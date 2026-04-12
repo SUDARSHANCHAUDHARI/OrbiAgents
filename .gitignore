@@ -1,0 +1,35 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Claude Code local settings
+.claude/settings.local.json
+.claude-plugin-config.json
+
+# Logs
+*.log
+
+# Node / Web
+node_modules/
+.env
+.env.local
+dist/
+.next/
+*.tsbuildinfo
+
+# Secrets
+*.env
+secrets.*
+credentials.*
+
+# Planning/spec docs — stay local
+PLUGIN_1_*.md
+SPEC_*.md
+PLAN_*.md
