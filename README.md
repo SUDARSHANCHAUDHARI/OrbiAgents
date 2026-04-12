@@ -28,15 +28,15 @@ orbiagents/
 **Terminal 1 — Backend**
 ```bash
 cd server
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 **Terminal 2 — Frontend**
 ```bash
 cd web
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000)

@@ -24,6 +24,9 @@ dist/
 .next/
 *.tsbuildinfo
 
+# npm — not used
+package-lock.json
+
 # Secrets
 *.env
 secrets.*
