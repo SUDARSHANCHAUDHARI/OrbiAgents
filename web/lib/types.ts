@@ -8,6 +8,7 @@ export interface Agent {
   paused: boolean;
   tokensUsed: number;
   lastAction: string;
+  logs: string[];
   x: number;
   y: number;
 }

@@ -59,6 +59,19 @@ export default function SidePanel({ agent, onClose, onPause, onResume }: Props) 
             x:{agent.x} y:{agent.y}
           </span>
         </Row>
+
+        <Row label="Logs">
+          <ul className="space-y-1 max-h-48 overflow-y-auto pr-1">
+            {agent.logs.map((entry, i) => (
+              <li
+                key={i}
+                className="text-[11px] text-gray-400 font-mono leading-snug border-l-2 border-gray-700 pl-2"
+              >
+                {entry}
+              </li>
+            ))}
+          </ul>
+        </Row>
       </div>
 
       <div className="px-4 py-4 border-t border-gray-700">

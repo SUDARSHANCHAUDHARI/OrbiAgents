@@ -47,6 +47,10 @@ function pick<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
+function timestamp(): string {
+  return new Date().toLocaleTimeString("en-US", { hour12: false });
+}
+
 let agents: Agent[] = [
   {
     id: "1",
@@ -56,6 +60,7 @@ let agents: Agent[] = [
     paused: false,
     tokensUsed: 0,
     lastAction: "Initialized",
+    logs: [`${timestamp()} — Agent initialized`],
     x: 80,
     y: 80,
   },
@@ -67,6 +72,7 @@ let agents: Agent[] = [
     paused: false,
     tokensUsed: 0,
     lastAction: "Initialized",
+    logs: [`${timestamp()} — Agent initialized`],
     x: 320,
     y: 180,
   },
@@ -90,13 +96,17 @@ setInterval(() => {
     const newState = pick(STATES);
     const tokenDelta = Math.floor(Math.random() * 800) + 100;
 
+    const action = pick(ACTIONS[newState]);
+    const entry = `${timestamp()} — [${newState}] ${action}`;
+
     changed = true;
     return {
       ...agent,
       state: newState,
       task: pick(TASKS[newState]),
-      lastAction: pick(ACTIONS[newState]),
+      lastAction: action,
       tokensUsed: agent.tokensUsed + tokenDelta,
+      logs: [entry, ...agent.logs].slice(0, 20),
     };
   });
 
