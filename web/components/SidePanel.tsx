@@ -1,94 +1,134 @@
 "use client";
-
-import { Agent } from "@/lib/types";
+import type { Agent } from "@/lib/types";
 
 interface Props {
   agent: Agent;
   onClose: () => void;
-  onPause: (agentId: string) => void;
-  onResume: (agentId: string) => void;
+  onPause: (id: string) => void;
+  onResume: (id: string) => void;
 }
 
-const STATE_COLOR: Record<Agent["state"], string> = {
-  idle: "text-gray-400",
-  thinking: "text-yellow-400",
-  coding: "text-blue-400",
-  done: "text-green-400",
+const STATE_COLOR: Record<string, string> = {
+  idle:      "#7A5230",
+  thinking:  "#FCD34D",
+  coding:    "#60A5FA",
+  testing:   "#6EE7B7",
+  reviewing: "#FCD34D",
+  debugging: "#F87171",
+  done:      "#6EE7B7",
 };
 
+const PALETTE_COLOR = ["#A78BFA","#60A5FA","#34D399","#FBBF24","#F87171"];
+
 export default function SidePanel({ agent, onClose, onPause, onResume }: Props) {
+  const paletteIdx = (parseInt(agent.id) - 1) % 5;
+  const accentColor = PALETTE_COLOR[paletteIdx];
+  const costLabel = agent.costUsd >= 0.01
+    ? `$${agent.costUsd.toFixed(3)}`
+    : agent.costUsd > 0 ? `$${agent.costUsd.toFixed(5)}` : "—";
+
   return (
-    <div className="w-72 bg-gray-800 border-l border-gray-700 flex flex-col">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-700">
-        <h2 className="text-white font-semibold text-sm">{agent.name}</h2>
-        <button
-          onClick={onClose}
-          className="text-gray-400 hover:text-white text-lg leading-none"
-        >
-          ✕
-        </button>
+    <div style={{
+      width: 280,
+      background: "#0d0907",
+      borderLeft: "3px solid #3D2409",
+      display: "flex",
+      flexDirection: "column",
+      fontFamily: "monospace",
+    }}>
+      {/* Header */}
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "8px 12px",
+        borderBottom: "2px solid #3D2409",
+        background: "#1a1208",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{
+            width: 10, height: 10,
+            background: accentColor,
+            border: `2px solid ${accentColor}`,
+          }} />
+          <span style={{ color: "#E9D5FF", fontSize: 10, letterSpacing: "0.1em" }}>
+            {agent.name.toUpperCase()}
+          </span>
+        </div>
+        <button onClick={onClose} style={{
+          background: "none", border: "none",
+          color: "#7A5230", cursor: "pointer", fontSize: 12, lineHeight: 1,
+        }}>✕</button>
       </div>
 
-      <div className="flex-1 px-4 py-4 space-y-4 overflow-y-auto">
-        <Row label="Status">
-          <span
-            className={`font-medium capitalize ${
-              agent.paused ? "text-gray-400" : STATE_COLOR[agent.state]
-            }`}
-          >
-            {agent.paused ? "Paused" : agent.state}
+      {/* Body */}
+      <div style={{ flex: 1, overflowY: "auto", padding: "12px" }}>
+        <Row label="STATUS">
+          <span style={{
+            color: agent.paused ? "#7A5230" : (STATE_COLOR[agent.state] ?? "#F5CBA7"),
+            fontSize: 10, letterSpacing: "0.05em",
+          }}>
+            {(agent.paused ? "PAUSED" : agent.state).toUpperCase()}
           </span>
         </Row>
 
-        <Row label="Current Task">
-          <span className="text-gray-300 text-xs leading-snug">{agent.task}</span>
+        <Row label="TASK">
+          <span style={{ color: "#F5CBA7", fontSize: 9, lineHeight: 1.6 }}>{agent.task}</span>
         </Row>
 
-        <Row label="Last Action">
-          <span className="text-gray-400 text-xs">{agent.lastAction}</span>
+        <Row label="LAST ACTION">
+          <span style={{ color: "#7A5230", fontSize: 9 }}>{agent.lastAction}</span>
         </Row>
 
-        <Row label="Tokens Used">
-          <span className="text-gray-300 font-mono text-xs">
+        <Row label="THIS RUN">
+          <div style={{ display: "flex", gap: 8, fontSize: 9, fontFamily: "monospace" }}>
+            <span style={{ color: "#60A5FA" }}>↓ {agent.inputTokens.toLocaleString()}</span>
+            <span style={{ color: "#4A2F14" }}>in</span>
+            <span style={{ color: "#6EE7B7" }}>↑ {agent.outputTokens.toLocaleString()}</span>
+            <span style={{ color: "#4A2F14" }}>out</span>
+          </div>
+          <div style={{ color: agent.costUsd > 0 ? "#FCD34D" : "#4A2F14", fontSize: 9, marginTop: 2 }}>
+            {costLabel}
+          </div>
+        </Row>
+
+        <Row label="TOTAL TOKENS">
+          <span style={{ color: "#F5CBA7", fontSize: 10 }}>
             {agent.tokensUsed.toLocaleString()}
           </span>
         </Row>
 
-        <Row label="Position">
-          <span className="text-gray-400 font-mono text-xs">
-            x:{agent.x} y:{agent.y}
-          </span>
-        </Row>
-
-        <Row label="Logs">
-          <ul className="space-y-1 max-h-48 overflow-y-auto pr-1">
+        <Row label="LOG">
+          <div style={{ maxHeight: 160, overflowY: "auto" }}>
             {agent.logs.map((entry, i) => (
-              <li
-                key={i}
-                className="text-[11px] text-gray-400 font-mono leading-snug border-l-2 border-gray-700 pl-2"
-              >
+              <div key={i} style={{
+                fontSize: 8, color: "#7A5230", lineHeight: 1.8,
+                borderLeft: "2px solid #3D2409",
+                paddingLeft: 6, marginBottom: 2,
+              }}>
                 {entry}
-              </li>
+              </div>
             ))}
-          </ul>
+          </div>
         </Row>
       </div>
 
-      <div className="px-4 py-4 border-t border-gray-700">
+      {/* Footer */}
+      <div style={{ padding: "10px 12px", borderTop: "2px solid #3D2409" }}>
         {agent.paused ? (
-          <button
-            onClick={() => onResume(agent.id)}
-            className="w-full bg-green-600 hover:bg-green-500 text-white text-sm font-medium py-2 rounded-lg transition-colors"
-          >
-            ▶ Resume Agent
-          </button>
+          <button onClick={() => onResume(agent.id)} style={{
+            width: "100%", background: "#14532D",
+            border: "2px solid #16A34A", color: "#6EE7B7",
+            fontFamily: "monospace", fontSize: 8,
+            letterSpacing: "0.1em", padding: "7px",
+            cursor: "pointer",
+          }}>▶ RESUME AGENT</button>
         ) : (
-          <button
-            onClick={() => onPause(agent.id)}
-            className="w-full bg-yellow-600 hover:bg-yellow-500 text-white text-sm font-medium py-2 rounded-lg transition-colors"
-          >
-            ⏸ Pause Agent
-          </button>
+          <button onClick={() => onPause(agent.id)} style={{
+            width: "100%", background: "#451A03",
+            border: "2px solid #D97706", color: "#FCD34D",
+            fontFamily: "monospace", fontSize: 8,
+            letterSpacing: "0.1em", padding: "7px",
+            cursor: "pointer",
+          }}>⏸ PAUSE AGENT</button>
         )}
       </div>
     </div>
@@ -97,8 +137,12 @@ export default function SidePanel({ agent, onClose, onPause, onResume }: Props) 
 
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div>
-      <p className="text-gray-500 text-[10px] uppercase tracking-wider mb-1">{label}</p>
+    <div style={{ marginBottom: 14 }}>
+      <div style={{
+        fontSize: 7, color: "#7C3AED",
+        letterSpacing: "0.15em", marginBottom: 3,
+        textTransform: "uppercase",
+      }}>{label}</div>
       {children}
     </div>
   );
