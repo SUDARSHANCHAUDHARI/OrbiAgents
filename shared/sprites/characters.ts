@@ -30,7 +30,12 @@ const PALETTE_OVERRIDES: Array<Partial<Record<string, string>>> = [
 ];
 
 function makePal(idx: number): Record<string, string> {
-  return { ...BASE, ...(PALETTE_OVERRIDES[idx] ?? {}) };
+  const overrides = PALETTE_OVERRIDES[idx] ?? {};
+  const merged: Record<string, string> = { ...BASE };
+  for (const [k, v] of Object.entries(overrides)) {
+    if (v !== undefined) merged[k] = v;
+  }
+  return merged;
 }
 
 function buildDownFrames(pal: Record<string, string>): [SpriteData, SpriteData, SpriteData, SpriteData] {
