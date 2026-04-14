@@ -6,7 +6,7 @@ const ctx = await esbuild.context({
   entryPoints: ["src/extension.ts"],
   bundle: true,
   outfile: "out/extension.js",
-  external: ["vscode"],
+  external: ["vscode", "fsevents"],
   format: "cjs",
   platform: "node",
   sourcemap: true,
