@@ -33,6 +33,8 @@ export class HookServer {
    * (detected via server.json PID check), reuses its config.
    */
   async start(): Promise<ServerConfig> {
+    if (this.config) return this.config;
+
     const existing = this.readServerJson();
     if (existing && isProcessRunning(existing.pid)) {
       this.config = existing;
@@ -133,6 +135,13 @@ export class HookServer {
     let body = "";
     let bodySize = 0;
     let responded = false;
+
+    req.on("error", () => {
+      if (!responded) {
+        responded = true;
+        res.writeHead(500).end();
+      }
+    });
 
     req.on("data", (chunk: Buffer) => {
       bodySize += chunk.length;
