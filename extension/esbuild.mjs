@@ -2,7 +2,8 @@ import * as esbuild from "esbuild";
 
 const watch = process.argv.includes("--watch");
 
-const ctx = await esbuild.context({
+// Extension host bundle — external: vscode (provided by VS Code runtime)
+const extCtx = await esbuild.context({
   entryPoints: ["src/extension.ts"],
   bundle: true,
   outfile: "out/extension.js",
@@ -13,10 +14,24 @@ const ctx = await esbuild.context({
   logLevel: "info",
 });
 
+// Hook script bundle — standalone CJS, no externals, runs in plain node
+const hookCtx = await esbuild.context({
+  entryPoints: ["src/hooks/claude-hook.ts"],
+  bundle: true,
+  outfile: "out/hooks/claude-hook.js",
+  format: "cjs",
+  platform: "node",
+  sourcemap: false,
+  logLevel: "info",
+});
+
 if (watch) {
-  await ctx.watch();
+  await extCtx.watch();
+  await hookCtx.watch();
   console.log("Watching...");
 } else {
-  await ctx.rebuild();
-  await ctx.dispose();
+  await extCtx.rebuild();
+  await hookCtx.rebuild();
+  await extCtx.dispose();
+  await hookCtx.dispose();
 }
