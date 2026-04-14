@@ -68,6 +68,10 @@ export class TranscriptWatcher {
   start() {
     if (!fs.existsSync(this.watchDir)) return;
 
+    // Pre-seed sizes for all existing files so we only read NEW bytes going forward,
+    // not the full historical content of every transcript on startup.
+    this.seedExistingFileSizes();
+
     this.watcher = chokidar.watch(`${this.watchDir}/**/*.jsonl`, {
       persistent: true,
       ignoreInitial: true,
@@ -91,6 +95,24 @@ export class TranscriptWatcher {
     this.watcher.on("add", (filePath: string) => {
       this.fileSizes.set(filePath, 0);
     });
+  }
+
+  private seedExistingFileSizes() {
+    try {
+      const entries = fs.readdirSync(this.watchDir, { withFileTypes: true });
+      for (const entry of entries) {
+        if (!entry.isDirectory()) continue;
+        const dir = path.join(this.watchDir, entry.name);
+        const files = fs.readdirSync(dir).filter(f => f.endsWith(".jsonl"));
+        for (const file of files) {
+          const filePath = path.join(dir, file);
+          try {
+            const stat = fs.statSync(filePath);
+            this.fileSizes.set(filePath, stat.size);
+          } catch { /* skip unreadable files */ }
+        }
+      }
+    } catch { /* watchDir not accessible */ }
   }
 
   stop() {
