@@ -47,6 +47,9 @@ export default function App() {
     const onResize = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
+      // Repaint immediately so the canvas doesn't flash blank until the next loop tick
+      const ctx = canvas.getContext("2d");
+      if (ctx) renderFrame(ctx, tileMap, furniture, latestChars.current, 0, 0, ZOOM);
     };
     window.addEventListener("resize", onResize);
 
@@ -71,9 +74,14 @@ export default function App() {
   // Listen for messages from the extension host
   useEffect(() => {
     const handler = (event: MessageEvent) => {
-      const msg = event.data as { type: string; agents?: AgentUpdate[] };
-      if (msg.type === "agents" && msg.agents) {
-        setAgents(msg.agents);
+      const data = event.data;
+      if (
+        data &&
+        typeof data === "object" &&
+        data.type === "agents" &&
+        Array.isArray(data.agents)
+      ) {
+        setAgents(data.agents as AgentUpdate[]);
       }
     };
     window.addEventListener("message", handler);
