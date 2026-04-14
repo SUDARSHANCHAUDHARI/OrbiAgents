@@ -1,4 +1,4 @@
-export type AgentState = "idle" | "thinking" | "coding" | "done";
+export type AgentState = "idle" | "thinking" | "coding" | "testing" | "reviewing" | "debugging" | "done";
 
 export interface Agent {
   id: string;
@@ -7,6 +7,9 @@ export interface Agent {
   task: string;
   paused: boolean;
   tokensUsed: number;
+  inputTokens: number;
+  outputTokens: number;
+  costUsd: number;
   lastAction: string;
   logs: string[];
   x: number;

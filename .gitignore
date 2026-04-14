@@ -36,3 +36,22 @@ credentials.*
 PLUGIN_1_*.md
 SPEC_*.md
 PLAN_*.md
+
+# Database
+server/prisma/dev.db
+server/prisma/dev.db-journal
+server/prisma/dev.db-shm
+server/prisma/dev.db-wal
+
+# Local tooling
+.superpowers/
+.playwright-mcp/
+
+# Canvas/screenshot artifacts
+canvas-capture.txt
+canvas-render.png
+canvas_render.png
+canvas_render.txt
+login-page.png
+orbi-dashboard.png
+orbi-pixel.png
