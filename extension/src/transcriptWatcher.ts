@@ -30,7 +30,6 @@ export class TranscriptWatcher {
   }
 
   private sessionIdFromPath(filePath: string): string {
-    // Use the parent folder name as a stable session ID
     return path.basename(path.dirname(filePath));
   }
 
@@ -49,19 +48,21 @@ export class TranscriptWatcher {
     const prevSize = this.fileSizes.get(filePath) ?? 0;
     let stat: fs.Stats;
     try {
-      stat = fs.statSync(filePath);
+      stat = await fs.promises.stat(filePath);
     } catch {
       return [];
     }
     if (stat.size <= prevSize) return [];
 
-    const fd = fs.openSync(filePath, "r");
-    const buf = Buffer.alloc(stat.size - prevSize);
-    fs.readSync(fd, buf, 0, buf.length, prevSize);
-    fs.closeSync(fd);
-    this.fileSizes.set(filePath, stat.size);
-
-    return buf.toString("utf8").split("\n").filter(l => l.trim().length > 0);
+    const fh = await fs.promises.open(filePath, "r");
+    try {
+      const buf = Buffer.alloc(stat.size - prevSize);
+      await fh.read(buf, 0, buf.length, prevSize);
+      this.fileSizes.set(filePath, stat.size);
+      return buf.toString("utf8").split("\n").filter(l => l.trim().length > 0);
+    } finally {
+      await fh.close();
+    }
   }
 
   start() {
@@ -75,14 +76,16 @@ export class TranscriptWatcher {
 
     this.watcher.on("change", async (filePath: string) => {
       const lines = await this.readNewLines(filePath);
+      if (lines.length === 0) return;
       const sessionId = this.sessionIdFromPath(filePath);
       for (const line of lines) {
         const state = parseTranscriptLine(line);
         if (state) {
           this.emit({ sessionId, state, timestamp: Date.now() });
-          this.scheduleIdle(filePath);
         }
       }
+      // Always reset idle timer when new bytes arrive, regardless of line content
+      this.scheduleIdle(filePath);
     });
 
     this.watcher.on("add", (filePath: string) => {
@@ -92,7 +95,9 @@ export class TranscriptWatcher {
 
   stop() {
     this.watcher?.close();
+    this.watcher = null;
     this.inactivityTimers.forEach(t => clearTimeout(t));
     this.inactivityTimers.clear();
+    this.fileSizes.clear();
   }
 }
