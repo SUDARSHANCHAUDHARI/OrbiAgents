@@ -56,3 +56,42 @@ export function parseTranscriptLine(raw: string): AgentState | null {
     return null;
   }
 }
+
+/**
+ * Map a Claude Code hook event to an AgentState.
+ *
+ * @param eventName  - hook_event_name field (e.g. "PreToolUse", "Stop")
+ * @param toolName   - tool_name field, only present for PreToolUse events
+ * @param notifType  - notification_type field, only present for Notification events
+ * @returns AgentState, or null if the event does not trigger a state change
+ */
+export function hookEventToState(
+  eventName: string,
+  toolName?: string,
+  notifType?: string,
+): AgentState | null {
+  switch (eventName) {
+    case "PreToolUse":
+      // Reuse same tool→state logic as the JSONL path
+      return toolName ? toolCallToState(toolName) : "thinking";
+    case "Stop":
+    case "SessionEnd":
+      return "idle";
+    case "Notification":
+      // idle_prompt means Claude finished and is waiting for user input
+      return notifType === "idle_prompt" ? "idle" : "thinking";
+    case "UserPromptSubmit":
+    case "SessionStart":
+    case "PermissionRequest":
+    case "SubagentStop":
+      return "thinking";
+    case "SubagentStart":
+      return "coding";
+    case "PostToolUse":
+    case "PostToolUseFailure":
+      // Stop hook handles the idle transition — these don't trigger a state change
+      return null;
+    default:
+      return null;
+  }
+}
