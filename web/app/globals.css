@@ -1,3 +1,169 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ── Base ──────────────────────────────────────────────────────────── */
+:root {
+  color-scheme: dark;
+}
+
+body {
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Custom scrollbar ───────────────────────────────────────────────── */
+::-webkit-scrollbar              { width: 4px; height: 4px; }
+::-webkit-scrollbar-track        { background: transparent; }
+::-webkit-scrollbar-thumb        { background: #374151; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover  { background: #4b5563; }
+
+/* ── Workflow SVG flow animation ───────────────────────────────────── */
+.orbi-flow-line {
+  stroke-dasharray: 8 6;
+  animation: orbi-flow 0.9s linear infinite;
+}
+
+/* ── Agent card glow layers ────────────────────────────────────────── */
+.orbi-agent-idle      { --glow: 0 0 0 0 transparent; }
+.orbi-agent-thinking  { --glow: 0 0 20px 4px rgba(167,139,250,0.4); }
+.orbi-agent-coding    { --glow: 0 0 20px 4px rgba(96,165,250,0.45); }
+.orbi-agent-testing   { --glow: 0 0 20px 4px rgba(52,211,153,0.4); }
+.orbi-agent-reviewing { --glow: 0 0 20px 4px rgba(251,191,36,0.4); }
+.orbi-agent-debugging { --glow: 0 0 20px 4px rgba(251,113,133,0.4); }
+.orbi-agent-done      { --glow: 0 0 16px 3px rgba(74,222,128,0.35); }
+.orbi-glow            { box-shadow: var(--glow); transition: box-shadow 0.5s ease; }
+
+/* ── Office floor ambient dots ─────────────────────────────────────── */
+.orbi-floor-dot {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(139,92,246,0.6), transparent);
+  pointer-events: none;
+}
+
+/* ── Code block line numbers ───────────────────────────────────────── */
+.orbi-code-block {
+  counter-reset: line;
+}
+.orbi-code-block .orbi-line::before {
+  counter-increment: line;
+  content: counter(line);
+  display: inline-block;
+  width: 2rem;
+  text-align: right;
+  margin-right: 1rem;
+  color: #374151;
+  user-select: none;
+  font-size: 10px;
+}
+
+/* ── Shimmer loading bar ───────────────────────────────────────────── */
+.orbi-shimmer-bar {
+  background: linear-gradient(
+    90deg,
+    #1f2937 0%,
+    #374151 50%,
+    #1f2937 100%
+  );
+  background-size: 200% 100%;
+  animation: orbi-shimmer 2s linear infinite;
+}
+
+/* ── Glass card ────────────────────────────────────────────────────── */
+.orbi-glass {
+  background: rgba(17, 24, 39, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* ── Pixel UI theme ──────────────────────────────────────── */
+:root {
+  --px-bg:          #0d0907;
+  --px-bg-mid:      #1a1208;
+  --px-border:      #3D2409;
+  --px-border-mid:  #4A2F14;
+  --px-text:        #F5CBA7;
+  --px-text-dim:    #7A5230;
+  --px-accent:      #7C3AED;
+  --px-accent-light:#A78BFA;
+  --px-green:       #6EE7B7;
+  --px-yellow:      #FCD34D;
+  --px-red:         #F87171;
+}
+
+.px-box {
+  background: var(--px-bg);
+  border: 2px solid var(--px-border);
+  font-family: monospace;
+  color: var(--px-text);
+}
+
+.px-label {
+  font-family: monospace;
+  font-size: 7px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--px-accent);
+}
+
+.px-value {
+  font-family: monospace;
+  font-size: 11px;
+  color: var(--px-text);
+}
+
+.px-btn {
+  background: var(--px-bg);
+  border: 2px solid var(--px-border-mid);
+  color: var(--px-text-dim);
+  font-family: monospace;
+  font-size: 7px;
+  letter-spacing: 0.1em;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: border-color 0.1s, color 0.1s;
+}
+.px-btn:hover {
+  border-color: var(--px-accent-light);
+  color: var(--px-accent-light);
+}
+.px-btn-primary {
+  background: var(--px-accent);
+  border-color: var(--px-accent-light);
+  color: #EDE9FE;
+  box-shadow: 0 3px 0 #3730A3;
+}
+.px-btn-primary:hover {
+  background: #6D28D9;
+}
+.px-btn-primary:disabled {
+  background: #4A2F14;
+  border-color: #7A5230;
+  box-shadow: none;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.px-input {
+  background: var(--px-bg-mid);
+  border: 2px solid var(--px-border-mid);
+  color: var(--px-text);
+  font-family: monospace;
+  font-size: 8px;
+  padding: 6px 10px;
+  outline: none;
+  letter-spacing: 0.05em;
+}
+.px-input:focus {
+  border-color: var(--px-accent);
+}
+
+.px-scanlines {
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent 0px, transparent 3px,
+    rgba(0,0,0,0.04) 3px, rgba(0,0,0,0.04) 4px
+  );
+  pointer-events: none;
+}
