@@ -1,34 +1,39 @@
+// "done" is not emitted here — reserved for future task completion signals.
+// Idle transitions are handled by the inactivity timer in transcriptWatcher.ts.
 export type AgentState = "idle" | "thinking" | "coding" | "done";
 
 // Maps tool name → agent state
 const TOOL_STATE_MAP: Record<string, AgentState> = {
   // Reading/exploring → thinking
-  Read:   "thinking",
-  Grep:   "thinking",
-  Glob:   "thinking",
-  LS:     "thinking",
-  WebFetch: "thinking",
+  Read:      "thinking",
+  Grep:      "thinking",
+  Glob:      "thinking",
+  LS:        "thinking",
+  WebFetch:  "thinking",
   WebSearch: "thinking",
+  Skill:     "thinking",
+  ToolSearch:"thinking",
   // Writing/running → coding
-  Write:  "coding",
-  Edit:   "coding",
-  Bash:   "coding",
-  NotebookEdit: "coding",
-  // Agent delegation → thinking (orchestrating)
-  Agent:  "thinking",
-  // Task tracking → thinking
+  Write:       "coding",
+  Edit:        "coding",
+  Bash:        "coding",
+  NotebookEdit:"coding",
+  // Agent delegation + task tracking → thinking
+  Agent:     "thinking",
   TodoWrite: "thinking",
 };
 
 export function toolCallToState(toolName: string): AgentState {
-  return TOOL_STATE_MAP[toolName] ?? "thinking";
+  if (TOOL_STATE_MAP[toolName]) return TOOL_STATE_MAP[toolName];
+  // MCP tools (mcp__server__tool) are side-effectful actions → coding
+  if (toolName.startsWith("mcp__")) return "coding";
+  return "thinking";
 }
 
 // A line of JSONL from a Claude Code transcript
 export interface TranscriptLine {
   type: string;
   message?: {
-    role?: string;
     content?: Array<{ type: string; name?: string }>;
   };
 }
