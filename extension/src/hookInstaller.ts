@@ -70,16 +70,6 @@ function makeHookEntry(): ClaudeHookEntry {
   };
 }
 
-/** Returns true if all 11 hook events have an OrbiAgents entry in Claude settings. */
-export function areHooksInstalled(): boolean {
-  const settings = readSettings();
-  if (!settings.hooks) return false;
-  return CLAUDE_HOOK_EVENTS.every((event) => {
-    const entries = settings.hooks?.[event];
-    return Array.isArray(entries) && entries.some(isOurEntry);
-  });
-}
-
 /**
  * Install OrbiAgents hook entries in ~/.claude/settings.json.
  * Idempotent: removes any existing OrbiAgents entries before inserting fresh ones
@@ -134,8 +124,9 @@ export function uninstallHooks(): void {
 /**
  * Copy the compiled hook script from the extension's out/hooks/ to ~/.orbiagents/hooks/.
  * Called after hookServer.start() so the script is in place before any Claude session fires.
+ * Returns true on success, false on failure.
  */
-export function copyHookScript(extensionPath: string): void {
+export function copyHookScript(extensionPath: string): boolean {
   const src = path.join(extensionPath, "out", "hooks", HOOK_SCRIPT_NAME);
   const dst = path.join(HOOK_SCRIPTS_DIR, HOOK_SCRIPT_NAME);
 
@@ -145,12 +136,14 @@ export function copyHookScript(extensionPath: string): void {
     }
     if (!fs.existsSync(src)) {
       console.warn(`[OrbiAgents] Hook script not found at ${src} — run pnpm build first`);
-      return;
+      return false;
     }
     fs.copyFileSync(src, dst);
     fs.chmodSync(dst, 0o700);
     console.log(`[OrbiAgents] Hook script copied to ${dst}`);
+    return true;
   } catch (e) {
     console.error(`[OrbiAgents] Failed to copy hook script: ${e}`);
+    return false;
   }
 }

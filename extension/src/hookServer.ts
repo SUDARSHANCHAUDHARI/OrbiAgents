@@ -37,6 +37,9 @@ export class HookServer {
 
     const existing = this.readServerJson();
     if (existing && isProcessRunning(existing.pid)) {
+      // Another VS Code window owns the server. This window will NOT receive hook
+      // events — the registered onHookEvent callback will never fire. The JSONL
+      // transcript watcher (fallback) continues to run and provides state updates.
       this.config = existing;
       this.ownsServer = false;
       console.log(`[OrbiAgents] Reusing server on port ${existing.port} (PID ${existing.pid})`);

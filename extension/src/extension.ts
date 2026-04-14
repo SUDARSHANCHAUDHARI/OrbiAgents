@@ -82,8 +82,9 @@ export function activate(context: vscode.ExtensionContext) {
 
   // Start HTTP hook server, then copy hook script and install hooks
   hookServer.start().then(() => {
-    copyHookScript(context.extensionPath);
-    installHooks();
+    if (copyHookScript(context.extensionPath)) {
+      installHooks();
+    }
   }).catch((e: unknown) => {
     console.error("[OrbiAgents] Failed to start hook server:", e);
   });
