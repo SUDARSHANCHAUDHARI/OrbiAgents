@@ -3,6 +3,7 @@ import express from "express";
 import { WebSocketServer, WebSocket } from "ws";
 import { Agent, AgentState, ClientMessage } from "./types";
 import { runWorkflow } from "./orchestrator";
+import { availableProviders, Provider } from "./ai";
 import { runWorkflowDynamic } from "./workflowRunner";
 import { Workflow } from "./workflowTypes";
 import {
@@ -199,9 +200,14 @@ app.delete("/workflows/:id", protect, async (req, res) => {
   res.status(204).send();
 });
 
+// ── Available providers ────────────────────────────────────────────
+app.get("/providers", (_req, res) => {
+  res.json({ providers: availableProviders(), default: process.env.DEFAULT_PROVIDER ?? "anthropic" });
+});
+
 // ── AI workflow — fixed planner→coder ─────────────────────────────
 app.post("/run", async (req, res) => {
-  const { task } = req.body as { task?: string };
+  const { task, provider } = req.body as { task?: string; provider?: Provider };
   if (!task?.trim()) { res.status(400).json({ error: "task is required" }); return; }
   if (workflowRunning) { res.status(409).json({ error: "Workflow already running" }); return; }
 
@@ -212,7 +218,7 @@ app.post("/run", async (req, res) => {
   res.status(202).json({ status: "started", sessionId });
 
   try {
-    const result = await runWorkflow(task.trim(), updateAgent);
+    const result = await runWorkflow(task.trim(), updateAgent, provider);
     updateSessionCost(sessionId, result.totalCostUsd);
     wss.clients.forEach((c) => {
       if (c.readyState === WebSocket.OPEN)

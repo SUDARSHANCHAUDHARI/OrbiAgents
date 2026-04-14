@@ -1,4 +1,4 @@
-import { streamMessage, StreamResult, OnChunk } from "../ai";
+import { streamMessage, StreamResult, OnChunk, Provider, DEFAULT_PROVIDER } from "../ai";
 
 const CODER_SYSTEM = `You are Orbi-Beta, an expert software engineer AI agent.
 You receive an implementation plan and write production-ready TypeScript code.
@@ -8,11 +8,13 @@ Be concise. No explanations outside the code blocks.`;
 export async function coderAgent(
   originalTask: string,
   plan: string,
-  onChunk: OnChunk
+  onChunk: OnChunk,
+  provider: Provider = DEFAULT_PROVIDER
 ): Promise<StreamResult> {
   return streamMessage(
     CODER_SYSTEM,
     `Original task: ${originalTask}\n\nImplementation plan:\n${plan}\n\nWrite the code:`,
-    onChunk
+    onChunk,
+    provider
   );
 }

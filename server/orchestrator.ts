@@ -1,5 +1,6 @@
 import { plannerAgent } from "./agents/planner";
 import { coderAgent } from "./agents/coder";
+import { Provider, DEFAULT_PROVIDER } from "./ai";
 import { Agent } from "./types";
 
 export interface WorkflowResult {
@@ -16,7 +17,8 @@ function timestamp(): string {
 
 export async function runWorkflow(
   task: string,
-  update: AgentUpdater
+  update: AgentUpdater,
+  provider: Provider = DEFAULT_PROVIDER
 ): Promise<WorkflowResult> {
   // ── Phase 1: Planner (Orbi-Alpha) ──────────────────────────────
   update("1", {
@@ -36,7 +38,7 @@ export async function runWorkflow(
       lastPlanBroadcast = now;
       update("1", { task: planBuffer.slice(0, 80) + "…" });
     }
-  });
+  }, provider);
 
   update("1", {
     state: "done",
@@ -72,7 +74,7 @@ export async function runWorkflow(
         lastAction: `Wrote ${lines} lines`,
       });
     }
-  });
+  }, provider);
 
   const lineCount = codeResult.text.split("\n").length;
   update("2", {
