@@ -5,8 +5,6 @@ import * as path from "path";
 const CLAUDE_SETTINGS_PATH = path.join(os.homedir(), ".claude", "settings.json");
 const HOOK_SCRIPTS_DIR = path.join(os.homedir(), ".orbiagents", "hooks");
 const HOOK_SCRIPT_NAME = "claude-hook.js";
-// String present in every hook command we install — used to identify our entries
-const HOOK_SCRIPT_MARKER = "claude-hook.js";
 
 const CLAUDE_HOOK_EVENTS = [
   "SessionStart",
@@ -48,7 +46,7 @@ function writeSettings(settings: ClaudeSettings): void {
   try {
     if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
     const tmpPath = CLAUDE_SETTINGS_PATH + ".orbiagents-tmp";
-    fs.writeFileSync(tmpPath, JSON.stringify(settings, null, 2), "utf-8");
+    fs.writeFileSync(tmpPath, JSON.stringify(settings, null, 2), { encoding: "utf-8", mode: 0o600 });
     fs.renameSync(tmpPath, CLAUDE_SETTINGS_PATH);
   } catch (e) {
     console.error(`[OrbiAgents] Failed to write Claude settings: ${e}`);
@@ -56,7 +54,7 @@ function writeSettings(settings: ClaudeSettings): void {
 }
 
 function isOurEntry(entry: ClaudeHookEntry): boolean {
-  return entry.hooks.some((h) => h.command.includes(HOOK_SCRIPT_MARKER));
+  return entry.hooks.some((h) => h.command.includes(HOOK_SCRIPT_NAME));
 }
 
 function makeHookEntry(): ClaudeHookEntry {
@@ -123,7 +121,7 @@ export function uninstallHooks(): void {
       settings.hooks[event] = filtered;
       changed = true;
     }
-    if (settings.hooks[event].length === 0) delete settings.hooks[event];
+    if (filtered.length === 0) delete settings.hooks[event];
   }
   if (Object.keys(settings.hooks).length === 0) delete settings.hooks;
 
