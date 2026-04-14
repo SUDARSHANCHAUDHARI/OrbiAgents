@@ -37,7 +37,7 @@ export function activate(context: vscode.ExtensionContext) {
       sessionSlots.set(sessionId, nextSlot % AGENT_NAMES.length);
       nextSlot++;
     }
-    return sessionSlots.get(sessionId)!;
+    return sessionSlots.get(sessionId) ?? 0;
   }
 
   // Transcript watcher → agent state updates
