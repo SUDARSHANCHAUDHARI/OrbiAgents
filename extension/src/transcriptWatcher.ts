@@ -17,12 +17,23 @@ export class TranscriptWatcher {
   private fileSizes = new Map<string, number>();
   private inactivityTimers = new Map<string, ReturnType<typeof setTimeout>>();
   private callbacks: ActivityCallback[] = [];
+  /** Sessions that have received a hook event — idle timer is suppressed for these. */
+  private hookDeliveredSessions = new Set<string>();
 
   private readonly watchDir = path.join(os.homedir(), ".claude", "projects");
   private readonly INACTIVITY_MS = 5000; // 5s no activity → idle
 
   onActivity(cb: ActivityCallback) {
     this.callbacks.push(cb);
+  }
+
+  /**
+   * Mark a session as hook-delivered. While marked, the 5s inactivity idle timer
+   * is suppressed so the hook Stop event (not a timeout) controls the idle transition.
+   * Called by extension.ts when any hook event arrives for this session.
+   */
+  markHookDelivered(sessionId: string): void {
+    this.hookDeliveredSessions.add(sessionId);
   }
 
   private emit(activity: AgentActivity) {
@@ -35,6 +46,10 @@ export class TranscriptWatcher {
 
   private scheduleIdle(filePath: string) {
     const sessionId = this.sessionIdFromPath(filePath);
+    // Suppress inactivity idle if hooks are active for this session —
+    // the Stop hook event handles the idle transition instead.
+    if (this.hookDeliveredSessions.has(sessionId)) return;
+
     const existing = this.inactivityTimers.get(filePath);
     if (existing) clearTimeout(existing);
     const timer = setTimeout(() => {
@@ -88,7 +103,8 @@ export class TranscriptWatcher {
           this.emit({ sessionId, state, timestamp: Date.now() });
         }
       }
-      // Always reset idle timer when new bytes arrive, regardless of line content
+      // Always reset idle timer when new bytes arrive, regardless of line content.
+      // scheduleIdle checks hookDeliveredSessions and returns early if hooks are active.
       this.scheduleIdle(filePath);
     });
 
@@ -121,5 +137,6 @@ export class TranscriptWatcher {
     this.inactivityTimers.forEach(t => clearTimeout(t));
     this.inactivityTimers.clear();
     this.fileSizes.clear();
+    this.hookDeliveredSessions.clear();
   }
 }
