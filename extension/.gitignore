@@ -1,2 +1,4 @@
 out/
+!out/hooks/
+!out/hooks/claude-hook.js
 node_modules/
