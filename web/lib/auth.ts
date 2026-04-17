@@ -1,4 +1,7 @@
-const API = "http://localhost:4000";
+import { getApiBaseUrl } from "./config";
+import { Provider, SessionMeta } from "./types";
+
+const API = getApiBaseUrl();
 const TOKEN_KEY = "orbi_token";
 
 export interface AuthUser {
@@ -20,7 +23,10 @@ export function clearToken(): void {
 }
 
 export function authHeaders(): Record<string, string> {
-  const token = getToken();
+  return buildAuthHeaders(getToken());
+}
+
+export function buildAuthHeaders(token: string | null): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
@@ -62,6 +68,11 @@ export interface WorkflowMeta {
   updatedAt: string;
 }
 
+export interface ProvidersResponse {
+  providers: Provider[];
+  default: Provider;
+}
+
 export async function listWorkflows(): Promise<WorkflowMeta[]> {
   const res = await fetch(`${API}/workflows`, { headers: authHeaders() });
   if (!res.ok) return [];
@@ -91,4 +102,32 @@ export async function deleteWorkflow(id: string): Promise<void> {
     method: "DELETE",
     headers: authHeaders(),
   });
+}
+
+export async function listProviders(): Promise<ProvidersResponse> {
+  const res = await fetch(`${API}/providers`);
+  if (!res.ok) {
+    throw new Error("Could not load providers");
+  }
+  return res.json() as Promise<ProvidersResponse>;
+}
+
+export async function listSessions(): Promise<SessionMeta[]> {
+  const res = await fetch(`${API}/sessions`, {
+    headers: authHeaders(),
+  });
+  if (!res.ok) return [];
+  return res.json() as Promise<SessionMeta[]>;
+}
+
+export async function createReplayShareLink(sessionId: string): Promise<{ token: string; url: string }> {
+  const res = await fetch(`${API}/replay/${sessionId}/share`, {
+    method: "POST",
+    headers: authHeaders(),
+  });
+  const body = (await res.json()) as { token?: string; url?: string; error?: string };
+  if (!res.ok || !body.token || !body.url) {
+    throw new Error(body.error ?? "Could not create share link");
+  }
+  return { token: body.token, url: body.url };
 }

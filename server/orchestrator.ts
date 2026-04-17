@@ -10,6 +10,7 @@ export interface WorkflowResult {
 }
 
 export type AgentUpdater = (id: string, patch: Partial<Agent>) => void;
+export type PauseWaiter = (id: string) => Promise<void>;
 
 function timestamp(): string {
   return new Date().toLocaleTimeString("en-US", { hour12: false });
@@ -18,6 +19,7 @@ function timestamp(): string {
 export async function runWorkflow(
   task: string,
   update: AgentUpdater,
+  waitIfPaused: PauseWaiter,
   provider: Provider = DEFAULT_PROVIDER
 ): Promise<WorkflowResult> {
   // ── Phase 1: Planner (Orbi-Alpha) ──────────────────────────────
@@ -31,7 +33,8 @@ export async function runWorkflow(
   let planBuffer = "";
   let lastPlanBroadcast = 0;
 
-  const planResult = await plannerAgent(task, (chunk) => {
+  const planResult = await plannerAgent(task, async (chunk) => {
+    await waitIfPaused("1");
     planBuffer += chunk;
     const now = Date.now();
     if (now - lastPlanBroadcast > 500) {
@@ -52,6 +55,7 @@ export async function runWorkflow(
   });
 
   // ── Phase 2: Coder (Orbi-Beta) ─────────────────────────────────
+  await waitIfPaused("2");
   update("2", {
     state: "thinking",
     task: "Reading plan from Orbi-Alpha…",
@@ -62,7 +66,8 @@ export async function runWorkflow(
   let codeBuffer = "";
   let lastCodeBroadcast = 0;
 
-  const codeResult = await coderAgent(task, planResult.text, (chunk) => {
+  const codeResult = await coderAgent(task, planResult.text, async (chunk) => {
+    await waitIfPaused("2");
     codeBuffer += chunk;
     const now = Date.now();
     if (now - lastCodeBroadcast > 500) {

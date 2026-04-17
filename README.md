@@ -29,6 +29,7 @@ orbiagents/
 ```bash
 cd server
 pnpm install
+cp .env.example .env
 pnpm dev
 ```
 
@@ -36,10 +37,23 @@ pnpm dev
 ```bash
 cd web
 pnpm install
+cp .env.example .env.local
 pnpm dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000)
+
+## Environment
+
+`server/.env`
+- `APP_URL` — public web app URL used for share links
+- `CORS_ORIGIN` — allowed frontend origin for API requests
+- `JWT_SECRET` — required outside local dev
+- `DEFAULT_PROVIDER` — `anthropic`, `openai`, or `gemini`
+
+`web/.env.local`
+- `NEXT_PUBLIC_API_BASE_URL` — backend base URL
+- `NEXT_PUBLIC_WS_BASE_URL` — backend WebSocket base URL
 
 ## Features
 

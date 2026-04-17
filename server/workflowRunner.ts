@@ -3,8 +3,8 @@ import { coderAgent } from "./agents/coder";
 import { testerAgent } from "./agents/tester";
 import { reviewerAgent } from "./agents/reviewer";
 import { debuggerAgent } from "./agents/debugger";
-import { StreamResult } from "./ai";
-import { AgentUpdater } from "./orchestrator";
+import { Provider, StreamResult, DEFAULT_PROVIDER } from "./ai";
+import { AgentUpdater, PauseWaiter } from "./orchestrator";
 import { Workflow, WorkflowNode, NODE_AGENT_ID } from "./workflowTypes";
 import { AgentState } from "./types";
 
@@ -20,7 +20,7 @@ const NODE_ACTIVE_STATE: Record<string, AgentState> = {
   debugger: "debugging",
 };
 
-function topoSort(workflow: Workflow): WorkflowNode[] {
+export function topoSort(workflow: Workflow): WorkflowNode[] {
   const inDegree = new Map<string, number>(
     workflow.nodes.map((n) => [n.id, 0])
   );
@@ -48,39 +48,77 @@ function topoSort(workflow: Workflow): WorkflowNode[] {
   return order;
 }
 
-function getPredOutput(
+export interface WorkflowInputs {
+  combined: string;
+  latestCode: string | null;
+  latestReview: string | null;
+}
+
+export function getWorkflowInputs(
   nodeId: string,
   edges: Workflow["edges"],
   outputs: Map<string, string>,
+  workflow: Workflow,
   task: string
-): string {
-  const predIds = edges.filter((e) => e.to === nodeId).map((e) => e.from);
-  if (predIds.length === 0) return task;
-  return predIds.map((id) => outputs.get(id) ?? "").join("\n\n");
+): WorkflowInputs {
+  const predecessors = edges
+    .filter((edge) => edge.to === nodeId)
+    .map((edge) => workflow.nodes.find((node) => node.id === edge.from))
+    .filter((node): node is WorkflowNode => node != null);
+
+  if (predecessors.length === 0) {
+    return { combined: task, latestCode: null, latestReview: null };
+  }
+
+  let latestCode: string | null = null;
+  let latestReview: string | null = null;
+
+  for (const node of predecessors) {
+    const output = outputs.get(node.id);
+    if (!output) continue;
+    if (node.type === "coder" || node.type === "debugger") latestCode = output;
+    if (node.type === "reviewer") latestReview = output;
+  }
+
+  return {
+    combined: predecessors.map((node) => outputs.get(node.id) ?? "").join("\n\n"),
+    latestCode,
+    latestReview,
+  };
 }
 
 export interface WorkflowRunResult {
   outputs: Record<string, string>;
+  steps: Array<{
+    nodeId: string;
+    type: WorkflowNode["type"];
+    label: string;
+    output: string;
+  }>;
   totalCostUsd: number;
 }
 
 export async function runWorkflowDynamic(
   workflow: Workflow,
   task: string,
-  update: AgentUpdater
+  update: AgentUpdater,
+  waitIfPaused: PauseWaiter,
+  provider: Provider = DEFAULT_PROVIDER
 ): Promise<WorkflowRunResult> {
   if (workflow.nodes.length === 0) throw new Error("Workflow has no nodes");
 
   const order = topoSort(workflow);
   const outputs = new Map<string, string>();
+  const steps: WorkflowRunResult["steps"] = [];
   let totalCostUsd = 0;
 
   for (const node of order) {
     const agentId = NODE_AGENT_ID[node.type];
     const label = node.label ?? node.type;
-    const predecessorOutput = getPredOutput(node.id, workflow.edges, outputs, task);
+    const inputs = getWorkflowInputs(node.id, workflow.edges, outputs, workflow, task);
     const activeState = NODE_ACTIVE_STATE[node.type] ?? "thinking";
 
+    await waitIfPaused(agentId);
     update(agentId, {
       state: activeState,
       task: `Running ${label}…`,
@@ -91,7 +129,8 @@ export async function runWorkflowDynamic(
     let buffer = "";
     let lastBroadcast = 0;
 
-    const onChunk = (chunk: string) => {
+    const onChunk = async (chunk: string) => {
+      await waitIfPaused(agentId);
       buffer += chunk;
       const now = Date.now();
       if (now - lastBroadcast > 500) {
@@ -102,33 +141,32 @@ export async function runWorkflowDynamic(
 
     let result: StreamResult;
 
-    // For coder/tester/reviewer/debugger, find the most recent code output
-    const lastCode = [...outputs.values()].pop() ?? task;
-
     switch (node.type) {
       case "planner":
-        result = await plannerAgent(predecessorOutput, onChunk);
+        result = await plannerAgent(inputs.combined, onChunk, provider);
         break;
       case "coder":
-        result = await coderAgent(task, predecessorOutput, onChunk);
+        result = await coderAgent(task, inputs.combined, onChunk, provider);
         break;
       case "tester":
-        result = await testerAgent(task, lastCode, onChunk);
+        result = await testerAgent(task, inputs.latestCode ?? inputs.combined, onChunk, provider);
         break;
       case "reviewer":
-        result = await reviewerAgent(task, lastCode, onChunk);
+        result = await reviewerAgent(task, inputs.latestCode ?? inputs.combined, onChunk, provider);
         break;
-      case "debugger": {
-        // Needs code (second-to-last) and review (last)
-        const vals = [...outputs.values()];
-        const code = vals.length >= 2 ? vals[vals.length - 2] : lastCode;
-        const review = vals[vals.length - 1] ?? "";
-        result = await debuggerAgent(task, code, review, onChunk);
+      case "debugger":
+        result = await debuggerAgent(
+          task,
+          inputs.latestCode ?? inputs.combined,
+          inputs.latestReview ?? inputs.combined,
+          onChunk,
+          provider
+        );
         break;
-      }
     }
 
     outputs.set(node.id, result.text);
+    steps.push({ nodeId: node.id, type: node.type, label, output: result.text });
     totalCostUsd += result.costUsd;
 
     update(agentId, {
@@ -143,5 +181,5 @@ export async function runWorkflowDynamic(
     });
   }
 
-  return { outputs: Object.fromEntries(outputs), totalCostUsd };
+  return { outputs: Object.fromEntries(outputs), steps, totalCostUsd };
 }

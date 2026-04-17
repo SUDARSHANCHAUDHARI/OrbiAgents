@@ -27,10 +27,12 @@ model SavedWorkflow {
 }
 
 model StoredSession {
-  id        String   @id @default(cuid())
-  task      String
-  frames    String
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  createdAt DateTime @default(now())
+  id           String   @id
+  task         String
+  frames       String
+  totalCostUsd Float    @default(0)
+  shareToken   String?  @unique
+  userId       String?
+  user         User?    @relation(fields: [userId], references: [id])
+  createdAt     DateTime @default(now())
 }

@@ -2,18 +2,34 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Agent, ClientMessage, Session, Workflow } from "@/lib/types";
-import { getToken, clearToken } from "@/lib/auth";
+import {
+  Agent,
+  ClientMessage,
+  Provider,
+  Session,
+  SessionMeta,
+  Workflow,
+  WorkflowStepResult,
+} from "@/lib/types";
+import {
+  authHeaders,
+  clearToken,
+  createReplayShareLink,
+  getToken,
+  listProviders,
+  listSessions,
+} from "@/lib/auth";
+import { getApiBaseUrl, getWebSocketBaseUrl } from "@/lib/config";
 import GameCanvas from "@/components/GameCanvas";
 import SidePanel from "@/components/SidePanel";
 import ResultPanel from "@/components/ResultPanel";
 import ReplayBar from "@/components/ReplayBar";
 import WorkflowBuilder from "@/components/WorkflowBuilder";
+import SessionHistoryPanel from "@/components/SessionHistoryPanel";
 
 interface WorkflowResult {
   sessionId: string;
-  plan: string;
-  code: string;
+  steps: WorkflowStepResult[];
   totalCostUsd?: number;
 }
 
@@ -36,6 +52,12 @@ export default function Home() {
   const [showBuilder, setShowBuilder] = useState(false);
   const [workflow, setWorkflow] = useState<Workflow>(DEFAULT_WORKFLOW);
   const [isAuthed, setIsAuthed] = useState(false);
+  const [providers, setProviders] = useState<Provider[]>([]);
+  const [selectedProvider, setSelectedProvider] = useState<Provider>("anthropic");
+  const [providersLoading, setProvidersLoading] = useState(false);
+  const [sessions, setSessions] = useState<SessionMeta[]>([]);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [historyMessage, setHistoryMessage] = useState<string | null>(null);
 
   // Replay state — declared before any early return (rules of hooks)
   const [replaySession, setReplaySession] = useState<Session | null>(null);
@@ -57,7 +79,9 @@ export default function Home() {
   // WebSocket — all hooks must be before any conditional return
   useEffect(() => {
     if (!isAuthed) return;
-    const ws = new WebSocket("ws://localhost:4000");
+    const token = getToken();
+    if (!token) return;
+    const ws = new WebSocket(`${getWebSocketBaseUrl()}?token=${encodeURIComponent(token)}`);
     wsRef.current = ws;
 
     ws.onmessage = (event) => {
@@ -78,21 +102,32 @@ export default function Home() {
       if (data.type === "result") {
         setResult({
           sessionId: data.sessionId as string,
-          plan: data.plan as string,
-          code: data.code as string,
+          steps: [
+            {
+              nodeId: "planner-default",
+              type: "planner",
+              label: "Planner",
+              output: data.plan as string,
+            },
+            {
+              nodeId: "coder-default",
+              type: "coder",
+              label: "Coder",
+              output: data.code as string,
+            },
+          ],
           totalCostUsd: data.totalCostUsd as number | undefined,
         });
         setRunning(false);
+        void loadSessions();
       } else if (data.type === "workflow-result") {
-        const outputs = data.outputs as Record<string, string>;
-        const vals = Object.values(outputs);
         setResult({
           sessionId: data.sessionId as string,
-          plan: vals[0] ?? "",
-          code: vals[vals.length - 1] ?? "",
+          steps: (data.steps as WorkflowStepResult[] | undefined) ?? [],
           totalCostUsd: data.totalCostUsd as number | undefined,
         });
         setRunning(false);
+        void loadSessions();
       } else if (data.type === "error") {
         setError(data.message as string);
         setRunning(false);
@@ -102,7 +137,46 @@ export default function Home() {
     return () => ws.close();
   }, [isAuthed]);
 
+  useEffect(() => {
+    if (!isAuthed) return;
+    void loadProviders();
+    void loadSessions();
+  }, [isAuthed]);
+
+  useEffect(() => {
+    if (!historyMessage) return;
+    const timeout = setTimeout(() => setHistoryMessage(null), 3000);
+    return () => clearTimeout(timeout);
+  }, [historyMessage]);
+
   if (!isAuthed) return null; // avoid flash before redirect
+
+  async function loadProviders() {
+    setProvidersLoading(true);
+    try {
+      const data = await listProviders();
+      setProviders(data.providers);
+      setSelectedProvider((prev) =>
+        data.providers.includes(prev) ? prev : data.default
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not load providers");
+    } finally {
+      setProvidersLoading(false);
+    }
+  }
+
+  async function loadSessions() {
+    setSessionsLoading(true);
+    try {
+      const data = await listSessions();
+      setSessions(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not load sessions");
+    } finally {
+      setSessionsLoading(false);
+    }
+  }
 
   function send(msg: ClientMessage) {
     if (wsRef.current?.readyState === WebSocket.OPEN) {
@@ -118,13 +192,17 @@ export default function Home() {
     setError(null);
 
     try {
-      await fetch("http://localhost:4000/run", {
+      const res = await fetch(`${getApiBaseUrl()}/run`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ task: task.trim() }),
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ task: task.trim(), provider: selectedProvider }),
       });
-    } catch {
-      setError("Could not reach server. Is it running?");
+      if (!res.ok) {
+        const body = (await res.json()) as { error?: string };
+        throw new Error(body.error ?? "Run failed");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not reach server. Is it running?");
       setRunning(false);
     }
   }
@@ -137,13 +215,17 @@ export default function Home() {
     setError(null);
 
     try {
-      await fetch("http://localhost:4000/workflow", {
+      const res = await fetch(`${getApiBaseUrl()}/workflow`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ workflow, task: task.trim() }),
+        headers: { "Content-Type": "application/json", ...authHeaders() },
+        body: JSON.stringify({ workflow, task: task.trim(), provider: selectedProvider }),
       });
-    } catch {
-      setError("Could not reach server. Is it running?");
+      if (!res.ok) {
+        const body = (await res.json()) as { error?: string };
+        throw new Error(body.error ?? "Workflow run failed");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not reach server. Is it running?");
       setRunning(false);
     }
   }
@@ -151,29 +233,52 @@ export default function Home() {
   // ── Replay ──────────────────────────────────────────────────────
   async function startReplay(sessionId: string) {
     stopReplay();
+    setError(null);
 
-    const res = await fetch(`http://localhost:4000/replay/${sessionId}`);
-    if (!res.ok) return;
-    const session = (await res.json()) as Session;
-    if (session.frames.length === 0) return;
-
-    setReplaySession(session);
-    setReplayFrame(0);
-    setSelected(null);
-
-    let i = 0;
-    const interval = setInterval(() => {
-      if (i >= session.frames.length) {
-        stopReplay();
-        setAgents(liveAgentsRef.current);
-        return;
+    try {
+      const res = await fetch(`${getApiBaseUrl()}/replay/${sessionId}`, {
+        headers: authHeaders(),
+      });
+      if (!res.ok) {
+        const body = (await res.json()) as { error?: string };
+        throw new Error(body.error ?? "Replay unavailable");
       }
-      setAgents(session.frames[i].agents);
-      setReplayFrame(i + 1);
-      i++;
-    }, 900);
+      const session = (await res.json()) as Session;
+      if (session.frames.length === 0) {
+        throw new Error("Replay has no frames yet");
+      }
 
-    replayRef.current = interval;
+      setReplaySession(session);
+      setReplayFrame(0);
+      setSelected(null);
+      setResult(null);
+
+      let i = 0;
+      const interval = setInterval(() => {
+        if (i >= session.frames.length) {
+          stopReplay();
+          setAgents(liveAgentsRef.current);
+          return;
+        }
+        setAgents(session.frames[i].agents);
+        setReplayFrame(i + 1);
+        i++;
+      }, 900);
+
+      replayRef.current = interval;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not start replay");
+    }
+  }
+
+  async function handleShareSession(sessionId: string) {
+    try {
+      const data = await createReplayShareLink(sessionId);
+      await navigator.clipboard.writeText(data.url);
+      setHistoryMessage("Share link copied");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not create share link");
+    }
   }
 
   function stopReplay() {
@@ -269,6 +374,37 @@ export default function Home() {
                 {running ? "RUNNING..." : "▶ RUN"}
               </button>
             )}
+            <div
+              style={{
+                background: "#1C1208",
+                border: "2px solid #4A2F14",
+                padding: "0 8px",
+                opacity: running || isReplaying ? 0.5 : 1,
+              }}
+            >
+              <select
+                value={selectedProvider}
+                onChange={(e) => setSelectedProvider(e.target.value as Provider)}
+                disabled={running || isReplaying || providersLoading || providers.length === 0}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color: "#C4B5FD",
+                  fontFamily: "var(--font-pixel, monospace)",
+                  fontSize: 7,
+                  padding: "6px 0",
+                  outline: "none",
+                  letterSpacing: "0.08em",
+                  textTransform: "uppercase",
+                }}
+              >
+                {(providers.length > 0 ? providers : [selectedProvider]).map((provider) => (
+                  <option key={provider} value={provider} style={{ color: "#111827" }}>
+                    {provider.toUpperCase()}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           {/* Right controls */}
@@ -379,6 +515,25 @@ export default function Home() {
             </div>
           )}
 
+          {historyMessage && !error && (
+            <div
+              className="absolute z-20"
+              style={{
+                top: 12,
+                right: 12,
+                background: "#14532D",
+                border: "2px solid #22C55E",
+                padding: "6px 12px",
+                fontFamily: "monospace",
+                fontSize: 7,
+                color: "#BBF7D0",
+                letterSpacing: "0.05em",
+              }}
+            >
+              ✓ {historyMessage}
+            </div>
+          )}
+
           {isReplaying && replaySession && (
             <ReplayBar
               task={replaySession.task}
@@ -415,6 +570,17 @@ export default function Home() {
           onClose={() => setSelected(null)}
           onPause={(id) => send({ type: "pause", agentId: id })}
           onResume={(id) => send({ type: "resume", agentId: id })}
+        />
+      )}
+
+      {!selected && !result && !isReplaying && (
+        <SessionHistoryPanel
+          sessions={sessions}
+          loading={sessionsLoading}
+          activeSessionId={replaySession?.id ?? null}
+          onReplay={startReplay}
+          onShare={handleShareSession}
+          onRefresh={loadSessions}
         />
       )}
     </div>

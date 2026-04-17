@@ -1,5 +1,7 @@
 import "dotenv/config";
 import express from "express";
+import type { Server } from "http";
+import type { AddressInfo } from "net";
 import { WebSocketServer, WebSocket } from "ws";
 import { Agent, AgentState, ClientMessage } from "./types";
 import { runWorkflow } from "./orchestrator";
@@ -16,26 +18,32 @@ import {
   listSessions,
 } from "./sessionStore";
 import { db } from "./db";
-import { hashPassword, verifyPassword, signToken, protect } from "./auth";
+import { hashPassword, verifyPassword, signToken, protect, verifyToken } from "./auth";
+import {
+  cleanupRuntimeStore,
+  getOrCreateRuntime,
+  resetRuntimeAgents,
+  setAgentPaused,
+  touchRuntime,
+  UserRuntime,
+} from "./runtimeState";
 
 const app = express();
 const PORT = 4000;
+const APP_URL = (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
+const CORS_ORIGIN = process.env.CORS_ORIGIN ?? APP_URL;
+let server: Server | null = null;
+let wss: WebSocketServer | null = null;
 
 app.use(express.json());
 
 app.use((_req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", "http://localhost:3000");
+  res.setHeader("Access-Control-Allow-Origin", CORS_ORIGIN);
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
   if (_req.method === "OPTIONS") { res.sendStatus(204); return; }
   next();
 });
-
-const server = app.listen(PORT, () =>
-  console.log(`OrbiAgents server running on http://localhost:${PORT}`)
-);
-
-const wss = new WebSocketServer({ server });
 
 // ── Agent definitions ──────────────────────────────────────────────
 function timestamp(): string {
@@ -65,34 +73,102 @@ function makeAgent(
   };
 }
 
-let agents: Agent[] = [
-  makeAgent("1", "Orbi-Alpha",   90,  90),  // Planner   — top-left desk
-  makeAgent("2", "Orbi-Beta",   330, 190),  // Coder     — center desk
-  makeAgent("3", "Orbi-Gamma",  580, 110),  // Tester    — top-right desk
-  makeAgent("4", "Orbi-Delta",  210, 330),  // Reviewer  — bottom-left desk
-  makeAgent("5", "Orbi-Epsilon",460, 300),  // Debugger  — bottom-center desk
-];
+function makeDefaultAgents(): Agent[] {
+  return [
+    makeAgent("1", "Orbi-Alpha",   90,  90),  // Planner   — top-left desk
+    makeAgent("2", "Orbi-Beta",   330, 190),  // Coder     — center desk
+    makeAgent("3", "Orbi-Gamma",  580, 110),  // Tester    — top-right desk
+    makeAgent("4", "Orbi-Delta",  210, 330),  // Reviewer  — bottom-left desk
+    makeAgent("5", "Orbi-Epsilon",460, 300),  // Debugger  — bottom-center desk
+  ];
+}
 
-let workflowRunning = false;
-let activeSessionId: string | null = null;
+const runtimes = new Map<string, UserRuntime>();
+
+function getRuntime(userId: string): UserRuntime {
+  return getOrCreateRuntime(runtimes, userId, makeDefaultAgents);
+}
 
 // ── Broadcast ─────────────────────────────────────────────────────
-function broadcast(data: Agent[]) {
-  const payload = JSON.stringify(data);
-  wss.clients.forEach((c) => {
-    if (c.readyState === WebSocket.OPEN) c.send(payload);
+function broadcast(runtime: UserRuntime) {
+  touchRuntime(runtime);
+  const payload = JSON.stringify(runtime.agents);
+  runtime.sockets.forEach((socket) => {
+    if (socket.readyState === WebSocket.OPEN) socket.send(payload);
   });
 }
 
-function updateAgent(id: string, patch: Partial<Agent>) {
-  agents = agents.map((a) => {
+function updateAgent(userId: string, id: string, patch: Partial<Agent>) {
+  const runtime = getRuntime(userId);
+  runtime.agents = runtime.agents.map((a) => {
     if (a.id !== id) return a;
     const newLogs =
       patch.logs != null ? [...patch.logs, ...a.logs].slice(0, 20) : a.logs;
     return { ...a, ...patch, logs: newLogs };
   });
-  broadcast(agents);
-  if (activeSessionId) recordFrame(activeSessionId, agents);
+  broadcast(runtime);
+  if (runtime.activeSessionId) recordFrame(runtime.activeSessionId, runtime.agents);
+}
+
+function isAgentPaused(userId: string, id: string): boolean {
+  return getRuntime(userId).agents.find((agent) => agent.id === id)?.paused ?? false;
+}
+
+async function waitIfPaused(userId: string, id: string): Promise<void> {
+  while (isAgentPaused(userId, id)) {
+    await new Promise((resolve) => setTimeout(resolve, 200));
+  }
+}
+
+function resetRuntime(userId: string): void {
+  const runtime = getRuntime(userId);
+  resetRuntimeAgents(runtime);
+  broadcast(runtime);
+}
+
+function removeSocketFromRuntimes(socket: WebSocket): void {
+  runtimes.forEach((runtime) => {
+    if (runtime.sockets.delete(socket)) touchRuntime(runtime);
+  });
+}
+
+function cleanupRuntimes(): void {
+  cleanupRuntimeStore(runtimes);
+}
+
+function getUserIdFromSocketRequest(req: import("http").IncomingMessage): string | null {
+  const url = new URL(req.url ?? "/", "http://localhost:4000");
+  const token = url.searchParams.get("token");
+  if (!token) return null;
+  try {
+    return verifyToken(token).sub;
+  } catch {
+    return null;
+  }
+}
+
+function broadcastSimulation() {
+  runtimes.forEach((runtime) => {
+    if (runtime.workflowRunning) return;
+    let changed = false;
+    runtime.agents = runtime.agents.map((a) => {
+      if (a.paused) return a;
+      const newState = pick(SIM_STATES);
+      const taskList = SIM_TASKS[newState] ?? SIM_TASKS.idle;
+      const actionList = SIM_ACTIONS[newState] ?? SIM_ACTIONS.idle;
+      const action = pick(actionList);
+      changed = true;
+      return {
+        ...a,
+        state: newState,
+        task: pick(taskList),
+        lastAction: action,
+        tokensUsed: a.tokensUsed + Math.floor(Math.random() * 800) + 100,
+        logs: [`${timestamp()} — [${newState}] ${action}`, ...a.logs].slice(0, 20),
+      };
+    });
+    if (changed) broadcast(runtime);
+  });
 }
 
 // ── Random simulation ─────────────────────────────────────────────
@@ -120,27 +196,15 @@ function pick<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-setInterval(() => {
-  if (workflowRunning) return;
-  let changed = false;
-  agents = agents.map((a) => {
-    if (a.paused) return a;
-    const newState = pick(SIM_STATES);
-    const taskList = SIM_TASKS[newState] ?? SIM_TASKS.idle;
-    const actionList = SIM_ACTIONS[newState] ?? SIM_ACTIONS.idle;
-    const action = pick(actionList);
-    changed = true;
-    return {
-      ...a,
-      state: newState,
-      task: pick(taskList),
-      lastAction: action,
-      tokensUsed: a.tokensUsed + Math.floor(Math.random() * 800) + 100,
-      logs: [`${timestamp()} — [${newState}] ${action}`, ...a.logs].slice(0, 20),
-    };
-  });
-  if (changed) broadcast(agents);
+const simulationInterval = setInterval(() => {
+  broadcastSimulation();
 }, 2000);
+simulationInterval.unref();
+
+const runtimeCleanupInterval = setInterval(() => {
+  cleanupRuntimes();
+}, 60 * 1000);
+runtimeCleanupInterval.unref();
 
 // ── Auth ───────────────────────────────────────────────────────────
 app.post("/signup", async (req, res) => {
@@ -206,89 +270,116 @@ app.get("/providers", (_req, res) => {
 });
 
 // ── AI workflow — fixed planner→coder ─────────────────────────────
-app.post("/run", async (req, res) => {
+app.post("/run", protect, async (req, res) => {
   const { task, provider } = req.body as { task?: string; provider?: Provider };
   if (!task?.trim()) { res.status(400).json({ error: "task is required" }); return; }
-  if (workflowRunning) { res.status(409).json({ error: "Workflow already running" }); return; }
+  const userId = req.userId!;
+  const runtime = getRuntime(userId);
+  if (runtime.workflowRunning) { res.status(409).json({ error: "Workflow already running" }); return; }
 
   const sessionId = Date.now().toString();
-  createSession(sessionId, task.trim());
-  activeSessionId = sessionId;
-  workflowRunning = true;
+  await createSession(sessionId, task.trim(), userId);
+  runtime.activeSessionId = sessionId;
+  runtime.workflowRunning = true;
+  touchRuntime(runtime);
   res.status(202).json({ status: "started", sessionId });
 
   try {
-    const result = await runWorkflow(task.trim(), updateAgent, provider);
+    const result = await runWorkflow(
+      task.trim(),
+      (id, patch) => updateAgent(userId, id, patch),
+      (id) => waitIfPaused(userId, id),
+      provider
+    );
     updateSessionCost(sessionId, result.totalCostUsd);
-    wss.clients.forEach((c) => {
-      if (c.readyState === WebSocket.OPEN)
-        c.send(JSON.stringify({ type: "result", sessionId, ...result }));
+    runtime.sockets.forEach((socket) => {
+      if (socket.readyState === WebSocket.OPEN)
+        socket.send(JSON.stringify({ type: "result", sessionId, ...result }));
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    wss.clients.forEach((c) => {
-      if (c.readyState === WebSocket.OPEN)
-        c.send(JSON.stringify({ type: "error", message: msg }));
+    runtime.sockets.forEach((socket) => {
+      if (socket.readyState === WebSocket.OPEN)
+        socket.send(JSON.stringify({ type: "error", message: msg }));
     });
-    agents = agents.map((a) => ({ ...a, state: "idle" as AgentState, task: "Ready" }));
-    broadcast(agents);
+    resetRuntime(userId);
   } finally {
-    workflowRunning = false;
-    activeSessionId = null;
+    runtime.workflowRunning = false;
+    runtime.activeSessionId = null;
+    touchRuntime(runtime);
   }
 });
 
 // ── Dynamic workflow ──────────────────────────────────────────────
-app.post("/workflow", async (req, res) => {
-  const { workflow, task } = req.body as { workflow?: Workflow; task?: string };
+app.post("/workflow", protect, async (req, res) => {
+  const { workflow, task, provider } = req.body as {
+    workflow?: Workflow;
+    task?: string;
+    provider?: Provider;
+  };
   if (!workflow || !task?.trim()) {
     res.status(400).json({ error: "workflow and task required" }); return;
   }
-  if (workflowRunning) { res.status(409).json({ error: "Workflow already running" }); return; }
+  const userId = req.userId!;
+  const runtime = getRuntime(userId);
+  if (runtime.workflowRunning) { res.status(409).json({ error: "Workflow already running" }); return; }
 
   const sessionId = Date.now().toString();
-  createSession(sessionId, task.trim());
-  activeSessionId = sessionId;
-  workflowRunning = true;
+  await createSession(sessionId, task.trim(), userId);
+  runtime.activeSessionId = sessionId;
+  runtime.workflowRunning = true;
+  touchRuntime(runtime);
   res.status(202).json({ status: "started", sessionId });
 
   try {
-    const result = await runWorkflowDynamic(workflow, task.trim(), updateAgent);
+    const result = await runWorkflowDynamic(
+      workflow,
+      task.trim(),
+      (id, patch) => updateAgent(userId, id, patch),
+      (id) => waitIfPaused(userId, id),
+      provider
+    );
     updateSessionCost(sessionId, result.totalCostUsd);
-    wss.clients.forEach((c) => {
-      if (c.readyState === WebSocket.OPEN)
-        c.send(JSON.stringify({ type: "workflow-result", sessionId, outputs: result.outputs, totalCostUsd: result.totalCostUsd }));
+    runtime.sockets.forEach((socket) => {
+      if (socket.readyState === WebSocket.OPEN)
+        socket.send(JSON.stringify({
+          type: "workflow-result",
+          sessionId,
+          outputs: result.outputs,
+          steps: result.steps,
+          totalCostUsd: result.totalCostUsd,
+        }));
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    wss.clients.forEach((c) => {
-      if (c.readyState === WebSocket.OPEN)
-        c.send(JSON.stringify({ type: "error", message: msg }));
+    runtime.sockets.forEach((socket) => {
+      if (socket.readyState === WebSocket.OPEN)
+        socket.send(JSON.stringify({ type: "error", message: msg }));
     });
-    agents = agents.map((a) => ({ ...a, state: "idle" as AgentState, task: "Ready" }));
-    broadcast(agents);
+    resetRuntime(userId);
   } finally {
-    workflowRunning = false;
-    activeSessionId = null;
+    runtime.workflowRunning = false;
+    runtime.activeSessionId = null;
+    touchRuntime(runtime);
   }
 });
 
 // ── Replay API ─────────────────────────────────────────────────────
-app.get("/sessions", (_req, res) => {
-  res.json(listSessions());
+app.get("/sessions", protect, async (req, res) => {
+  res.json(await listSessions(req.userId));
 });
 
-app.get("/replay/:id", (req, res) => {
-  const session = getSession(req.params.id);
+app.get("/replay/:id", protect, async (req, res) => {
+  const session = await getSession(req.params.id, req.userId);
   if (!session) { res.status(404).json({ error: "Session not found" }); return; }
   res.json(session);
 });
 
 // Create share link (auth required to share your own sessions)
-app.post("/replay/:id/share", (_req, res) => {
+app.post("/replay/:id/share", protect, async (_req, res) => {
   try {
-    const token = createShareToken(_req.params.id);
-    const url = `http://localhost:3000/replay/${token}`;
+    const token = await createShareToken(_req.params.id, _req.userId);
+    const url = `${APP_URL}/replay/${token}`;
     res.json({ token, url });
   } catch {
     res.status(404).json({ error: "Session not found" });
@@ -296,25 +387,95 @@ app.post("/replay/:id/share", (_req, res) => {
 });
 
 // Public replay via share token — no auth needed
-app.get("/replay/public/:token", (req, res) => {
-  const session = getSessionByShareToken(req.params.token);
+app.get("/replay/public/:token", async (req, res) => {
+  const session = await getSessionByShareToken(req.params.token);
   if (!session) { res.status(404).json({ error: "Share link invalid or expired" }); return; }
   res.json(session);
 });
 
 // ── WebSocket ──────────────────────────────────────────────────────
-wss.on("connection", (ws) => {
-  ws.send(JSON.stringify(agents));
+function attachWebSocketHandlers(wsServer: WebSocketServer): void {
+  wsServer.on("connection", (ws, req) => {
+    const userId = getUserIdFromSocketRequest(req);
+    if (!userId) {
+      ws.close(1008, "Unauthorized");
+      return;
+    }
 
-  ws.on("message", (raw) => {
-    try {
-      const msg: ClientMessage = JSON.parse(raw.toString());
-      if (msg.type === "pause") {
-        agents = agents.map((a) => a.id === msg.agentId ? { ...a, paused: true } : a);
-      } else if (msg.type === "resume") {
-        agents = agents.map((a) => a.id === msg.agentId ? { ...a, paused: false } : a);
-      }
-      broadcast(agents);
-    } catch { /* ignore malformed */ }
+    const runtime = getRuntime(userId);
+    runtime.sockets.add(ws);
+    touchRuntime(runtime);
+    ws.send(JSON.stringify(runtime.agents));
+
+    ws.on("message", (raw) => {
+      try {
+        const msg: ClientMessage = JSON.parse(raw.toString());
+        if (msg.type === "pause") {
+          setAgentPaused(runtime, msg.agentId, true);
+        } else if (msg.type === "resume") {
+          setAgentPaused(runtime, msg.agentId, false);
+        }
+        touchRuntime(runtime);
+        broadcast(runtime);
+      } catch { /* ignore malformed */ }
+    });
+
+    ws.on("close", () => {
+      runtime.sockets.delete(ws);
+      touchRuntime(runtime);
+      removeSocketFromRuntimes(ws);
+    });
   });
-});
+}
+
+export function startServer(port: number = PORT): { server: Server; port: number } {
+  if (server && wss) {
+    const address = server.address() as AddressInfo | null;
+    return { server, port: address?.port ?? port };
+  }
+
+  server = app.listen(port, () => {
+    const address = server?.address() as AddressInfo | null;
+    const actualPort = address?.port ?? port;
+    console.log(`OrbiAgents server running on http://localhost:${actualPort}`);
+  });
+  wss = new WebSocketServer({ server });
+  attachWebSocketHandlers(wss);
+
+  const address = server.address() as AddressInfo | null;
+  return { server, port: address?.port ?? port };
+}
+
+export async function stopServer(): Promise<void> {
+  runtimes.forEach((runtime) => {
+    runtime.sockets.forEach((socket) => socket.close());
+    runtime.sockets.clear();
+  });
+
+  if (wss) {
+    const wsServer = wss;
+    wss = null;
+    await new Promise<void>((resolve, reject) => {
+      wsServer.close((err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+  }
+
+  if (server) {
+    const httpServer = server;
+    server = null;
+    if (!httpServer.listening) return;
+    await new Promise<void>((resolve, reject) => {
+      httpServer.close((err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+  }
+}
+
+if (require.main === module) {
+  startServer();
+}

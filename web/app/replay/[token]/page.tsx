@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { use } from "react";
 import { Agent, Session } from "@/lib/types";
+import { getApiBaseUrl } from "@/lib/config";
 import AgentBox from "@/components/Agent";
 import ReplayBar from "@/components/ReplayBar";
 
@@ -20,7 +21,7 @@ export default function PublicReplayPage({
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    fetch(`http://localhost:4000/replay/public/${token}`)
+    fetch(`${getApiBaseUrl()}/replay/public/${token}`)
       .then(async (res) => {
         if (!res.ok) { setNotFound(true); return; }
         const s = (await res.json()) as Session;

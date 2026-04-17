@@ -37,13 +37,17 @@ export interface Session {
   task: string;
   createdAt: number;
   frames: SessionFrame[];
+  totalCostUsd?: number;
 }
 
 export interface SessionMeta {
   id: string;
   task: string;
   createdAt: number;
+  totalCostUsd?: number;
 }
+
+export type Provider = "anthropic" | "openai" | "gemini";
 
 // ── Workflow builder ───────────────────────────────────────────────
 export type WorkflowNodeType = "planner" | "coder" | "tester" | "reviewer" | "debugger";
@@ -62,4 +66,11 @@ export interface WorkflowEdge {
 export interface Workflow {
   nodes: WorkflowNode[];
   edges: WorkflowEdge[];
+}
+
+export interface WorkflowStepResult {
+  nodeId: string;
+  type: WorkflowNodeType;
+  label: string;
+  output: string;
 }

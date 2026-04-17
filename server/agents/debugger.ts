@@ -1,4 +1,4 @@
-import { streamMessage, StreamResult, OnChunk } from "../ai";
+import { streamMessage, StreamResult, OnChunk, Provider, DEFAULT_PROVIDER } from "../ai";
 
 const DEBUGGER_SYSTEM = `You are Orbi-Epsilon, a debugging specialist AI agent.
 You receive code and a review, then produce a fixed version.
@@ -9,11 +9,13 @@ export async function debuggerAgent(
   originalTask: string,
   code: string,
   review: string,
-  onChunk: OnChunk
+  onChunk: OnChunk,
+  provider: Provider = DEFAULT_PROVIDER
 ): Promise<StreamResult> {
   return streamMessage(
     DEBUGGER_SYSTEM,
     `Original task: ${originalTask}\n\nOriginal code:\n${code}\n\nReview findings:\n${review}\n\nProvide fixed code:`,
-    onChunk
+    onChunk,
+    provider
   );
 }

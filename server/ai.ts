@@ -52,7 +52,7 @@ export interface StreamResult {
   model: string;
 }
 
-export type OnChunk = (text: string) => void;
+export type OnChunk = (text: string) => void | Promise<void>;
 
 // ── Provider implementations ──────────────────────────────────────────────────
 async function streamAnthropic(
@@ -74,7 +74,7 @@ async function streamAnthropic(
   for await (const event of stream) {
     if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
       fullText += event.delta.text;
-      onChunk(event.delta.text);
+      await onChunk(event.delta.text);
     }
   }
 
@@ -117,7 +117,7 @@ async function streamOpenAI(
     const delta = chunk.choices[0]?.delta?.content;
     if (delta) {
       fullText += delta;
-      onChunk(delta);
+      await onChunk(delta);
     }
     if (chunk.usage) {
       inputTokens = chunk.usage.prompt_tokens ?? 0;
@@ -152,7 +152,7 @@ async function streamGemini(
     const text = chunk.text();
     if (text) {
       fullText += text;
-      onChunk(text);
+      await onChunk(text);
     }
   }
 
