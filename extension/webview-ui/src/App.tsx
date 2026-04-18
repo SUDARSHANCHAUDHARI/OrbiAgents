@@ -13,6 +13,7 @@ import {
 } from "shared/engine/layoutStorage";
 import type { AgentInput } from "shared/engine/gameLoop";
 import type { CharacterRenderState, FurnitureInstance } from "shared/types";
+import { postMessage } from "./vscodeApi";
 
 const ZOOM = 2;
 
@@ -132,8 +133,6 @@ export default function App() {
       if (!ctx) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       renderFrame(ctx, currentTileMap, furnitureRef.current, latestChars.current, 0, 0, ZOOM);
-
-      // Update label positions for always-show overlay
       setCharPositions(chars.map(c => ({ id: c.id, col: c.col, row: c.row })));
     });
 
@@ -267,11 +266,14 @@ export default function App() {
     saveCustomFurniture([]);
   }, [customItems]);
 
-  const requestDiagnostics = useCallback(() => {
-    // @ts-expect-error acquireVsCodeApi is injected by the extension host
-    const vscode = window.acquireVsCodeApi?.();
-    vscode?.postMessage({ type: "requestDiagnostics" });
+  const handleRequestDiag = useCallback(() => {
+    postMessage({ type: "requestDiagnostics" });
     setShowDiag(d => !d);
+    setDiagData(null);
+  }, []);
+
+  const handleLaunchAgent = useCallback(() => {
+    postMessage({ type: "launchAgent" });
   }, []);
 
   // Build a lookup from agent id → agent for label rendering
@@ -335,6 +337,25 @@ export default function App() {
 
       {/* Toolbar — top-right */}
       <div style={{ position: "absolute", top: 8, right: 8, zIndex: 10, display: "flex", gap: 4 }}>
+        {/* + Agent */}
+        <button
+          onClick={handleLaunchAgent}
+          title="Launch a new Claude Code agent in a terminal"
+          style={{
+            padding: "4px 10px",
+            borderRadius: 6,
+            border: "1px solid #1F4B3A",
+            background: "#064E3B",
+            color: "#6EE7B7",
+            fontSize: 10,
+            fontFamily: "monospace",
+            cursor: "pointer",
+            fontWeight: "bold",
+          }}
+        >
+          + Agent
+        </button>
+
         {/* Labels toggle */}
         <button
           onClick={() => setAlwaysShowLabels(l => !l)}
@@ -355,7 +376,7 @@ export default function App() {
 
         {/* Diagnostics toggle */}
         <button
-          onClick={requestDiagnostics}
+          onClick={handleRequestDiag}
           title="Connection diagnostics"
           style={{
             padding: "4px 8px",

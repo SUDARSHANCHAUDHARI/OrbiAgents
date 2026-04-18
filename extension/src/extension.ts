@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
 import * as vscode from "vscode";
-import { AgentUpdate, OrbiPanel } from "./panel";
+import { AgentUpdate, OrbiPanel, OrbiViewProvider, onWebviewMessage } from "./panel";
 import { TranscriptWatcher } from "./transcriptWatcher";
 import { HookServer } from "./hookServer";
 import { installHooks, uninstallHooks, copyHookScript } from "./hookInstaller";
@@ -65,11 +65,13 @@ export function activate(context: vscode.ExtensionContext) {
   const watcher = new TranscriptWatcher();
   const hookServer = new HookServer();
   const permissionTimer = new PermissionTimer();
+  const viewProvider = new OrbiViewProvider(context.extensionUri);
   let statusBar: vscode.StatusBarItem;
   let hookEventsReceived = 0;
   let activeSessionCount = 0;
   let selectedWorkspaceFolder: string | null = null;
   let assetPack: AssetPack | null = null;
+  let terminalCounter = 0;
 
   // Status bar item
   statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
@@ -109,6 +111,7 @@ export function activate(context: vscode.ExtensionContext) {
       ? `$(robot) OrbiAgents ● ${active} active`
       : "$(robot) OrbiAgents";
     OrbiPanel.currentPanel?.sendAgents(all);
+    viewProvider.sendAgents(all);
   }
 
   function updateAgentState(sessionId: string, state: string, toolName?: string) {
@@ -252,14 +255,36 @@ export function activate(context: vscode.ExtensionContext) {
     },
   });
 
-  // Handle messages coming from the webview
+  // Handle messages coming from any webview surface (panel tab or view provider)
   context.subscriptions.push({
-    dispose: OrbiPanel.onWebviewMessage((msg: { type: string }) => {
+    dispose: onWebviewMessage((msg) => {
       if (msg.type === "requestDiagnostics") {
-        OrbiPanel.currentPanel?.sendDiagnostics(buildDiagnostics());
+        const payload = buildDiagnostics() as unknown as Record<string, unknown>;
+        OrbiPanel.currentPanel?.sendDiagnostics(payload);
+        viewProvider.sendDiagnostics(payload);
+      }
+
+      if (msg.type === "launchAgent") {
+        const folder = selectedWorkspaceFolder ?? vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+        if (!folder) {
+          vscode.window.showWarningMessage("OrbiAgents: No workspace folder found. Use 'OrbiAgents: Pick Workspace Folder' first.");
+          return;
+        }
+        terminalCounter++;
+        const terminal = vscode.window.createTerminal({
+          name: `Claude Code #${terminalCounter}`,
+          cwd: folder,
+        });
+        terminal.sendText("claude");
+        terminal.show();
       }
     }),
   });
+
+  // ── View provider (VS Code panel/sidebar view) ────────────────────────
+  context.subscriptions.push(
+    vscode.window.registerWebviewViewProvider(OrbiViewProvider.viewId, viewProvider)
+  );
 
   // ── Commands ──────────────────────────────────────────────────────────
 

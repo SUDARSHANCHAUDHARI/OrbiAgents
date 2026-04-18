@@ -33,6 +33,24 @@
         "title": "OrbiAgents: Show Diagnostics"
       }
     ],
+    "viewsContainers": {
+      "panel": [
+        {
+          "id": "orbiagents-panel",
+          "title": "OrbiAgents",
+          "icon": "$(robot)"
+        }
+      ]
+    },
+    "views": {
+      "orbiagents-panel": [
+        {
+          "type": "webview",
+          "id": "orbiagents.panelView",
+          "name": "Pixel Office"
+        }
+      ]
+    },
     "menus": {
       "commandPalette": [
         { "command": "orbiagents.openPanel" },
