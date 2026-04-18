@@ -11,6 +11,7 @@ import {
   calculateViewport,
   layoutAgents,
 } from "@/lib/dashboardLayout";
+import { SoundSystem } from "../../shared/engine/soundSystem";
 
 interface Props {
   agents: Agent[];
@@ -18,6 +19,10 @@ interface Props {
   isReplaying: boolean;
   workflow?: Workflow | null;
   onAgentClick: (agent: Agent) => void;
+  soundEnabled?: boolean;
+  extraFurniture?: FurnitureInstance[];
+  editMode?: boolean;
+  onLayoutClick?: (col: number, row: number) => void;
 }
 
 const tileMap = buildTileMap();
@@ -30,7 +35,9 @@ const TYPE_TO_AGENT_ID: Record<string, string> = {
   debugger: "5",
 };
 
-export default function GameCanvas({ agents, selectedId, isReplaying, workflow, onAgentClick }: Props) {
+const CHIME_STATES = new Set(["done", "permission-waiting"]);
+
+export default function GameCanvas({ agents, selectedId, isReplaying, workflow, onAgentClick, soundEnabled = true, extraFurniture, editMode, onLayoutClick }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const loopRef = useRef<ReturnType<typeof createGameLoop> | null>(null);
@@ -44,13 +51,17 @@ export default function GameCanvas({ agents, selectedId, isReplaying, workflow, 
 
   const agentsRef = useRef(agents);
   agentsRef.current = agents;
+  const extraFurnitureRef = useRef<FurnitureInstance[]>(extraFurniture ?? []);
+  extraFurnitureRef.current = extraFurniture ?? [];
+  const soundRef = useRef(new SoundSystem(soundEnabled));
+  const prevStatesRef = useRef<Map<string, string>>(new Map());
   const selectedIdRef = useRef(selectedId);
   selectedIdRef.current = selectedId;
   const officeLayout = useMemo(
     () => layoutAgents(agents, calculateViewport(viewportSize.width, viewportSize.height)),
     [agents, viewportSize.height, viewportSize.width],
   );
-  furnitureRef.current = officeLayout.furniture;
+  furnitureRef.current = [...officeLayout.furniture, ...extraFurnitureRef.current];
 
   // Init game loop once
   useEffect(() => {
@@ -87,6 +98,25 @@ export default function GameCanvas({ agents, selectedId, isReplaying, workflow, 
     return () => loop.stop();
   }, []);
 
+  // Sync sound enabled flag
+  useEffect(() => {
+    soundRef.current.setEnabled(soundEnabled);
+  }, [soundEnabled]);
+
+  // Detect state transitions and play chime
+  useEffect(() => {
+    const prev = prevStatesRef.current;
+    let shouldChime = false;
+    for (const agent of agents) {
+      const prevState = prev.get(agent.id);
+      if (prevState !== agent.state && CHIME_STATES.has(agent.state)) {
+        shouldChime = true;
+      }
+      prev.set(agent.id, agent.state);
+    }
+    if (shouldChime) soundRef.current.play();
+  }, [agents]);
+
   // Feed agents to game loop on change
   useEffect(() => {
     loopRef.current?.setAgents(
@@ -97,6 +127,9 @@ export default function GameCanvas({ agents, selectedId, isReplaying, workflow, 
         paused: agent.paused,
         paletteIndex: i % 5,
         homeTile: agent.homeTile,
+        activeToolName: agent.state !== "idle" && agent.state !== "done"
+          ? (agentsRef.current.find(a => a.id === agent.id)?.lastAction ?? undefined)
+          : undefined,
       }))
     );
   }, [officeLayout.agents]);
@@ -129,16 +162,29 @@ export default function GameCanvas({ agents, selectedId, isReplaying, workflow, 
     return () => ro.disconnect();
   }, []);
 
+  const editModeRef = useRef(editMode);
+  editModeRef.current = editMode;
+  const onLayoutClickRef = useRef(onLayoutClick);
+  onLayoutClickRef.current = onLayoutClick;
+
   const handleClick = useCallback((e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (isReplaying) return;
+    soundRef.current.unlock();
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
     const mx = e.clientX - rect.left;
     const my = e.clientY - rect.top;
+    const zoom = zoomRef.current;
 
+    if (editModeRef.current && onLayoutClickRef.current) {
+      const col = Math.floor((mx - offsetRef.current.x) / (TILE_SIZE * zoom));
+      const row = Math.floor((my - offsetRef.current.y) / (TILE_SIZE * zoom));
+      onLayoutClickRef.current(col, row);
+      return;
+    }
+
+    if (isReplaying) return;
     for (const ch of latestChars.current) {
-      const zoom = zoomRef.current;
       const px = offsetRef.current.x + ch.col * TILE_SIZE * zoom - (16 * zoom) / 2;
       const py = offsetRef.current.y + ch.row * TILE_SIZE * zoom - 26 * zoom;
       if (mx >= px && mx <= px + 16 * zoom && my >= py && my <= py + 26 * zoom) {

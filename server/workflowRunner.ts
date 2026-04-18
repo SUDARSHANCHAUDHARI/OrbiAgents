@@ -13,7 +13,7 @@ function timestamp(): string {
 }
 
 const NODE_ACTIVE_STATE: Record<string, AgentState> = {
-  planner: "thinking",
+  planner: "reading",
   coder: "coding",
   tester: "testing",
   reviewer: "reviewing",

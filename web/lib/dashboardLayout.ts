@@ -6,9 +6,12 @@ import type { FurnitureInstance, TileCoord } from "../../shared/types";
 import {
   BOOKSHELF_SPRITE,
   CHAIR_SPRITE,
+  COFFEE_MACHINE_SPRITE,
   DESK_SPRITE,
   MEETING_TABLE_SPRITE,
   PLANT_SPRITE,
+  SOFA_SPRITE,
+  WHITEBOARD_SPRITE,
 } from "../../shared/sprites/furniture";
 
 export const HEADER_HEIGHT = 64;
@@ -437,6 +440,42 @@ export function placeFurniture(homeTiles: Record<string, TileCoord>, contentBoun
     });
     reserveTile(tile, 0);
   });
+
+  // Whiteboard — left wall of collaboration zone
+  const wbTile = { col: tableCol, row: tableRow + 1 };
+  if (canPlace(wbTile, 0) && wbTile.col < GRID_COLS - 2 && wbTile.row < GRID_ROWS - 2) {
+    items.push({
+      sprite: WHITEBOARD_SPRITE,
+      x: wbTile.col * TILE_SIZE,
+      y: wbTile.row * TILE_SIZE,
+      zY: (wbTile.row + 1) * TILE_SIZE,
+    });
+    reserveTile(wbTile, 1);
+  }
+
+  // Sofa — lounge area below meeting table
+  const sofaTile = { col: tableCol + 1, row: contentBounds.maxRow - 3 };
+  if (canPlace(sofaTile, 0) && sofaTile.row < GRID_ROWS - 2) {
+    items.push({
+      sprite: SOFA_SPRITE,
+      x: sofaTile.col * TILE_SIZE,
+      y: sofaTile.row * TILE_SIZE,
+      zY: (sofaTile.row + 1) * TILE_SIZE,
+    });
+    reserveTile(sofaTile, 1);
+  }
+
+  // Coffee machine — corner near collaboration zone
+  const coffeeTile = { col: tableCol + 7, row: tableRow };
+  if (canPlace(coffeeTile, 0) && coffeeTile.col < GRID_COLS - 1) {
+    items.push({
+      sprite: COFFEE_MACHINE_SPRITE,
+      x: coffeeTile.col * TILE_SIZE,
+      y: coffeeTile.row * TILE_SIZE,
+      zY: (coffeeTile.row + 1) * TILE_SIZE,
+    });
+    reserveTile(coffeeTile, 0);
+  }
 
   return items;
 }

@@ -36,10 +36,16 @@ export interface FurnitureInstance {
   mirrored?: boolean;
 }
 
+export interface Bubble {
+  text: string;
+  color: string;   // border + dot color
+  fill: string;    // background fill
+}
+
 export interface CharacterRenderState {
   id: string;
   name: string;
-  agentState: string; // "idle" | "thinking" | "coding" | "done" etc.
+  agentState: string; // "idle" | "thinking" | "reading" | "coding" | "permission-waiting" | "done" etc.
   paused: boolean;
   col: number;        // current tile col (float during interpolation)
   row: number;        // current tile row (float during interpolation)
@@ -48,4 +54,6 @@ export interface CharacterRenderState {
   animFrame: number;  // 0-3
   paletteIndex: number; // 0-4
   selected: boolean;
+  bubble?: Bubble;
+  activeToolName?: string;
 }

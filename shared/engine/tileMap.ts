@@ -3,6 +3,7 @@ import type { FurnitureInstance, TileCoord } from "../types";
 import {
   DESK_SPRITE, BOOKSHELF_SPRITE, PLANT_SPRITE,
   MEETING_TABLE_SPRITE, CHAIR_SPRITE,
+  WHITEBOARD_SPRITE, SOFA_SPRITE, COFFEE_MACHINE_SPRITE,
 } from "../sprites/furniture";
 
 export const TILE_SIZE = 16; // px
@@ -91,6 +92,27 @@ export function buildFurnitureInstances(): FurnitureInstance[] {
       x: c * TS, y: r * TS,
       zY: (r + 1) * TS,
     });
+  });
+
+  // Whiteboard (collaboration room, left of meeting table)
+  items.push({
+    sprite: WHITEBOARD_SPRITE,
+    x: 30 * TS, y: 7 * TS,
+    zY: 9 * TS,
+  });
+
+  // Sofa (lounge/carpet zone)
+  items.push({
+    sprite: SOFA_SPRITE,
+    x: 34 * TS, y: 22 * TS,
+    zY: 24 * TS,
+  });
+
+  // Coffee machine (corner near meeting table)
+  items.push({
+    sprite: COFFEE_MACHINE_SPRITE,
+    x: 40 * TS, y: 6 * TS,
+    zY: 8 * TS,
   });
 
   return items;

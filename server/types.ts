@@ -1,4 +1,4 @@
-export type AgentState = "idle" | "thinking" | "coding" | "testing" | "reviewing" | "debugging" | "done";
+export type AgentState = "idle" | "thinking" | "reading" | "coding" | "testing" | "reviewing" | "debugging" | "permission-waiting" | "done";
 
 export interface Agent {
   id: string;

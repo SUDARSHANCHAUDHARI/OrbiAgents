@@ -1,18 +1,18 @@
 // "done" is not emitted here — reserved for future task completion signals.
 // Idle transitions are handled by the inactivity timer in transcriptWatcher.ts.
-export type AgentState = "idle" | "thinking" | "coding" | "done";
+export type AgentState = "idle" | "thinking" | "reading" | "coding" | "permission-waiting" | "done";
 
 // Maps tool name → agent state
 const TOOL_STATE_MAP: Record<string, AgentState> = {
-  // Reading/exploring → thinking
-  Read:      "thinking",
-  Grep:      "thinking",
-  Glob:      "thinking",
-  LS:        "thinking",
-  WebFetch:  "thinking",
-  WebSearch: "thinking",
+  // Reading/exploring → reading
+  Read:      "reading",
+  Grep:      "reading",
+  Glob:      "reading",
+  LS:        "reading",
+  WebFetch:  "reading",
+  WebSearch: "reading",
   Skill:     "thinking",
-  ToolSearch:"thinking",
+  ToolSearch:"reading",
   // Writing/running → coding
   Write:       "coding",
   Edit:        "coding",
@@ -28,6 +28,17 @@ export function toolCallToState(toolName: string): AgentState {
   // MCP tools (mcp__server__tool) are side-effectful actions → coding
   if (toolName.startsWith("mcp__")) return "coding";
   return "thinking";
+}
+
+// Exempt tools complete without user approval — no permission timer needed.
+// Non-exempt tools (Write/Edit/Bash/MCP/NotebookEdit) may trigger a permission prompt.
+const EXEMPT_TOOLS = new Set([
+  "Read", "Grep", "Glob", "LS", "WebFetch", "WebSearch",
+  "Skill", "ToolSearch", "Agent", "TodoWrite",
+]);
+
+export function isExemptTool(toolName: string): boolean {
+  return EXEMPT_TOOLS.has(toolName);
 }
 
 // A line of JSONL from a Claude Code transcript
@@ -80,9 +91,10 @@ export function hookEventToState(
     case "Notification":
       // idle_prompt means Claude finished and is waiting for user input
       return notifType === "idle_prompt" ? "idle" : "thinking";
+    case "PermissionRequest":
+      return "permission-waiting";
     case "UserPromptSubmit":
     case "SessionStart":
-    case "PermissionRequest":
     case "SubagentStop":
       return "thinking";
     case "SubagentStart":

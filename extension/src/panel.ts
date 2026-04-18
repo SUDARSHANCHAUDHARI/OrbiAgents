@@ -8,6 +8,7 @@ export interface AgentUpdate {
   agentState: string;
   paused: boolean;
   paletteIndex: number;
+  activeToolName?: string;
 }
 
 export class OrbiPanel {

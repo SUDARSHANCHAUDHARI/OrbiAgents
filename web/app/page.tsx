@@ -21,7 +21,7 @@ import {
   listSessions,
 } from "@/lib/auth";
 import { getApiBaseUrl, getWebSocketBaseUrl } from "@/lib/config";
-import GameCanvas from "@/components/GameCanvas";
+import LayoutEditor from "@/components/LayoutEditor";
 import SidePanel from "@/components/SidePanel";
 import ResultPanel from "@/components/ResultPanel";
 import ReplayBar from "@/components/ReplayBar";
@@ -672,7 +672,7 @@ export default function Home() {
           className="flex-1 relative overflow-hidden"
           style={{ flex: 1, minHeight: 0, position: "relative", overflow: "hidden", background: "var(--map-bg)", padding: 24 }}
         >
-          <GameCanvas
+          <LayoutEditor
             agents={agents}
             selectedId={selected?.id ?? null}
             isReplaying={isReplaying}

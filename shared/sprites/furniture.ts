@@ -109,6 +109,93 @@ export const MEETING_TABLE_SPRITE: SpriteData = s([
   "....LL......................................LL...",
 ], MT_PAL);
 
+// ── Whiteboard (32×20) ────────────────────────────────────────────
+const WB_PAL = {
+  F: "#F1F5F9", // board surface
+  f: "#E2E8F0", // board mid
+  R: "#EF4444", // red marker line
+  B: "#3B82F6", // blue marker line
+  G: "#22C55E", // green marker line
+  K: "#1E293B", // frame dark
+  k: "#334155", // frame mid
+  L: "#CBD5E1", // legs
+};
+export const WHITEBOARD_SPRITE: SpriteData = s([
+  "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKK",
+  "KFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFk",
+  "KFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFk",
+  "KFfRRRRRRRRRRffffffffffffffffffk",
+  "KFfRRRRRRRRRRffffffffffffffffffk",
+  "KFffffffffffBBBBBBBBBffffffffffk",
+  "KFffffffffffBBBBBBBBBffffffffffk",
+  "KFffffffffffffffffffffGGGGGGGffk",
+  "KFffffffffffffffffffffGGGGGGGffk",
+  "KFfffffffffffffffffffffffffffffff",
+  "KFfffffffffffffffffffffffffffffff",
+  "KFfffffffffffffffffffffffffffffff",
+  "KFfffffffffffffffffffffffffffffff",
+  "KFfffffffffffffffffffffffffffffff",
+  "KFfffffffffffffffffffffffffffffff",
+  "KFfffffffffffffffffffffffffffffff",
+  "KFfffffffffffffffffffffffffffffff",
+  "KKKKKKKKKKKKKKKKKKKKKKKKKKKKKKKk",
+  "....LLLL......................LLLL",
+  "....LLLL......................LLLL",
+], WB_PAL);
+
+// ── Coffee machine (16×14) ────────────────────────────────────────
+const CM_PAL = {
+  A: "#1F2937", // body dark
+  a: "#374151", // body mid
+  B: "#111827", // button panel
+  b: "#6B7280", // button
+  W: "#F9FAFB", // cup white
+  w: "#E5E7EB", // cup mid
+  C: "#92400E", // coffee brown
+  S: "#D97706", // steam amber
+  T: "#4B5563", // tray
+};
+export const COFFEE_MACHINE_SPRITE: SpriteData = s([
+  "AAAAAAAAAAAAAAAA",
+  "AaaaaaaaaaaaaaAA",
+  "AaBBBBBBBBBBaaAA",
+  "AaBbbbBbbbBbaaAA",
+  "AaBBBBBBBBBBaaAA",
+  "AaaaaaaaaaaaaaAA",
+  "AaaaaaaaaaaaaaAA",
+  "AaaaaWWWWaaaaaAA",
+  "AaaaaWCCWaaaaaAA",
+  "AaaaaWCCWaaaaaAA",
+  "AaaaaWwwWaaaaaAA",
+  "AAAAAAAAAAAAAAAA",
+  "TTTTTTTTTTTTTTTT",
+  "TTTTTTTTTTTTTTTT",
+], CM_PAL);
+
+// ── Sofa (32×12) ──────────────────────────────────────────────────
+const SF_PAL = {
+  A: "#7C3AED", // cushion dark
+  a: "#8B5CF6", // cushion mid
+  B: "#6D28D9", // frame dark
+  b: "#7C3AED", // frame mid
+  L: "#1E1B4B", // legs
+  s: "#A78BFA", // highlight
+};
+export const SOFA_SPRITE: SpriteData = s([
+  "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+  "BAaaaaaAAAAAAAAAAAAAAAAAAAaaaaAB",
+  "BAasssaAAAAAAAAAAAAAAAAAAAasssAB",
+  "BAasssaAAAAAAAAAAAAAAAAAAAasssAB",
+  "BAasssaAAAAAAAAAAAAAAAAAAAasssAB",
+  "BAaaaaaAAAAAAAAAAAAAAAAAAAaaaaAB",
+  "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+  "BbbbbbbbbbbbbbbbbbbbbbbbbbbbbbBB",
+  "BbbbbbbbbbbbbbbbbbbbbbbbbbbbbbBB",
+  "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+  "LL............................LL.",
+  "LL............................LL.",
+], SF_PAL);
+
 // ── Lounge chair (16×10) ──────────────────────────────────────────
 const C_PAL = {
   B: "#1E3A5F",

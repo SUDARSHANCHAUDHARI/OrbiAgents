@@ -39,6 +39,7 @@ const app = express();
 const PORT = 4000;
 const APP_URL = (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
 const CORS_ORIGIN = process.env.CORS_ORIGIN ?? APP_URL;
+const CORS_ORIGINS = new Set([CORS_ORIGIN, "http://localhost:3001", "http://localhost:3000"]);
 const AUTH_RATE_LIMIT_MAX = Number(process.env.RATE_LIMIT_AUTH_MAX ?? "10");
 const WORKFLOW_RATE_LIMIT_MAX = Number(process.env.RATE_LIMIT_WORKFLOW_MAX ?? "12");
 const MAX_RUNS_PER_HOUR = Number(process.env.MAX_RUNS_PER_HOUR ?? "30");
@@ -51,7 +52,8 @@ app.use(express.json());
 app.use(requestLogger);
 
 app.use((_req, res, next) => {
-  res.setHeader("Access-Control-Allow-Origin", CORS_ORIGIN);
+  const origin = _req.headers.origin ?? "";
+  res.setHeader("Access-Control-Allow-Origin", CORS_ORIGINS.has(origin) ? origin : CORS_ORIGIN);
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
   if (_req.method === "OPTIONS") { res.sendStatus(204); return; }
@@ -222,10 +224,11 @@ function broadcastSimulation() {
 }
 
 // ── Random simulation ─────────────────────────────────────────────
-const SIM_STATES: AgentState[] = ["idle", "thinking", "coding", "done"];
+const SIM_STATES: AgentState[] = ["idle", "thinking", "reading", "coding", "done"];
 const SIM_TASKS: Record<string, string[]> = {
   idle: ["Waiting for task...", "Standing by", "Ready"],
   thinking: ["Planning architecture", "Analyzing requirements", "Reviewing codebase"],
+  reading: ["Reading source files", "Searching codebase", "Fetching docs"],
   coding: ["Writing components", "Implementing handler", "Fixing type errors"],
   testing: ["Running test suite", "Checking coverage"],
   reviewing: ["Reviewing PR", "Checking patterns"],
@@ -234,7 +237,8 @@ const SIM_TASKS: Record<string, string[]> = {
 };
 const SIM_ACTIONS: Record<string, string[]> = {
   idle: ["Checked queue", "Pinged server"],
-  thinking: ["Read 14 files", "Searched codebase"],
+  thinking: ["Outlined plan", "Analyzed task"],
+  reading: ["Read 14 files", "Searched codebase", "Fetched 3 docs"],
   coding: ["Wrote 42 lines", "Ran type check"],
   testing: ["Ran 20 tests", "Checked snapshots"],
   reviewing: ["Flagged 2 issues", "Approved PR"],

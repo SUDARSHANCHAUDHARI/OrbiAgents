@@ -1,4 +1,4 @@
-import type { CharacterRenderState, FurnitureInstance } from "../types";
+import type { Bubble, CharacterRenderState, FurnitureInstance } from "../types";
 import { CharacterState, Direction, TileType } from "../types";
 import { getCachedSprite, getOutlineSprite } from "./spriteCache";
 import { getFloorColor, TILE_SIZE } from "./tileMap";
@@ -9,13 +9,15 @@ const CHAR_W = 16;
 const CHAR_H = 26;
 
 const STATE_STYLES: Record<string, { text: string; border: string; fill: string }> = {
-  idle: { text: "#E5E7EB", border: "#6B7280", fill: "#1F2937" },
-  thinking: { text: "#FDE68A", border: "#F59E0B", fill: "#422006" },
-  coding: { text: "#DBEAFE", border: "#3B82F6", fill: "#172554" },
-  testing: { text: "#DCFCE7", border: "#22C55E", fill: "#052E16" },
-  reviewing: { text: "#FDE68A", border: "#F59E0B", fill: "#422006" },
-  debugging: { text: "#FECACA", border: "#EF4444", fill: "#450A0A" },
-  done: { text: "#DCFCE7", border: "#22C55E", fill: "#052E16" },
+  idle:               { text: "#E5E7EB", border: "#6B7280", fill: "#1F2937" },
+  thinking:           { text: "#FDE68A", border: "#F59E0B", fill: "#422006" },
+  reading:            { text: "#BAE6FD", border: "#38BDF8", fill: "#082F49" },
+  coding:             { text: "#DBEAFE", border: "#3B82F6", fill: "#172554" },
+  testing:            { text: "#DCFCE7", border: "#22C55E", fill: "#052E16" },
+  reviewing:          { text: "#FDE68A", border: "#F59E0B", fill: "#422006" },
+  debugging:          { text: "#FECACA", border: "#EF4444", fill: "#450A0A" },
+  "permission-waiting": { text: "#FDE68A", border: "#F59E0B", fill: "#422006" },
+  done:               { text: "#DCFCE7", border: "#22C55E", fill: "#052E16" },
 };
 
 interface ZDrawable {
@@ -142,6 +144,14 @@ export function renderFrame(
           drawCodingActivity(c, px, py, zoom, time, ch.col);
         }
 
+        if (ch.bubble) {
+          drawSpeechBubble(c, px, py, zoom, ch.bubble);
+        }
+
+        if (ch.selected && ch.activeToolName) {
+          drawToolOverlay(c, px, py, zoom, ch.activeToolName);
+        }
+
         // Name label below the sprite for clearer separation from state.
         const labelFontSize = Math.max(11, 7.2 * zoom);
         const labelY = py + cached.height + 14 * zoom;
@@ -222,6 +232,7 @@ export function resolveCharacterSprite(
     return sprites.typing[ch.direction][ch.animFrame % 2];
   }
 
+  // READING and WALKING both use walk frames (look-around pose)
   return sprites.walk[ch.direction][ch.animFrame % 4];
 }
 
@@ -260,7 +271,10 @@ function drawRoundedRect(
 function getDeskGlow(agentState: string): { color: string; alpha: number } | null {
   switch (agentState) {
     case "thinking":
+    case "permission-waiting":
       return { color: "#F59E0B", alpha: 0.14 };
+    case "reading":
+      return { color: "#38BDF8", alpha: 0.13 };
     case "coding":
       return { color: "#3B82F6", alpha: 0.16 };
     case "done":
@@ -268,6 +282,64 @@ function getDeskGlow(agentState: string): { color: string; alpha: number } | nul
     default:
       return null;
   }
+}
+
+function drawToolOverlay(
+  ctx: CanvasRenderingContext2D,
+  px: number,
+  py: number,
+  zoom: number,
+  toolName: string,
+): void {
+  const cx = px + CHAR_W * zoom / 2;
+  const fontSize = Math.max(9, 6 * zoom);
+  ctx.font = `${fontSize}px Inter, system-ui, sans-serif`;
+  const label = `⚙ ${toolName}`;
+  const tw = ctx.measureText(label).width + 10 * zoom;
+  const th = 10 * zoom;
+  const tx = cx - tw / 2;
+  const ty = py - 26 * zoom;
+
+  drawRoundedRect(ctx, tx, ty - th, tw, th, 3 * zoom, "rgba(15,23,42,0.88)", "#60A5FA", Math.max(1, zoom * 0.6));
+  ctx.fillStyle = "#BAE6FD";
+  ctx.textAlign = "center";
+  ctx.fillText(label, cx, ty - th * 0.26);
+}
+
+function drawSpeechBubble(
+  ctx: CanvasRenderingContext2D,
+  px: number,
+  py: number,
+  zoom: number,
+  bubble: Bubble,
+): void {
+  const cx = px + CHAR_W * zoom / 2;
+  const by = py - 22 * zoom;
+  const bw = 22 * zoom;
+  const bh = 13 * zoom;
+  const br = 4 * zoom;
+  const tailH = 4 * zoom;
+
+  // Bubble body
+  drawRoundedRect(ctx, cx - bw / 2, by - bh, bw, bh, br, bubble.fill, bubble.color, Math.max(1, zoom * 0.7));
+
+  // Tail pointing down to character
+  ctx.beginPath();
+  ctx.moveTo(cx - 3 * zoom, by);
+  ctx.lineTo(cx, by + tailH);
+  ctx.lineTo(cx + 3 * zoom, by);
+  ctx.fillStyle = bubble.fill;
+  ctx.fill();
+  ctx.strokeStyle = bubble.color;
+  ctx.lineWidth = Math.max(1, zoom * 0.7);
+  ctx.stroke();
+
+  // Text
+  const fontSize = Math.max(8, 5.5 * zoom);
+  ctx.font = `bold ${fontSize}px Inter, system-ui, sans-serif`;
+  ctx.textAlign = "center";
+  ctx.fillStyle = bubble.color;
+  ctx.fillText(bubble.text, cx, by - bh * 0.28);
 }
 
 function drawThinkingParticles(

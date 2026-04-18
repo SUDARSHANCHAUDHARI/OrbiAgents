@@ -65,6 +65,36 @@ export function setAgentPaused(runtime: UserRuntime, agentId: string, paused: bo
   );
 }
 
+let _subAgentSeq = 0;
+const SUB_AGENT_NAMES = ["Sub-A", "Sub-B", "Sub-C", "Sub-D", "Sub-E", "Sub-F"];
+
+export function spawnSubAgent(runtime: UserRuntime, parentId: string): Agent {
+  const seq = ++_subAgentSeq;
+  const id = `sub-${parentId}-${seq}`;
+  const name = SUB_AGENT_NAMES[seq % SUB_AGENT_NAMES.length];
+  const sub: Agent = {
+    id,
+    name,
+    state: "thinking",
+    task: "Delegated sub-task",
+    paused: false,
+    tokensUsed: 0,
+    inputTokens: 0,
+    outputTokens: 0,
+    costUsd: 0,
+    lastAction: "Starting",
+    logs: [],
+    x: 0,
+    y: 0,
+  };
+  runtime.agents = [...runtime.agents, sub];
+  return sub;
+}
+
+export function despawnSubAgent(runtime: UserRuntime, subId: string): void {
+  runtime.agents = runtime.agents.filter(a => a.id !== subId);
+}
+
 export function requestRuntimeCancel(runtime: UserRuntime): void {
   runtime.cancelRequested = true;
   runtime.agents = runtime.agents.map((agent) =>

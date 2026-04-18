@@ -1,4 +1,4 @@
-import type { CharacterRenderState, TileCoord } from "../types";
+import type { Bubble, CharacterRenderState, TileCoord } from "../types";
 import { CharacterState, Direction, TileType } from "../types";
 import { findPath } from "../pathfinding/bfs";
 
@@ -11,7 +11,12 @@ export interface AgentInput {
   paused: boolean;
   paletteIndex: number;
   homeTile: TileCoord;
+  activeToolName?: string;
 }
+
+const BUBBLE_PERMISSION: Bubble = { text: "...", color: "#F59E0B", fill: "#422006" };
+const BUBBLE_DONE: Bubble       = { text: "✓",   color: "#22C55E", fill: "#052E16" };
+const DONE_BUBBLE_TTL = 2; // seconds
 
 interface AgentMotion {
   path: TileCoord[];
@@ -23,6 +28,8 @@ interface AgentMotion {
   animFrame: number;
   animTimer: number;
   homeTile: TileCoord;
+  prevAgentState: string;
+  doneBubbleTimer: number; // counts down from DONE_BUBBLE_TTL
 }
 
 export function createGameLoop(
@@ -45,6 +52,8 @@ export function createGameLoop(
       charState: CharacterState.IDLE,
       animFrame: 0, animTimer: 0,
       homeTile: home,
+      prevAgentState: "",
+      doneBubbleTimer: 0,
     };
     motions.set(agent.id, motion);
     return motion;
@@ -102,7 +111,9 @@ export function createGameLoop(
         motion.charState =
           agent.agentState === "coding" || agent.agentState === "thinking"
             ? CharacterState.TYPING
-            : CharacterState.IDLE;
+            : agent.agentState === "reading"
+              ? CharacterState.READING
+              : CharacterState.IDLE;
         if (agent.agentState !== "idle") {
           motion.direction = Direction.DOWN;
         }
@@ -114,6 +125,15 @@ export function createGameLoop(
         motion.animTimer = 0;
         motion.animFrame = (motion.animFrame + 1) % 4;
       }
+
+      // Bubble lifecycle
+      if (agent.agentState === "done" && motion.prevAgentState !== "done") {
+        motion.doneBubbleTimer = DONE_BUBBLE_TTL;
+      }
+      if (motion.doneBubbleTimer > 0) {
+        motion.doneBubbleTimer = Math.max(0, motion.doneBubbleTimer - dt);
+      }
+      motion.prevAgentState = agent.agentState;
 
       return toRenderState(agent, motion, i);
     });
@@ -127,6 +147,13 @@ export function createGameLoop(
     motion: AgentMotion,
     idx: number,
   ): CharacterRenderState {
+    let bubble: Bubble | undefined;
+    if (agent.agentState === "permission-waiting") {
+      bubble = BUBBLE_PERMISSION;
+    } else if (motion.doneBubbleTimer > 0) {
+      bubble = BUBBLE_DONE;
+    }
+
     return {
       id: agent.id,
       name: agent.name,
@@ -137,8 +164,10 @@ export function createGameLoop(
       direction: motion.direction,
       charState: motion.charState,
       animFrame: motion.animFrame,
-      paletteIndex: idx % 5,
+      paletteIndex: agent.paletteIndex % 5,
       selected: false,
+      bubble,
+      activeToolName: agent.activeToolName,
     };
   }
 
