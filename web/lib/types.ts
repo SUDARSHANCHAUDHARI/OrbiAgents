@@ -38,6 +38,7 @@ export interface Session {
   createdAt: number;
   frames: SessionFrame[];
   totalCostUsd?: number;
+  provider?: Provider;
 }
 
 export interface SessionMeta {
@@ -45,6 +46,7 @@ export interface SessionMeta {
   task: string;
   createdAt: number;
   totalCostUsd?: number;
+  provider?: Provider;
 }
 
 export type Provider = "anthropic" | "openai" | "gemini";

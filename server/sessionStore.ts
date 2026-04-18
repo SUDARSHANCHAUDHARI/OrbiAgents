@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import { Agent } from "./types";
 import { db } from "./db";
+import type { Provider } from "./ai";
 
 export interface SessionFrame {
   timestamp: number;
@@ -13,6 +14,7 @@ export interface Session {
   createdAt: number;
   frames: SessionFrame[];
   totalCostUsd: number;
+  provider?: Provider;
   shareToken?: string;
   userId?: string;
 }
@@ -33,6 +35,7 @@ function deserializeSession(row: {
   task: string;
   frames: string;
   totalCostUsd: number;
+  provider: string | null;
   shareToken: string | null;
   userId: string | null;
   createdAt: Date;
@@ -43,6 +46,7 @@ function deserializeSession(row: {
     createdAt: row.createdAt.getTime(),
     frames: JSON.parse(row.frames) as SessionFrame[],
     totalCostUsd: row.totalCostUsd,
+    provider: (row.provider as Provider | null) ?? undefined,
     shareToken: row.shareToken ?? undefined,
     userId: row.userId ?? undefined,
   };
@@ -68,6 +72,7 @@ async function persistSession(sessionId: string): Promise<void> {
       task: session.task,
       frames: serializeSession(session),
       totalCostUsd: session.totalCostUsd,
+      provider: session.provider,
       shareToken: session.shareToken,
       userId: session.userId,
       createdAt: new Date(session.createdAt),
@@ -76,19 +81,21 @@ async function persistSession(sessionId: string): Promise<void> {
       task: session.task,
       frames: serializeSession(session),
       totalCostUsd: session.totalCostUsd,
+      provider: session.provider,
       shareToken: session.shareToken,
       userId: session.userId,
     },
   });
 }
 
-export async function createSession(id: string, task: string, userId?: string): Promise<void> {
+export async function createSession(id: string, task: string, userId?: string, provider?: Provider): Promise<void> {
   const session: Session = {
     id,
     task,
     createdAt: Date.now(),
     frames: [],
     totalCostUsd: 0,
+    provider,
     userId,
   };
   sessions.set(id, session);
@@ -99,6 +106,7 @@ export async function createSession(id: string, task: string, userId?: string): 
       task,
       frames: "[]",
       totalCostUsd: 0,
+      provider,
       userId,
       createdAt: new Date(session.createdAt),
     },
@@ -106,6 +114,7 @@ export async function createSession(id: string, task: string, userId?: string): 
       task,
       frames: "[]",
       totalCostUsd: 0,
+      provider,
       shareToken: null,
       userId,
       createdAt: new Date(session.createdAt),
@@ -171,10 +180,10 @@ export async function getSessionByShareToken(token: string): Promise<Session | n
   return session;
 }
 
-export async function listSessions(userId?: string): Promise<Pick<Session, "id" | "task" | "createdAt" | "totalCostUsd">[]> {
+export async function listSessions(userId?: string): Promise<Pick<Session, "id" | "task" | "createdAt" | "totalCostUsd" | "provider">[]> {
   const rows = await db.storedSession.findMany({
     where: userId ? { userId } : undefined,
-    select: { id: true, task: true, createdAt: true, totalCostUsd: true },
+    select: { id: true, task: true, createdAt: true, totalCostUsd: true, provider: true },
     orderBy: { createdAt: "desc" },
     take: 20,
   });
@@ -183,5 +192,32 @@ export async function listSessions(userId?: string): Promise<Pick<Session, "id" 
     task: row.task,
     createdAt: row.createdAt.getTime(),
     totalCostUsd: row.totalCostUsd,
+    provider: (row.provider as Provider | null) ?? undefined,
   }));
+}
+
+export async function getUserSessionUsage(
+  userId: string,
+  since: Date
+): Promise<{ count: number; totalCostUsd: number }> {
+  const [count, aggregate] = await Promise.all([
+    db.storedSession.count({
+      where: {
+        userId,
+        createdAt: { gte: since },
+      },
+    }),
+    db.storedSession.aggregate({
+      _sum: { totalCostUsd: true },
+      where: {
+        userId,
+        createdAt: { gte: since },
+      },
+    }),
+  ]);
+
+  return {
+    count,
+    totalCostUsd: aggregate._sum.totalCostUsd ?? 0,
+  };
 }

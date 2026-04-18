@@ -4,9 +4,17 @@ import { Agent } from "./types";
 export interface UserRuntime {
   agents: Agent[];
   workflowRunning: boolean;
+  cancelRequested: boolean;
   activeSessionId: string | null;
   sockets: Set<WebSocket>;
   lastTouchedAt: number;
+}
+
+export class WorkflowCancelledError extends Error {
+  constructor(message: string = "Workflow cancelled") {
+    super(message);
+    this.name = "WorkflowCancelledError";
+  }
 }
 
 export const RUNTIME_TTL_MS = 10 * 60 * 1000;
@@ -15,6 +23,7 @@ export function createUserRuntime(makeAgents: () => Agent[]): UserRuntime {
   return {
     agents: makeAgents(),
     workflowRunning: false,
+    cancelRequested: false,
     activeSessionId: null,
     sockets: new Set(),
     lastTouchedAt: Date.now(),
@@ -44,13 +53,35 @@ export function resetRuntimeAgents(runtime: UserRuntime): void {
     ...agent,
     state: "idle",
     task: "Ready",
+    paused: false,
+    lastAction: "Waiting for task",
   }));
+  runtime.cancelRequested = false;
 }
 
 export function setAgentPaused(runtime: UserRuntime, agentId: string, paused: boolean): void {
   runtime.agents = runtime.agents.map((agent) =>
     agent.id === agentId ? { ...agent, paused } : agent
   );
+}
+
+export function requestRuntimeCancel(runtime: UserRuntime): void {
+  runtime.cancelRequested = true;
+  runtime.agents = runtime.agents.map((agent) =>
+    agent.state === "idle" || agent.state === "done"
+      ? agent
+      : {
+          ...agent,
+          task: "Stopping workflow…",
+          lastAction: "Stop requested",
+        }
+  );
+}
+
+export function ensureRuntimeActive(runtime: UserRuntime): void {
+  if (runtime.cancelRequested) {
+    throw new WorkflowCancelledError();
+  }
 }
 
 export function cleanupRuntimeStore(

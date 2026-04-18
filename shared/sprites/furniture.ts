@@ -38,14 +38,14 @@ export const DESK_SPRITE: SpriteData = s([
 
 // ── Bookshelf tile (16×16) — tiled across top wall ─────────────────
 const B_PAL = {
-  W: "#3D1A08", // wood dark
-  w: "#5C2D0E", // wood mid
-  R: "#DC2626", // red book
-  B: "#2563EB", // blue book
-  G: "#16A34A", // green book
-  Y: "#D97706", // yellow book
-  P: "#7C3AED", // purple book
-  O: "#EA580C", // orange book
+  W: "#2B1B12", // wood dark
+  w: "#4B3224", // wood mid
+  R: "#9F3A32", // muted red
+  B: "#315F9D", // muted blue
+  G: "#2F7A67", // muted green
+  Y: "#A06D22", // muted amber
+  P: "#6A4A9B", // muted violet
+  O: "#9D5B2F", // muted orange
 };
 export const BOOKSHELF_SPRITE: SpriteData = s([
   "WWWWWWWWWWWWWWWW",

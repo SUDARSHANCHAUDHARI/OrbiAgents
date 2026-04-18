@@ -15,27 +15,40 @@ import {
   getSession,
   getSessionByShareToken,
   createShareToken,
+  getUserSessionUsage,
   listSessions,
 } from "./sessionStore";
 import { db } from "./db";
 import { hashPassword, verifyPassword, signToken, protect, verifyToken } from "./auth";
 import {
   cleanupRuntimeStore,
+  ensureRuntimeActive,
   getOrCreateRuntime,
+  requestRuntimeCancel,
   resetRuntimeAgents,
   setAgentPaused,
   touchRuntime,
   UserRuntime,
+  WorkflowCancelledError,
 } from "./runtimeState";
+import { createRateLimit } from "./rateLimit";
+import { validateServerEnv } from "./env";
+import { logServerEvent, requestLogger } from "./logger";
 
 const app = express();
 const PORT = 4000;
 const APP_URL = (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
 const CORS_ORIGIN = process.env.CORS_ORIGIN ?? APP_URL;
+const AUTH_RATE_LIMIT_MAX = Number(process.env.RATE_LIMIT_AUTH_MAX ?? "10");
+const WORKFLOW_RATE_LIMIT_MAX = Number(process.env.RATE_LIMIT_WORKFLOW_MAX ?? "12");
+const MAX_RUNS_PER_HOUR = Number(process.env.MAX_RUNS_PER_HOUR ?? "30");
+const MAX_DAILY_COST_USD = Number(process.env.MAX_DAILY_COST_USD ?? "10");
+const MAX_WORKFLOW_NODES = Number(process.env.MAX_WORKFLOW_NODES ?? "12");
 let server: Server | null = null;
 let wss: WebSocketServer | null = null;
 
 app.use(express.json());
+app.use(requestLogger);
 
 app.use((_req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", CORS_ORIGIN);
@@ -84,6 +97,18 @@ function makeDefaultAgents(): Agent[] {
 }
 
 const runtimes = new Map<string, UserRuntime>();
+const authRateLimit = createRateLimit({
+  key: "auth",
+  windowMs: 60_000,
+  max: AUTH_RATE_LIMIT_MAX,
+  message: "Too many auth attempts. Please try again in a minute.",
+});
+const workflowRateLimit = createRateLimit({
+  key: "workflow",
+  windowMs: 60_000,
+  max: WORKFLOW_RATE_LIMIT_MAX,
+  message: "Too many workflow requests. Please slow down and try again shortly.",
+});
 
 function getRuntime(userId: string): UserRuntime {
   return getOrCreateRuntime(runtimes, userId, makeDefaultAgents);
@@ -115,9 +140,13 @@ function isAgentPaused(userId: string, id: string): boolean {
 }
 
 async function waitIfPaused(userId: string, id: string): Promise<void> {
+  const runtime = getRuntime(userId);
+  ensureRuntimeActive(runtime);
   while (isAgentPaused(userId, id)) {
+    ensureRuntimeActive(runtime);
     await new Promise((resolve) => setTimeout(resolve, 200));
   }
+  ensureRuntimeActive(runtime);
 }
 
 function resetRuntime(userId: string): void {
@@ -134,6 +163,27 @@ function removeSocketFromRuntimes(socket: WebSocket): void {
 
 function cleanupRuntimes(): void {
   cleanupRuntimeStore(runtimes);
+}
+
+async function enforceUsageGuardrails(userId: string): Promise<string | null> {
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+  const dayStart = new Date();
+  dayStart.setHours(0, 0, 0, 0);
+
+  const [recentRuns, dailyUsage] = await Promise.all([
+    getUserSessionUsage(userId, oneHourAgo),
+    getUserSessionUsage(userId, dayStart),
+  ]);
+
+  if (recentRuns.count >= MAX_RUNS_PER_HOUR) {
+    return `Hourly run limit reached (${MAX_RUNS_PER_HOUR}/hour). Please wait before starting another workflow.`;
+  }
+
+  if (dailyUsage.totalCostUsd >= MAX_DAILY_COST_USD) {
+    return `Daily usage cap reached ($${MAX_DAILY_COST_USD.toFixed(2)}).`;
+  }
+
+  return null;
 }
 
 function getUserIdFromSocketRequest(req: import("http").IncomingMessage): string | null {
@@ -207,7 +257,16 @@ const runtimeCleanupInterval = setInterval(() => {
 runtimeCleanupInterval.unref();
 
 // ── Auth ───────────────────────────────────────────────────────────
-app.post("/signup", async (req, res) => {
+app.get("/health", (_req, res) => {
+  res.json({
+    status: "ok",
+    uptimeSec: Math.round(process.uptime()),
+    runtimes: runtimes.size,
+    timestamp: Date.now(),
+  });
+});
+
+app.post("/signup", authRateLimit, async (req, res) => {
   const { email, password } = req.body as { email?: string; password?: string };
   if (!email || !password || password.length < 8) {
     res.status(400).json({ error: "Valid email and password (≥8 chars) required" }); return;
@@ -219,7 +278,7 @@ app.post("/signup", async (req, res) => {
   res.status(201).json({ token: signToken(user.id), user: { id: user.id, email } });
 });
 
-app.post("/login", async (req, res) => {
+app.post("/login", authRateLimit, async (req, res) => {
   const { email, password } = req.body as { email?: string; password?: string };
   if (!email || !password) { res.status(400).json({ error: "email and password required" }); return; }
   const user = await db.user.findUnique({ where: { email } });
@@ -231,12 +290,35 @@ app.post("/login", async (req, res) => {
 
 // ── Saved workflows ────────────────────────────────────────────────
 app.post("/workflows/save", protect, async (req, res) => {
-  const { name, data } = req.body as { name?: string; data?: unknown };
+  const { id, name, data } = req.body as { id?: string; name?: string; data?: unknown };
   if (!name || !data) { res.status(400).json({ error: "name and data required" }); return; }
-  const saved = await db.savedWorkflow.create({
-    data: { name, data: JSON.stringify(data), userId: req.userId! },
+  const saved = id
+    ? await db.savedWorkflow.updateMany({
+        where: { id, userId: req.userId! },
+        data: { name, data: JSON.stringify(data) },
+      })
+    : null;
+  if (id && (!saved || saved.count === 0)) {
+    res.status(404).json({ error: "Workflow not found" });
+    return;
+  }
+  const workflow = id
+    ? await db.savedWorkflow.findFirst({
+        where: { id, userId: req.userId! },
+      })
+    : await db.savedWorkflow.create({
+        data: { name, data: JSON.stringify(data), userId: req.userId! },
+      });
+  if (!workflow) {
+    res.status(404).json({ error: "Workflow not found" });
+    return;
+  }
+  res.status(id ? 200 : 201).json({
+    id: workflow.id,
+    name: workflow.name,
+    createdAt: workflow.createdAt,
+    updatedAt: workflow.updatedAt,
   });
-  res.status(201).json({ id: saved.id, name: saved.name, createdAt: saved.createdAt });
 });
 
 app.get("/workflows", protect, async (req, res) => {
@@ -270,17 +352,20 @@ app.get("/providers", (_req, res) => {
 });
 
 // ── AI workflow — fixed planner→coder ─────────────────────────────
-app.post("/run", protect, async (req, res) => {
+app.post("/run", protect, workflowRateLimit, async (req, res) => {
   const { task, provider } = req.body as { task?: string; provider?: Provider };
   if (!task?.trim()) { res.status(400).json({ error: "task is required" }); return; }
   const userId = req.userId!;
+  const usageError = await enforceUsageGuardrails(userId);
+  if (usageError) { res.status(429).json({ error: usageError }); return; }
   const runtime = getRuntime(userId);
   if (runtime.workflowRunning) { res.status(409).json({ error: "Workflow already running" }); return; }
 
   const sessionId = Date.now().toString();
-  await createSession(sessionId, task.trim(), userId);
+  await createSession(sessionId, task.trim(), userId, provider);
   runtime.activeSessionId = sessionId;
   runtime.workflowRunning = true;
+  runtime.cancelRequested = false;
   touchRuntime(runtime);
   res.status(202).json({ status: "started", sessionId });
 
@@ -297,6 +382,15 @@ app.post("/run", protect, async (req, res) => {
         socket.send(JSON.stringify({ type: "result", sessionId, ...result }));
     });
   } catch (err) {
+    if (err instanceof WorkflowCancelledError) {
+      resetRuntime(userId);
+      runtime.sockets.forEach((socket) => {
+        if (socket.readyState === WebSocket.OPEN) {
+          socket.send(JSON.stringify({ type: "stopped", message: "Workflow stopped" }));
+        }
+      });
+      return;
+    }
     const msg = err instanceof Error ? err.message : String(err);
     runtime.sockets.forEach((socket) => {
       if (socket.readyState === WebSocket.OPEN)
@@ -311,7 +405,7 @@ app.post("/run", protect, async (req, res) => {
 });
 
 // ── Dynamic workflow ──────────────────────────────────────────────
-app.post("/workflow", protect, async (req, res) => {
+app.post("/workflow", protect, workflowRateLimit, async (req, res) => {
   const { workflow, task, provider } = req.body as {
     workflow?: Workflow;
     task?: string;
@@ -320,14 +414,20 @@ app.post("/workflow", protect, async (req, res) => {
   if (!workflow || !task?.trim()) {
     res.status(400).json({ error: "workflow and task required" }); return;
   }
+  if (workflow.nodes.length > MAX_WORKFLOW_NODES) {
+    res.status(400).json({ error: `Workflow exceeds node limit (${MAX_WORKFLOW_NODES})` }); return;
+  }
   const userId = req.userId!;
+  const usageError = await enforceUsageGuardrails(userId);
+  if (usageError) { res.status(429).json({ error: usageError }); return; }
   const runtime = getRuntime(userId);
   if (runtime.workflowRunning) { res.status(409).json({ error: "Workflow already running" }); return; }
 
   const sessionId = Date.now().toString();
-  await createSession(sessionId, task.trim(), userId);
+  await createSession(sessionId, task.trim(), userId, provider);
   runtime.activeSessionId = sessionId;
   runtime.workflowRunning = true;
+  runtime.cancelRequested = false;
   touchRuntime(runtime);
   res.status(202).json({ status: "started", sessionId });
 
@@ -351,6 +451,15 @@ app.post("/workflow", protect, async (req, res) => {
         }));
     });
   } catch (err) {
+    if (err instanceof WorkflowCancelledError) {
+      resetRuntime(userId);
+      runtime.sockets.forEach((socket) => {
+        if (socket.readyState === WebSocket.OPEN) {
+          socket.send(JSON.stringify({ type: "stopped", message: "Workflow stopped" }));
+        }
+      });
+      return;
+    }
     const msg = err instanceof Error ? err.message : String(err);
     runtime.sockets.forEach((socket) => {
       if (socket.readyState === WebSocket.OPEN)
@@ -362,6 +471,19 @@ app.post("/workflow", protect, async (req, res) => {
     runtime.activeSessionId = null;
     touchRuntime(runtime);
   }
+});
+
+app.post("/workflow/stop", protect, async (req, res) => {
+  const runtime = getRuntime(req.userId!);
+  if (!runtime.workflowRunning) {
+    res.status(409).json({ error: "No workflow is currently running" });
+    return;
+  }
+
+  requestRuntimeCancel(runtime);
+  touchRuntime(runtime);
+  broadcast(runtime);
+  res.json({ status: "stopping" });
 });
 
 // ── Replay API ─────────────────────────────────────────────────────
@@ -434,10 +556,12 @@ export function startServer(port: number = PORT): { server: Server; port: number
     return { server, port: address?.port ?? port };
   }
 
+  validateServerEnv();
+
   server = app.listen(port, () => {
     const address = server?.address() as AddressInfo | null;
     const actualPort = address?.port ?? port;
-    console.log(`OrbiAgents server running on http://localhost:${actualPort}`);
+    logServerEvent(`OrbiAgents server running on http://localhost:${actualPort}`);
   });
   wss = new WebSocketServer({ server });
   attachWebSocketHandlers(wss);

@@ -256,6 +256,10 @@ export default function PixelOffice({ activeAgentIds = [], agentColors = {} }: P
         background: WOOD,
         opacity: 0.85,
       }} />
+      <div className="absolute" style={{
+        left: 0, top: 0, width: "72%", height: "100%",
+        background: "linear-gradient(180deg, rgba(255,244,214,0.05) 0%, rgba(255,255,255,0) 24%, rgba(0,0,0,0.05) 100%)",
+      }} />
 
       {/* ── Break room — top right (tile) ───────────────────── */}
       <div className="absolute" style={{
@@ -263,12 +267,20 @@ export default function PixelOffice({ activeAgentIds = [], agentColors = {} }: P
         background: TILE,
         opacity: 0.9,
       }} />
+      <div className="absolute" style={{
+        right: 0, top: 0, width: "28%", height: "42%",
+        background: "linear-gradient(180deg, rgba(255,255,255,0.18) 0%, rgba(211,244,251,0.06) 100%)",
+      }} />
 
       {/* ── Meeting room — bottom right (carpet) ────────────── */}
       <div className="absolute" style={{
         right: 0, bottom: 0, width: "28%", height: "55%",
         background: CARPET,
         opacity: 0.85,
+      }} />
+      <div className="absolute" style={{
+        right: 0, bottom: 0, width: "28%", height: "55%",
+        background: "linear-gradient(180deg, rgba(125,220,246,0.08) 0%, rgba(14,59,92,0.04) 100%)",
       }} />
 
       {/* ── Wall dividers ───────────────────────────────────── */}
@@ -354,7 +366,8 @@ export default function PixelOffice({ activeAgentIds = [], agentColors = {} }: P
         style={{
           right: "14%", top: "21%",
           fontFamily: "var(--font-pixel, monospace)",
-          color: "rgba(120,100,80,0.5)",
+          color: "rgba(83, 116, 137, 0.62)",
+          textShadow: "0 1px 0 rgba(255,255,255,0.22)",
           transform: "translateX(50%)",
         }}
       >
@@ -365,7 +378,8 @@ export default function PixelOffice({ activeAgentIds = [], agentColors = {} }: P
         style={{
           right: "14%", bottom: "27%",
           fontFamily: "var(--font-pixel, monospace)",
-          color: "rgba(80,100,130,0.5)",
+          color: "rgba(185, 230, 244, 0.46)",
+          textShadow: "0 1px 0 rgba(12,34,48,0.35)",
           transform: "translateX(50%)",
         }}
       >

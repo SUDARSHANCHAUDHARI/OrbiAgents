@@ -1,0 +1,39 @@
+version: "3.9"
+
+services:
+  server:
+    build:
+      context: ./server
+    command: ["sh", "/app/docker-entrypoint.sh"]
+    environment:
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+      JWT_SECRET: ${JWT_SECRET}
+      DEFAULT_PROVIDER: ${DEFAULT_PROVIDER:-anthropic}
+      RATE_LIMIT_AUTH_MAX: ${RATE_LIMIT_AUTH_MAX:-10}
+      RATE_LIMIT_WORKFLOW_MAX: ${RATE_LIMIT_WORKFLOW_MAX:-12}
+      MAX_RUNS_PER_HOUR: ${MAX_RUNS_PER_HOUR:-30}
+      MAX_DAILY_COST_USD: ${MAX_DAILY_COST_USD:-10}
+      MAX_WORKFLOW_NODES: ${MAX_WORKFLOW_NODES:-12}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+    ports:
+      - "4000:4000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:4000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build:
+      context: ./web
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:4000}
+      NEXT_PUBLIC_WS_BASE_URL: ${NEXT_PUBLIC_WS_BASE_URL:-ws://localhost:4000}
+    ports:
+      - "3000:3000"
+    depends_on:
+      server:
+        condition: service_healthy

@@ -15,6 +15,7 @@ import {
   authHeaders,
   clearToken,
   createReplayShareLink,
+  getSessionDetails,
   getToken,
   listProviders,
   listSessions,
@@ -26,6 +27,7 @@ import ResultPanel from "@/components/ResultPanel";
 import ReplayBar from "@/components/ReplayBar";
 import WorkflowBuilder from "@/components/WorkflowBuilder";
 import SessionHistoryPanel from "@/components/SessionHistoryPanel";
+import SessionDetailsPanel from "@/components/SessionDetailsPanel";
 
 interface WorkflowResult {
   sessionId: string;
@@ -42,11 +44,25 @@ const DEFAULT_WORKFLOW: Workflow = {
 };
 
 export default function Home() {
+  const sky = {
+    pageBg: "var(--app-bg)",
+    hudBg: "#0F172A",
+    hudBgAlt: "#1F2937",
+    border: "#374151",
+    borderSoft: "#374151",
+    text: "#E5E7EB",
+    textMuted: "#9CA3AF",
+    primary: "#2563EB",
+    primaryText: "#F8FAFC",
+    dangerBg: "#7F1D1D",
+    dangerBorder: "#EF4444",
+  };
   const router = useRouter();
   const [agents, setAgents] = useState<Agent[]>([]);
   const [selected, setSelected] = useState<Agent | null>(null);
   const [task, setTask] = useState("");
   const [running, setRunning] = useState(false);
+  const [stopping, setStopping] = useState(false);
   const [result, setResult] = useState<WorkflowResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showBuilder, setShowBuilder] = useState(false);
@@ -58,6 +74,9 @@ export default function Home() {
   const [sessions, setSessions] = useState<SessionMeta[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
   const [historyMessage, setHistoryMessage] = useState<string | null>(null);
+  const [selectedSession, setSelectedSession] = useState<Session | null>(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [compactSidebar, setCompactSidebar] = useState(false);
 
   // Replay state — declared before any early return (rules of hooks)
   const [replaySession, setReplaySession] = useState<Session | null>(null);
@@ -119,6 +138,7 @@ export default function Home() {
           totalCostUsd: data.totalCostUsd as number | undefined,
         });
         setRunning(false);
+        setStopping(false);
         void loadSessions();
       } else if (data.type === "workflow-result") {
         setResult({
@@ -127,10 +147,19 @@ export default function Home() {
           totalCostUsd: data.totalCostUsd as number | undefined,
         });
         setRunning(false);
+        setStopping(false);
+        void loadSessions();
+      } else if (data.type === "stopped") {
+        setRunning(false);
+        setStopping(false);
+        setResult(null);
+        setSelectedSession(null);
+        setHistoryMessage((data.message as string | undefined) ?? "Workflow stopped");
         void loadSessions();
       } else if (data.type === "error") {
         setError(data.message as string);
         setRunning(false);
+        setStopping(false);
       }
     };
 
@@ -188,6 +217,7 @@ export default function Home() {
   async function handleRun() {
     if (!task.trim() || running) return;
     setRunning(true);
+    setStopping(false);
     setResult(null);
     setError(null);
 
@@ -211,6 +241,7 @@ export default function Home() {
   async function handleWorkflowRun() {
     if (!task.trim() || running) return;
     setRunning(true);
+    setStopping(false);
     setResult(null);
     setError(null);
 
@@ -252,6 +283,7 @@ export default function Home() {
       setReplayFrame(0);
       setSelected(null);
       setResult(null);
+      setSelectedSession(null);
 
       let i = 0;
       const interval = setInterval(() => {
@@ -281,6 +313,21 @@ export default function Home() {
     }
   }
 
+  async function handleInspectSession(sessionId: string) {
+    setDetailsLoading(true);
+    setError(null);
+    try {
+      const session = await getSessionDetails(sessionId);
+      setSelected(null);
+      setResult(null);
+      setSelectedSession(session);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not load session");
+    } finally {
+      setDetailsLoading(false);
+    }
+  }
+
   function stopReplay() {
     if (replayRef.current) {
       clearInterval(replayRef.current);
@@ -291,48 +338,109 @@ export default function Home() {
     setAgents(liveAgentsRef.current);
   }
 
+  async function handleStopRun() {
+    if (!running || stopping) return;
+    setStopping(true);
+    setError(null);
+    try {
+      const res = await fetch(`${getApiBaseUrl()}/workflow/stop`, {
+        method: "POST",
+        headers: authHeaders(),
+      });
+      if (!res.ok) {
+        const body = (await res.json()) as { error?: string };
+        throw new Error(body.error ?? "Could not stop workflow");
+      }
+    } catch (err) {
+      setStopping(false);
+      setError(err instanceof Error ? err.message : "Could not stop workflow");
+    }
+  }
+
   const isReplaying = replayRef.current !== null;
+  const thinkingCount = agents.filter((agent) => agent.state === "thinking").length;
+  const codingCount = agents.filter((agent) => agent.state === "coding").length;
+  const activeSummary = [
+    { label: `${agents.length} AGENTS`, color: "#E5E7EB" },
+    { label: `${thinkingCount} THINKING`, color: "#FDE68A" },
+    { label: `${codingCount} CODING`, color: "#BFDBFE" },
+  ];
 
   return (
-    <div className="flex h-screen text-white" style={{ background: "#1a1208", fontFamily: "var(--font-pixel, monospace)" }}>
-      <div className="flex-1 flex flex-col min-w-0">
+    <div
+      className="flex h-screen text-white"
+      style={{
+        display: "flex",
+        height: "100vh",
+        overflow: "hidden",
+        color: "#ffffff",
+        background: sky.pageBg,
+        fontFamily: "Inter, system-ui, sans-serif",
+      }}
+    >
+      <div
+        className="flex-1 flex flex-col min-w-0"
+        style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          minWidth: 0,
+          minHeight: 0,
+        }}
+      >
 
         {/* ── Header — pixel art HUD ─────────────────────────── */}
         <header
           className="relative flex items-center justify-between gap-4 z-20 px-4 py-2"
           style={{
-            background: "#0d0907",
-            borderBottom: "3px solid #3D2409",
-            boxShadow: "0 3px 0 #1C1208",
+            position: "relative",
+            zIndex: 20,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 20,
+            flexWrap: "wrap",
+            padding: "12px 18px",
+            flexShrink: 0,
+            background: sky.hudBg,
+            minHeight: 64,
+            borderBottom: `1px solid ${sky.border}`,
+            boxShadow: "0 10px 24px rgba(0, 0, 0, 0.18)",
           }}
         >
           {/* Logo */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div
+            className="flex items-center gap-2 shrink-0"
+            style={{ display: "flex", alignItems: "center", gap: 8, flexShrink: 0 }}
+          >
             <div
               style={{
-                width: 28, height: 28,
-                background: "#7C3AED",
-                border: "2px solid #A78BFA",
+                width: 36, height: 36,
+                background: "#111827",
+                border: `1px solid ${sky.border}`,
+                borderRadius: 8,
                 display: "flex", alignItems: "center", justifyContent: "center",
-                fontFamily: "var(--font-pixel, monospace)",
-                fontSize: 12, fontWeight: "bold",
-                imageRendering: "pixelated",
-                color: "#EDE9FE",
+                fontSize: 16, fontWeight: 700,
+                color: sky.text,
               }}
             >O</div>
             <div>
-              <div style={{ fontFamily: "var(--font-pixel)", fontSize: 9, color: "#E9D5FF", letterSpacing: "0.05em" }}>
+              <div style={{ fontSize: 18, fontWeight: 600, color: sky.text, letterSpacing: "-0.01em" }}>
                 OrbiAgents
               </div>
-              <div style={{ fontFamily: "var(--font-pixel)", fontSize: 5, color: "#7C3AED", letterSpacing: "0.2em" }}>
+              <div style={{ fontSize: 12, color: sky.textMuted, letterSpacing: "0.08em", textTransform: "uppercase" }}>
                 WORKSPACE
               </div>
             </div>
           </div>
 
           {/* Task input */}
-          <div className="flex-1 flex items-center gap-2 max-w-2xl">
+          <div
+            className="flex-1 flex items-center gap-2 max-w-2xl"
+            style={{ flex: 1, display: "flex", alignItems: "center", gap: 12, maxWidth: "52rem", minWidth: 0 }}
+          >
             <input
+              className="orbi-input"
               type="text"
               value={task}
               onChange={(e) => setTask(e.target.value)}
@@ -341,45 +449,53 @@ export default function Home() {
               disabled={running || isReplaying}
               style={{
                 flex: 1,
-                background: "#1C1208",
-                border: "2px solid #4A2F14",
-                padding: "6px 10px",
-                color: "#F5CBA7",
-                fontFamily: "var(--font-pixel, monospace)",
-                fontSize: 7,
+                minHeight: 40,
+                background: sky.hudBgAlt,
+                border: `1px solid ${sky.borderSoft}`,
+                borderRadius: 8,
+                padding: "0 16px",
+                color: sky.text,
+                fontSize: 16,
+                fontWeight: 500,
                 outline: "none",
-                letterSpacing: "0.05em",
                 opacity: running || isReplaying ? 0.4 : 1,
+                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04), 0 0 0 1px transparent",
               }}
             />
             {!showBuilder && (
               <button
+                className="orbi-control"
                 onClick={handleRun}
-                disabled={running || !task.trim() || isReplaying}
+                disabled={running || stopping || !task.trim() || isReplaying}
                 style={{
-                  background: running ? "#4A2F14" : "#6D28D9",
-                  border: "2px solid",
-                  borderColor: running ? "#7A5230" : "#A78BFA",
-                  color: "#EDE9FE",
-                  fontFamily: "var(--font-pixel, monospace)",
-                  fontSize: 7,
-                  padding: "6px 14px",
-                  cursor: running || !task.trim() ? "not-allowed" : "pointer",
+                  minHeight: 40,
+                  background: running ? "#2A6E96" : sky.primary,
+                  border: "1px solid",
+                  borderColor: running ? sky.borderSoft : sky.border,
+                  borderRadius: 8,
+                  color: sky.primaryText,
+                  fontSize: 16,
+                  fontWeight: 600,
+                  padding: "0 18px",
+                  cursor: running || stopping || !task.trim() ? "not-allowed" : "pointer",
                   opacity: !task.trim() ? 0.4 : 1,
-                  letterSpacing: "0.1em",
                   whiteSpace: "nowrap",
-                  boxShadow: running ? "none" : "0 3px 0 #3730A3",
+                  boxShadow: running ? "none" : "0 10px 20px rgba(37,99,235,0.24)",
                 }}
               >
-                {running ? "RUNNING..." : "▶ RUN"}
+                {stopping ? "STOPPING..." : running ? "RUNNING..." : "▶ RUN"}
               </button>
             )}
             <div
               style={{
-                background: "#1C1208",
-                border: "2px solid #4A2F14",
-                padding: "0 8px",
+                background: sky.hudBgAlt,
+                border: `1px solid ${sky.borderSoft}`,
+                borderRadius: 8,
+                padding: "0 12px",
                 opacity: running || isReplaying ? 0.5 : 1,
+                minHeight: 40,
+                display: "flex",
+                alignItems: "center",
               }}
             >
               <select
@@ -389,12 +505,11 @@ export default function Home() {
                 style={{
                   background: "transparent",
                   border: "none",
-                  color: "#C4B5FD",
-                  fontFamily: "var(--font-pixel, monospace)",
-                  fontSize: 7,
-                  padding: "6px 0",
+                  color: sky.text,
+                  fontSize: 16,
+                  fontWeight: 500,
+                  padding: "0",
                   outline: "none",
-                  letterSpacing: "0.08em",
                   textTransform: "uppercase",
                 }}
               >
@@ -408,69 +523,143 @@ export default function Home() {
           </div>
 
           {/* Right controls */}
-          <div className="flex items-center gap-3 shrink-0">
+          <div
+            className="flex items-center gap-3 shrink-0"
+            style={{ display: "flex", alignItems: "center", gap: 16, flexShrink: 0 }}
+          >
             <button
+              className="orbi-control"
               onClick={() => setShowBuilder((v) => !v)}
-              disabled={running || isReplaying}
+              disabled={running || stopping || isReplaying}
               style={{
-                background: showBuilder ? "#3730A3" : "#1C1208",
-                border: "2px solid",
-                borderColor: showBuilder ? "#818CF8" : "#4A2F14",
-                color: showBuilder ? "#C7D2FE" : "#7A5230",
-                fontFamily: "var(--font-pixel, monospace)",
-                fontSize: 6,
-                padding: "5px 10px",
+                minHeight: 40,
+                background: showBuilder ? "#374151" : sky.hudBgAlt,
+                border: "1px solid",
+                borderColor: showBuilder ? sky.border : sky.borderSoft,
+                color: showBuilder ? sky.text : sky.textMuted,
+                borderRadius: 8,
+                fontSize: 14,
+                fontWeight: 500,
+                padding: "0 16px",
                 cursor: "pointer",
-                letterSpacing: "0.1em",
-                opacity: running || isReplaying ? 0.3 : 1,
+                opacity: running || stopping || isReplaying ? 0.3 : 1,
               }}
             >
               ⬡ WORKFLOW
             </button>
 
-            {/* Status display */}
-            <div style={{
-              background: "#1C1208",
-              border: "2px solid #3D2409",
-              padding: "4px 8px",
-              fontFamily: "var(--font-pixel, monospace)",
-              fontSize: 6,
-              letterSpacing: "0.05em",
-            }}>
-              {isReplaying ? (
-                <span style={{ color: "#C084FC" }}>▶ REPLAY</span>
-              ) : running ? (
-                <span style={{ color: "#818CF8" }}>● RUNNING</span>
-              ) : (
-                <span style={{ color: "#6EE7B7" }}>● {agents.length} AGENTS</span>
-              )}
+            <button
+              className="orbi-control"
+              onClick={() => setCompactSidebar((value) => !value)}
+              style={{
+                minHeight: 40,
+                background: compactSidebar ? "#374151" : sky.hudBgAlt,
+                border: `1px solid ${sky.borderSoft}`,
+                color: compactSidebar ? sky.text : sky.textMuted,
+                borderRadius: 8,
+                fontSize: 14,
+                fontWeight: 500,
+                padding: "0 14px",
+                cursor: "pointer",
+              }}
+            >
+              {compactSidebar ? "EXPAND" : "COMPACT"}
+            </button>
+
+            {running && !isReplaying && (
+              <button
+                onClick={() => void handleStopRun()}
+                disabled={stopping}
+                style={{
+                  background: sky.dangerBg,
+                  minHeight: 40,
+                  border: `1px solid ${sky.dangerBorder}`,
+                  borderRadius: 8,
+                  color: "#FFF0F7",
+                  fontSize: 16,
+                  fontWeight: 600,
+                  padding: "0 14px",
+                  cursor: stopping ? "not-allowed" : "pointer",
+                  opacity: stopping ? 0.5 : 1,
+                }}
+              >
+                {stopping ? "..." : "■ STOP"}
+              </button>
+            )}
+
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+              <div style={{
+                background: sky.hudBgAlt,
+                minHeight: 40,
+                border: `1px solid ${sky.borderSoft}`,
+                borderRadius: 8,
+                padding: "0 12px",
+                display: "flex",
+                alignItems: "center",
+                fontSize: 14,
+                fontWeight: 500,
+              }}>
+                {isReplaying ? (
+                  <span style={{ color: sky.text }}>▶ REPLAY</span>
+                ) : stopping ? (
+                  <span style={{ color: "#FFF0F7" }}>■ STOPPING</span>
+                ) : running ? (
+                  <span style={{ color: sky.border }}>● RUNNING</span>
+                ) : (
+                  <span style={{ color: "#86EFAC" }}>● READY</span>
+                )}
+              </div>
+              {activeSummary.map((item) => (
+                <div
+                  key={item.label}
+                  style={{
+                    background: sky.hudBgAlt,
+                    minHeight: 40,
+                    border: `1px solid ${sky.borderSoft}`,
+                    borderRadius: 8,
+                    padding: "0 12px",
+                    display: "flex",
+                    alignItems: "center",
+                    fontSize: 16,
+                    fontWeight: 500,
+                    color: item.color,
+                  }}
+                >
+                  {item.label}
+                </div>
+              ))}
             </div>
 
             {result?.totalCostUsd != null && !running && (
               <div style={{
-                background: "#1C1208",
-                border: "2px solid #92400E",
-                padding: "4px 8px",
-                fontFamily: "var(--font-pixel, monospace)",
-                fontSize: 6,
-                color: "#FCD34D",
-                letterSpacing: "0.05em",
+                background: sky.hudBgAlt,
+                minHeight: 40,
+                border: `1px solid ${sky.border}`,
+                borderRadius: 8,
+                padding: "0 12px",
+                display: "flex",
+                alignItems: "center",
+                fontSize: 14,
+                fontWeight: 500,
+                color: sky.text,
               }}>
                 ${result.totalCostUsd.toFixed(4)}
               </div>
             )}
 
             <button
+              className="orbi-control"
               onClick={() => { clearToken(); router.push("/login"); }}
               style={{
                 background: "transparent",
-                border: "1px solid #3D2409",
-                color: "#7A5230",
-                fontFamily: "var(--font-pixel, monospace)",
-                fontSize: 6,
-                padding: "4px 8px",
+                border: `1px solid ${sky.borderSoft}`,
+                minHeight: 40,
+                borderRadius: 8,
+                color: sky.textMuted,
+                fontSize: 16,
+                fontWeight: 500,
+                padding: "0 14px",
                 cursor: "pointer",
-                letterSpacing: "0.05em",
               }}
             >
               LOGOUT
@@ -479,11 +668,15 @@ export default function Home() {
         </header>
 
         {/* ── Office floor — HTML5 Canvas game renderer ──────── */}
-        <main className="flex-1 relative overflow-hidden" style={{ background: "#1a1208" }}>
+        <main
+          className="flex-1 relative overflow-hidden"
+          style={{ flex: 1, minHeight: 0, position: "relative", overflow: "hidden", background: "var(--map-bg)", padding: 24 }}
+        >
           <GameCanvas
             agents={agents}
             selectedId={selected?.id ?? null}
             isReplaying={isReplaying}
+            workflow={workflow}
             onAgentClick={isReplaying ? () => {} : setSelected}
           />
 
@@ -491,7 +684,7 @@ export default function Home() {
           <div
             className="absolute inset-0 pointer-events-none"
             style={{
-              backgroundImage: "repeating-linear-gradient(0deg, transparent 0px, transparent 3px, rgba(0,0,0,0.03) 3px, rgba(0,0,0,0.03) 4px)",
+              backgroundImage: "repeating-linear-gradient(0deg, transparent 0px, transparent 5px, rgba(255,255,255,0.012) 5px, rgba(255,255,255,0.012) 6px)",
               zIndex: 5,
             }}
           />
@@ -500,15 +693,18 @@ export default function Home() {
             <div
               className="absolute z-20"
               style={{
-                top: 12, left: "50%", transform: "translateX(-50%)",
+                top: 16,
+                left: "50%",
+                transform: "translateX(-50%)",
                 background: "#7F1D1D",
-                border: "2px solid #DC2626",
-                padding: "6px 14px",
-                fontFamily: "monospace",
-                fontSize: 7,
-                color: "#FCA5A5",
-                letterSpacing: "0.05em",
+                border: "1px solid #DC2626",
+                borderRadius: 10,
+                padding: "10px 14px",
+                fontSize: 14,
+                fontWeight: 500,
+                color: "#FECACA",
                 whiteSpace: "nowrap",
+                boxShadow: "0 14px 28px rgba(0,0,0,0.24)",
               }}
             >
               ✖ {error}
@@ -519,15 +715,16 @@ export default function Home() {
             <div
               className="absolute z-20"
               style={{
-                top: 12,
-                right: 12,
+                top: 16,
+                right: 16,
                 background: "#14532D",
-                border: "2px solid #22C55E",
-                padding: "6px 12px",
-                fontFamily: "monospace",
-                fontSize: 7,
+                border: "1px solid #22C55E",
+                borderRadius: 10,
+                padding: "10px 12px",
+                fontSize: 14,
+                fontWeight: 500,
                 color: "#BBF7D0",
-                letterSpacing: "0.05em",
+                boxShadow: "0 14px 28px rgba(0,0,0,0.22)",
               }}
             >
               ✓ {historyMessage}
@@ -550,7 +747,7 @@ export default function Home() {
             workflow={workflow}
             onChange={setWorkflow}
             onRun={handleWorkflowRun}
-            running={running}
+            running={running || stopping}
           />
         )}
       </div>
@@ -559,6 +756,8 @@ export default function Home() {
       {result && !selected && !isReplaying && (
         <ResultPanel
           result={result}
+          compact={compactSidebar}
+          provider={selectedProvider}
           onClose={() => setResult(null)}
           onReplay={startReplay}
         />
@@ -567,21 +766,52 @@ export default function Home() {
       {selected && !isReplaying && (
         <SidePanel
           agent={selected}
+          compact={compactSidebar}
           onClose={() => setSelected(null)}
           onPause={(id) => send({ type: "pause", agentId: id })}
           onResume={(id) => send({ type: "resume", agentId: id })}
         />
       )}
 
-      {!selected && !result && !isReplaying && (
+      {selectedSession && !selected && !result && !isReplaying && (
+        <SessionDetailsPanel
+          session={selectedSession}
+          compact={compactSidebar}
+          onClose={() => setSelectedSession(null)}
+          onReplay={startReplay}
+          onShare={handleShareSession}
+        />
+      )}
+
+      {!selected && !result && !isReplaying && !selectedSession && (
         <SessionHistoryPanel
           sessions={sessions}
           loading={sessionsLoading}
+          compact={compactSidebar}
           activeSessionId={replaySession?.id ?? null}
+          selectedSessionId={null}
           onReplay={startReplay}
           onShare={handleShareSession}
+          onInspect={handleInspectSession}
           onRefresh={loadSessions}
         />
+      )}
+
+      {detailsLoading && !selected && !result && !isReplaying && !selectedSession && (
+        <aside
+          className="w-[340px] shrink-0"
+          style={{
+            width: 320,
+            background: "#0F172A",
+            borderLeft: "1px solid #374151",
+            padding: 16,
+            color: "#9CA3AF",
+            fontFamily: "Inter, system-ui, sans-serif",
+            fontSize: 14,
+          }}
+        >
+          Loading session details...
+        </aside>
       )}
     </div>
   );

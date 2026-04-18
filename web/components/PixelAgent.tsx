@@ -196,6 +196,8 @@ export default function PixelAgent({ agent, selected, onClick }: Props) {
   const active   = !agent.paused && isActive(agent.state);
   const glow     = agent.paused ? "transparent" : STATE_GLOW[agent.state];
   const labelCol = agent.paused ? "#374151" : STATE_LABEL[agent.state];
+  const nameBg = selected ? "rgba(11, 46, 70, 0.92)" : "rgba(7, 26, 42, 0.82)";
+  const nameBorder = selected ? "#9DEBFF" : "rgba(157, 235, 255, 0.45)";
 
   return (
     <div
@@ -218,14 +220,26 @@ export default function PixelAgent({ agent, selected, onClick }: Props) {
 
       {/* Selection ring */}
       {selected && (
-        <div
-          className="absolute pointer-events-none animate-orbi-ping"
-          style={{
-            inset: -4,
-            border: "2px solid rgba(255,255,255,0.6)",
-            borderRadius: 2,
-          }}
-        />
+        <>
+          <div
+            className="absolute pointer-events-none"
+            style={{
+              inset: -9,
+              borderRadius: 10,
+              background: "radial-gradient(circle, rgba(116,217,255,0.18) 0%, rgba(116,217,255,0) 70%)",
+              filter: "blur(3px)",
+            }}
+          />
+          <div
+            className="absolute pointer-events-none animate-orbi-ping"
+            style={{
+              inset: -6,
+              border: "2px solid rgba(157,235,255,0.95)",
+              boxShadow: "0 0 0 2px rgba(15,42,62,0.55), 0 0 18px rgba(116,217,255,0.45)",
+              borderRadius: 6,
+            }}
+          />
+        </>
       )}
 
       {/* Pixel sprite */}
@@ -239,33 +253,19 @@ export default function PixelAgent({ agent, selected, onClick }: Props) {
         <PixelSprite id={agent.id} />
       </div>
 
-      {/* Name tag — pixel font */}
-      <div
-        className="mt-1 px-2 py-0.5 text-center"
-        style={{
-          fontFamily: "var(--font-pixel, monospace)",
-          fontSize: 6,
-          color: "#D1D5DB",
-          background: "rgba(0,0,0,0.6)",
-          border: "1px solid rgba(255,255,255,0.1)",
-          whiteSpace: "nowrap",
-          lineHeight: "1.8",
-          letterSpacing: "0.05em",
-        }}
-      >
-        {agent.name}
-      </div>
-
       {/* State badge */}
       <div
         key={agent.state}
-        className="animate-orbi-slide-up mt-0.5 px-1.5"
+        className="absolute bottom-full left-1/2 animate-orbi-slide-up px-1.5"
         style={{
+          transform: "translateX(-50%)",
+          marginBottom: 8,
           fontFamily: "var(--font-pixel, monospace)",
           fontSize: 5,
-          color: labelCol,
-          background: "rgba(0,0,0,0.5)",
-          border: `1px solid ${labelCol}40`,
+          color: selected ? "#F7FDFF" : labelCol,
+          background: selected ? "rgba(14, 54, 79, 0.9)" : "rgba(0,0,0,0.5)",
+          border: `1px solid ${selected ? "#8FE7FF" : `${labelCol}40`}`,
+          boxShadow: selected ? "0 0 10px rgba(116,217,255,0.16)" : "none",
           lineHeight: "1.8",
           letterSpacing: "0.1em",
           whiteSpace: "nowrap",
@@ -278,12 +278,14 @@ export default function PixelAgent({ agent, selected, onClick }: Props) {
       {/* Cost badge */}
       {agent.costUsd > 0 && (
         <div
-          className="mt-0.5"
+          className="absolute top-full left-1/2"
           style={{
+            transform: "translateX(-50%)",
+            marginTop: 22,
             fontFamily: "var(--font-pixel, monospace)",
             fontSize: 5,
             color: "#FCD34D",
-            background: "rgba(0,0,0,0.5)",
+            background: selected ? "rgba(56, 49, 15, 0.85)" : "rgba(0,0,0,0.5)",
             padding: "1px 4px",
             border: "1px solid rgba(253,211,77,0.3)",
             letterSpacing: "0.05em",
@@ -292,6 +294,27 @@ export default function PixelAgent({ agent, selected, onClick }: Props) {
           ${agent.costUsd.toFixed(4)}
         </div>
       )}
+
+      {/* Name tag — pixel font */}
+      <div
+        className="absolute top-full left-1/2 px-2 py-0.5 text-center"
+        style={{
+          transform: "translateX(-50%)",
+          marginTop: 6,
+          fontFamily: "var(--font-pixel, monospace)",
+          fontSize: 6,
+          color: "#F3FDFF",
+          background: nameBg,
+          border: `1px solid ${nameBorder}`,
+          boxShadow: selected ? "0 0 0 1px rgba(116,217,255,0.3), 0 4px 10px rgba(0,0,0,0.25)" : "0 3px 8px rgba(0,0,0,0.22)",
+          textShadow: "0 1px 0 rgba(6,13,22,0.9)",
+          whiteSpace: "nowrap",
+          lineHeight: "1.8",
+          letterSpacing: "0.08em",
+        }}
+      >
+        {agent.name}
+      </div>
 
       {/* Hover tooltip */}
       <div

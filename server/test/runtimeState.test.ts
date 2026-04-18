@@ -4,9 +4,12 @@ import { Agent } from "../types";
 import {
   cleanupRuntimeStore,
   createUserRuntime,
+  ensureRuntimeActive,
   getOrCreateRuntime,
+  requestRuntimeCancel,
   resetRuntimeAgents,
   setAgentPaused,
+  WorkflowCancelledError,
 } from "../runtimeState";
 
 function makeAgents(): Agent[] {
@@ -71,4 +74,15 @@ test("resetRuntimeAgents restores agents to idle-ready state", () => {
 
   assert.equal(runtime.agents[0]?.state, "idle");
   assert.equal(runtime.agents[0]?.task, "Ready");
+  assert.equal(runtime.agents[0]?.paused, false);
+});
+
+test("requestRuntimeCancel marks running agents and blocks further progress", () => {
+  const runtime = createUserRuntime(makeAgents);
+
+  requestRuntimeCancel(runtime);
+
+  assert.equal(runtime.cancelRequested, true);
+  assert.equal(runtime.agents[0]?.task, "Stopping workflow…");
+  assert.throws(() => ensureRuntimeActive(runtime), WorkflowCancelledError);
 });

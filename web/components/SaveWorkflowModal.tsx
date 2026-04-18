@@ -5,10 +5,19 @@ import { useState } from "react";
 interface Props {
   onSave: (name: string) => Promise<void>;
   onClose: () => void;
+  initialName?: string;
+  title?: string;
+  confirmLabel?: string;
 }
 
-export default function SaveWorkflowModal({ onSave, onClose }: Props) {
-  const [name, setName] = useState("");
+export default function SaveWorkflowModal({
+  onSave,
+  onClose,
+  initialName = "",
+  title = "Save Workflow",
+  confirmLabel = "Save",
+}: Props) {
+  const [name, setName] = useState(initialName);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,7 +38,7 @@ export default function SaveWorkflowModal({ onSave, onClose }: Props) {
   return (
     <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
       <div className="bg-gray-800 border border-gray-700 rounded-xl px-6 py-5 w-80 shadow-2xl">
-        <h3 className="text-white font-semibold text-sm mb-4">Save Workflow</h3>
+        <h3 className="text-white font-semibold text-sm mb-4">{title}</h3>
 
         <input
           type="text"
@@ -55,7 +64,7 @@ export default function SaveWorkflowModal({ onSave, onClose }: Props) {
             disabled={saving || !name.trim()}
             className="flex-1 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 text-white text-sm font-medium rounded-lg transition-colors"
           >
-            {saving ? "Saving…" : "Save"}
+            {saving ? "Saving…" : confirmLabel}
           </button>
         </div>
       </div>

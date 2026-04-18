@@ -7,8 +7,11 @@ interface Props {
   sessions: SessionMeta[];
   loading: boolean;
   activeSessionId?: string | null;
+  selectedSessionId?: string | null;
+  compact?: boolean;
   onReplay: (sessionId: string) => void;
   onShare: (sessionId: string) => Promise<void>;
+  onInspect: (sessionId: string) => Promise<void> | void;
   onRefresh: () => Promise<void> | void;
 }
 
@@ -30,10 +33,22 @@ export default function SessionHistoryPanel({
   sessions,
   loading,
   activeSessionId,
+  selectedSessionId,
+  compact = false,
   onReplay,
   onShare,
+  onInspect,
   onRefresh,
 }: Props) {
+  const chrome = {
+    bg: "#0F172A",
+    bgMid: "#111827",
+    card: "#1F2937",
+    border: "#374151",
+    text: "#E5E7EB",
+    textMuted: "#9CA3AF",
+    accent: "#3B82F6",
+  };
   const [sharingId, setSharingId] = useState<string | null>(null);
 
   async function handleShare(sessionId: string) {
@@ -47,42 +62,47 @@ export default function SessionHistoryPanel({
 
   return (
     <aside
-      className="w-[300px] shrink-0"
       style={{
-        background: "#120d08",
-        borderLeft: "3px solid #3D2409",
+        width: compact ? 272 : 320,
+        flexShrink: 0,
+        height: "100vh",
+        background: chrome.bg,
+        borderLeft: `1px solid ${chrome.border}`,
         display: "flex",
         flexDirection: "column",
+        fontFamily: "Inter, system-ui, sans-serif",
+        boxShadow: "inset 1px 0 0 rgba(255,255,255,0.04), -10px 0 30px rgba(0,0,0,0.18)",
       }}
     >
       <div
         style={{
-          padding: "10px 12px",
-          borderBottom: "2px solid #3D2409",
-          background: "#1a1208",
+          padding: "16px",
+          borderBottom: `1px solid ${chrome.border}`,
+          background: chrome.bgMid,
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
         }}
       >
         <div>
-          <div style={{ color: "#E9D5FF", fontSize: 10, letterSpacing: "0.1em", fontFamily: "monospace" }}>
+          <div style={{ color: chrome.text, fontSize: compact ? 16 : 18, fontWeight: 600 }}>
             SESSION LOG
           </div>
-          <div style={{ color: "#7A5230", fontSize: 8, fontFamily: "monospace" }}>
+          <div style={{ color: chrome.textMuted, fontSize: compact ? 13 : 14 }}>
             Replay and share recent runs
           </div>
         </div>
         <button
           onClick={() => void onRefresh()}
           style={{
-            background: "#1C1208",
-            border: "2px solid #4A2F14",
-            color: "#A78BFA",
-            fontFamily: "monospace",
-            fontSize: 7,
-            letterSpacing: "0.08em",
-            padding: "5px 8px",
+            background: chrome.card,
+            minHeight: 40,
+            border: `1px solid ${chrome.border}`,
+            borderRadius: 8,
+            color: chrome.text,
+            fontSize: 14,
+            fontWeight: 500,
+            padding: "0 14px",
             cursor: "pointer",
           }}
         >
@@ -90,60 +110,70 @@ export default function SessionHistoryPanel({
         </button>
       </div>
 
-      <div style={{ flex: 1, overflowY: "auto", padding: 10, display: "flex", flexDirection: "column", gap: 8 }}>
+      <div style={{ flex: 1, overflowY: "auto", padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
         {loading ? (
-          <div className="orbi-shimmer-bar" style={{ height: 72, borderRadius: 12, border: "2px solid #3D2409" }} />
+          <div className="orbi-shimmer-bar" style={{ height: 72, borderRadius: 12, border: `2px solid ${chrome.border}` }} />
         ) : sessions.length === 0 ? (
           <div
             style={{
-              border: "2px dashed #3D2409",
-              color: "#7A5230",
-              fontFamily: "monospace",
-              fontSize: 8,
-              padding: 16,
+              border: `1px dashed ${chrome.accent}`,
+              borderRadius: 12,
+              color: chrome.textMuted,
+              fontSize: 14,
+              padding: compact ? 14 : 16,
               textAlign: "center",
             }}
           >
-            No sessions yet. Run a task and it will show up here.
+            No runs yet.
+            <div style={{ marginTop: 8, fontSize: 13, lineHeight: 1.6 }}>
+              Start a task to build your first replay, share link, and session timeline.
+            </div>
           </div>
         ) : (
           sessions.map((session) => {
             const active = session.id === activeSessionId;
+            const selected = session.id === selectedSessionId;
             return (
               <div
                 key={session.id}
                 style={{
-                  background: active ? "#21120d" : "#17100b",
-                  border: `2px solid ${active ? "#7C3AED" : "#3D2409"}`,
-                  padding: 10,
+                  background: active || selected ? "#21739A" : chrome.card,
+                  border: `1px solid ${active ? "#60A5FA" : selected ? chrome.accent : chrome.border}`,
+                  borderRadius: 12,
+                  padding: 12,
                   display: "flex",
                   flexDirection: "column",
                   gap: 8,
-                  boxShadow: active ? "0 0 0 1px #A78BFA33" : "none",
+                  boxShadow: active || selected ? "0 12px 24px rgba(0,0,0,0.18)" : "none",
                 }}
               >
                 <div style={{ display: "flex", justifyContent: "space-between", gap: 8 }}>
                   <div style={{ minWidth: 0 }}>
                     <div
                       style={{
-                        color: "#F5CBA7",
-                        fontFamily: "monospace",
-                        fontSize: 8,
+                        color: chrome.text,
+                        fontSize: 14,
+                        fontWeight: 500,
                         lineHeight: 1.6,
                         wordBreak: "break-word",
                       }}
                     >
                       {session.task}
                     </div>
-                    <div style={{ color: "#7A5230", fontFamily: "monospace", fontSize: 7 }}>
+                    <div style={{ color: chrome.textMuted, fontSize: 12 }}>
                       {formatDate(session.createdAt)}
                     </div>
+                    {session.provider && (
+                      <div style={{ color: "#93C5FD", fontSize: 12, marginTop: 4, fontWeight: 600, textTransform: "uppercase" }}>
+                        {session.provider}
+                      </div>
+                    )}
                   </div>
                   <div
                     style={{
-                      color: "#FCD34D",
-                      fontFamily: "monospace",
-                      fontSize: 7,
+                      color: "#FFF3B0",
+                      fontSize: 12,
+                      fontWeight: 600,
                       whiteSpace: "nowrap",
                     }}
                   >
@@ -153,15 +183,34 @@ export default function SessionHistoryPanel({
 
                 <div style={{ display: "flex", gap: 6 }}>
                   <button
+                    onClick={() => void onInspect(session.id)}
+                    style={{
+                      flex: 1,
+                      minHeight: 40,
+                      background: "#1F2937",
+                      border: `1px solid ${chrome.border}`,
+                      borderRadius: 8,
+                      color: chrome.text,
+                      fontSize: 14,
+                      fontWeight: 500,
+                      padding: "0 10px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    DETAILS
+                  </button>
+                  <button
                     onClick={() => onReplay(session.id)}
                     style={{
                       flex: 1,
-                      background: "#2e1065",
-                      border: "2px solid #7C3AED",
-                      color: "#C4B5FD",
-                      fontFamily: "monospace",
-                      fontSize: 7,
-                      padding: "5px 7px",
+                      minHeight: 40,
+                      background: "#2563EB",
+                      border: `1px solid #1D4ED8`,
+                      borderRadius: 8,
+                      color: "#F8FAFC",
+                      fontSize: 14,
+                      fontWeight: 600,
+                      padding: "0 10px",
                       cursor: "pointer",
                     }}
                   >
@@ -172,12 +221,14 @@ export default function SessionHistoryPanel({
                     disabled={sharingId === session.id}
                     style={{
                       flex: 1,
-                      background: "#1C1208",
-                      border: "2px solid #4A2F14",
-                      color: "#A78BFA",
-                      fontFamily: "monospace",
-                      fontSize: 7,
-                      padding: "5px 7px",
+                      background: chrome.bgMid,
+                      minHeight: 40,
+                      border: `1px solid ${chrome.border}`,
+                      borderRadius: 8,
+                      color: chrome.text,
+                      fontSize: 14,
+                      fontWeight: 500,
+                      padding: "0 10px",
                       cursor: "pointer",
                       opacity: sharingId === session.id ? 0.5 : 1,
                     }}

@@ -31,8 +31,17 @@ model StoredSession {
   task         String
   frames       String
   totalCostUsd Float    @default(0)
+  provider     String?  @default("anthropic")
   shareToken   String?  @unique
   userId       String?
   user         User?    @relation(fields: [userId], references: [id])
   createdAt     DateTime @default(now())
+}
+
+model RateLimitBucket {
+  id        String   @id
+  scope     String
+  count     Int
+  resetAt   DateTime
+  updatedAt DateTime @updatedAt
 }

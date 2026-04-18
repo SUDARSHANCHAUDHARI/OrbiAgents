@@ -10,6 +10,7 @@ export interface AgentInput {
   agentState: string;
   paused: boolean;
   paletteIndex: number;
+  homeTile: TileCoord;
 }
 
 interface AgentMotion {
@@ -36,7 +37,7 @@ export function createGameLoop(
 
   function getOrCreateMotion(agent: AgentInput): AgentMotion {
     if (motions.has(agent.id)) return motions.get(agent.id)!;
-    const home = homeTiles[agent.id] ?? { col: 5, row: 5 };
+    const home = agent.homeTile ?? homeTiles[agent.id] ?? { col: 5, row: 5 };
     const motion: AgentMotion = {
       path: [], pathIdx: 0,
       col: home.col, row: home.row,
@@ -55,6 +56,7 @@ export function createGameLoop(
 
     const chars: CharacterRenderState[] = lastAgents.map((agent, i) => {
       const motion = getOrCreateMotion(agent);
+      motion.homeTile = agent.homeTile ?? motion.homeTile;
 
       if (agent.paused) {
         return toRenderState(agent, motion, i);
@@ -64,7 +66,7 @@ export function createGameLoop(
         Math.abs(motion.col - motion.homeTile.col) < 0.1 &&
         Math.abs(motion.row - motion.homeTile.row) < 0.1;
 
-      if (agent.agentState !== "idle" && !atHome && motion.path.length === 0) {
+      if (!atHome && motion.path.length === 0) {
         motion.path = findPath(
           Math.round(motion.col), Math.round(motion.row),
           motion.homeTile.col, motion.homeTile.row,

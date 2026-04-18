@@ -18,6 +18,8 @@ interface WorkflowResult {
 
 interface Props {
   result: WorkflowResult;
+  compact?: boolean;
+  provider?: string | null;
   onClose: () => void;
   onReplay: (sessionId: string) => void;
 }
@@ -28,10 +30,10 @@ function CodeBlock({ code }: { code: string }) {
     <div className="orbi-code-block overflow-x-auto">
       {lines.map((line, i) => (
         <div key={i} className="orbi-line flex">
-          <span className="shrink-0 w-8 text-right text-[10px] font-mono text-gray-700 select-none pr-3 pt-0.5">
+          <span className="shrink-0 w-8 text-right text-[10px] font-mono select-none pr-3 pt-0.5" style={{ color: "#8BCFE6" }}>
             {i + 1}
           </span>
-          <span className="text-[11px] font-mono text-green-300/90 leading-relaxed whitespace-pre">
+          <span className="text-[11px] font-mono leading-relaxed whitespace-pre" style={{ color: "#E8FCFF" }}>
             {line || " "}
           </span>
         </div>
@@ -40,7 +42,15 @@ function CodeBlock({ code }: { code: string }) {
   );
 }
 
-export default function ResultPanel({ result, onClose, onReplay }: Props) {
+export default function ResultPanel({ result, compact = false, provider, onClose, onReplay }: Props) {
+  const chrome = {
+    bg: "#0F172A",
+    bgMid: "#111827",
+    border: "#374151",
+    text: "#E5E7EB",
+    textMuted: "#9CA3AF",
+    accent: "#3B82F6",
+  };
   const [activeStepId, setActiveStepId] = useState<string>(result.steps[0]?.nodeId ?? "");
   const [copied, setCopied] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
@@ -67,12 +77,17 @@ export default function ResultPanel({ result, onClose, onReplay }: Props) {
   }
 
   return (
-    <div style={{ width: 420, background: "#0d0907", borderLeft: "3px solid #3D2409", display: "flex", flexDirection: "column", fontFamily: "monospace" }}>
+    <div style={{ width: compact ? 340 : 420, flexShrink: 0, height: "100vh", background: chrome.bg, borderLeft: `1px solid ${chrome.border}`, display: "flex", flexDirection: "column", fontFamily: "Inter, system-ui, sans-serif" }}>
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", borderBottom: "2px solid #3D2409", background: "#1a1208" }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px", borderBottom: `1px solid ${chrome.border}`, background: chrome.bgMid }}>
         <div className="flex items-center gap-2.5">
           <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-          <h2 className="text-white font-semibold text-sm">Workflow Complete</h2>
+          <h2 className="text-white font-semibold text-sm" style={{ fontSize: 18 }}>Workflow Complete</h2>
+          {provider && (
+            <span className="text-[10px] font-semibold uppercase rounded-md px-1.5 py-0.5" style={{ color: "#93C5FD", background: "rgba(59,130,246,0.12)", border: "1px solid rgba(59,130,246,0.25)" }}>
+              {provider}
+            </span>
+          )}
           {costLabel && (
             <span className="text-[10px] font-mono font-bold text-yellow-400 bg-yellow-400/10 border border-yellow-400/20 rounded-md px-1.5 py-0.5">
               {costLabel}
@@ -81,14 +96,15 @@ export default function ResultPanel({ result, onClose, onReplay }: Props) {
         </div>
         <button
           onClick={onClose}
-          className="text-gray-600 hover:text-gray-300 text-base leading-none transition-colors"
+          className="text-base leading-none transition-colors"
+          style={{ color: chrome.textMuted }}
         >
           ✕
         </button>
       </div>
 
-      {result.steps.length > 0 && (
-        <div style={{ display: "flex", borderBottom: "2px solid #3D2409", overflowX: "auto" as const }}>
+      {result.steps.length > 0 ? (
+        <div style={{ display: "flex", borderBottom: `2px solid ${chrome.border}`, overflowX: "auto" as const }}>
           {result.steps.map((step) => {
             const selected = step.nodeId === activeStep?.nodeId;
             return (
@@ -98,12 +114,11 @@ export default function ResultPanel({ result, onClose, onReplay }: Props) {
                 style={{
                   flex: 1,
                   padding: "7px",
-                  background: selected ? "#1a1208" : "transparent",
-                  borderBottom: selected ? "2px solid #7C3AED" : "2px solid transparent",
-                  color: selected ? "#A78BFA" : "#7A5230",
-                  fontFamily: "monospace",
-                  fontSize: 8,
-                  letterSpacing: "0.1em",
+                  background: selected ? chrome.bgMid : "transparent",
+                  borderBottom: selected ? `2px solid ${chrome.accent}` : "2px solid transparent",
+                  color: selected ? chrome.text : chrome.textMuted,
+                  fontSize: 14,
+                  fontWeight: 500,
                   cursor: "pointer",
                   borderLeft: "none",
                   borderRight: "none",
@@ -116,6 +131,10 @@ export default function ResultPanel({ result, onClose, onReplay }: Props) {
             );
           })}
         </div>
+      ) : (
+        <div style={{ padding: 16, color: chrome.textMuted, fontSize: 14, lineHeight: 1.6 }}>
+          No workflow steps were recorded for this run yet.
+        </div>
       )}
 
       {/* Content */}
@@ -123,14 +142,28 @@ export default function ResultPanel({ result, onClose, onReplay }: Props) {
         {activeStep && (
           <div className="p-4">
             {isCodeLikeStep(activeStep.type) ? (
-              <div className="bg-gray-950 rounded-xl border border-gray-800 overflow-hidden">
-                <div className="flex items-center justify-between px-4 py-2 border-b border-gray-800 bg-gray-900/60">
-                  <span className="text-[10px] text-gray-600 font-mono uppercase tracking-wider">
+              <div
+                className="rounded-xl overflow-hidden"
+                style={{
+                  background: "#111827",
+                  border: `1px solid ${chrome.border}`,
+                  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
+                }}
+              >
+                <div
+                  className="flex items-center justify-between px-4 py-2"
+                  style={{
+                    borderBottom: `1px solid ${chrome.border}`,
+                    background: "#1F2937",
+                  }}
+                >
+                  <span className="text-[10px] uppercase tracking-wider" style={{ color: chrome.textMuted, fontSize: 12, fontWeight: 700 }}>
                     {NODE_KIND_LABEL[activeStep.type]}
                   </span>
                   <button
                     onClick={() => navigator.clipboard.writeText(activeStep.output)}
-                    className="text-[10px] text-gray-600 hover:text-gray-400 transition-colors"
+                    className="text-[10px] transition-colors"
+                    style={{ color: chrome.accent }}
                   >
                     Copy
                   </button>
@@ -140,7 +173,15 @@ export default function ResultPanel({ result, onClose, onReplay }: Props) {
                 </div>
               </div>
             ) : (
-              <div className="bg-gray-800/60 rounded-xl p-4 text-xs text-gray-300 leading-relaxed whitespace-pre-wrap font-mono border border-gray-700/50">
+              <div
+                className="rounded-xl p-4 text-xs leading-relaxed whitespace-pre-wrap font-mono"
+                style={{
+                  background: "#1F2937",
+                  color: chrome.text,
+                  border: `1px solid ${chrome.border}`,
+                  boxShadow: "inset 0 1px 0 rgba(255,255,255,0.04)",
+                }}
+              >
                 {activeStep.output}
               </div>
             )}
@@ -149,14 +190,14 @@ export default function ResultPanel({ result, onClose, onReplay }: Props) {
       </div>
 
       {/* Actions */}
-      <div style={{ padding: "10px 12px", borderTop: "2px solid #3D2409", display: "flex", flexDirection: "column" as const, gap: 8 }}>
+      <div style={{ padding: "16px", borderTop: `1px solid ${chrome.border}`, display: "flex", flexDirection: "column" as const, gap: 8 }}>
         {shareError && (
           <div style={{ color: "#FCA5A5", fontSize: 9, fontFamily: "monospace" }}>
             {shareError}
           </div>
         )}
         {shareUrl && (
-          <div style={{ background: "#1a1208", border: "2px solid #3D2409", padding: "4px 8px", fontSize: 9, fontFamily: "monospace", color: "#A78BFA", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
+          <div style={{ background: chrome.bgMid, border: `1px solid ${chrome.border}`, borderRadius: 8, padding: "8px 10px", fontSize: 13, color: chrome.text, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
             {shareUrl}
           </div>
         )}
@@ -164,13 +205,13 @@ export default function ResultPanel({ result, onClose, onReplay }: Props) {
           <button
             onClick={handleShare}
             disabled={sharing}
-            style={{ flex: 1, background: "#1a1208", border: "2px solid #3D2409", color: "#7A5230", fontFamily: "monospace", fontSize: 8, letterSpacing: "0.1em", padding: "7px", cursor: "pointer" }}
+            style={{ flex: 1, minHeight: 40, background: chrome.bgMid, border: `1px solid ${chrome.border}`, borderRadius: 8, color: chrome.text, fontSize: 14, fontWeight: 500, padding: "0 12px", cursor: "pointer" }}
           >
             {copied ? "✓ COPIED" : sharing ? "CREATING..." : "SHARE"}
           </button>
           <button
             onClick={() => onReplay(result.sessionId)}
-            style={{ flex: 1, background: "#2e1065", border: "2px solid #7C3AED", color: "#A78BFA", fontFamily: "monospace", fontSize: 8, letterSpacing: "0.1em", padding: "7px", cursor: "pointer" }}
+            style={{ flex: 1, minHeight: 40, background: "#2563EB", border: `1px solid #1D4ED8`, borderRadius: 8, color: "#F8FAFC", fontSize: 14, fontWeight: 600, padding: "0 12px", cursor: "pointer" }}
           >
             ▶ REPLAY
           </button>

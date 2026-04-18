@@ -1,5 +1,5 @@
 import { getApiBaseUrl } from "./config";
-import { Provider, SessionMeta } from "./types";
+import { Provider, Session, SessionMeta } from "./types";
 
 const API = getApiBaseUrl();
 const TOKEN_KEY = "orbi_token";
@@ -79,11 +79,11 @@ export async function listWorkflows(): Promise<WorkflowMeta[]> {
   return res.json() as Promise<WorkflowMeta[]>;
 }
 
-export async function saveWorkflow(name: string, data: unknown): Promise<WorkflowMeta> {
+export async function saveWorkflow(name: string, data: unknown, id?: string): Promise<WorkflowMeta> {
   const res = await fetch(`${API}/workflows/save`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...authHeaders() },
-    body: JSON.stringify({ name, data }),
+    body: JSON.stringify({ id, name, data }),
   });
   const body = (await res.json()) as WorkflowMeta & { error?: string };
   if (!res.ok) throw new Error(body.error ?? "Save failed");
@@ -118,6 +118,17 @@ export async function listSessions(): Promise<SessionMeta[]> {
   });
   if (!res.ok) return [];
   return res.json() as Promise<SessionMeta[]>;
+}
+
+export async function getSessionDetails(sessionId: string): Promise<Session> {
+  const res = await fetch(`${API}/replay/${sessionId}`, {
+    headers: authHeaders(),
+  });
+  const body = (await res.json()) as Session & { error?: string };
+  if (!res.ok) {
+    throw new Error(body.error ?? "Could not load session");
+  }
+  return body;
 }
 
 export async function createReplayShareLink(sessionId: string): Promise<{ token: string; url: string }> {

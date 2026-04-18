@@ -5,11 +5,34 @@
 /* ── Base ──────────────────────────────────────────────────────────── */
 :root {
   color-scheme: dark;
+  --app-bg: #0b0f14;
+  --map-bg: #111827;
+  --panel-bg: #0f172a;
+  --panel-surface: #1f2937;
+  --border-subtle: #1f2937;
+  --border-strong: #374151;
+  --text-primary: #e5e7eb;
+  --text-secondary: #9ca3af;
+  --text-muted: #6b7280;
+  --state-thinking: #f59e0b;
+  --state-coding: #3b82f6;
+  --state-done: #22c55e;
+  --state-idle: #6b7280;
+  --state-error: #ef4444;
+  --run-primary: #2563eb;
+  --run-primary-hover: #1d4ed8;
+}
+
+html, body {
+  background: var(--app-bg);
 }
 
 body {
+  margin: 0;
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   -webkit-font-smoothing: antialiased;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--text-primary);
 }
 
 /* ── Custom scrollbar ───────────────────────────────────────────────── */
@@ -56,6 +79,25 @@ body {
   color: #374151;
   user-select: none;
   font-size: 10px;
+}
+
+.orbi-control {
+  min-height: 40px;
+  border-radius: 8px;
+  transition: transform 180ms ease-out, background-color 180ms ease-out, border-color 180ms ease-out, box-shadow 180ms ease-out;
+}
+
+.orbi-control:hover {
+  transform: scale(1.02);
+}
+
+.orbi-input {
+  transition: border-color 180ms ease-out, box-shadow 180ms ease-out, background-color 180ms ease-out;
+}
+
+.orbi-input:focus {
+  border-color: #2563eb !important;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.18), inset 0 1px 0 rgba(255,255,255,0.04) !important;
 }
 
 /* ── Shimmer loading bar ───────────────────────────────────────────── */

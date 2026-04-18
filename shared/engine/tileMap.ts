@@ -10,9 +10,9 @@ export const GRID_COLS = 45;
 export const GRID_ROWS = 30;
 
 // ── Tile map ───────────────────────────────────────────────────────
-// Columns 0-30: wood floor
-// Columns 31-44, rows 0-15: tiled meeting room
-// Columns 31-44, rows 16-29: carpet lounge
+// Columns 0-27: workspace wood floor
+// Columns 28-44, rows 0-18: tiled collaboration room
+// Columns 28-44, rows 19-29: carpet lounge
 // Row 0: bookshelf wall (all columns)
 
 export function buildTileMap(): TileType[][] {
@@ -22,9 +22,9 @@ export function buildTileMap(): TileType[][] {
     for (let c = 0; c < GRID_COLS; c++) {
       if (r === 0) {
         row.push(TileType.WALL); // bookshelf row
-      } else if (c <= 30) {
+      } else if (c <= 27) {
         row.push(TileType.FLOOR_WOOD);
-      } else if (r <= 15) {
+      } else if (r <= 18) {
         row.push(TileType.FLOOR_TILE);
       } else {
         row.push(TileType.FLOOR_CARPET);
@@ -98,10 +98,10 @@ export function buildFurnitureInstances(): FurnitureInstance[] {
 
 // ── Floor tile colors ──────────────────────────────────────────────
 export const FLOOR_COLORS: Record<TileType, string[]> = {
-  [TileType.FLOOR_WOOD]:   ["#5C3D1E","#7A5230","#8B6040","#6B4A28"],
-  [TileType.FLOOR_TILE]:   ["#C8B89A","#B8A88A","#D8C8AA","#C0B090"],
-  [TileType.FLOOR_CARPET]: ["#1E3A5F","#162D47","#1A3254","#152840"],
-  [TileType.WALL]:         ["#3D1A08"],
+  [TileType.FLOOR_WOOD]:   ["#34261D", "#412F24", "#4C3729", "#2B2119"],
+  [TileType.FLOOR_TILE]:   ["#374151", "#445064", "#55627A", "#313B4D"],
+  [TileType.FLOOR_CARPET]: ["#1A2640", "#223150", "#1F2B46", "#162238"],
+  [TileType.WALL]:         ["#241812"],
   [TileType.VOID]:         [],
 };
 

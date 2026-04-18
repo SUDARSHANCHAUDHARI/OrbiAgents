@@ -22,6 +22,8 @@ export async function runWorkflow(
   waitIfPaused: PauseWaiter,
   provider: Provider = DEFAULT_PROVIDER
 ): Promise<WorkflowResult> {
+  await waitIfPaused("1");
+
   // ── Phase 1: Planner (Orbi-Alpha) ──────────────────────────────
   update("1", {
     state: "thinking",

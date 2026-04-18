@@ -72,6 +72,15 @@ test("protected replay endpoints enforce session ownership", async () => {
   assert.equal(otherRes.status, 404);
 });
 
+test("health endpoint reports basic server status", async () => {
+  const res = await fetch(`${baseUrl}/health`);
+  assert.equal(res.status, 200);
+  const body = (await res.json()) as { status: string; uptimeSec: number; runtimes: number };
+  assert.equal(body.status, "ok");
+  assert.equal(typeof body.uptimeSec, "number");
+  assert.equal(typeof body.runtimes, "number");
+});
+
 test("share links can be created by the owner and viewed publicly", async () => {
   const sessionId = `share-session-${Date.now()}`;
   const owner = await createTestUser("share-owner");
@@ -116,4 +125,14 @@ test("websocket rejects missing token and accepts authenticated clients", async 
 
     ws.on("error", reject);
   });
+});
+
+test("workflow stop returns conflict when no run is active", async () => {
+  const user = await createTestUser("stop-idle");
+  const res = await fetch(`${baseUrl}/workflow/stop`, {
+    method: "POST",
+    headers: makeHeaders(user.token),
+  });
+
+  assert.equal(res.status, 409);
 });
