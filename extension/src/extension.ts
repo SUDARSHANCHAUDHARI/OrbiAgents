@@ -283,7 +283,9 @@ export function activate(context: vscode.ExtensionContext) {
 
   // ── View provider (VS Code panel/sidebar view) ────────────────────────
   context.subscriptions.push(
-    vscode.window.registerWebviewViewProvider(OrbiViewProvider.viewId, viewProvider)
+    vscode.window.registerWebviewViewProvider(OrbiViewProvider.viewId, viewProvider, {
+      webviewOptions: { retainContextWhenHidden: true },
+    })
   );
 
   // ── Commands ──────────────────────────────────────────────────────────

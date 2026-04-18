@@ -29,12 +29,17 @@ function dispatchMessage(msg: Record<string, unknown>): void {
 
 // ── Shared HTML generation ────────────────────────────────────────────────
 
-function buildWebviewOptions(extensionUri: vscode.Uri): vscode.WebviewOptions {
+// Base options shared by both panel and view provider
+function buildBaseOptions(extensionUri: vscode.Uri): vscode.WebviewOptions {
   return {
     enableScripts: true,
-    retainContextWhenHidden: true,
     localResourceRoots: [vscode.Uri.joinPath(extensionUri, "webview-ui", "dist")],
   };
+}
+
+// Panel-specific options (includes retainContextWhenHidden which is WebviewPanelOptions)
+function buildPanelOptions(extensionUri: vscode.Uri): vscode.WebviewPanelOptions & vscode.WebviewOptions {
+  return { ...buildBaseOptions(extensionUri), retainContextWhenHidden: true };
 }
 
 function getWebviewHtml(webview: vscode.Webview, extensionUri: vscode.Uri): string {
@@ -92,7 +97,7 @@ export class OrbiPanel {
       "orbiagents",
       "OrbiAgents",
       column,
-      buildWebviewOptions(extensionUri),
+      buildPanelOptions(extensionUri),
     );
 
     OrbiPanel.currentPanel = new OrbiPanel(panel, extensionUri);
@@ -137,7 +142,7 @@ export class OrbiViewProvider implements vscode.WebviewViewProvider {
   resolveWebviewView(webviewView: vscode.WebviewView): void {
     OrbiViewProvider.currentView = webviewView;
 
-    webviewView.webview.options = buildWebviewOptions(this.extensionUri);
+    webviewView.webview.options = buildBaseOptions(this.extensionUri);
     webviewView.webview.html = getWebviewHtml(webviewView.webview, this.extensionUri);
 
     webviewView.webview.onDidReceiveMessage(
