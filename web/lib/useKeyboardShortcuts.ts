@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 interface Shortcuts {
+  enabled: boolean;
   onRun: () => void;
   onStop: () => void;
   onTogglePause: () => void;
@@ -16,13 +17,20 @@ function isTyping(e: KeyboardEvent): boolean {
 }
 
 export function useKeyboardShortcuts({
+  enabled,
   onRun,
   onStop,
   onTogglePause,
   onClosePanel,
   onToggleLogs,
 }: Shortcuts) {
+  // Keep latest callbacks in a ref so the effect never needs to re-register
+  const cbRef = useRef({ onRun, onStop, onTogglePause, onClosePanel, onToggleLogs });
+  cbRef.current = { onRun, onStop, onTogglePause, onClosePanel, onToggleLogs };
+
   useEffect(() => {
+    if (!enabled) return;
+
     function handler(e: KeyboardEvent) {
       if (isTyping(e)) return;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
@@ -30,27 +38,27 @@ export function useKeyboardShortcuts({
       switch (e.key) {
         case "r": case "R":
           e.preventDefault();
-          onRun();
+          cbRef.current.onRun();
           break;
         case "s": case "S":
           e.preventDefault();
-          onStop();
+          cbRef.current.onStop();
           break;
         case " ":
           e.preventDefault();
-          onTogglePause();
+          cbRef.current.onTogglePause();
           break;
         case "Escape":
-          onClosePanel();
+          cbRef.current.onClosePanel();
           break;
         case "l": case "L":
           e.preventDefault();
-          onToggleLogs();
+          cbRef.current.onToggleLogs();
           break;
       }
     }
 
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [onRun, onStop, onTogglePause, onClosePanel, onToggleLogs]);
+  }, [enabled]);
 }

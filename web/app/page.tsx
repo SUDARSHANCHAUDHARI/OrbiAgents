@@ -198,6 +198,26 @@ export default function Home() {
     return () => clearTimeout(timeout);
   }, [historyMessage]);
 
+  const isReplaying = replayRef.current !== null;
+
+  useKeyboardShortcuts({
+    enabled: isAuthed,
+    onRun: () => { if (!running && !isReplaying) { showBuilder ? void handleWorkflowRun() : void handleRun(); } },
+    onStop: () => { if (running) void handleStopRun(); else if (isReplaying) stopReplay(); },
+    onTogglePause: () => {
+      if (selected) {
+        selected.paused ? send({ type: "resume", agentId: selected.id }) : send({ type: "pause", agentId: selected.id });
+      }
+    },
+    onClosePanel: () => {
+      if (selected) setSelected(null);
+      else if (result) setResult(null);
+      else if (selectedSession) setSelectedSession(null);
+      else if (isReplaying) stopReplay();
+    },
+    onToggleLogs: () => setShowLogs((v) => !v),
+  });
+
   if (!isAuthed) return null; // avoid flash before redirect
 
   async function loadProviders() {
@@ -393,24 +413,6 @@ export default function Home() {
     }
   }
 
-  const isReplaying = replayRef.current !== null;
-
-  useKeyboardShortcuts({
-    onRun: () => { if (!running && !isReplaying) { showBuilder ? void handleWorkflowRun() : void handleRun(); } },
-    onStop: () => { if (running) void handleStopRun(); else if (isReplaying) stopReplay(); },
-    onTogglePause: () => {
-      if (selected) {
-        selected.paused ? send({ type: "resume", agentId: selected.id }) : send({ type: "pause", agentId: selected.id });
-      }
-    },
-    onClosePanel: () => {
-      if (selected) setSelected(null);
-      else if (result) setResult(null);
-      else if (selectedSession) setSelectedSession(null);
-      else if (isReplaying) stopReplay();
-    },
-    onToggleLogs: () => setShowLogs((v) => !v),
-  });
   const thinkingCount = agents.filter((agent) => agent.state === "thinking").length;
   const codingCount = agents.filter((agent) => agent.state === "coding").length;
   const activeSummary = [
