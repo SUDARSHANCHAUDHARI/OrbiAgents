@@ -20,7 +20,7 @@ const MAX_HOOK_BODY_SIZE = 65_536; // 64 KB
 export class HookServer {
   private server: http.Server | null = null;
   private config: ServerConfig | null = null;
-  private ownsServer = false;
+  ownsServer = false;
   private callback: HookEventCallback | null = null;
   private startedAt = 0;
 

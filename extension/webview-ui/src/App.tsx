@@ -35,8 +35,38 @@ interface AgentUpdate {
   activeToolName?: string;
 }
 
+interface DiagnosticsData {
+  hookServerPort: number | null;
+  hookServerOwner: boolean;
+  hookServerPid: number | null;
+  hookEventsReceived: number;
+  activeSessions: number;
+  hooksInstalled: boolean;
+  watcherRunning: boolean;
+  uptime: number;
+  workspaceFolder: string | null;
+  assetPackLoaded: boolean;
+  assetPackItems: number;
+}
+
+interface CharPos {
+  id: string;
+  col: number;
+  row: number;
+}
+
 const CHAR_W = 16;
 const CHAR_H = 26;
+
+const STATE_COLORS: Record<string, string> = {
+  thinking: "#818CF8",
+  coding: "#34D399",
+  reading: "#60A5FA",
+  "permission-waiting": "#FBBF24",
+  done: "#A78BFA",
+  idle: "#4B5563",
+  debugging: "#F87171",
+};
 
 export default function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -49,6 +79,14 @@ export default function App() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const selectedIdRef = useRef<string | null>(null);
   selectedIdRef.current = selectedId;
+
+  // Always-show labels
+  const [alwaysShowLabels, setAlwaysShowLabels] = useState(false);
+  const [charPositions, setCharPositions] = useState<CharPos[]>([]);
+
+  // Diagnostics
+  const [showDiag, setShowDiag] = useState(false);
+  const [diagData, setDiagData] = useState<DiagnosticsData | null>(null);
 
   // Layout editor state
   const [editMode, setEditMode] = useState(false);
@@ -70,7 +108,6 @@ export default function App() {
     setCustomItems(loadCustomFurniture());
   }, []);
 
-  // Merge base + custom whenever customItems changes
   useEffect(() => {
     furnitureRef.current = [...baseFurnitureRef.current, ...customItems.map(customItemToFurnitureInstance)];
   }, [customItems]);
@@ -95,6 +132,9 @@ export default function App() {
       if (!ctx) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       renderFrame(ctx, currentTileMap, furnitureRef.current, latestChars.current, 0, 0, ZOOM);
+
+      // Update label positions for always-show overlay
+      setCharPositions(chars.map(c => ({ id: c.id, col: c.col, row: c.row })));
     });
 
     loopRef.current = loop;
@@ -149,8 +189,14 @@ export default function App() {
   useEffect(() => {
     const handler = (event: MessageEvent) => {
       const data = event.data;
-      if (data && typeof data === "object" && data.type === "agents" && Array.isArray(data.agents)) {
+      if (!data || typeof data !== "object") return;
+
+      if (data.type === "agents" && Array.isArray(data.agents)) {
         setAgents(data.agents as AgentUpdate[]);
+      }
+
+      if (data.type === "diagnostics") {
+        setDiagData(data.payload as DiagnosticsData);
       }
     };
     window.addEventListener("message", handler);
@@ -221,6 +267,16 @@ export default function App() {
     saveCustomFurniture([]);
   }, [customItems]);
 
+  const requestDiagnostics = useCallback(() => {
+    // @ts-expect-error acquireVsCodeApi is injected by the extension host
+    const vscode = window.acquireVsCodeApi?.();
+    vscode?.postMessage({ type: "requestDiagnostics" });
+    setShowDiag(d => !d);
+  }, []);
+
+  // Build a lookup from agent id → agent for label rendering
+  const agentById = new Map(agents.map(a => [a.id, a]));
+
   return (
     <div style={{ position: "relative", width: "100%", height: "100%", overflow: "hidden" }}>
       <canvas
@@ -229,26 +285,162 @@ export default function App() {
         style={{ display: "block", width: "100%", height: "100%", cursor: editMode ? "crosshair" : "pointer" }}
       />
 
-      {/* Edit toggle */}
-      <button
-        onClick={() => setEditMode(m => !m)}
-        style={{
+      {/* Always-show label overlays */}
+      {alwaysShowLabels && charPositions.map(pos => {
+        const agent = agentById.get(pos.id);
+        if (!agent || agent.agentState === "idle") return null;
+        const px = pos.col * TILE_SIZE * ZOOM - (CHAR_W * ZOOM) / 2;
+        const py = pos.row * TILE_SIZE * ZOOM - CHAR_H * ZOOM - 18;
+        const color = STATE_COLORS[agent.agentState] ?? "#9CA3AF";
+        return (
+          <div
+            key={pos.id}
+            style={{
+              position: "absolute",
+              left: px,
+              top: py,
+              pointerEvents: "none",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 1,
+            }}
+          >
+            <div style={{
+              fontSize: 8,
+              fontFamily: "monospace",
+              color,
+              background: "rgba(0,0,0,0.7)",
+              padding: "1px 4px",
+              borderRadius: 3,
+              whiteSpace: "nowrap",
+              border: `1px solid ${color}44`,
+            }}>
+              {agent.name}
+            </div>
+            <div style={{
+              fontSize: 7,
+              fontFamily: "monospace",
+              color: "#6B7280",
+              background: "rgba(0,0,0,0.6)",
+              padding: "1px 3px",
+              borderRadius: 2,
+              whiteSpace: "nowrap",
+            }}>
+              {agent.activeToolName ?? agent.agentState}
+            </div>
+          </div>
+        );
+      })}
+
+      {/* Toolbar — top-right */}
+      <div style={{ position: "absolute", top: 8, right: 8, zIndex: 10, display: "flex", gap: 4 }}>
+        {/* Labels toggle */}
+        <button
+          onClick={() => setAlwaysShowLabels(l => !l)}
+          title="Toggle always-show agent labels"
+          style={{
+            padding: "4px 8px",
+            borderRadius: 6,
+            border: `1px solid ${alwaysShowLabels ? "#818CF8" : "#374151"}`,
+            background: alwaysShowLabels ? "#1E1B4B" : "#1F2937",
+            color: alwaysShowLabels ? "#A5B4FC" : "#9CA3AF",
+            fontSize: 10,
+            fontFamily: "monospace",
+            cursor: "pointer",
+          }}
+        >
+          {alwaysShowLabels ? "🏷 ON" : "🏷"}
+        </button>
+
+        {/* Diagnostics toggle */}
+        <button
+          onClick={requestDiagnostics}
+          title="Connection diagnostics"
+          style={{
+            padding: "4px 8px",
+            borderRadius: 6,
+            border: `1px solid ${showDiag ? "#34D399" : "#374151"}`,
+            background: showDiag ? "#064E3B" : "#1F2937",
+            color: showDiag ? "#6EE7B7" : "#9CA3AF",
+            fontSize: 10,
+            fontFamily: "monospace",
+            cursor: "pointer",
+          }}
+        >
+          DIAG
+        </button>
+
+        {/* Edit toggle */}
+        <button
+          onClick={() => setEditMode(m => !m)}
+          style={{
+            padding: "4px 10px",
+            borderRadius: 6,
+            border: `1px solid ${editMode ? "#F59E0B" : "#374151"}`,
+            background: editMode ? "#422006" : "#1F2937",
+            color: editMode ? "#FCD34D" : "#9CA3AF",
+            fontSize: 11,
+            fontFamily: "monospace",
+            cursor: "pointer",
+          }}
+        >
+          {editMode ? "✕ Done" : "✏"}
+        </button>
+      </div>
+
+      {/* Diagnostics panel */}
+      {showDiag && (
+        <div style={{
           position: "absolute",
-          top: 8,
+          top: 40,
           right: 8,
-          zIndex: 10,
-          padding: "4px 10px",
-          borderRadius: 6,
-          border: `1px solid ${editMode ? "#F59E0B" : "#374151"}`,
-          background: editMode ? "#422006" : "#1F2937",
-          color: editMode ? "#FCD34D" : "#9CA3AF",
-          fontSize: 11,
+          zIndex: 20,
+          width: 240,
+          background: "rgba(10,15,25,0.97)",
+          border: "1px solid #1F4B3A",
+          borderRadius: 8,
+          padding: "10px 12px",
           fontFamily: "monospace",
-          cursor: "pointer",
-        }}
-      >
-        {editMode ? "✕ Done" : "✏"}
-      </button>
+          fontSize: 10,
+          color: "#9CA3AF",
+          boxShadow: "0 4px 16px rgba(0,0,0,0.6)",
+        }}>
+          <div style={{ color: "#34D399", fontWeight: "bold", marginBottom: 8, fontSize: 11 }}>
+            ● Connection Diagnostics
+          </div>
+          {diagData ? (
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <tbody>
+                {[
+                  ["Hook server", diagData.hookServerPort
+                    ? `port ${diagData.hookServerPort} (${diagData.hookServerOwner ? "owner" : "secondary"})`
+                    : "stopped"],
+                  ["Hook server PID", diagData.hookServerPid ?? "—"],
+                  ["Uptime", diagData.uptime ? `${diagData.uptime}s` : "—"],
+                  ["Events received", diagData.hookEventsReceived],
+                  ["Active sessions", diagData.activeSessions],
+                  ["Hooks installed", diagData.hooksInstalled ? "✓ yes" : "✗ no"],
+                  ["JSONL watcher", diagData.watcherRunning ? "running" : "stopped"],
+                  ["Workspace", diagData.workspaceFolder
+                    ? diagData.workspaceFolder.split("/").pop()
+                    : "none"],
+                  ["Asset pack", diagData.assetPackLoaded
+                    ? `✓ ${diagData.assetPackItems} items`
+                    : "none"],
+                ].map(([k, v]) => (
+                  <tr key={String(k)}>
+                    <td style={{ color: "#6B7280", paddingRight: 8, paddingBottom: 3 }}>{k}</td>
+                    <td style={{ color: "#E5E7EB" }}>{String(v)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <div style={{ color: "#6B7280" }}>Requesting diagnostics…</div>
+          )}
+        </div>
+      )}
 
       {/* Editor toolbar */}
       {editMode && (

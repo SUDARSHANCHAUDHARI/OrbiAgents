@@ -11,10 +11,22 @@ export interface AgentUpdate {
   activeToolName?: string;
 }
 
+type WebviewMessageCallback = (msg: Record<string, unknown>) => void;
+const webviewListeners: WebviewMessageCallback[] = [];
+
 export class OrbiPanel {
   static currentPanel: OrbiPanel | undefined;
   private readonly panel: vscode.WebviewPanel;
   private disposables: vscode.Disposable[] = [];
+
+  /** Register a listener for messages posted by the webview. Returns a dispose fn. */
+  static onWebviewMessage(cb: WebviewMessageCallback): () => void {
+    webviewListeners.push(cb);
+    return () => {
+      const idx = webviewListeners.indexOf(cb);
+      if (idx !== -1) webviewListeners.splice(idx, 1);
+    };
+  }
 
   static createOrShow(extensionUri: vscode.Uri) {
     const column = vscode.window.activeTextEditor?.viewColumn ?? vscode.ViewColumn.One;
@@ -42,12 +54,20 @@ export class OrbiPanel {
   private constructor(panel: vscode.WebviewPanel, extensionUri: vscode.Uri) {
     this.panel = panel;
     this.panel.webview.html = this.getHtml(extensionUri);
-    // Do NOT pass this.disposables — the listener must not drain the array it was pushed into.
     this.panel.onDidDispose(() => this.dispose());
+
+    // Forward messages from the webview to registered listeners
+    this.panel.webview.onDidReceiveMessage((msg: Record<string, unknown>) => {
+      for (const cb of webviewListeners) cb(msg);
+    }, undefined, this.disposables);
   }
 
   sendAgents(agents: AgentUpdate[]) {
     this.panel.webview.postMessage({ type: "agents", agents });
+  }
+
+  sendDiagnostics(payload: Record<string, unknown>) {
+    this.panel.webview.postMessage({ type: "diagnostics", payload });
   }
 
   private getHtml(extensionUri: vscode.Uri): string {
@@ -75,7 +95,7 @@ export class OrbiPanel {
   }
 
   dispose() {
-    if (!OrbiPanel.currentPanel) return; // guard against re-entrancy
+    if (!OrbiPanel.currentPanel) return;
     OrbiPanel.currentPanel = undefined;
     this.panel.dispose();
     while (this.disposables.length) {

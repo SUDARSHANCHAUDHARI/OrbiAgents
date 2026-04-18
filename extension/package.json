@@ -2,7 +2,14 @@
   "name": "orbiagents",
   "displayName": "OrbiAgents",
   "description": "Live pixel office showing your Claude Code agents",
-  "version": "0.1.0",
+  "version": "0.2.0",
+  "publisher": "SudarshanTechLabs",
+  "icon": "icon.png",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SUDARSHANCHAUDHARI/Orbiagents"
+  },
   "engines": { "vscode": "^1.85.0" },
   "categories": ["Other"],
   "activationEvents": ["onStartupFinished"],
@@ -12,23 +19,41 @@
       {
         "command": "orbiagents.openPanel",
         "title": "OrbiAgents: Open Panel"
+      },
+      {
+        "command": "orbiagents.launchWithoutPermissions",
+        "title": "OrbiAgents: Launch Claude Without Permission Checks"
+      },
+      {
+        "command": "orbiagents.pickWorkspaceFolder",
+        "title": "OrbiAgents: Pick Workspace Folder"
+      },
+      {
+        "command": "orbiagents.showDiagnostics",
+        "title": "OrbiAgents: Show Diagnostics"
       }
     ],
     "menus": {
       "commandPalette": [
-        { "command": "orbiagents.openPanel" }
+        { "command": "orbiagents.openPanel" },
+        { "command": "orbiagents.launchWithoutPermissions" },
+        { "command": "orbiagents.pickWorkspaceFolder" },
+        { "command": "orbiagents.showDiagnostics" }
       ]
     }
   },
   "scripts": {
     "build": "node esbuild.mjs && pnpm --prefix webview-ui build",
     "watch": "node esbuild.mjs --watch",
-    "vscode:prepublish": "pnpm build"
+    "vscode:prepublish": "pnpm build",
+    "e2e": "playwright test --config e2e/playwright.config.ts",
+    "e2e:debug": "playwright test --config e2e/playwright.config.ts --debug"
   },
   "dependencies": {
     "chokidar": "^3.6.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.48.0",
     "@types/node": "^20.0.0",
     "@types/vscode": "^1.85.0",
     "esbuild": "^0.20.0",
