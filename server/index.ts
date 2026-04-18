@@ -355,6 +355,23 @@ app.get("/providers", (_req, res) => {
   res.json({ providers: availableProviders(), default: process.env.DEFAULT_PROVIDER ?? "anthropic" });
 });
 
+app.get("/usage", protect, async (req, res) => {
+  const userId = req.userId!;
+  const dayStart = new Date();
+  dayStart.setHours(0, 0, 0, 0);
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+  const [daily, hourly] = await Promise.all([
+    getUserSessionUsage(userId, dayStart),
+    getUserSessionUsage(userId, oneHourAgo),
+  ]);
+  res.json({
+    dailyCostUsd: daily.totalCostUsd,
+    maxDailyCostUsd: MAX_DAILY_COST_USD,
+    hourlyRuns: hourly.count,
+    maxRunsPerHour: MAX_RUNS_PER_HOUR,
+  });
+});
+
 // ── AI workflow — fixed planner→coder ─────────────────────────────
 app.post("/run", protect, workflowRateLimit, async (req, res) => {
   const { task, provider } = req.body as { task?: string; provider?: Provider };

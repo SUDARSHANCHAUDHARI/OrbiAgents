@@ -1,13 +1,18 @@
 "use client";
 
+const SPEEDS = [0.5, 1, 2, 4] as const;
+export type ReplaySpeed = (typeof SPEEDS)[number];
+
 interface Props {
   task: string;
   current: number;
   total: number;
+  speed: ReplaySpeed;
   onStop: () => void;
+  onSpeedChange: (speed: ReplaySpeed) => void;
 }
 
-export default function ReplayBar({ task, current, total, onStop }: Props) {
+export default function ReplayBar({ task, current, total, speed, onStop, onSpeedChange }: Props) {
   const pct = total > 0 ? Math.round((current / total) * 100) : 0;
   const chrome = {
     bg: "rgba(15, 23, 42, 0.96)",
@@ -21,7 +26,7 @@ export default function ReplayBar({ task, current, total, onStop }: Props) {
 
   return (
     <div
-      className="absolute bottom-5 left-1/2 -translate-x-1/2 w-[500px] rounded-2xl px-5 py-3.5 shadow-2xl z-10 animate-orbi-slide-up"
+      className="absolute bottom-5 left-1/2 -translate-x-1/2 w-[560px] rounded-2xl px-5 py-3.5 shadow-2xl z-10 animate-orbi-slide-up"
       style={{
         background: `linear-gradient(180deg, ${chrome.bgMid} 0%, ${chrome.bg} 100%)`,
         border: `2px solid ${chrome.border}`,
@@ -37,10 +42,30 @@ export default function ReplayBar({ task, current, total, onStop }: Props) {
           <span className="text-xs font-semibold tracking-wide" style={{ color: chrome.text }}>
             Replay
           </span>
-          <span className="text-xs truncate max-w-[260px]" style={{ color: chrome.textMuted }}>
+          <span className="text-xs truncate max-w-[220px]" style={{ color: chrome.textMuted }}>
             — {task}
           </span>
         </div>
+
+        {/* Speed controls */}
+        <div className="flex items-center gap-1">
+          {SPEEDS.map((s) => (
+            <button
+              key={s}
+              onClick={() => onSpeedChange(s)}
+              className="text-[11px] font-mono px-1.5 py-0.5 rounded transition-colors"
+              style={{
+                background: speed === s ? chrome.accent : "transparent",
+                color: speed === s ? "#fff" : chrome.textMuted,
+                border: `1px solid ${speed === s ? chrome.accent : chrome.border}`,
+                cursor: "pointer",
+              }}
+            >
+              {s}×
+            </button>
+          ))}
+        </div>
+
         <button
           onClick={onStop}
           className="text-xs transition-colors"

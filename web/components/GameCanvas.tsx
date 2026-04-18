@@ -213,6 +213,51 @@ export default function GameCanvas({ agents, selectedId, isReplaying, workflow, 
         boxShadow: "inset 0 1px 0 rgba(255,255,255,0.03), 0 20px 40px rgba(0,0,0,0.22)",
       }}
     >
+      {/* Sub-agent parent→child relationship lines */}
+      {(() => {
+        const subEdges: Array<{ parentId: string; childId: string }> = [];
+        for (const agent of agents) {
+          const m = agent.id.match(/^sub-(.+)-\d+$/);
+          if (m) subEdges.push({ parentId: m[1], childId: agent.id });
+        }
+        if (subEdges.length === 0) return null;
+        return (
+          <svg
+            style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 3 }}
+            width="100%"
+            height="100%"
+          >
+            <defs>
+              <marker id="dag-arrow" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto">
+                <path d="M0,0 L0,6 L6,3 z" fill="rgba(251,191,36,0.7)" />
+              </marker>
+            </defs>
+            {subEdges.map(({ parentId, childId }) => {
+              const fromTile = officeLayout.homeTiles[parentId];
+              const toTile = officeLayout.homeTiles[childId];
+              if (!fromTile || !toTile) return null;
+              const x1 = cameraFrame.offsetX + fromTile.col * TILE_SIZE * cameraFrame.zoom;
+              const y1 = cameraFrame.offsetY + fromTile.row * TILE_SIZE * cameraFrame.zoom - 8 * cameraFrame.zoom;
+              const x2 = cameraFrame.offsetX + toTile.col * TILE_SIZE * cameraFrame.zoom;
+              const y2 = cameraFrame.offsetY + toTile.row * TILE_SIZE * cameraFrame.zoom - 8 * cameraFrame.zoom;
+              const midX = (x1 + x2) / 2;
+              return (
+                <path
+                  key={`${parentId}-${childId}`}
+                  d={`M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`}
+                  fill="none"
+                  stroke="rgba(251,191,36,0.55)"
+                  strokeWidth={2}
+                  strokeDasharray="5 4"
+                  strokeLinecap="round"
+                  markerEnd="url(#dag-arrow)"
+                />
+              );
+            })}
+          </svg>
+        );
+      })()}
+
       {workflow && workflow.edges.length > 0 && (
         <svg
           style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 2 }}

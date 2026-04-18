@@ -47,7 +47,7 @@ Open [http://localhost:3000](http://localhost:3000)
 
 ## Deploy
 
-Containerized launch is included now.
+Containerized launch is included.
 
 1. Set production values for `JWT_SECRET`, `APP_URL`, `CORS_ORIGIN`, and at least one provider API key.
 2. Build and run:
@@ -90,17 +90,56 @@ curl http://localhost:4000/health
 
 ## Features
 
+### Core
 - Real-time agent state updates via WebSocket
-- Click agent → side panel with task, tokens used, last action
+- Click agent → side panel with task, tokens used, last action, live log stream
 - Pause / Resume any agent from the UI
 - Stop an active workflow from the dashboard
-- Session history with replay, share links, and a details view
-- Dot-grid office floor layout
+- Pixel office floor with animated agent sprites and pathfinding
+- Dynamic workflow builder (drag-and-drop DAG)
+- Layout editor for custom office furniture
+- **Keyboard shortcuts**: `R` run, `S` stop, `Space` pause/resume selected agent, `Esc` close panel, `L` toggle log panel
+
+### Cost & Budget
+- Pre-run cost estimate shown next to the Run button (updates live as you type)
+- Daily budget progress bar below the header — green → amber → red as spend approaches limit
+- `GET /usage` endpoint returns daily spend, hourly run count, and their caps
+- Per-session and per-agent cost breakdown in session details
+
+### Session History & Replay
+- Full session history with searchable task list
+- Filter sessions by provider (Anthropic / OpenAI / Gemini) and max cost
+- Cost trend sparkline and total-spent summary across all sessions
+- Per-session cost bar showing relative spend at a glance
+- Replay any session frame-by-frame with **0.5× / 1× / 2× / 4× speed control**
+- Session details panel: per-agent token breakdown, input/output counts, cost
+- **Token heatmap** in session details — agent × time grid coloured by token generation rate
+- Export any session as **JSON** (full frame data) or **CSV** (flat agent-per-frame table)
+
+### Sharing
+- One-click share link — generates a public replay URL requiring no login
+- Share modal displays the full URL with an animated copy button
+
+### Alerts
+- Browser notifications when an agent enters an error/debugging state or a workflow fails
+- Configurable webhook URL (Slack, Discord, or any HTTP endpoint) for external alerts
+- Alert settings accessible from the dashboard header (`🔔 ALERTS` button)
+
+### Multi-agent Observability
+- Sub-agent dependency graph: amber bezier lines drawn from parent → child agents in real time
+- Workflow edge overlay: blue dashed lines show the configured node execution order
+- **Aggregated live log panel** (`≡ LOGS` button or `L`): all agents' log output in a single timestamped stream
+
+### Workflow Builder
+- **Built-in templates**: Plan+Code, Plan+Code+Test, Full Pipeline (Plan→Code→Test→Review), Debug Pipeline, Review Only
+- Save / load / update named workflows per user account
+- Cycle-detection prevents invalid DAGs
 
 ## Ops
 
 - `GET /health` returns a lightweight health payload for uptime checks
-- server request logs include route, status code, duration, and user context
+- `GET /usage` (authenticated) returns daily cost, hourly run count, and guardrail limits
+- Server request logs include route, status code, duration, and user context
 
 ## Author
 

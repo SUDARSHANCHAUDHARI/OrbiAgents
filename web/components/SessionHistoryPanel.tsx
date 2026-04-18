@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { SessionMeta } from "@/lib/types";
+import { useMemo, useState } from "react";
+import { Provider, SessionMeta } from "@/lib/types";
 
 interface Props {
   sessions: SessionMeta[];
@@ -29,6 +29,8 @@ function formatCost(cost?: number): string {
   return cost >= 0.01 ? `$${cost.toFixed(3)}` : `$${cost.toFixed(5)}`;
 }
 
+const PROVIDER_OPTIONS: Array<Provider | "all"> = ["all", "anthropic", "openai", "gemini"];
+
 export default function SessionHistoryPanel({
   sessions,
   loading,
@@ -49,7 +51,31 @@ export default function SessionHistoryPanel({
     textMuted: "#9CA3AF",
     accent: "#3B82F6",
   };
+
   const [sharingId, setSharingId] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [providerFilter, setProviderFilter] = useState<Provider | "all">("all");
+  const [maxCost, setMaxCost] = useState("");
+
+  const totalCost = useMemo(
+    () => sessions.reduce((sum, s) => sum + (s.totalCostUsd ?? 0), 0),
+    [sessions]
+  );
+  const maxSessionCost = useMemo(
+    () => Math.max(1e-9, ...sessions.map((s) => s.totalCostUsd ?? 0)),
+    [sessions]
+  );
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const costCap = parseFloat(maxCost);
+    return sessions.filter((s) => {
+      if (q && !s.task.toLowerCase().includes(q)) return false;
+      if (providerFilter !== "all" && s.provider !== providerFilter) return false;
+      if (!isNaN(costCap) && maxCost !== "" && (s.totalCostUsd ?? 0) > costCap) return false;
+      return true;
+    });
+  }, [sessions, search, providerFilter, maxCost]);
 
   async function handleShare(sessionId: string) {
     setSharingId(sessionId);
@@ -59,6 +85,8 @@ export default function SessionHistoryPanel({
       setSharingId(null);
     }
   }
+
+  const filtersActive = search !== "" || providerFilter !== "all" || maxCost !== "";
 
   return (
     <aside
@@ -74,6 +102,7 @@ export default function SessionHistoryPanel({
         boxShadow: "inset 1px 0 0 rgba(255,255,255,0.04), -10px 0 30px rgba(0,0,0,0.18)",
       }}
     >
+      {/* Header */}
       <div
         style={{
           padding: "16px",
@@ -110,10 +139,145 @@ export default function SessionHistoryPanel({
         </button>
       </div>
 
+      {/* Cost summary sparkline */}
+      {sessions.length > 0 && (
+        <div
+          style={{
+            padding: "10px 16px",
+            borderBottom: `1px solid ${chrome.border}`,
+            background: "#0B1120",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+            <span style={{ color: chrome.textMuted, fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+              Total spent
+            </span>
+            <span style={{ color: "#FFF3B0", fontSize: 13, fontWeight: 700 }}>
+              {totalCost >= 0.01 ? `$${totalCost.toFixed(3)}` : `$${totalCost.toFixed(5)}`}
+            </span>
+          </div>
+          {/* Mini sparkline — cost per session, most recent right */}
+          <div style={{ display: "flex", gap: 2, alignItems: "flex-end", height: 20 }}>
+            {sessions.slice().reverse().map((s) => {
+              const h = Math.max(3, Math.round(((s.totalCostUsd ?? 0) / maxSessionCost) * 20));
+              return (
+                <div
+                  key={s.id}
+                  title={formatCost(s.totalCostUsd)}
+                  style={{
+                    flex: 1,
+                    height: h,
+                    background: "linear-gradient(180deg, #60A5FA, #2563EB)",
+                    borderRadius: 2,
+                    opacity: 0.8,
+                  }}
+                />
+              );
+            })}
+          </div>
+          <div style={{ color: chrome.textMuted, fontSize: 10, marginTop: 3 }}>
+            ← older &nbsp;&nbsp;&nbsp; newer →
+          </div>
+        </div>
+      )}
+
+      {/* Search + filter row */}
+      <div
+        style={{
+          padding: "10px 16px",
+          borderBottom: `1px solid ${chrome.border}`,
+          display: "flex",
+          flexDirection: "column",
+          gap: 8,
+        }}
+      >
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Search tasks..."
+          style={{
+            background: chrome.card,
+            border: `1px solid ${chrome.border}`,
+            borderRadius: 7,
+            color: chrome.text,
+            fontSize: 13,
+            padding: "6px 10px",
+            outline: "none",
+            width: "100%",
+            boxSizing: "border-box",
+          }}
+        />
+        <div style={{ display: "flex", gap: 6 }}>
+          <select
+            value={providerFilter}
+            onChange={(e) => setProviderFilter(e.target.value as Provider | "all")}
+            style={{
+              flex: 1,
+              background: chrome.card,
+              border: `1px solid ${chrome.border}`,
+              borderRadius: 7,
+              color: chrome.text,
+              fontSize: 12,
+              padding: "5px 8px",
+              outline: "none",
+              textTransform: "uppercase",
+            }}
+          >
+            {PROVIDER_OPTIONS.map((p) => (
+              <option key={p} value={p} style={{ color: "#111827" }}>
+                {p === "all" ? "ALL PROVIDERS" : p.toUpperCase()}
+              </option>
+            ))}
+          </select>
+          <input
+            type="number"
+            value={maxCost}
+            onChange={(e) => setMaxCost(e.target.value)}
+            placeholder="Max $"
+            min={0}
+            step={0.001}
+            style={{
+              width: 72,
+              background: chrome.card,
+              border: `1px solid ${chrome.border}`,
+              borderRadius: 7,
+              color: chrome.text,
+              fontSize: 12,
+              padding: "5px 8px",
+              outline: "none",
+            }}
+          />
+          {filtersActive && (
+            <button
+              onClick={() => { setSearch(""); setProviderFilter("all"); setMaxCost(""); }}
+              style={{
+                background: "transparent",
+                border: `1px solid ${chrome.border}`,
+                borderRadius: 7,
+                color: chrome.textMuted,
+                fontSize: 11,
+                padding: "0 8px",
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+              }}
+            >
+              ✕ Clear
+            </button>
+          )}
+        </div>
+        {filtersActive && (
+          <div style={{ color: chrome.textMuted, fontSize: 11 }}>
+            {filtered.length} of {sessions.length} sessions
+          </div>
+        )}
+      </div>
+
+      {/* Session list */}
       <div style={{ flex: 1, overflowY: "auto", padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
         {loading ? (
           <div className="orbi-shimmer-bar" style={{ height: 72, borderRadius: 12, border: `2px solid ${chrome.border}` }} />
-        ) : sessions.length === 0 ? (
+        ) : filtered.length === 0 ? (
           <div
             style={{
               border: `1px dashed ${chrome.accent}`,
@@ -124,15 +288,18 @@ export default function SessionHistoryPanel({
               textAlign: "center",
             }}
           >
-            No runs yet.
-            <div style={{ marginTop: 8, fontSize: 13, lineHeight: 1.6 }}>
-              Start a task to build your first replay, share link, and session timeline.
-            </div>
+            {sessions.length === 0 ? "No runs yet." : "No sessions match your filters."}
+            {sessions.length === 0 && (
+              <div style={{ marginTop: 8, fontSize: 13, lineHeight: 1.6 }}>
+                Start a task to build your first replay, share link, and session timeline.
+              </div>
+            )}
           </div>
         ) : (
-          sessions.map((session) => {
+          filtered.map((session) => {
             const active = session.id === activeSessionId;
             const selected = session.id === selectedSessionId;
+            const barWidth = maxSessionCost > 0 ? ((session.totalCostUsd ?? 0) / maxSessionCost) * 100 : 0;
             return (
               <div
                 key={session.id}
@@ -180,6 +347,19 @@ export default function SessionHistoryPanel({
                     {formatCost(session.totalCostUsd)}
                   </div>
                 </div>
+
+                {/* Per-session cost bar */}
+                {session.totalCostUsd != null && session.totalCostUsd > 0 && (
+                  <div style={{ height: 3, background: "rgba(255,255,255,0.06)", borderRadius: 999, overflow: "hidden" }}>
+                    <div
+                      style={{
+                        width: `${barWidth}%`,
+                        height: "100%",
+                        background: "linear-gradient(90deg, #2563EB, #60A5FA)",
+                      }}
+                    />
+                  </div>
+                )}
 
                 <div style={{ display: "flex", gap: 6 }}>
                   <button

@@ -2,6 +2,30 @@
 
 import { Session } from "@/lib/types";
 
+function downloadBlob(content: string, filename: string, mime: string) {
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportJson(session: Session) {
+  downloadBlob(JSON.stringify(session, null, 2), `session-${session.id}.json`, "application/json");
+}
+
+function exportCsv(session: Session) {
+  const rows: string[] = ["frame,timestamp,agentId,agentName,state,task,tokensUsed,inputTokens,outputTokens,costUsd"];
+  session.frames.forEach((frame, fi) => {
+    frame.agents.forEach((agent) => {
+      rows.push([fi, frame.timestamp, agent.id, `"${agent.name}"`, agent.state, `"${agent.task.replace(/"/g, '""')}"`, agent.tokensUsed, agent.inputTokens, agent.outputTokens, agent.costUsd].join(","));
+    });
+  });
+  downloadBlob(rows.join("\n"), `session-${session.id}.csv`, "text/csv");
+}
+
 interface Props {
   session: Session;
   compact?: boolean;
@@ -154,6 +178,64 @@ export default function SessionDetailsPanel({
           </div>
         </div>
 
+        {/* Token heatmap — agent × frame, color = token rate */}
+        {session.frames.length > 1 && (() => {
+          const agentIds = Array.from(new Set(session.frames.flatMap((f) => f.agents.map((a) => a.id))));
+          const agentNames = Object.fromEntries(
+            session.frames.flatMap((f) => f.agents.map((a) => [a.id, a.name]))
+          );
+          const BUCKET = Math.max(1, Math.ceil(session.frames.length / 40));
+          const buckets: number[][] = [];
+          for (let b = 0; b < session.frames.length; b += BUCKET) {
+            const slice = session.frames.slice(b, b + BUCKET);
+            buckets.push(
+              agentIds.map((id) => {
+                const first = slice[0]?.agents.find((a) => a.id === id)?.tokensUsed ?? 0;
+                const last = slice[slice.length - 1]?.agents.find((a) => a.id === id)?.tokensUsed ?? 0;
+                return Math.max(0, last - first);
+              })
+            );
+          }
+          const maxRate = Math.max(1, ...buckets.flatMap((b) => b));
+          return (
+            <div style={{ marginTop: 18 }}>
+              <div style={{ color: chrome.textMuted, fontSize: 12, letterSpacing: "0.08em", marginBottom: 8, textTransform: "uppercase", fontWeight: 700 }}>
+                TOKEN HEATMAP
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                {agentIds.map((id, ai) => (
+                  <div key={id} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <div style={{ color: chrome.textMuted, fontSize: 10, width: 60, textAlign: "right", flexShrink: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {agentNames[id]}
+                    </div>
+                    <div style={{ display: "flex", gap: 1, flex: 1 }}>
+                      {buckets.map((bucket, bi) => {
+                        const rate = bucket[ai] / maxRate;
+                        const alpha = 0.1 + rate * 0.9;
+                        return (
+                          <div
+                            key={bi}
+                            title={`${bucket[ai]} tokens`}
+                            style={{
+                              flex: 1,
+                              height: 12,
+                              borderRadius: 2,
+                              background: `rgba(96,165,250,${alpha.toFixed(2)})`,
+                            }}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4, color: chrome.textMuted, fontSize: 10 }}>
+                <span>start</span><span>end</span>
+              </div>
+            </div>
+          );
+        })()}
+
         <div style={{ marginTop: 18 }}>
           <div style={{ color: chrome.textMuted, fontSize: 12, letterSpacing: "0.08em", marginBottom: 8, textTransform: "uppercase", fontWeight: 700 }}>
             FINAL AGENT SNAPSHOT
@@ -193,41 +275,77 @@ export default function SessionDetailsPanel({
         </div>
       </div>
 
-      <div style={{ padding: "16px", borderTop: `1px solid ${chrome.border}`, display: "flex", gap: 8 }}>
-        <button
-          onClick={() => onReplay(session.id)}
-          style={{
-            flex: 1,
-            minHeight: 40,
-            background: "#2563EB",
-            border: `1px solid #1D4ED8`,
-            borderRadius: 8,
-            color: "#F8FAFC",
-            fontSize: 14,
-            fontWeight: 600,
-            padding: "0 12px",
-            cursor: "pointer",
-          }}
-        >
-          ▶ REPLAY
-        </button>
-        <button
-          onClick={() => void onShare(session.id)}
-          style={{
-            flex: 1,
-            background: chrome.bgMid,
-            minHeight: 40,
-            border: `1px solid ${chrome.border}`,
-            borderRadius: 8,
-            color: chrome.text,
-            fontSize: 14,
-            fontWeight: 500,
-            padding: "0 12px",
-            cursor: "pointer",
-          }}
-        >
-          SHARE
-        </button>
+      <div style={{ padding: "16px", borderTop: `1px solid ${chrome.border}`, display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button
+            onClick={() => onReplay(session.id)}
+            style={{
+              flex: 1,
+              minHeight: 40,
+              background: "#2563EB",
+              border: `1px solid #1D4ED8`,
+              borderRadius: 8,
+              color: "#F8FAFC",
+              fontSize: 14,
+              fontWeight: 600,
+              padding: "0 12px",
+              cursor: "pointer",
+            }}
+          >
+            ▶ REPLAY
+          </button>
+          <button
+            onClick={() => void onShare(session.id)}
+            style={{
+              flex: 1,
+              background: chrome.bgMid,
+              minHeight: 40,
+              border: `1px solid ${chrome.border}`,
+              borderRadius: 8,
+              color: chrome.text,
+              fontSize: 14,
+              fontWeight: 500,
+              padding: "0 12px",
+              cursor: "pointer",
+            }}
+          >
+            SHARE
+          </button>
+        </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button
+            onClick={() => exportJson(session)}
+            style={{
+              flex: 1,
+              minHeight: 36,
+              background: "transparent",
+              border: `1px solid ${chrome.border}`,
+              borderRadius: 8,
+              color: chrome.textMuted,
+              fontSize: 12,
+              fontWeight: 500,
+              cursor: "pointer",
+            }}
+          >
+            ↓ JSON
+          </button>
+          <button
+            onClick={() => exportCsv(session)}
+            style={{
+              flex: 1,
+              minHeight: 36,
+              background: "transparent",
+              border: `1px solid ${chrome.border}`,
+              borderRadius: 8,
+              color: chrome.textMuted,
+              fontSize: 12,
+              fontWeight: 500,
+              cursor: "pointer",
+            }}
+          >
+            ↓ CSV
+          </button>
+        </div>
       </div>
     </aside>
   );

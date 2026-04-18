@@ -57,6 +57,26 @@ const NODE_META: Record<
 
 const PALETTE: WorkflowNodeType[] = ["planner", "coder", "tester", "reviewer", "debugger"];
 
+interface WorkflowTemplate {
+  name: string;
+  description: string;
+  workflow: Workflow;
+}
+
+function makeChain(types: WorkflowNodeType[]): Workflow {
+  const nodes: WorkflowNode[] = types.map((t, i) => ({ id: `${t}-${i}`, type: t, label: NODE_META[t].label }));
+  const edges: WorkflowEdge[] = nodes.slice(0, -1).map((n, i) => ({ from: n.id, to: nodes[i + 1].id }));
+  return { nodes, edges };
+}
+
+const WORKFLOW_TEMPLATES: WorkflowTemplate[] = [
+  { name: "Plan + Code", description: "Planner then Coder", workflow: makeChain(["planner", "coder"]) },
+  { name: "Plan + Code + Test", description: "Add testing step", workflow: makeChain(["planner", "coder", "tester"]) },
+  { name: "Full Pipeline", description: "Plan → Code → Test → Review", workflow: makeChain(["planner", "coder", "tester", "reviewer"]) },
+  { name: "Debug Pipeline", description: "Plan → Debug → Code → Test", workflow: makeChain(["planner", "debugger", "coder", "tester"]) },
+  { name: "Review Only", description: "Reviewer then Debugger", workflow: makeChain(["reviewer", "debugger"]) },
+];
+
 function formatUpdatedAt(value?: string): string | null {
   if (!value) return null;
   return new Date(value).toLocaleString([], {
@@ -102,6 +122,7 @@ export default function WorkflowBuilder({
   running,
 }: Props) {
   const [showPalette, setShowPalette] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(false);
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [savedList, setSavedList] = useState<WorkflowMeta[]>([]);
   const [currentWorkflowId, setCurrentWorkflowId] = useState<string | null>(null);
@@ -301,6 +322,37 @@ export default function WorkflowBuilder({
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Template picker */}
+            <div className="relative">
+              <button
+                onClick={() => setShowTemplates((v) => !v)}
+                disabled={running}
+                className="px-3 py-1 text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 rounded-lg transition-colors disabled:opacity-40"
+              >
+                ⬡ Templates
+              </button>
+              {showTemplates && (
+                <div className="absolute bottom-full mb-2 left-0 bg-gray-800 border border-gray-700 rounded-lg overflow-hidden shadow-xl z-20 min-w-[200px]">
+                  {WORKFLOW_TEMPLATES.map((tpl) => (
+                    <button
+                      key={tpl.name}
+                      onClick={() => {
+                        onChange(tpl.workflow);
+                        setCurrentWorkflowId(null);
+                        setCurrentWorkflowName(tpl.name);
+                        setGraphError(null);
+                        setShowTemplates(false);
+                      }}
+                      className="w-full flex flex-col px-3 py-2 text-xs hover:bg-gray-700 transition-colors text-left"
+                    >
+                      <span className="text-gray-200 font-medium">{tpl.name}</span>
+                      <span className="text-gray-500 text-[10px]">{tpl.description}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {isLoggedIn && (
               <button
                 onClick={handleReset}

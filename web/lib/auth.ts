@@ -112,6 +112,19 @@ export async function listProviders(): Promise<ProvidersResponse> {
   return res.json() as Promise<ProvidersResponse>;
 }
 
+export interface UsageStats {
+  dailyCostUsd: number;
+  maxDailyCostUsd: number;
+  hourlyRuns: number;
+  maxRunsPerHour: number;
+}
+
+export async function getUsage(): Promise<UsageStats> {
+  const res = await fetch(`${API}/usage`, { headers: authHeaders() });
+  if (!res.ok) throw new Error("Could not load usage");
+  return res.json() as Promise<UsageStats>;
+}
+
 export async function listSessions(): Promise<SessionMeta[]> {
   const res = await fetch(`${API}/sessions`, {
     headers: authHeaders(),

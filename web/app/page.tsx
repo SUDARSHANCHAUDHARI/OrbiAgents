@@ -21,13 +21,20 @@ import {
   listSessions,
 } from "@/lib/auth";
 import { getApiBaseUrl, getWebSocketBaseUrl } from "@/lib/config";
+import { useAlerts } from "@/lib/useAlerts";
+import { getUsage, UsageStats } from "@/lib/auth";
+import { useKeyboardShortcuts } from "@/lib/useKeyboardShortcuts";
+import { estimateRunCost, formatEstimate } from "@/lib/costEstimate";
 import LayoutEditor from "@/components/LayoutEditor";
 import SidePanel from "@/components/SidePanel";
 import ResultPanel from "@/components/ResultPanel";
-import ReplayBar from "@/components/ReplayBar";
+import ReplayBar, { ReplaySpeed } from "@/components/ReplayBar";
 import WorkflowBuilder from "@/components/WorkflowBuilder";
 import SessionHistoryPanel from "@/components/SessionHistoryPanel";
 import SessionDetailsPanel from "@/components/SessionDetailsPanel";
+import AlertSettings from "@/components/AlertSettings";
+import ShareModal from "@/components/ShareModal";
+import AgentLogsPanel from "@/components/AgentLogsPanel";
 
 interface WorkflowResult {
   sessionId: string;
@@ -77,14 +84,21 @@ export default function Home() {
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [compactSidebar, setCompactSidebar] = useState(false);
+  const [showAlertSettings, setShowAlertSettings] = useState(false);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [usage, setUsage] = useState<UsageStats | null>(null);
+  const [showLogs, setShowLogs] = useState(false);
 
   // Replay state — declared before any early return (rules of hooks)
   const [replaySession, setReplaySession] = useState<Session | null>(null);
   const [replayFrame, setReplayFrame] = useState(0);
+  const [replaySpeed, setReplaySpeed] = useState<ReplaySpeed>(1);
   const replayRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const replaySpeedRef = useRef<ReplaySpeed>(1);
 
   const wsRef = useRef<WebSocket | null>(null);
   const liveAgentsRef = useRef<Agent[]>([]);
+  const { checkAgents, alertWorkflowError, resetAlertState } = useAlerts();
 
   // Auth gate — redirect to /login if no token
   useEffect(() => {
@@ -109,6 +123,7 @@ export default function Home() {
       if (Array.isArray(data)) {
         const agentList = data as Agent[];
         liveAgentsRef.current = agentList;
+        checkAgents(agentList);
         if (!replayRef.current) {
           setAgents(agentList);
           setSelected((prev) =>
@@ -140,6 +155,7 @@ export default function Home() {
         setRunning(false);
         setStopping(false);
         void loadSessions();
+        void loadUsage();
       } else if (data.type === "workflow-result") {
         setResult({
           sessionId: data.sessionId as string,
@@ -149,6 +165,7 @@ export default function Home() {
         setRunning(false);
         setStopping(false);
         void loadSessions();
+        void loadUsage();
       } else if (data.type === "stopped") {
         setRunning(false);
         setStopping(false);
@@ -157,7 +174,9 @@ export default function Home() {
         setHistoryMessage((data.message as string | undefined) ?? "Workflow stopped");
         void loadSessions();
       } else if (data.type === "error") {
-        setError(data.message as string);
+        const msg = data.message as string;
+        setError(msg);
+        alertWorkflowError(msg);
         setRunning(false);
         setStopping(false);
       }
@@ -170,6 +189,7 @@ export default function Home() {
     if (!isAuthed) return;
     void loadProviders();
     void loadSessions();
+    void loadUsage();
   }, [isAuthed]);
 
   useEffect(() => {
@@ -192,6 +212,15 @@ export default function Home() {
       setError(err instanceof Error ? err.message : "Could not load providers");
     } finally {
       setProvidersLoading(false);
+    }
+  }
+
+  async function loadUsage() {
+    try {
+      const data = await getUsage();
+      setUsage(data);
+    } catch {
+      // non-fatal
     }
   }
 
@@ -220,6 +249,7 @@ export default function Home() {
     setStopping(false);
     setResult(null);
     setError(null);
+    resetAlertState();
 
     try {
       const res = await fetch(`${getApiBaseUrl()}/run`, {
@@ -244,6 +274,7 @@ export default function Home() {
     setStopping(false);
     setResult(null);
     setError(null);
+    resetAlertState();
 
     try {
       const res = await fetch(`${getApiBaseUrl()}/workflow`, {
@@ -286,7 +317,8 @@ export default function Home() {
       setSelectedSession(null);
 
       let i = 0;
-      const interval = setInterval(() => {
+      replaySpeedRef.current = replaySpeed;
+      const tick = () => {
         if (i >= session.frames.length) {
           stopReplay();
           setAgents(liveAgentsRef.current);
@@ -295,9 +327,9 @@ export default function Home() {
         setAgents(session.frames[i].agents);
         setReplayFrame(i + 1);
         i++;
-      }, 900);
-
-      replayRef.current = interval;
+        replayRef.current = setTimeout(tick, 900 / replaySpeedRef.current) as unknown as ReturnType<typeof setInterval>;
+      };
+      replayRef.current = setTimeout(tick, 900 / replaySpeedRef.current) as unknown as ReturnType<typeof setInterval>;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not start replay");
     }
@@ -306,8 +338,7 @@ export default function Home() {
   async function handleShareSession(sessionId: string) {
     try {
       const data = await createReplayShareLink(sessionId);
-      await navigator.clipboard.writeText(data.url);
-      setHistoryMessage("Share link copied");
+      setShareUrl(data.url);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not create share link");
     }
@@ -330,12 +361,17 @@ export default function Home() {
 
   function stopReplay() {
     if (replayRef.current) {
-      clearInterval(replayRef.current);
+      clearTimeout(replayRef.current as unknown as ReturnType<typeof setTimeout>);
       replayRef.current = null;
     }
     setReplaySession(null);
     setReplayFrame(0);
     setAgents(liveAgentsRef.current);
+  }
+
+  function handleReplaySpeedChange(speed: ReplaySpeed) {
+    setReplaySpeed(speed);
+    replaySpeedRef.current = speed;
   }
 
   async function handleStopRun() {
@@ -358,6 +394,23 @@ export default function Home() {
   }
 
   const isReplaying = replayRef.current !== null;
+
+  useKeyboardShortcuts({
+    onRun: () => { if (!running && !isReplaying) { showBuilder ? void handleWorkflowRun() : void handleRun(); } },
+    onStop: () => { if (running) void handleStopRun(); else if (isReplaying) stopReplay(); },
+    onTogglePause: () => {
+      if (selected) {
+        selected.paused ? send({ type: "resume", agentId: selected.id }) : send({ type: "pause", agentId: selected.id });
+      }
+    },
+    onClosePanel: () => {
+      if (selected) setSelected(null);
+      else if (result) setResult(null);
+      else if (selectedSession) setSelectedSession(null);
+      else if (isReplaying) stopReplay();
+    },
+    onToggleLogs: () => setShowLogs((v) => !v),
+  });
   const thinkingCount = agents.filter((agent) => agent.state === "thinking").length;
   const codingCount = agents.filter((agent) => agent.state === "coding").length;
   const activeSummary = [
@@ -463,28 +516,44 @@ export default function Home() {
               }}
             />
             {!showBuilder && (
-              <button
-                className="orbi-control"
-                onClick={handleRun}
-                disabled={running || stopping || !task.trim() || isReplaying}
-                style={{
-                  minHeight: 40,
-                  background: running ? "#2A6E96" : sky.primary,
-                  border: "1px solid",
-                  borderColor: running ? sky.borderSoft : sky.border,
-                  borderRadius: 8,
-                  color: sky.primaryText,
-                  fontSize: 16,
-                  fontWeight: 600,
-                  padding: "0 18px",
-                  cursor: running || stopping || !task.trim() ? "not-allowed" : "pointer",
-                  opacity: !task.trim() ? 0.4 : 1,
-                  whiteSpace: "nowrap",
-                  boxShadow: running ? "none" : "0 10px 20px rgba(37,99,235,0.24)",
-                }}
-              >
-                {stopping ? "STOPPING..." : running ? "RUNNING..." : "▶ RUN"}
-              </button>
+              <>
+                <button
+                  className="orbi-control"
+                  onClick={handleRun}
+                  disabled={running || stopping || !task.trim() || isReplaying}
+                  style={{
+                    minHeight: 40,
+                    background: running ? "#2A6E96" : sky.primary,
+                    border: "1px solid",
+                    borderColor: running ? sky.borderSoft : sky.border,
+                    borderRadius: 8,
+                    color: sky.primaryText,
+                    fontSize: 16,
+                    fontWeight: 600,
+                    padding: "0 18px",
+                    cursor: running || stopping || !task.trim() ? "not-allowed" : "pointer",
+                    opacity: !task.trim() ? 0.4 : 1,
+                    whiteSpace: "nowrap",
+                    boxShadow: running ? "none" : "0 10px 20px rgba(37,99,235,0.24)",
+                  }}
+                >
+                  {stopping ? "STOPPING..." : running ? "RUNNING..." : "▶ RUN"}
+                </button>
+                {task.trim() && !running && !isReplaying && (
+                  <div
+                    title="Estimated cost (rough, based on task length)"
+                    style={{
+                      fontSize: 11,
+                      color: sky.textMuted,
+                      whiteSpace: "nowrap",
+                      fontFamily: "monospace",
+                      padding: "0 4px",
+                    }}
+                  >
+                    {formatEstimate(estimateRunCost(task, selectedProvider))}
+                  </div>
+                )}
+              </>
             )}
             <div
               style={{
@@ -546,6 +615,42 @@ export default function Home() {
               }}
             >
               ⬡ WORKFLOW
+            </button>
+
+            <button
+              className="orbi-control"
+              onClick={() => setShowLogs((v) => !v)}
+              style={{
+                minHeight: 40,
+                background: showLogs ? "#374151" : sky.hudBgAlt,
+                border: `1px solid ${sky.borderSoft}`,
+                color: showLogs ? sky.text : sky.textMuted,
+                borderRadius: 8,
+                fontSize: 14,
+                fontWeight: 500,
+                padding: "0 14px",
+                cursor: "pointer",
+              }}
+            >
+              ≡ LOGS
+            </button>
+
+            <button
+              className="orbi-control"
+              onClick={() => setShowAlertSettings(true)}
+              style={{
+                minHeight: 40,
+                background: sky.hudBgAlt,
+                border: `1px solid ${sky.borderSoft}`,
+                color: sky.textMuted,
+                borderRadius: 8,
+                fontSize: 14,
+                fontWeight: 500,
+                padding: "0 14px",
+                cursor: "pointer",
+              }}
+            >
+              🔔 ALERTS
             </button>
 
             <button
@@ -667,6 +772,46 @@ export default function Home() {
           </div>
         </header>
 
+        {/* ── Daily budget bar ───────────────────────────────── */}
+        {usage && (
+          <div style={{ flexShrink: 0 }}>
+            {(() => {
+              const pct = Math.min(100, (usage.dailyCostUsd / usage.maxDailyCostUsd) * 100);
+              const warn = pct >= 80;
+              const barColor = pct >= 95 ? "#EF4444" : pct >= 80 ? "#F59E0B" : "#22C55E";
+              return (
+                <div
+                  title={`Daily spend: $${usage.dailyCostUsd.toFixed(4)} / $${usage.maxDailyCostUsd.toFixed(2)} — ${usage.hourlyRuns}/${usage.maxRunsPerHour} runs this hour`}
+                  style={{ position: "relative", height: 4, background: "#111827", cursor: "default" }}
+                >
+                  <div
+                    style={{
+                      height: "100%",
+                      width: `${pct}%`,
+                      background: barColor,
+                      transition: "width 0.6s ease, background 0.4s",
+                      boxShadow: warn ? `0 0 6px ${barColor}` : "none",
+                    }}
+                  />
+                  <div
+                    style={{
+                      position: "absolute",
+                      right: 8,
+                      top: 6,
+                      fontSize: 10,
+                      color: warn ? barColor : "#6B7280",
+                      fontWeight: 600,
+                      pointerEvents: "none",
+                    }}
+                  >
+                    ${usage.dailyCostUsd.toFixed(3)} / ${usage.maxDailyCostUsd.toFixed(2)} today
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        )}
+
         {/* ── Office floor — HTML5 Canvas game renderer ──────── */}
         <main
           className="flex-1 relative overflow-hidden"
@@ -731,12 +876,18 @@ export default function Home() {
             </div>
           )}
 
+          {showLogs && (
+            <AgentLogsPanel agents={agents} onClose={() => setShowLogs(false)} />
+          )}
+
           {isReplaying && replaySession && (
             <ReplayBar
               task={replaySession.task}
               current={replayFrame}
               total={replaySession.frames.length}
+              speed={replaySpeed}
               onStop={stopReplay}
+              onSpeedChange={handleReplaySpeedChange}
             />
           )}
         </main>
@@ -795,6 +946,14 @@ export default function Home() {
           onInspect={handleInspectSession}
           onRefresh={loadSessions}
         />
+      )}
+
+      {showAlertSettings && (
+        <AlertSettings onClose={() => setShowAlertSettings(false)} />
+      )}
+
+      {shareUrl && (
+        <ShareModal url={shareUrl} onClose={() => setShareUrl(null)} />
       )}
 
       {detailsLoading && !selected && !result && !isReplaying && !selectedSession && (
