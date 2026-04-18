@@ -33,10 +33,11 @@ interface AgentMotion {
 }
 
 export function createGameLoop(
-  tileMap: TileType[][],
+  tileMapInit: TileType[][],
   homeTiles: Record<string, TileCoord>,
   onFrame: (chars: CharacterRenderState[]) => void,
 ) {
+  let tileMap = tileMapInit;
   const motions = new Map<string, AgentMotion>();
   let lastAgents: AgentInput[] = [];
   let rafId: number | null = null;
@@ -184,6 +185,11 @@ export function createGameLoop(
     },
     setAgents(agents: AgentInput[]) {
       lastAgents = agents;
+    },
+    setTileMap(newMap: TileType[][]) {
+      tileMap = newMap;
+      // Clear cached paths so agents re-route on the new map
+      motions.forEach(m => { m.path = []; m.pathIdx = 0; });
     },
   };
 }

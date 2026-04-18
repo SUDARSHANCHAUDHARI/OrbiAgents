@@ -1,7 +1,7 @@
 "use client";
 
 import type { Agent } from "@/lib/types";
-import { GRID_COLS, GRID_ROWS, TILE_SIZE } from "../../shared/engine/tileMap";
+import { TILE_SIZE } from "../../shared/engine/tileMap";
 import type { FurnitureInstance, TileCoord } from "../../shared/types";
 import {
   BOOKSHELF_SPRITE,
@@ -22,19 +22,18 @@ export const AGENT_SIZE = {
   heightTiles: 3,
 };
 
-const CENTER_ZONE = {
-  minCol: 6,
-  maxCol: 24,
-  minRow: 5,
-  maxRow: 22,
-};
+function getCenterZone(gridCols: number, gridRows: number): Bounds {
+  return {
+    minCol: Math.max(2, Math.floor(gridCols * 0.13)),
+    maxCol: Math.min(gridCols - 3, Math.floor(gridCols * 0.53)),
+    minRow: Math.max(2, Math.floor(gridRows * 0.17)),
+    maxRow: Math.min(gridRows - 3, Math.floor(gridRows * 0.73)),
+  };
+}
 
-const FULL_MAP_BOUNDS = {
-  minCol: 0,
-  maxCol: GRID_COLS - 1,
-  minRow: 0,
-  maxRow: GRID_ROWS - 1,
-};
+function getFullMapBounds(gridCols: number, gridRows: number): Bounds {
+  return { minCol: 0, maxCol: gridCols - 1, minRow: 0, maxRow: gridRows - 1 };
+}
 
 type Bounds = {
   minCol: number;
@@ -48,6 +47,8 @@ export interface DashboardViewport {
   height: number;
   contentWidth: number;
   contentHeight: number;
+  gridCols: number;
+  gridRows: number;
 }
 
 export interface NamedAgentLayout {
@@ -71,6 +72,8 @@ export function calculateViewport(width: number, height: number): DashboardViewp
     height,
     contentWidth: Math.max(0, width),
     contentHeight: Math.max(0, height),
+    gridCols: Math.max(20, Math.ceil(width / TILE_SIZE)),
+    gridRows: Math.max(15, Math.ceil(height / TILE_SIZE)),
   };
 }
 
@@ -89,26 +92,29 @@ export function ensureUniqueAgentNames(agents: Agent[]): Map<string, string> {
 }
 
 export function layoutAgents(agents: Agent[], viewport: DashboardViewport): OfficeLayout {
+  const { gridCols, gridRows } = viewport;
+  const CENTER_ZONE = getCenterZone(gridCols, gridRows);
+  const FULL_MAP_BOUNDS = getFullMapBounds(gridCols, gridRows);
   const uniqueNames = ensureUniqueAgentNames(agents);
   if (agents.length === 0) {
     const idleBounds = {
       minCol: CENTER_ZONE.minCol,
-      maxCol: CENTER_ZONE.maxCol + 7,
-      minRow: CENTER_ZONE.minRow - 1,
-      maxRow: CENTER_ZONE.maxRow + 2,
+      maxCol: Math.min(gridCols - 3, CENTER_ZONE.maxCol + 7),
+      minRow: Math.max(1, CENTER_ZONE.minRow - 1),
+      maxRow: Math.min(gridRows - 2, CENTER_ZONE.maxRow + 2),
     };
 
     return {
       agents: [],
       homeTiles: {},
-      furniture: placeFurniture({}, idleBounds),
+      furniture: placeFurniture({}, idleBounds, gridCols, gridRows),
       contentBounds: idleBounds,
     };
   }
 
   const grid = resolveGrid(agents.length, viewport);
   // Keep agents inside a centered safe zone first, then let decor use the outer ring.
-  const placementBounds = resolvePlacementBounds(grid.columns, grid.rows);
+  const placementBounds = resolvePlacementBounds(grid.columns, grid.rows, CENTER_ZONE);
   const usableWidth = placementBounds.maxCol - placementBounds.minCol;
   const usableHeight = placementBounds.maxRow - placementBounds.minRow;
   const spacingX = usableWidth / Math.max(1, grid.columns - 1 || 1);
@@ -141,19 +147,18 @@ export function layoutAgents(agents: Agent[], viewport: DashboardViewport): Offi
   });
 
   const homeTiles = Object.fromEntries(laidOutAgents.map((agent) => [agent.id, agent.homeTile]));
-  const agentBounds = expandBounds(getBounds(Object.values(homeTiles)), PADDING, FULL_MAP_BOUNDS);
-  // Camera bounds intentionally include a little decor room without expanding to the whole map.
+  const agentBounds = expandBounds(getBounds(Object.values(homeTiles), CENTER_ZONE), PADDING, FULL_MAP_BOUNDS);
   const contentBounds = expandBounds(
     {
       minCol: Math.max(0, agentBounds.minCol - 2),
-      maxCol: Math.min(GRID_COLS - 1, agentBounds.maxCol + 9),
+      maxCol: Math.min(gridCols - 1, agentBounds.maxCol + 9),
       minRow: Math.max(1, agentBounds.minRow - 4),
-      maxRow: Math.min(GRID_ROWS - 1, agentBounds.maxRow + 4),
+      maxRow: Math.min(gridRows - 1, agentBounds.maxRow + 4),
     },
     0,
     FULL_MAP_BOUNDS,
   );
-  const furniture = placeFurniture(homeTiles, contentBounds);
+  const furniture = placeFurniture(homeTiles, contentBounds, gridCols, gridRows);
 
   return {
     agents: laidOutAgents,
@@ -241,26 +246,27 @@ function resolveGrid(count: number, viewport: DashboardViewport): { columns: num
   };
 }
 
-function resolvePlacementBounds(columns: number, rows: number): Bounds {
+function resolvePlacementBounds(columns: number, rows: number, centerZone: Bounds): Bounds {
+  const { minCol, maxCol, minRow, maxRow } = centerZone;
+  const w = maxCol - minCol;
+  const h = maxRow - minRow;
   if (columns <= 3 && rows === 1) {
     return {
-      minCol: 9,
-      maxCol: 22,
-      minRow: 10,
-      maxRow: 14,
+      minCol: minCol + Math.round(w * 0.15),
+      maxCol: maxCol - Math.round(w * 0.08),
+      minRow: minRow + Math.round(h * 0.38),
+      maxRow: minRow + Math.round(h * 0.55),
     };
   }
-
   if (columns <= 3 && rows <= 2) {
     return {
-      minCol: 8,
-      maxCol: 24,
-      minRow: 8,
-      maxRow: 18,
+      minCol: minCol + Math.round(w * 0.08),
+      maxCol: maxCol,
+      minRow: minRow + Math.round(h * 0.10),
+      maxRow: maxRow - Math.round(h * 0.18),
     };
   }
-
-  return CENTER_ZONE;
+  return centerZone;
 }
 
 function reserveNearestOpenTile(
@@ -292,7 +298,7 @@ function reserveNearestOpenTile(
   return { col, row };
 }
 
-export function placeFurniture(homeTiles: Record<string, TileCoord>, contentBounds: Bounds): FurnitureInstance[] {
+export function placeFurniture(homeTiles: Record<string, TileCoord>, contentBounds: Bounds, gridCols: number, gridRows: number): FurnitureInstance[] {
   const items: FurnitureInstance[] = [];
   const occupied = new Set<string>(Object.values(homeTiles).map((tile) => `${tile.col}:${tile.row}`));
   const reserveTile = (tile: TileCoord, padding = 0) => {
@@ -311,8 +317,8 @@ export function placeFurniture(homeTiles: Record<string, TileCoord>, contentBoun
     return true;
   };
 
-  const shelfStart = clamp(contentBounds.minCol, 0, GRID_COLS - 1);
-  const shelfEnd = clamp(contentBounds.maxCol - 2, shelfStart, GRID_COLS - 1);
+  const shelfStart = clamp(contentBounds.minCol, 0, gridCols - 1);
+  const shelfEnd = clamp(contentBounds.maxCol - 2, shelfStart, gridCols - 1);
   for (let col = shelfStart; col <= shelfEnd; col++) {
     items.push({
       sprite: BOOKSHELF_SPRITE,
@@ -334,9 +340,9 @@ export function placeFurniture(homeTiles: Record<string, TileCoord>, contentBoun
 
   const plantCandidates: TileCoord[] = [
     { col: Math.max(2, contentBounds.minCol + 1), row: Math.max(2, contentBounds.minRow + 1) },
-    { col: Math.min(contentBounds.maxCol - 1, GRID_COLS - 3), row: Math.max(2, contentBounds.minRow + 1) },
-    { col: Math.max(2, contentBounds.minCol + 1), row: Math.min(contentBounds.maxRow - 1, GRID_ROWS - 3) },
-    { col: Math.min(contentBounds.maxCol - 1, GRID_COLS - 3), row: Math.min(contentBounds.maxRow - 1, GRID_ROWS - 3) },
+    { col: Math.min(contentBounds.maxCol - 1, gridCols - 3), row: Math.max(2, contentBounds.minRow + 1) },
+    { col: Math.max(2, contentBounds.minCol + 1), row: Math.min(contentBounds.maxRow - 1, gridRows - 3) },
+    { col: Math.min(contentBounds.maxCol - 1, gridCols - 3), row: Math.min(contentBounds.maxRow - 1, gridRows - 3) },
   ];
 
   plantCandidates.forEach((tile) => {
@@ -370,12 +376,13 @@ export function placeFurniture(homeTiles: Record<string, TileCoord>, contentBoun
     reserveTile(tile, 1);
   });
 
-  const decorStartCol = Math.min(contentBounds.maxCol + 1, GRID_COLS - 8);
-  const tableCol = clamp(Math.max(decorStartCol, 28), 28, GRID_COLS - 7);
+  const decorMinCol = Math.floor(gridCols * 0.62);
+  const decorStartCol = Math.min(contentBounds.maxCol + 1, gridCols - 8);
+  const tableCol = clamp(Math.max(decorStartCol, decorMinCol), decorMinCol, gridCols - 7);
   const tableRow = clamp(
     Math.round((contentBounds.minRow + contentBounds.maxRow) / 2) - 5,
-    8,
-    GRID_ROWS - 13,
+    Math.max(3, Math.floor(gridRows * 0.10)),
+    Math.max(3, gridRows - 13),
   );
   items.push({
     sprite: MEETING_TABLE_SPRITE,
@@ -393,7 +400,7 @@ export function placeFurniture(homeTiles: Record<string, TileCoord>, contentBoun
     { col: tableCol + 2, row: tableRow + 3 },
     { col: tableCol + 6, row: tableRow + 3 },
   ].forEach((tile) => {
-    if (tile.col < GRID_COLS - 1 && tile.row < GRID_ROWS - 1 && canPlace(tile, 0)) {
+    if (tile.col < gridCols - 1 && tile.row < gridRows - 1 && canPlace(tile, 0)) {
       items.push({
         sprite: CHAIR_SPRITE,
         x: tile.col * TILE_SIZE,
@@ -412,7 +419,7 @@ export function placeFurniture(homeTiles: Record<string, TileCoord>, contentBoun
   ];
 
   loungeCandidates.forEach((tile) => {
-    if (!canPlace(tile, 0) || tile.row >= GRID_ROWS - 1) return;
+    if (!canPlace(tile, 0) || tile.row >= gridRows - 1) return;
     items.push({
       sprite: CHAIR_SPRITE,
       x: tile.col * TILE_SIZE,
@@ -431,7 +438,7 @@ export function placeFurniture(homeTiles: Record<string, TileCoord>, contentBoun
   ];
 
   accentPlants.forEach((tile) => {
-    if (!canPlace(tile, 0) || tile.row >= GRID_ROWS) return;
+    if (!canPlace(tile, 0) || tile.row >= gridRows) return;
     items.push({
       sprite: PLANT_SPRITE,
       x: tile.col * TILE_SIZE,
@@ -443,7 +450,7 @@ export function placeFurniture(homeTiles: Record<string, TileCoord>, contentBoun
 
   // Whiteboard — left wall of collaboration zone
   const wbTile = { col: tableCol, row: tableRow + 1 };
-  if (canPlace(wbTile, 0) && wbTile.col < GRID_COLS - 2 && wbTile.row < GRID_ROWS - 2) {
+  if (canPlace(wbTile, 0) && wbTile.col < gridCols - 2 && wbTile.row < gridRows - 2) {
     items.push({
       sprite: WHITEBOARD_SPRITE,
       x: wbTile.col * TILE_SIZE,
@@ -455,7 +462,7 @@ export function placeFurniture(homeTiles: Record<string, TileCoord>, contentBoun
 
   // Sofa — lounge area below meeting table
   const sofaTile = { col: tableCol + 1, row: contentBounds.maxRow - 3 };
-  if (canPlace(sofaTile, 0) && sofaTile.row < GRID_ROWS - 2) {
+  if (canPlace(sofaTile, 0) && sofaTile.row < gridRows - 2) {
     items.push({
       sprite: SOFA_SPRITE,
       x: sofaTile.col * TILE_SIZE,
@@ -467,7 +474,7 @@ export function placeFurniture(homeTiles: Record<string, TileCoord>, contentBoun
 
   // Coffee machine — corner near collaboration zone
   const coffeeTile = { col: tableCol + 7, row: tableRow };
-  if (canPlace(coffeeTile, 0) && coffeeTile.col < GRID_COLS - 1) {
+  if (canPlace(coffeeTile, 0) && coffeeTile.col < gridCols - 1) {
     items.push({
       sprite: COFFEE_MACHINE_SPRITE,
       x: coffeeTile.col * TILE_SIZE,
@@ -480,9 +487,9 @@ export function placeFurniture(homeTiles: Record<string, TileCoord>, contentBoun
   return items;
 }
 
-function getBounds(tiles: TileCoord[]): Bounds {
+function getBounds(tiles: TileCoord[], fallback?: Bounds): Bounds {
   if (tiles.length === 0) {
-    return CENTER_ZONE;
+    return fallback ?? { minCol: 6, maxCol: 24, minRow: 5, maxRow: 22 };
   }
 
   return {

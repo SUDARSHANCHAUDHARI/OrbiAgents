@@ -25,7 +25,6 @@ interface Props {
   onLayoutClick?: (col: number, row: number) => void;
 }
 
-const tileMap = buildTileMap();
 
 const TYPE_TO_AGENT_ID: Record<string, string> = {
   planner: "1",
@@ -53,6 +52,7 @@ export default function GameCanvas({ agents, selectedId, isReplaying, workflow, 
   agentsRef.current = agents;
   const extraFurnitureRef = useRef<FurnitureInstance[]>(extraFurniture ?? []);
   extraFurnitureRef.current = extraFurniture ?? [];
+  const tileMapRef = useRef<import("../../shared/types").TileType[][]>([]);
   const soundRef = useRef(new SoundSystem(soundEnabled));
   const prevStatesRef = useRef<Map<string, string>>(new Map());
   const selectedIdRef = useRef(selectedId);
@@ -63,9 +63,12 @@ export default function GameCanvas({ agents, selectedId, isReplaying, workflow, 
   );
   furnitureRef.current = [...officeLayout.furniture, ...extraFurnitureRef.current];
 
-  // Init game loop once
+  // Init game loop once with a placeholder tileMap — updated on first resize
   useEffect(() => {
-    const loop = createGameLoop(tileMap, officeLayout.homeTiles, (chars) => {
+    const initCols = Math.max(20, Math.ceil((containerRef.current?.clientWidth ?? 800) / TILE_SIZE));
+    const initRows = Math.max(15, Math.ceil((containerRef.current?.clientHeight ?? 600) / TILE_SIZE));
+    tileMapRef.current = buildTileMap(initCols, initRows);
+    const loop = createGameLoop(tileMapRef.current, officeLayout.homeTiles, (chars) => {
       latestChars.current = chars.map(c => ({
         ...c,
         selected: c.id === selectedIdRef.current,
@@ -84,7 +87,7 @@ export default function GameCanvas({ agents, selectedId, isReplaying, workflow, 
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       renderFrame(
         ctx,
-        tileMap,
+        tileMapRef.current,
         furnitureRef.current,
         latestChars.current,
         offsetRef.current.x,
@@ -151,12 +154,16 @@ export default function GameCanvas({ agents, selectedId, isReplaying, workflow, 
     if (!container || !canvas) return;
 
     const ro = new ResizeObserver(() => {
-      canvas.width = container.clientWidth;
-      canvas.height = container.clientHeight;
-      setViewportSize({
-        width: container.clientWidth,
-        height: container.clientHeight,
-      });
+      const w = container.clientWidth;
+      const h = container.clientHeight;
+      canvas.width = w;
+      canvas.height = h;
+      // Rebuild tileMap to fill the new viewport
+      const cols = Math.max(20, Math.ceil(w / TILE_SIZE));
+      const rows = Math.max(15, Math.ceil(h / TILE_SIZE));
+      tileMapRef.current = buildTileMap(cols, rows);
+      loopRef.current?.setTileMap(tileMapRef.current);
+      setViewportSize({ width: w, height: h });
     });
     ro.observe(container);
     return () => ro.disconnect();

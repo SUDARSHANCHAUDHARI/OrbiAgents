@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { buildTileMap, buildFurnitureInstances, AGENT_HOME_TILES, TILE_SIZE } from "shared/engine/tileMap";
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { buildTileMap, buildFurnitureInstances, buildAgentHomeTiles, TILE_SIZE } from "shared/engine/tileMap";
 import { createGameLoop } from "shared/engine/gameLoop";
 import { renderFrame } from "shared/engine/renderer";
 import { SoundSystem } from "shared/engine/soundSystem";
@@ -14,9 +14,14 @@ import {
 import type { AgentInput } from "shared/engine/gameLoop";
 import type { CharacterRenderState, FurnitureInstance } from "shared/types";
 
-const tileMap = buildTileMap();
-const defaultFurniture = buildFurnitureInstances();
 const ZOOM = 2;
+
+function gridFromWindow() {
+  return {
+    cols: Math.max(20, Math.ceil(window.innerWidth / (TILE_SIZE * ZOOM))),
+    rows: Math.max(15, Math.ceil(window.innerHeight / (TILE_SIZE * ZOOM))),
+  };
+}
 const CHIME_STATES = new Set(["done", "permission-waiting"]);
 const sound = new SoundSystem();
 const SPRITE_KEYS = Object.keys(SPRITE_LABELS) as SpriteKey[];
@@ -51,27 +56,37 @@ export default function App() {
   const [customItems, setCustomItems] = useState<CustomFurnitureItem[]>([]);
   const historyRef = useRef<CustomFurnitureItem[][]>([]);
 
-  const furnitureRef = useRef<FurnitureInstance[]>(defaultFurniture);
+  const baseFurnitureRef = useRef<FurnitureInstance[]>([]);
+  const furnitureRef = useRef<FurnitureInstance[]>([]);
+  const customItemsRef = useRef<CustomFurnitureItem[]>([]);
+  customItemsRef.current = customItems;
+
+  const rebuildFurniture = useCallback((base: FurnitureInstance[]) => {
+    baseFurnitureRef.current = base;
+    furnitureRef.current = [...base, ...customItemsRef.current.map(customItemToFurnitureInstance)];
+  }, []);
 
   useEffect(() => {
     setCustomItems(loadCustomFurniture());
   }, []);
 
-  const mergedFurniture = useMemo<FurnitureInstance[]>(
-    () => [...defaultFurniture, ...customItems.map(customItemToFurnitureInstance)],
-    [customItems],
-  );
-  furnitureRef.current = mergedFurniture;
+  // Merge base + custom whenever customItems changes
+  useEffect(() => {
+    furnitureRef.current = [...baseFurnitureRef.current, ...customItems.map(customItemToFurnitureInstance)];
+  }, [customItems]);
 
-  // Init game loop once
+  // Init game loop once, rebuild tileMap/furniture on resize
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
+    const { cols, rows } = gridFromWindow();
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
+    let currentTileMap = buildTileMap(cols, rows);
+    rebuildFurniture(buildFurnitureInstances(cols, rows));
 
-    const loop = createGameLoop(tileMap, AGENT_HOME_TILES, (chars) => {
+    const loop = createGameLoop(currentTileMap, buildAgentHomeTiles(cols, rows), (chars) => {
       latestChars.current = chars.map(c => ({
         ...c,
         selected: c.id === selectedIdRef.current,
@@ -79,17 +94,21 @@ export default function App() {
       const ctx = canvas.getContext("2d");
       if (!ctx) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      renderFrame(ctx, tileMap, furnitureRef.current, latestChars.current, 0, 0, ZOOM);
+      renderFrame(ctx, currentTileMap, furnitureRef.current, latestChars.current, 0, 0, ZOOM);
     });
 
     loopRef.current = loop;
     loop.start();
 
     const onResize = () => {
+      const { cols: c, rows: r } = gridFromWindow();
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
+      currentTileMap = buildTileMap(c, r);
+      rebuildFurniture(buildFurnitureInstances(c, r));
+      loop.setTileMap(currentTileMap);
       const ctx = canvas.getContext("2d");
-      if (ctx) renderFrame(ctx, tileMap, furnitureRef.current, latestChars.current, 0, 0, ZOOM);
+      if (ctx) renderFrame(ctx, currentTileMap, furnitureRef.current, latestChars.current, 0, 0, ZOOM);
     };
     window.addEventListener("resize", onResize);
 
