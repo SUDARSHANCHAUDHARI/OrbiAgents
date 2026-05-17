@@ -1,59 +1,11 @@
-# macOS
-.DS_Store
-.AppleDouble
-.LSOverride
-
-# Editor
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# Claude Code local settings
-.claude/settings.local.json
-.claude-plugin-config.json
-
-# Logs
-*.log
-
-# Node / Web
 node_modules/
+.next/
+out/
 .env
 .env.local
-dist/
-.next/
-*.tsbuildinfo
-
-# npm — not used
-package-lock.json
-
-# Secrets
-*.env
-secrets.*
-credentials.*
-
-# Planning/spec docs — stay local
-PLUGIN_1_*.md
-SPEC_*.md
-PLAN_*.md
-
-# Database
-server/prisma/dev.db
-server/prisma/dev.db-journal
-server/prisma/dev.db-shm
-server/prisma/dev.db-wal
-
-# Local tooling
-.superpowers/
-.playwright-mcp/
-
-# Canvas/screenshot artifacts
-canvas-capture.txt
-canvas-render.png
-canvas_render.png
-canvas_render.txt
-test-*.png
-login-page.png
-orbi-dashboard.png
-orbi-pixel.png
-PLAN.md
+.env.*.local
+*.pem
+.DS_Store
+.vercel
+pnpm-debug.log*
+tsconfig.tsbuildinfo
