@@ -1,0 +1,25 @@
+# OrbiAgents - Codex Context
+
+## Project
+
+- Path: `AIProjects/OrbiAgents`
+- Type: Web/TypeScript project
+- Framework: Next.js; read current docs or local `node_modules/next/dist/docs/` when APIs are version-sensitive.
+- Package manager: `pnpm` unless repo scripts prove otherwise.
+
+## Workflows
+
+- Inspect `package.json` scripts before running build, lint, test, or dev commands.
+- Keep environment variables server-side unless intentionally public with `NEXT_PUBLIC_`.
+- Do not commit `.next/`, `dist/`, local env files, generated caches, or deployment secrets.
+- For visible UI changes, verify with browser/screenshot checks when feasible.
+
+## Codex Rules
+
+- Global context comes from `~/.codex/AGENTS.md`.
+- Verify actual files before claiming repo state, config, counts, or duplicates.
+- Do not commit secrets, `.env*`, local config, signing material, generated caches, sessions, or auth files.
+- Stage files by explicit path only.
+- Prefer focused changes and match existing project patterns.
+- Read `CodexConfig/rules/web.md` before substantial web/TypeScript work.
+
