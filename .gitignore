@@ -9,3 +9,6 @@ out/
 .vercel
 pnpm-debug.log*
 tsconfig.tsbuildinfo
+.claude/worktrees/
+
+repoguard-results/
