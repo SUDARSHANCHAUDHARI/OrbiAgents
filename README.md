@@ -45,7 +45,7 @@ The workflow engine resolves dependencies between nodes, passes predecessor outp
 
 OrbiAgents also includes a simpler fixed Planner → Coder execution path.
 
-> **Current runtime model:** OrbiAgents currently uses API-driven specialist agents. Persistent CLI-agent processes, long-term agent memory, direct agent-to-agent mailboxes, and deeper autonomous recovery are roadmap items rather than features claimed as complete today.
+> **Current runtime model:** OrbiAgents executes specialist agents through Anthropic, OpenAI, and Gemini APIs. It now has persistent agent/shared memory, durable mailboxes, a supervisor policy layer, and runtime/isolation contracts. Local Claude Code or Codex processes are not executed yet; those adapters remain disabled foundations until a secured process runner is implemented.
 
 ## Features
 
@@ -54,7 +54,7 @@ OrbiAgents also includes a simpler fixed Planner → Coder execution path.
 - Fixed Planner → Coder execution path
 - Dynamic DAG-based workflows
 - Planner, Coder, Tester, Reviewer, and Debugger node types
-- Dependency-aware execution using topological ordering
+- Bounded parallel execution of dependency-ready DAG branches
 - Cycle detection
 - Per-node streaming progress
 - Pause and resume agent state
@@ -83,11 +83,15 @@ Provider availability is determined by which API keys are configured on the serv
 - Per-user runtime isolation
 - Live workflow result delivery
 - Pixel-office / coworking visual workspace
+- Orbi-Prime supervisor activity and retry/circuit events
+- Animated mailbox delivery and concurrent-agent indicators driven by real events
+- Reduced-motion support
 
 ### Sessions and replay
 
 - Record workflow sessions
 - Capture agent-state frames during execution
+- Persist supervisor and workflow observability events
 - Replay completed sessions
 - List previous sessions
 - Record cost per run
@@ -99,12 +103,15 @@ Provider availability is determined by which API keys are configured on the serv
 - Email/password signup and login
 - JWT-based authentication
 - Persistent saved workflows
+- Persistent per-agent and shared project memory
+- Durable agent-to-agent mailbox messages outside workflow edges
 - User-scoped workflow and session access
 - Authentication rate limiting
 - Workflow rate limiting
 - Maximum workflow node count
 - Maximum runs per hour
 - Daily cost cap
+- Runtime, retry, token, cost, message-hop, and consecutive-failure circuit breakers
 - Protection against multiple workflows running at the same time for one user
 
 ### VS Code extension
@@ -136,7 +143,7 @@ OrbiAgents is no longer a single Next.js MVP. The repository contains multiple p
 │            Express · WebSocket · TypeScript         │
 │                                                     │
 │  auth      workflows      sessions      runtimes    │
-│  usage     replay         rate limits   providers   │
+│  memory    mailbox        supervisor    safety      │
 └───────────────┬─────────────────────────────────────┘
                 │
        ┌────────┼─────────┐
@@ -144,12 +151,12 @@ OrbiAgents is no longer a single Next.js MVP. The repository contains multiple p
    Anthropic  OpenAI    Gemini
                 │
                 ▼
-       Dynamic Workflow Runtime
+    Runtime Adapter + Dynamic DAG Runtime
                 │
- Planner → Coder → Tester / Reviewer → Debugger
+ Planner → Coder → Tester ∥ Reviewer → Debugger
                 │
                 ▼
-      state · logs · cost · replay
+ state · messages · events · cost · replay
 ```
 
 ## Repository structure
@@ -162,6 +169,12 @@ OrbiAgents/
 │   ├── agents/                  # Planner/Coder/Tester/Reviewer/Debugger
 │   ├── test/                    # Server tests
 │   ├── ai.ts                    # Anthropic/OpenAI/Gemini abstraction
+│   ├── runtimeAdapter.ts        # API and guarded local-CLI contracts
+│   ├── workspaceIsolation.ts    # No-op and Git-worktree isolation hooks
+│   ├── memoryStore.ts           # Per-agent/shared memory persistence
+│   ├── mailboxStore.ts          # Independent agent messages
+│   ├── supervisor.ts            # Orbi-Prime execution events
+│   ├── circuitBreaker.ts        # Workflow safety budgets
 │   ├── auth.ts                  # Authentication helpers
 │   ├── index.ts                 # HTTP + WebSocket server
 │   ├── orchestrator.ts          # Fixed Planner → Coder runtime
@@ -175,6 +188,7 @@ OrbiAgents/
 │   └── e2e/                     # Playwright E2E tests
 ├── docs/
 │   ├── assets/screenshots/
+│   ├── architecture-next.md
 │   └── coworking-space-roadmap.md
 ├── docker-compose.prod.yml
 └── README.md
@@ -184,7 +198,8 @@ OrbiAgents/
 
 | Area | Technology |
 |---|---|
-| Web | Next.js 16, React 19, TypeScript |
+| Web dashboard | Next.js 14, React 18, TypeScript |
+| Root design app | Next.js 16, React 19, TypeScript |
 | Styling | Tailwind CSS |
 | Server | Node.js, Express, WebSocket |
 | AI providers | Anthropic SDK, OpenAI SDK, Google Generative AI |
@@ -252,6 +267,7 @@ RATE_LIMIT_WORKFLOW_MAX=12
 MAX_RUNS_PER_HOUR=30
 MAX_DAILY_COST_USD=10
 MAX_WORKFLOW_NODES=12
+MAX_PARALLEL_AGENTS=3
 ```
 
 Use a strong `JWT_SECRET` outside local development.
@@ -291,9 +307,12 @@ The server currently exposes runtime capabilities for:
 - dynamic workflow execution
 - workflow cancellation
 - saved workflow CRUD
+- persistent agent/shared memory
+- agent-to-agent mailbox messaging
 - session listing and replay
 - replay sharing
 - authenticated WebSocket state updates
+- supervisor and circuit-breaker observability events
 
 The implementation in `server/` is the source of truth for current runtime behavior.
 
@@ -314,12 +333,15 @@ The implementation in `server/` is the source of truth for current runtime behav
 | VS Code extension | ✅ Built |
 | Server tests | ✅ Built |
 | Extension Playwright E2E setup | ✅ Built |
-| True parallel execution of independent DAG branches | 🧭 Planned |
-| Persistent agent memory | 🧭 Planned |
-| Direct agent mailbox / messaging | 🧭 Planned |
-| Supervisor agent with autonomous recovery | 🧭 Planned |
-| CLI-agent runtime adapters | 🧭 Planned |
-| Git worktree isolation for coding agents | 🧭 Planned |
+| Bounded parallel execution of independent DAG branches | ✅ Built |
+| Persistent per-agent and shared memory | ✅ Built |
+| Direct agent mailbox / messaging | ✅ Built |
+| Orbi-Prime supervisor policy and event layer | ✅ Built |
+| Circuit breakers for runtime/retries/tokens/cost/failures | ✅ Built |
+| API runtime adapter | ✅ Built and default |
+| Local CLI-agent adapter contracts | 🧱 Foundation only; execution disabled |
+| Git worktree isolation hooks | 🧱 Foundation only; command runner not enabled |
+| Autonomous supervisor workflow mutation and recovery | 🧭 Planned |
 
 ## Product direction
 
@@ -333,14 +355,12 @@ That direction is captured in the [coworking-space roadmap](docs/coworking-space
 
 The next architectural milestones are focused on making orchestration deeper rather than adding decorative complexity:
 
-1. Execute independent DAG branches in parallel
-2. Add persistent per-agent and shared project memory
-3. Add agent-to-agent mailbox messaging outside fixed workflow edges
-4. Add a supervisor/orchestrator agent for assignment, retry, escalation, and recovery
-5. Add runtime adapters for coding-agent CLIs such as Claude Code and Codex
-6. Isolate coding agents with Git worktrees or equivalent sandboxes
-7. Add circuit-breaker logic for loops, repeated failures, runtime, and spend
-8. Tie coworking-space behavior directly to real workflow events and replay data
+1. Implement secured, opt-in process runners for Claude Code and Codex adapters
+2. Connect Git-worktree isolation hooks to those local coding runtimes
+3. Let Orbi-Prime safely modify workflows and choose recovery actions
+4. Inject selected memory into agent prompts with explicit retention controls
+5. Add mailbox conversation and memory-management UI
+6. Expand replay to synchronize event timing precisely with agent frames
 
 ## Why OrbiAgents
 
