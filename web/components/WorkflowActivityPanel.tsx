@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import type { Agent, WorkflowEvent } from "@/lib/types";
 import { describeWorkflowEvent, isSupervisorActive } from "@/lib/observability";
 

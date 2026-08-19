@@ -28,3 +28,15 @@ export function isSupervisorActive(events: WorkflowEvent[]): boolean {
   }
   return active;
 }
+
+export interface MessageFlightPoint { x: number; y: number }
+
+export function buildMessageFlightPath(
+  event: WorkflowEvent,
+  positions: Record<string, MessageFlightPoint>
+): string | null {
+  const from = event.senderAgentId ? positions[event.senderAgentId] : undefined;
+  const to = event.recipientAgentId ? positions[event.recipientAgentId] : undefined;
+  if (event.type !== "mailbox-message" || !from || !to) return null;
+  return `M ${from.x} ${from.y} Q ${(from.x + to.x) / 2} ${Math.min(from.y, to.y) - 60} ${to.x} ${to.y}`;
+}

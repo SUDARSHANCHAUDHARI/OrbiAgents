@@ -12,6 +12,7 @@ import {
   layoutAgents,
 } from "@/lib/dashboardLayout";
 import { SoundSystem } from "../../shared/engine/soundSystem";
+import { buildMessageFlightPath } from "@/lib/observability";
 
 interface Props {
   agents: Agent[];
@@ -307,7 +308,11 @@ export default function GameCanvas({ agents, selectedId, isReplaying, workflow, 
           const y1 = cameraFrame.offsetY + from.row * TILE_SIZE * cameraFrame.zoom - 12 * cameraFrame.zoom;
           const x2 = cameraFrame.offsetX + to.col * TILE_SIZE * cameraFrame.zoom;
           const y2 = cameraFrame.offsetY + to.row * TILE_SIZE * cameraFrame.zoom - 12 * cameraFrame.zoom;
-          const path = `M ${x1} ${y1} Q ${(x1 + x2) / 2} ${Math.min(y1, y2) - 60} ${x2} ${y2}`;
+          const path = buildMessageFlightPath(event, {
+            [event.senderAgentId!]: { x: x1, y: y1 },
+            [event.recipientAgentId!]: { x: x2, y: y2 },
+          });
+          if (!path) return null;
           return (
             <g key={`${event.timestamp}-${index}`} className="orbi-mail-flight">
               <path d={path} fill="none" stroke="rgba(250,204,21,0.28)" strokeWidth="2" strokeDasharray="4 5" />
