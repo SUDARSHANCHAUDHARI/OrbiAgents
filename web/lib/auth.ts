@@ -1,5 +1,5 @@
 import { getApiBaseUrl } from "./config";
-import { PreservedWorkspace, Provider, RuntimeId, Session, SessionMeta, WorkspaceChanges } from "./types";
+import { MailboxMessage, MemoryEntry, MemoryScope, MessageKind, PreservedWorkspace, Provider, RuntimeId, Session, SessionMeta, WorkspaceChanges } from "./types";
 
 const API = getApiBaseUrl();
 const TOKEN_KEY = "orbi_token";
@@ -146,6 +146,39 @@ export async function discardPreservedWorkspace(id: string): Promise<void> {
     const body = (await res.json()) as { error?: string };
     throw new Error(body.error ?? "Could not discard workspace");
   }
+}
+
+export async function listMemory(scope: MemoryScope, agentId?: string): Promise<MemoryEntry[]> {
+  const query = new URLSearchParams({ scope });
+  if (agentId) query.set("agentId", agentId);
+  const res = await fetch(`${API}/memory?${query}`, { headers: authHeaders() });
+  if (!res.ok) throw new Error("Could not load memory");
+  return res.json() as Promise<MemoryEntry[]>;
+}
+
+export async function createMemory(scope: MemoryScope, content: string, agentId?: string): Promise<MemoryEntry> {
+  const res = await fetch(`${API}/memory`, { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ scope, agentId: scope === "agent" ? agentId : undefined, content }) });
+  const body = (await res.json()) as MemoryEntry & { error?: string };
+  if (!res.ok) throw new Error(body.error ?? "Could not save memory");
+  return body;
+}
+
+export async function listInbox(agentId: string): Promise<MailboxMessage[]> {
+  const res = await fetch(`${API}/messages/${encodeURIComponent(agentId)}?includeRead=true`, { headers: authHeaders() });
+  if (!res.ok) throw new Error("Could not load inbox");
+  return res.json() as Promise<MailboxMessage[]>;
+}
+
+export async function sendMailboxMessage(input: { senderAgentId: string; recipientAgentId: string; kind: MessageKind; body: string }): Promise<MailboxMessage> {
+  const res = await fetch(`${API}/messages`, { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify(input) });
+  const body = (await res.json()) as MailboxMessage & { error?: string };
+  if (!res.ok) throw new Error(body.error ?? "Could not send message");
+  return body;
+}
+
+export async function markMailboxMessageRead(id: string): Promise<void> {
+  const res = await fetch(`${API}/messages/${encodeURIComponent(id)}/read`, { method: "POST", headers: authHeaders() });
+  if (!res.ok) throw new Error("Could not mark message read");
 }
 
 export interface UsageStats {

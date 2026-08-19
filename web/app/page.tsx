@@ -40,6 +40,7 @@ import ShareModal from "@/components/ShareModal";
 import AgentLogsPanel from "@/components/AgentLogsPanel";
 import WorkflowActivityPanel from "@/components/WorkflowActivityPanel";
 import WorkspaceReviewPanel from "@/components/WorkspaceReviewPanel";
+import AgentContextPanel from "@/components/AgentContextPanel";
 
 interface WorkflowResult {
   sessionId: string;
@@ -98,6 +99,7 @@ export default function Home() {
   const [showLogs, setShowLogs] = useState(false);
   const [workflowEvents, setWorkflowEvents] = useState<WorkflowEvent[]>([]);
   const [showWorkspaces, setShowWorkspaces] = useState(false);
+  const [showContext, setShowContext] = useState(false);
 
   // Replay state — declared before any early return (rules of hooks)
   const [replaySession, setReplaySession] = useState<Session | null>(null);
@@ -648,6 +650,12 @@ export default function Home() {
           >
             <button
               className="orbi-control"
+              onClick={() => setShowContext((value) => !value)}
+              style={{ minHeight: 40, background: showContext ? "#374151" : sky.hudBgAlt, border: `1px solid ${sky.borderSoft}`, color: showContext ? sky.text : sky.textMuted, borderRadius: 8, fontSize: 14, fontWeight: 500, padding: "0 14px", cursor: "pointer" }}
+            >CONTEXT</button>
+
+            <button
+              className="orbi-control"
               onClick={() => setShowWorkspaces((value) => !value)}
               style={{ minHeight: 40, background: showWorkspaces ? "#374151" : sky.hudBgAlt, border: `1px solid ${sky.borderSoft}`, color: showWorkspaces ? sky.text : sky.textMuted, borderRadius: 8, fontSize: 14, fontWeight: 500, padding: "0 14px", cursor: "pointer" }}
             >
@@ -945,6 +953,7 @@ export default function Home() {
           )}
 
           {showWorkspaces && <WorkspaceReviewPanel onClose={() => setShowWorkspaces(false)} />}
+          {showContext && <AgentContextPanel onClose={() => setShowContext(false)} />}
 
           {isReplaying && replaySession && (
             <ReplayBar
