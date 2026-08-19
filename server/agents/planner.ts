@@ -1,4 +1,5 @@
-import { streamMessage, StreamResult, OnChunk, Provider, DEFAULT_PROVIDER } from "../ai";
+import { StreamResult, OnChunk, Provider, DEFAULT_PROVIDER } from "../ai";
+import { apiRuntime, RuntimeAdapter } from "../runtimeAdapter";
 
 const PLANNER_SYSTEM = `You are Orbi-Alpha, a senior software architect AI agent.
 Your job is to analyze a coding task and produce a clear, numbered implementation plan.
@@ -8,12 +9,13 @@ Each step should be concrete and actionable. Maximum 6 steps.`;
 export async function plannerAgent(
   task: string,
   onChunk: OnChunk,
-  provider: Provider = DEFAULT_PROVIDER
+  provider: Provider = DEFAULT_PROVIDER,
+  runtime: RuntimeAdapter = apiRuntime
 ): Promise<StreamResult> {
-  return streamMessage(
-    PLANNER_SYSTEM,
-    `Task: ${task}\n\nProvide the implementation plan:`,
+  return runtime.execute({
+    systemPrompt: PLANNER_SYSTEM,
+    userMessage: `Task: ${task}\n\nProvide the implementation plan:`,
     onChunk,
-    provider
-  );
+    provider,
+  });
 }
