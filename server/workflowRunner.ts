@@ -122,6 +122,7 @@ export interface WorkflowRunOptions {
   signal?: AbortSignal;
   workspaceIsolation?: WorkspaceIsolation;
   runId?: string;
+  onWorkspacePreserved?: (input: { runId: string; nodeId: string; path: string }) => void | Promise<void>;
 }
 
 export async function runWorkflowDynamic(
@@ -229,6 +230,13 @@ export async function runWorkflowDynamic(
       }
     } finally {
       workspaceDisposition = await lease?.release();
+      if (workspaceDisposition === "preserved" && lease) {
+        await options.onWorkspacePreserved?.({
+          runId: options.runId ?? "unknown",
+          nodeId: node.id,
+          path: lease.path,
+        });
+      }
     }
     if (!result) {
       supervisor.report("node-failed", { nodeId: node.id, detail: errorMessage(lastError) });
