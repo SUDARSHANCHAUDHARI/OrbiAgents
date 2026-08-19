@@ -13,7 +13,43 @@ model User {
   password       String
   savedWorkflows SavedWorkflow[]
   sessions       StoredSession[]
+  memories       MemoryEntry[]
+  messages       MailboxMessage[]
   createdAt      DateTime        @default(now())
+}
+
+model MemoryEntry {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectKey String   @default("default")
+  scope      String
+  agentId    String?
+  content    String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([userId, projectKey, scope, agentId, updatedAt])
+}
+
+model MailboxMessage {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectKey     String   @default("default")
+  senderAgentId  String
+  recipientAgentId String
+  kind           String
+  body           String
+  conversationId String
+  replyToId      String?
+  hopCount       Int      @default(0)
+  status         String   @default("pending")
+  createdAt      DateTime @default(now())
+  readAt         DateTime?
+
+  @@index([userId, projectKey, recipientAgentId, status, createdAt])
+  @@index([conversationId, createdAt])
 }
 
 model SavedWorkflow {
