@@ -64,6 +64,19 @@ export interface SessionMeta {
 export type Provider = "anthropic" | "openai" | "gemini";
 export type RuntimeId = "provider-api" | "codex-cli" | "claude-cli";
 
+export interface PreservedWorkspace {
+  id: string;
+  runId: string;
+  nodeId: string;
+  path: string;
+  createdAt: number;
+}
+
+export interface WorkspaceChanges {
+  status: string;
+  diffStat: string;
+}
+
 // ── Workflow builder ───────────────────────────────────────────────
 export type WorkflowNodeType = "planner" | "coder" | "tester" | "reviewer" | "debugger";
 

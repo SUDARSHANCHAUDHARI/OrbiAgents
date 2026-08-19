@@ -1,5 +1,5 @@
 import { getApiBaseUrl } from "./config";
-import { Provider, RuntimeId, Session, SessionMeta } from "./types";
+import { PreservedWorkspace, Provider, RuntimeId, Session, SessionMeta, WorkspaceChanges } from "./types";
 
 const API = getApiBaseUrl();
 const TOKEN_KEY = "orbi_token";
@@ -121,6 +121,31 @@ export async function listRuntimes(): Promise<RuntimesResponse> {
   const res = await fetch(`${API}/runtimes`);
   if (!res.ok) throw new Error("Could not load runtimes");
   return res.json() as Promise<RuntimesResponse>;
+}
+
+export async function listPreservedWorkspaces(): Promise<PreservedWorkspace[]> {
+  const res = await fetch(`${API}/workspaces`, { headers: authHeaders() });
+  if (!res.ok) throw new Error("Could not load preserved workspaces");
+  return res.json() as Promise<PreservedWorkspace[]>;
+}
+
+export async function inspectPreservedWorkspace(id: string): Promise<WorkspaceChanges> {
+  const res = await fetch(`${API}/workspaces/${encodeURIComponent(id)}/changes`, { headers: authHeaders() });
+  const body = (await res.json()) as WorkspaceChanges & { error?: string };
+  if (!res.ok) throw new Error(body.error ?? "Could not inspect workspace");
+  return body;
+}
+
+export async function discardPreservedWorkspace(id: string): Promise<void> {
+  const res = await fetch(`${API}/workspaces/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ confirm: true }),
+  });
+  if (!res.ok) {
+    const body = (await res.json()) as { error?: string };
+    throw new Error(body.error ?? "Could not discard workspace");
+  }
 }
 
 export interface UsageStats {
