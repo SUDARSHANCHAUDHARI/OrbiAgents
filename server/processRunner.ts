@@ -8,6 +8,7 @@ export interface ProcessRequest {
   signal?: AbortSignal;
   onStdout?: (chunk: string) => void | Promise<void>;
   onStderr?: (chunk: string) => void | Promise<void>;
+  maxOutputBytes?: number;
 }
 
 export interface ProcessResult {
@@ -41,24 +42,44 @@ export class SpawnProcessRunner implements ProcessRunner {
       let stdout = "";
       let stderr = "";
       let callbackChain = Promise.resolve();
-      const abort = () => child.kill("SIGTERM");
+      let outputBytes = 0;
+      let killTimer: ReturnType<typeof setTimeout> | undefined;
+      const maxOutputBytes = request.maxOutputBytes ?? 2 * 1024 * 1024;
+      const abort = () => {
+        child.kill("SIGTERM");
+        killTimer = setTimeout(() => child.kill("SIGKILL"), 2_000);
+        killTimer.unref();
+      };
 
       request.signal?.addEventListener("abort", abort, { once: true });
       child.stdout.on("data", (value: Buffer) => {
+        outputBytes += value.byteLength;
+        if (outputBytes > maxOutputBytes) {
+          child.kill("SIGTERM");
+          return;
+        }
         const chunk = value.toString("utf8");
         stdout += chunk;
         if (request.onStdout) callbackChain = callbackChain.then(() => request.onStdout!(chunk));
       });
       child.stderr.on("data", (value: Buffer) => {
+        outputBytes += value.byteLength;
+        if (outputBytes > maxOutputBytes) {
+          child.kill("SIGTERM");
+          return;
+        }
         const chunk = value.toString("utf8");
         stderr += chunk;
         if (request.onStderr) callbackChain = callbackChain.then(() => request.onStderr!(chunk));
       });
       child.once("error", reject);
       child.once("close", (code) => {
+        if (killTimer) clearTimeout(killTimer);
         request.signal?.removeEventListener("abort", abort);
         callbackChain.then(() => {
-          if (request.signal?.aborted) {
+          if (outputBytes > maxOutputBytes) {
+            reject(new Error(`Process output exceeded ${maxOutputBytes} bytes`));
+          } else if (request.signal?.aborted) {
             reject(request.signal.reason ?? new Error("Process cancelled"));
           } else if (code !== 0) {
             reject(new Error(`${request.command} exited with code ${code}: ${stderr.trim()}`));

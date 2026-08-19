@@ -8,7 +8,7 @@ OrbiAgents uses its existing Prisma/SQLite database for user-scoped memory and m
 
 ### Runtime boundary
 
-`RuntimeAdapter` separates agent prompts from execution. `ApiRuntimeAdapter` preserves the existing Anthropic, OpenAI, and Gemini behavior. `LocalCliRuntimeAdapter` is deliberately disabled: it documents the contract but does not spawn local processes without a secured runner.
+`RuntimeAdapter` separates agent prompts from execution. `ApiRuntimeAdapter` preserves the existing Anthropic, OpenAI, and Gemini behavior. `LocalCliRuntimeAdapter` can run Codex or Claude Code through an allowlisted, no-shell process runner when the server operator explicitly enables it. Dynamic workflow nodes receive isolated Git worktrees; API execution remains the default.
 
 ### Supervisor and safety
 
@@ -28,8 +28,8 @@ Supervisor events are broadcast through the authenticated WebSocket and persiste
 
 ## Deliberately not claimed as complete
 
-- Claude Code or Codex CLI process spawning and terminal streaming
-- Automatic Git worktree creation through operating-system commands
+- UI controls for choosing an operator-enabled local runtime
+- Patch review, selective merge, and cleanup flows for dirty agent worktrees
 - Autonomous supervisor changes to user workflows
 - Automatic memory extraction, semantic retrieval, or prompt injection
 - Full mailbox conversation and memory editing screens

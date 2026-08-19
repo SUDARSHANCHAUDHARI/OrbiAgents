@@ -268,6 +268,9 @@ MAX_RUNS_PER_HOUR=30
 MAX_DAILY_COST_USD=10
 MAX_WORKFLOW_NODES=12
 MAX_PARALLEL_AGENTS=3
+LOCAL_CLI_ENABLED=false
+# LOCAL_CLI_REPO_PATH=/absolute/path/to/repository
+# LOCAL_CLI_WORKTREE_ROOT=/absolute/path/to/orbi-worktrees
 ```
 
 Use a strong `JWT_SECRET` outside local development.
@@ -339,8 +342,8 @@ The implementation in `server/` is the source of truth for current runtime behav
 | Orbi-Prime supervisor policy and event layer | ✅ Built |
 | Circuit breakers for runtime/retries/tokens/cost/failures | ✅ Built |
 | API runtime adapter | ✅ Built and default |
-| Local CLI-agent adapter contracts | 🧱 Foundation only; execution disabled |
-| Git worktree isolation hooks | 🧱 Foundation only; command runner not enabled |
+| Codex and Claude Code CLI adapters | ✅ Opt-in for dynamic workflows; disabled by default |
+| Git worktree isolation | ✅ Required for local CLI nodes; dirty worktrees are preserved |
 | Autonomous supervisor workflow mutation and recovery | 🧭 Planned |
 
 ## Product direction
@@ -355,12 +358,10 @@ That direction is captured in the [coworking-space roadmap](docs/coworking-space
 
 The next architectural milestones are focused on making orchestration deeper rather than adding decorative complexity:
 
-1. Implement secured, opt-in process runners for Claude Code and Codex adapters
-2. Connect Git-worktree isolation hooks to those local coding runtimes
-3. Let Orbi-Prime safely modify workflows and choose recovery actions
-4. Inject selected memory into agent prompts with explicit retention controls
-5. Add mailbox conversation and memory-management UI
-6. Expand replay to synchronize event timing precisely with agent frames
+1. Let Orbi-Prime safely modify workflows and choose recovery actions
+2. Inject selected memory into agent prompts with explicit retention controls
+3. Add mailbox conversation and memory-management UI
+4. Expand replay to synchronize event timing precisely with agent frames
 
 ## Why OrbiAgents
 

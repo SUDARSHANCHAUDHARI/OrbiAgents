@@ -55,6 +55,42 @@ test("spawn runner rejects commands outside its allowlist before spawning", asyn
   );
 });
 
+test("spawn runner streams output and aborts a running child", async () => {
+  const runner = new SpawnProcessRunner(new Set([process.execPath]));
+  const chunks: string[] = [];
+  const completed = await runner.run({
+    command: process.execPath,
+    args: ["-e", "process.stdout.write('hello')"],
+    cwd: "/tmp",
+    onStdout: (chunk) => { chunks.push(chunk); },
+  });
+  assert.equal(completed.stdout, "hello");
+  assert.equal(chunks.join(""), "hello");
+
+  const controller = new AbortController();
+  const running = runner.run({
+    command: process.execPath,
+    args: ["-e", "setInterval(() => {}, 1000)"],
+    cwd: "/tmp",
+    signal: controller.signal,
+  });
+  controller.abort(new Error("cancelled by test"));
+  await assert.rejects(running, /cancelled by test/);
+});
+
+test("spawn runner terminates output beyond its configured bound", async () => {
+  const runner = new SpawnProcessRunner(new Set([process.execPath]));
+  await assert.rejects(
+    runner.run({
+      command: process.execPath,
+      args: ["-e", "process.stdout.write('123456789')"],
+      cwd: "/tmp",
+      maxOutputBytes: 4,
+    }),
+    /output exceeded 4 bytes/
+  );
+});
+
 test("worktree isolation sanitizes names and releases once", async () => {
   const calls: string[] = [];
   const isolation = new GitWorktreeIsolation("/repo", "/tmp/orbi-worktrees", {

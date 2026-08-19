@@ -577,7 +577,7 @@ app.post("/workflow", protect, workflowRateLimit, async (req, res) => {
         maxConcurrency: MAX_PARALLEL_AGENTS,
         runtime: execution.runtime,
         workspaceIsolation: execution.workspaceIsolation,
-        runId: sessionId,
+        runId: `${userId}-${sessionId}`,
         supervisor: new OrbiPrimeSupervisor((event) => publishWorkflowEvent(userId, event)),
         signal: runtime.workflowAbortController.signal,
       }
