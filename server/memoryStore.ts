@@ -12,6 +12,7 @@ export interface WriteMemoryInput {
 
 export function validateMemory(input: WriteMemoryInput): void {
   if (!input.content.trim()) throw new Error("Memory content is required");
+  if (input.content.length > 10_000) throw new Error("Memory content is too long");
   if (input.scope === "agent" && !input.agentId?.trim()) {
     throw new Error("agentId is required for agent memory");
   }

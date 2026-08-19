@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 import { db } from "./db";
 
 export type MessageKind = "request" | "inform" | "propose" | "query" | "agree" | "refuse" | "done";
+const MESSAGE_KINDS = new Set<MessageKind>(["request", "inform", "propose", "query", "agree", "refuse", "done"]);
 export const DEFAULT_MAX_MESSAGE_HOPS = 8;
 
 export interface SendMessageInput {
@@ -32,6 +33,8 @@ export function validateMessage(input: SendMessageInput): void {
     throw new Error("Agents cannot message themselves");
   }
   if (!input.body.trim()) throw new Error("Message body is required");
+  if (!MESSAGE_KINDS.has(input.kind)) throw new Error("Unsupported message kind");
+  if (input.body.length > 10_000) throw new Error("Message body is too long");
   if ((input.hopCount ?? 0) > (input.maxHops ?? DEFAULT_MAX_MESSAGE_HOPS)) {
     throw new MessageHopLimitError();
   }

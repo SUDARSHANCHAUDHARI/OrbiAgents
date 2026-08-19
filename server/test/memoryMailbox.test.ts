@@ -26,4 +26,8 @@ test("mailbox prevents self-messages and runaway hops", () => {
     () => validateMessage({ userId: "u1", senderAgentId: "a", recipientAgentId: "b", kind: "inform", body: "x", hopCount: 9 }),
     MessageHopLimitError
   );
+  assert.throws(
+    () => validateMessage({ userId: "u1", senderAgentId: "a", recipientAgentId: "b", kind: "unknown" as "inform", body: "x" }),
+    /Unsupported message kind/
+  );
 });
