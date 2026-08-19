@@ -6,6 +6,7 @@ export type SupervisorEventType =
   | "node-completed"
   | "node-failed"
   | "circuit-opened"
+  | "workflow-failed"
   | "workflow-completed";
 
 export interface SupervisorEvent {

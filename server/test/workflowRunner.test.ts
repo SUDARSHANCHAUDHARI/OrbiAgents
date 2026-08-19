@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { getWorkflowInputs, runWorkflowDynamic, topoSort } from "../workflowRunner";
 import { Workflow } from "../workflowTypes";
 import { StreamResult } from "../ai";
+import { OrbiPrimeSupervisor, SupervisorEvent } from "../supervisor";
 
 test("topoSort returns dependency-safe order", () => {
   const workflow: Workflow = {
@@ -132,4 +133,18 @@ test("dynamic workflow serializes nodes represented by the same agent", async ()
     },
   });
   assert.equal(peakCoders, 1);
+});
+
+test("dynamic workflow falls back from invalid concurrency and emits a terminal failure event", async () => {
+  const events: SupervisorEvent[] = [];
+  const workflow: Workflow = { nodes: [{ id: "plan", type: "planner" }], edges: [] };
+  await assert.rejects(
+    runWorkflowDynamic(workflow, "task", () => {}, async () => {}, "anthropic", {
+      maxConcurrency: Number.NaN,
+      supervisor: new OrbiPrimeSupervisor((event) => events.push(event)),
+      executeNode: async () => { throw new Error("expected failure"); },
+    }),
+    /expected failure/
+  );
+  assert.equal(events.at(-1)?.type, "workflow-failed");
 });

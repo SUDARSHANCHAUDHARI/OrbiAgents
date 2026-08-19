@@ -13,6 +13,6 @@ test("supervisor activity follows workflow terminal events", () => {
   assert.equal(isSupervisorActive([{ type: "workflow-started", timestamp: 1 }]), true);
   assert.equal(isSupervisorActive([
     { type: "workflow-started", timestamp: 1 },
-    { type: "workflow-completed", timestamp: 2 },
+    { type: "workflow-failed", timestamp: 2 },
   ]), false);
 });

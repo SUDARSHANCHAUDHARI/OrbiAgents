@@ -8,6 +8,7 @@ const LABELS: Record<string, string> = {
   "node-completed": "Agent completed work",
   "node-failed": "Agent failed",
   "circuit-opened": "Circuit breaker stopped execution",
+  "workflow-failed": "Workflow failed",
   "workflow-completed": "Workflow completed",
   "mailbox-message": "Agent message delivered",
 };
@@ -23,7 +24,7 @@ export function isSupervisorActive(events: WorkflowEvent[]): boolean {
   let active = false;
   for (const event of events) {
     if (event.type === "workflow-started") active = true;
-    if (event.type === "workflow-completed" || event.type === "circuit-opened") active = false;
+    if (["workflow-completed", "workflow-failed", "circuit-opened"].includes(event.type)) active = false;
   }
   return active;
 }

@@ -130,7 +130,10 @@ export async function runWorkflowDynamic(
   const outputs = new Map<string, string>();
   const completedSteps = new Map<string, WorkflowRunResult["steps"][number]>();
   let totalCostUsd = 0;
-  const maxConcurrency = Math.max(1, Math.min(options.maxConcurrency ?? 3, 10));
+  const requestedConcurrency = options.maxConcurrency ?? 3;
+  const maxConcurrency = Number.isFinite(requestedConcurrency)
+    ? Math.max(1, Math.min(Math.floor(requestedConcurrency), 10))
+    : 3;
   const nodeTimeoutMs = options.nodeTimeoutMs ?? 5 * 60_000;
   const breaker = options.circuitBreaker ?? new WorkflowCircuitBreaker();
   const supervisor = options.supervisor ?? new OrbiPrimeSupervisor();
@@ -244,6 +247,7 @@ export async function runWorkflowDynamic(
       finished = await Promise.race(running.values());
     } catch (error) {
       await Promise.allSettled(running.values());
+      supervisor.report("workflow-failed", { detail: errorMessage(error) });
       throw error;
     }
     running.delete(finished.node.id);
