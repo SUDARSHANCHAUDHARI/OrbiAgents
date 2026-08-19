@@ -5,7 +5,7 @@ import { use } from "react";
 import { Agent, Session } from "@/lib/types";
 import { getApiBaseUrl } from "@/lib/config";
 import AgentBox from "@/components/Agent";
-import ReplayBar from "@/components/ReplayBar";
+import ReplayBar, { ReplaySpeed } from "@/components/ReplayBar";
 
 export default function PublicReplayPage({
   params,
@@ -17,6 +17,7 @@ export default function PublicReplayPage({
   const [agents, setAgents] = useState<Agent[]>([]);
   const [frame, setFrame] = useState(0);
   const [playing, setPlaying] = useState(false);
+  const [speed, setSpeed] = useState<ReplaySpeed>(1);
   const [notFound, setNotFound] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -43,7 +44,7 @@ export default function PublicReplayPage({
       setAgents(session.frames[i].agents);
       setFrame(i + 1);
       i++;
-    }, 900);
+    }, 900 / speed);
   }
 
   function stopPlay() {
@@ -157,6 +158,8 @@ export default function PublicReplayPage({
             task={session.task}
             current={frame}
             total={session.frames.length}
+            speed={speed}
+            onSpeedChange={setSpeed}
             onStop={stopPlay}
           />
         )}

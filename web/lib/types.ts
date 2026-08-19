@@ -1,10 +1,12 @@
 export type AgentState =
   | "idle"
   | "thinking"
+  | "reading"
   | "coding"
   | "testing"
   | "reviewing"
   | "debugging"
+  | "permission-waiting"
   | "done";
 
 export interface Agent {
@@ -37,8 +39,18 @@ export interface Session {
   task: string;
   createdAt: number;
   frames: SessionFrame[];
+  events?: WorkflowEvent[];
   totalCostUsd?: number;
   provider?: Provider;
+}
+
+export interface WorkflowEvent {
+  type: string;
+  timestamp: number;
+  nodeId?: string;
+  detail?: string;
+  senderAgentId?: string;
+  recipientAgentId?: string;
 }
 
 export interface SessionMeta {

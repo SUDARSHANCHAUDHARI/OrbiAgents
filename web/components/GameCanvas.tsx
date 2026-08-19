@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useCallback, useMemo, useState } from "react";
-import type { Agent, Workflow } from "@/lib/types";
+import type { Agent, Workflow, WorkflowEvent } from "@/lib/types";
 import { buildTileMap, TILE_SIZE } from "../../shared/engine/tileMap";
 import { createGameLoop } from "../../shared/engine/gameLoop";
 import { renderFrame } from "../../shared/engine/renderer";
@@ -18,6 +18,7 @@ interface Props {
   selectedId: string | null;
   isReplaying: boolean;
   workflow?: Workflow | null;
+  events?: WorkflowEvent[];
   onAgentClick: (agent: Agent) => void;
   soundEnabled?: boolean;
   extraFurniture?: FurnitureInstance[];
@@ -36,7 +37,7 @@ const TYPE_TO_AGENT_ID: Record<string, string> = {
 
 const CHIME_STATES = new Set(["done", "permission-waiting"]);
 
-export default function GameCanvas({ agents, selectedId, isReplaying, workflow, onAgentClick, soundEnabled = true, extraFurniture, editMode, onLayoutClick }: Props) {
+export default function GameCanvas({ agents, selectedId, isReplaying, workflow, events = [], onAgentClick, soundEnabled = true, extraFurniture, editMode, onLayoutClick }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const loopRef = useRef<ReturnType<typeof createGameLoop> | null>(null);
@@ -292,6 +293,31 @@ export default function GameCanvas({ agents, selectedId, isReplaying, workflow, 
           })}
         </svg>
       )}
+      <svg
+        aria-hidden="true"
+        style={{ position: "absolute", inset: 0, pointerEvents: "none", zIndex: 4 }}
+        width="100%"
+        height="100%"
+      >
+        {events.filter((event) => event.type === "mailbox-message").slice(-4).map((event, index) => {
+          const from = event.senderAgentId ? officeLayout.homeTiles[event.senderAgentId] : undefined;
+          const to = event.recipientAgentId ? officeLayout.homeTiles[event.recipientAgentId] : undefined;
+          if (!from || !to) return null;
+          const x1 = cameraFrame.offsetX + from.col * TILE_SIZE * cameraFrame.zoom;
+          const y1 = cameraFrame.offsetY + from.row * TILE_SIZE * cameraFrame.zoom - 12 * cameraFrame.zoom;
+          const x2 = cameraFrame.offsetX + to.col * TILE_SIZE * cameraFrame.zoom;
+          const y2 = cameraFrame.offsetY + to.row * TILE_SIZE * cameraFrame.zoom - 12 * cameraFrame.zoom;
+          const path = `M ${x1} ${y1} Q ${(x1 + x2) / 2} ${Math.min(y1, y2) - 60} ${x2} ${y2}`;
+          return (
+            <g key={`${event.timestamp}-${index}`} className="orbi-mail-flight">
+              <path d={path} fill="none" stroke="rgba(250,204,21,0.28)" strokeWidth="2" strokeDasharray="4 5" />
+              <text fontSize="18">✉
+                <animateMotion path={path} dur="1.4s" begin={`${index * 0.12}s`} fill="freeze" />
+              </text>
+            </g>
+          );
+        })}
+      </svg>
       <canvas
         ref={canvasRef}
         onClick={handleClick}

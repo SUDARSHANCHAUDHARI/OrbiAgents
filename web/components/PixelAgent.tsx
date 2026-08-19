@@ -132,20 +132,24 @@ const WALK_FRAME_SHIFT = 2; // px offset for "walk" frame on active
 const STATE_GLOW: Record<Agent["state"], string> = {
   idle:      "transparent",
   thinking:  "rgba(139,92,246,0.9)",
+  reading:   "rgba(167,139,250,0.9)",
   coding:    "rgba(56,189,248,0.9)",
   testing:   "rgba(52,211,153,0.9)",
   reviewing: "rgba(251,191,36,0.9)",
   debugging: "rgba(251,113,133,0.9)",
+  "permission-waiting": "rgba(251,146,60,0.9)",
   done:      "rgba(74,222,128,0.9)",
 };
 
 const STATE_LABEL: Record<Agent["state"], string> = {
   idle:      "#4B5563",
   thinking:  "#A78BFA",
+  reading:   "#C4B5FD",
   coding:    "#7DD3FC",
   testing:   "#6EE7B7",
   reviewing: "#FCD34D",
   debugging: "#FDA4AF",
+  "permission-waiting": "#FDBA74",
   done:      "#86EFAC",
 };
 

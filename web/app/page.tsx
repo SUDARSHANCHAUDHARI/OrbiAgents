@@ -9,6 +9,7 @@ import {
   Session,
   SessionMeta,
   Workflow,
+  WorkflowEvent,
   WorkflowStepResult,
 } from "@/lib/types";
 import {
@@ -35,6 +36,7 @@ import SessionDetailsPanel from "@/components/SessionDetailsPanel";
 import AlertSettings from "@/components/AlertSettings";
 import ShareModal from "@/components/ShareModal";
 import AgentLogsPanel from "@/components/AgentLogsPanel";
+import WorkflowActivityPanel from "@/components/WorkflowActivityPanel";
 
 interface WorkflowResult {
   sessionId: string;
@@ -88,6 +90,7 @@ export default function Home() {
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [usage, setUsage] = useState<UsageStats | null>(null);
   const [showLogs, setShowLogs] = useState(false);
+  const [workflowEvents, setWorkflowEvents] = useState<WorkflowEvent[]>([]);
 
   // Replay state — declared before any early return (rules of hooks)
   const [replaySession, setReplaySession] = useState<Session | null>(null);
@@ -133,7 +136,10 @@ export default function Home() {
         return;
       }
 
-      if (data.type === "result") {
+      if (data.type === "workflow-event") {
+        const event = data.event as WorkflowEvent;
+        setWorkflowEvents((previous) => [...previous, event].slice(-100));
+      } else if (data.type === "result") {
         setResult({
           sessionId: data.sessionId as string,
           steps: [
@@ -269,6 +275,7 @@ export default function Home() {
     setStopping(false);
     setResult(null);
     setError(null);
+    setWorkflowEvents([]);
     resetAlertState();
 
     try {
@@ -294,6 +301,7 @@ export default function Home() {
     setStopping(false);
     setResult(null);
     setError(null);
+    setWorkflowEvents([]);
     resetAlertState();
 
     try {
@@ -824,7 +832,13 @@ export default function Home() {
             selectedId={selected?.id ?? null}
             isReplaying={isReplaying}
             workflow={workflow}
+            events={isReplaying ? replaySession?.events ?? [] : workflowEvents}
             onAgentClick={isReplaying ? () => {} : setSelected}
+          />
+
+          <WorkflowActivityPanel
+            agents={agents}
+            events={isReplaying ? replaySession?.events ?? [] : workflowEvents}
           />
 
           {/* Scanline overlay */}

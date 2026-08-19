@@ -119,6 +119,85 @@ body {
   -webkit-backdrop-filter: blur(12px);
 }
 
+/* ── Real workflow observability ─────────────────────────────────── */
+.orbi-observability {
+  position: absolute;
+  top: 38px;
+  left: 38px;
+  z-index: 12;
+  width: min(410px, calc(100% - 76px));
+  padding: 12px;
+  color: #e5e7eb;
+  background: rgba(8, 15, 28, 0.94);
+  border: 1px solid #334155;
+  border-radius: 12px;
+  box-shadow: 0 12px 28px rgba(0,0,0,0.35);
+  backdrop-filter: blur(10px);
+}
+
+.orbi-observability__header {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding-bottom: 9px;
+  border-bottom: 1px solid #1e293b;
+}
+
+.orbi-observability__header strong,
+.orbi-observability__header span { display: block; }
+.orbi-observability__header strong { font-size: 12px; }
+.orbi-observability__header div > span { color: #94a3b8; font-size: 10px; margin-top: 2px; }
+.orbi-observability__count { margin-left: auto; color: #93c5fd; font: 10px ui-monospace, monospace; }
+
+.orbi-prime {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  color: #64748b;
+  border: 1px solid #475569;
+  background: #0f172a;
+  transform: rotate(45deg);
+  transition: color 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+.orbi-prime--active {
+  color: #fde68a;
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 4px rgba(245,158,11,0.14), 0 0 22px rgba(245,158,11,0.4);
+  animation: orbi-prime-pulse 1.4s ease-in-out infinite;
+}
+
+.orbi-observability__agents { display: flex; gap: 6px; overflow-x: auto; padding: 9px 0 7px; }
+.orbi-agent-chip { display: inline-flex; align-items: center; gap: 5px; flex: 0 0 auto; color: #94a3b8; font: 9px ui-monospace, monospace; }
+.orbi-agent-chip i { width: 6px; height: 6px; border-radius: 50%; background: #64748b; }
+.orbi-agent-chip--thinking i, .orbi-agent-chip--reading i { background: #c084fc; box-shadow: 0 0 7px #c084fc; }
+.orbi-agent-chip--coding i { background: #60a5fa; box-shadow: 0 0 7px #60a5fa; }
+.orbi-agent-chip--testing i { background: #34d399; box-shadow: 0 0 7px #34d399; }
+.orbi-agent-chip--reviewing i { background: #fbbf24; box-shadow: 0 0 7px #fbbf24; }
+.orbi-agent-chip--debugging i, .orbi-agent-chip--permission-waiting i { background: #fb7185; box-shadow: 0 0 7px #fb7185; }
+.orbi-agent-chip--done i { background: #4ade80; }
+
+.orbi-observability__events { display: grid; gap: 4px; max-height: 112px; margin: 0; padding: 0; overflow: auto; list-style: none; }
+.orbi-observability__events li { display: grid; grid-template-columns: 58px 1fr; gap: 8px; font-size: 10px; line-height: 1.4; }
+.orbi-observability__events time { color: #475569; font-family: ui-monospace, monospace; }
+.orbi-observability__events span { color: #cbd5e1; }
+.orbi-observability__empty { color: #64748b; }
+
+@keyframes orbi-prime-pulse {
+  0%, 100% { transform: rotate(45deg) scale(1); }
+  50% { transform: rotate(45deg) scale(1.08); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .orbi-mail-flight { display: none; }
+}
+
 /* ── Pixel UI theme ──────────────────────────────────────── */
 :root {
   --px-bg:          #0d0907;

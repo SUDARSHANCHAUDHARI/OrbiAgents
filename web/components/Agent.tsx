@@ -55,10 +55,12 @@ const STATE_INACTIVE_CARD = "shadow-none opacity-80";
 const STATE_LABEL_COLOR: Record<Agent["state"], string> = {
   idle:      "text-gray-500",
   thinking:  "text-violet-400",
+  reading:   "text-violet-300",
   coding:    "text-sky-400",
   testing:   "text-emerald-400",
   reviewing: "text-amber-400",
   debugging: "text-rose-400",
+  "permission-waiting": "text-orange-400",
   done:      "text-green-400",
 };
 
