@@ -1,5 +1,5 @@
 import { getApiBaseUrl } from "./config";
-import { Provider, Session, SessionMeta } from "./types";
+import { Provider, RuntimeId, Session, SessionMeta } from "./types";
 
 const API = getApiBaseUrl();
 const TOKEN_KEY = "orbi_token";
@@ -73,6 +73,11 @@ export interface ProvidersResponse {
   default: Provider;
 }
 
+export interface RuntimesResponse {
+  runtimes: RuntimeId[];
+  default: RuntimeId;
+}
+
 export async function listWorkflows(): Promise<WorkflowMeta[]> {
   const res = await fetch(`${API}/workflows`, { headers: authHeaders() });
   if (!res.ok) return [];
@@ -110,6 +115,12 @@ export async function listProviders(): Promise<ProvidersResponse> {
     throw new Error("Could not load providers");
   }
   return res.json() as Promise<ProvidersResponse>;
+}
+
+export async function listRuntimes(): Promise<RuntimesResponse> {
+  const res = await fetch(`${API}/runtimes`);
+  if (!res.ok) throw new Error("Could not load runtimes");
+  return res.json() as Promise<RuntimesResponse>;
 }
 
 export interface UsageStats {

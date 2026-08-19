@@ -591,6 +591,7 @@ app.post("/workflow", protect, workflowRateLimit, async (req, res) => {
           outputs: result.outputs,
           steps: result.steps,
           totalCostUsd: result.totalCostUsd,
+          runtimeId,
         }));
     });
   } catch (err) {

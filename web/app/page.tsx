@@ -6,6 +6,7 @@ import {
   Agent,
   ClientMessage,
   Provider,
+  RuntimeId,
   Session,
   SessionMeta,
   Workflow,
@@ -19,6 +20,7 @@ import {
   getSessionDetails,
   getToken,
   listProviders,
+  listRuntimes,
   listSessions,
 } from "@/lib/auth";
 import { getApiBaseUrl, getWebSocketBaseUrl } from "@/lib/config";
@@ -42,6 +44,7 @@ interface WorkflowResult {
   sessionId: string;
   steps: WorkflowStepResult[];
   totalCostUsd?: number;
+  runtimeId?: RuntimeId;
 }
 
 const DEFAULT_WORKFLOW: Workflow = {
@@ -80,6 +83,8 @@ export default function Home() {
   const [providers, setProviders] = useState<Provider[]>([]);
   const [selectedProvider, setSelectedProvider] = useState<Provider>("anthropic");
   const [providersLoading, setProvidersLoading] = useState(false);
+  const [runtimes, setRuntimes] = useState<RuntimeId[]>(["provider-api"]);
+  const [selectedRuntime, setSelectedRuntime] = useState<RuntimeId>("provider-api");
   const [sessions, setSessions] = useState<SessionMeta[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
   const [historyMessage, setHistoryMessage] = useState<string | null>(null);
@@ -157,6 +162,7 @@ export default function Home() {
             },
           ],
           totalCostUsd: data.totalCostUsd as number | undefined,
+          runtimeId: "provider-api",
         });
         setRunning(false);
         setStopping(false);
@@ -167,6 +173,7 @@ export default function Home() {
           sessionId: data.sessionId as string,
           steps: (data.steps as WorkflowStepResult[] | undefined) ?? [],
           totalCostUsd: data.totalCostUsd as number | undefined,
+          runtimeId: (data.runtimeId as RuntimeId | undefined) ?? "provider-api",
         });
         setRunning(false);
         setStopping(false);
@@ -194,6 +201,7 @@ export default function Home() {
   useEffect(() => {
     if (!isAuthed) return;
     void loadProviders();
+    void loadRuntimes();
     void loadSessions();
     void loadUsage();
   }, [isAuthed]);
@@ -238,6 +246,17 @@ export default function Home() {
       setError(err instanceof Error ? err.message : "Could not load providers");
     } finally {
       setProvidersLoading(false);
+    }
+  }
+
+  async function loadRuntimes() {
+    try {
+      const data = await listRuntimes();
+      setRuntimes(data.runtimes);
+      setSelectedRuntime((current) => data.runtimes.includes(current) ? current : data.default);
+    } catch {
+      setRuntimes(["provider-api"]);
+      setSelectedRuntime("provider-api");
     }
   }
 
@@ -308,7 +327,7 @@ export default function Home() {
       const res = await fetch(`${getApiBaseUrl()}/workflow`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeaders() },
-        body: JSON.stringify({ workflow, task: task.trim(), provider: selectedProvider }),
+        body: JSON.stringify({ workflow, task: task.trim(), provider: selectedProvider, runtimeId: selectedRuntime }),
       });
       if (!res.ok) {
         const body = (await res.json()) as { error?: string };
@@ -495,6 +514,25 @@ export default function Home() {
                 WORKSPACE
               </div>
             </div>
+            {showBuilder && (
+              <div style={{ background: sky.hudBgAlt, border: `1px solid ${sky.borderSoft}`, borderRadius: 8, padding: "0 12px", minHeight: 40, display: "flex", alignItems: "center" }}>
+                <label htmlFor="runtime-select" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0 0 0 0)" }}>Workflow runtime</label>
+                <select
+                  id="runtime-select"
+                  value={selectedRuntime}
+                  onChange={(event) => setSelectedRuntime(event.target.value as RuntimeId)}
+                  disabled={running || isReplaying}
+                  title="Execution runtime for dynamic workflows"
+                  style={{ background: "transparent", border: "none", color: sky.text, fontSize: 14, fontWeight: 500, outline: "none" }}
+                >
+                  {runtimes.map((runtimeId) => (
+                    <option key={runtimeId} value={runtimeId} style={{ color: "#111827" }}>
+                      {runtimeId === "provider-api" ? "API" : runtimeId === "codex-cli" ? "CODEX CLI" : "CLAUDE CLI"}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
 
           {/* Task input */}
@@ -924,7 +962,7 @@ export default function Home() {
         <ResultPanel
           result={result}
           compact={compactSidebar}
-          provider={selectedProvider}
+          provider={result.runtimeId === "provider-api" || !result.runtimeId ? selectedProvider : result.runtimeId}
           onClose={() => setResult(null)}
           onReplay={startReplay}
         />

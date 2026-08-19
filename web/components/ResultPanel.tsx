@@ -141,6 +141,13 @@ export default function ResultPanel({ result, compact = false, provider, onClose
       <div style={{ flex: 1, overflowY: "auto" as const }}>
         {activeStep && (
           <div className="p-4">
+            {activeStep.workspaceDisposition === "preserved" && activeStep.workspacePath && (
+              <section aria-label="Preserved agent workspace" style={{ marginBottom: 12, padding: 12, borderRadius: 8, border: "1px solid #92400E", background: "rgba(120,53,15,0.2)" }}>
+                <strong style={{ display: "block", color: "#FCD34D", fontSize: 12, marginBottom: 6 }}>Agent changes preserved for review</strong>
+                <code style={{ display: "block", color: "#FDE68A", fontSize: 11, overflowWrap: "anywhere" }}>{activeStep.workspacePath}</code>
+                <span style={{ display: "block", color: chrome.textMuted, fontSize: 11, marginTop: 6 }}>OrbiAgents did not commit, merge, push, or delete these files.</span>
+              </section>
+            )}
             {isCodeLikeStep(activeStep.type) ? (
               <div
                 className="rounded-xl overflow-hidden"

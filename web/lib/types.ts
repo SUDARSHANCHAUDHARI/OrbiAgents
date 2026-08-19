@@ -62,6 +62,7 @@ export interface SessionMeta {
 }
 
 export type Provider = "anthropic" | "openai" | "gemini";
+export type RuntimeId = "provider-api" | "codex-cli" | "claude-cli";
 
 // ── Workflow builder ───────────────────────────────────────────────
 export type WorkflowNodeType = "planner" | "coder" | "tester" | "reviewer" | "debugger";
@@ -87,4 +88,6 @@ export interface WorkflowStepResult {
   type: WorkflowNodeType;
   label: string;
   output: string;
+  workspacePath?: string;
+  workspaceDisposition?: "removed" | "preserved";
 }
