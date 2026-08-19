@@ -12,7 +12,7 @@ import {
   type SpriteKey,
 } from "shared/engine/layoutStorage";
 import type { AgentInput } from "shared/engine/gameLoop";
-import type { CharacterRenderState, FurnitureInstance } from "shared/types";
+import type { CharacterRenderState, FurnitureInstance, TileCoord } from "shared/types";
 import { postMessage } from "./vscodeApi";
 
 const ZOOM = 2;
@@ -73,6 +73,7 @@ export default function App() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const loopRef = useRef<ReturnType<typeof createGameLoop> | null>(null);
   const latestChars = useRef<CharacterRenderState[]>([]);
+  const homeTilesRef = useRef<Record<string, TileCoord>>({});
   const [agents, setAgents] = useState<AgentUpdate[]>([]);
   const agentsRef = useRef<AgentUpdate[]>([]);
   agentsRef.current = agents;
@@ -124,7 +125,8 @@ export default function App() {
     let currentTileMap = buildTileMap(cols, rows);
     rebuildFurniture(buildFurnitureInstances(cols, rows));
 
-    const loop = createGameLoop(currentTileMap, buildAgentHomeTiles(cols, rows), (chars) => {
+    homeTilesRef.current = buildAgentHomeTiles(cols, rows);
+    const loop = createGameLoop(currentTileMap, homeTilesRef.current, (chars) => {
       latestChars.current = chars.map(c => ({
         ...c,
         selected: c.id === selectedIdRef.current,
@@ -144,6 +146,7 @@ export default function App() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
       currentTileMap = buildTileMap(c, r);
+      homeTilesRef.current = buildAgentHomeTiles(c, r);
       rebuildFurniture(buildFurnitureInstances(c, r));
       loop.setTileMap(currentTileMap);
       const ctx = canvas.getContext("2d");
@@ -180,6 +183,7 @@ export default function App() {
       paused: a.paused,
       paletteIndex: a.paletteIndex,
       activeToolName: a.activeToolName,
+      homeTile: homeTilesRef.current[a.id] ?? { col: 5, row: 5 },
     }));
     loopRef.current?.setAgents(inputs);
   }, [agents]);
