@@ -145,6 +145,7 @@ export async function runWorkflowDynamic(
   );
   const ready = order.filter((node) => remainingDependencies.get(node.id) === 0);
   const running = new Map<string, Promise<{ node: WorkflowNode; result: StreamResult }>>();
+  const activeAgentIds = new Set<string>();
 
   supervisor.report("workflow-started", { detail: `${workflow.nodes.length} nodes` });
 
@@ -189,23 +190,29 @@ export async function runWorkflowDynamic(
         break;
       } catch (error) {
         lastError = error;
-        if (attempt === 1) {
-          try {
-            breaker.recordFailure();
-          } catch (circuitError) {
-            supervisor.report("circuit-opened", { nodeId: node.id, detail: errorMessage(circuitError) });
-            throw circuitError;
-          }
-          supervisor.report("node-failed", { nodeId: node.id, detail: errorMessage(error) });
-        }
+        if (error instanceof NodeTimeoutError) break;
       }
     }
-    if (!result) throw lastError instanceof Error ? lastError : new Error("Workflow node failed");
+    if (!result) {
+      supervisor.report("node-failed", { nodeId: node.id, detail: errorMessage(lastError) });
+      try {
+        breaker.recordFailure();
+      } catch (circuitError) {
+        supervisor.report("circuit-opened", { nodeId: node.id, detail: errorMessage(circuitError) });
+        throw circuitError;
+      }
+      throw lastError instanceof Error ? lastError : new Error("Workflow node failed");
+    }
 
     outputs.set(node.id, result.text);
     completedSteps.set(node.id, { nodeId: node.id, type: node.type, label, output: result.text });
     totalCostUsd += result.costUsd;
-    breaker.recordSuccess(result.inputTokens, result.outputTokens, result.costUsd);
+    try {
+      breaker.recordSuccess(result.inputTokens, result.outputTokens, result.costUsd);
+    } catch (error) {
+      supervisor.report("circuit-opened", { nodeId: node.id, detail: errorMessage(error) });
+      throw error;
+    }
     supervisor.report("node-completed", { nodeId: node.id, detail: label });
 
     update(agentId, {
@@ -224,13 +231,23 @@ export async function runWorkflowDynamic(
   while (ready.length > 0 || running.size > 0) {
     ready.sort((a, b) => (rank.get(a.id) ?? 0) - (rank.get(b.id) ?? 0));
     while (ready.length > 0 && running.size < maxConcurrency) {
-      const node = ready.shift()!;
+      const readyIndex = ready.findIndex((node) => !activeAgentIds.has(NODE_AGENT_ID[node.type]));
+      if (readyIndex === -1) break;
+      const [node] = ready.splice(readyIndex, 1);
       supervisor.report("node-ready", { nodeId: node.id });
+      activeAgentIds.add(NODE_AGENT_ID[node.type]);
       running.set(node.id, runNode(node));
     }
 
-    const finished = await Promise.race(running.values());
+    let finished: { node: WorkflowNode; result: StreamResult };
+    try {
+      finished = await Promise.race(running.values());
+    } catch (error) {
+      await Promise.allSettled(running.values());
+      throw error;
+    }
     running.delete(finished.node.id);
+    activeAgentIds.delete(NODE_AGENT_ID[finished.node.type]);
     for (const edge of workflow.edges) {
       if (edge.from !== finished.node.id) continue;
       const remaining = (remainingDependencies.get(edge.to) ?? 1) - 1;
@@ -276,11 +293,18 @@ async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, nodeId: st
     return await Promise.race([
       promise,
       new Promise<T>((_, reject) => {
-        timer = setTimeout(() => reject(new Error(`Node ${nodeId} timed out`)), timeoutMs);
+        timer = setTimeout(() => reject(new NodeTimeoutError(nodeId)), timeoutMs);
       }),
     ]);
   } finally {
     if (timer) clearTimeout(timer);
+  }
+}
+
+class NodeTimeoutError extends Error {
+  constructor(nodeId: string) {
+    super(`Node ${nodeId} timed out`);
+    this.name = "NodeTimeoutError";
   }
 }
 

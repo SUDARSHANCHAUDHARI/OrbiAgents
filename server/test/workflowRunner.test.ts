@@ -102,3 +102,34 @@ test("dynamic workflow runs independent branches concurrently and waits for depe
   assert.equal(peak, 2);
   assert.deepEqual(result.steps.map((step) => step.nodeId), ["plan", "test", "review", "fix"]);
 });
+
+test("dynamic workflow serializes nodes represented by the same agent", async () => {
+  const workflow: Workflow = {
+    nodes: [
+      { id: "code-a", type: "coder" },
+      { id: "code-b", type: "coder" },
+    ],
+    edges: [],
+  };
+  let activeCoders = 0;
+  let peakCoders = 0;
+  await runWorkflowDynamic(workflow, "task", () => {}, async () => {}, "anthropic", {
+    maxConcurrency: 2,
+    executeNode: async (node) => {
+      activeCoders += 1;
+      peakCoders = Math.max(peakCoders, activeCoders);
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      activeCoders -= 1;
+      return {
+        text: node.id,
+        inputTokens: 0,
+        outputTokens: 0,
+        cacheReadTokens: 0,
+        costUsd: 0,
+        provider: "anthropic",
+        model: "test",
+      };
+    },
+  });
+  assert.equal(peakCoders, 1);
+});
