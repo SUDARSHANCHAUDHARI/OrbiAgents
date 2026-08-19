@@ -66,6 +66,7 @@ model StoredSession {
   id           String   @id
   task         String
   frames       String
+  events       String   @default("[]")
   totalCostUsd Float    @default(0)
   provider     String?  @default("anthropic")
   shareToken   String?  @unique

@@ -1,0 +1,1 @@
+ALTER TABLE "StoredSession" ADD COLUMN "events" TEXT NOT NULL DEFAULT '[]';

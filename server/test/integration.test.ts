@@ -24,6 +24,10 @@ function makeHeaders(token?: string): Record<string, string> | undefined {
   return token ? { Authorization: `Bearer ${token}` } : undefined;
 }
 
+function makeJsonHeaders(token: string): Record<string, string> {
+  return { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
+}
+
 function makeAgent(): Agent {
   return {
     id: "1",
@@ -135,4 +139,43 @@ test("workflow stop returns conflict when no run is active", async () => {
   });
 
   assert.equal(res.status, 409);
+});
+
+test("memory and mailbox APIs persist user-scoped agent context", async () => {
+  const user = await createTestUser("memory-mailbox");
+  const memoryRes = await fetch(`${baseUrl}/memory`, {
+    method: "POST",
+    headers: makeJsonHeaders(user.token),
+    body: JSON.stringify({ scope: "agent", agentId: "2", content: "Prefer focused tests" }),
+  });
+  assert.equal(memoryRes.status, 201);
+
+  const memoryList = await fetch(`${baseUrl}/memory?scope=agent&agentId=2`, {
+    headers: makeHeaders(user.token),
+  });
+  const memories = (await memoryList.json()) as Array<{ content: string }>;
+  assert.equal(memories[0]?.content, "Prefer focused tests");
+
+  const messageRes = await fetch(`${baseUrl}/messages`, {
+    method: "POST",
+    headers: makeJsonHeaders(user.token),
+    body: JSON.stringify({
+      senderAgentId: "3",
+      recipientAgentId: "2",
+      kind: "request",
+      body: "Fix the failing edge case",
+    }),
+  });
+  assert.equal(messageRes.status, 201);
+  const message = (await messageRes.json()) as { id: string };
+
+  const inboxRes = await fetch(`${baseUrl}/messages/2`, { headers: makeHeaders(user.token) });
+  const inbox = (await inboxRes.json()) as Array<{ id: string; body: string }>;
+  assert.equal(inbox.some((item) => item.id === message.id && item.body === "Fix the failing edge case"), true);
+
+  const readRes = await fetch(`${baseUrl}/messages/${message.id}/read`, {
+    method: "POST",
+    headers: makeHeaders(user.token),
+  });
+  assert.equal(readRes.status, 200);
 });

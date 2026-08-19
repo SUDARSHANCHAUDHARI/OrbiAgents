@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto";
-import { Agent } from "./types";
+import { Agent, WorkflowEvent } from "./types";
 import { db } from "./db";
 import type { Provider } from "./ai";
 
@@ -13,6 +13,7 @@ export interface Session {
   task: string;
   createdAt: number;
   frames: SessionFrame[];
+  events: WorkflowEvent[];
   totalCostUsd: number;
   provider?: Provider;
   shareToken?: string;
@@ -34,6 +35,7 @@ function deserializeSession(row: {
   id: string;
   task: string;
   frames: string;
+  events: string;
   totalCostUsd: number;
   provider: string | null;
   shareToken: string | null;
@@ -45,6 +47,7 @@ function deserializeSession(row: {
     task: row.task,
     createdAt: row.createdAt.getTime(),
     frames: JSON.parse(row.frames) as SessionFrame[],
+    events: JSON.parse(row.events) as WorkflowEvent[],
     totalCostUsd: row.totalCostUsd,
     provider: (row.provider as Provider | null) ?? undefined,
     shareToken: row.shareToken ?? undefined,
@@ -71,6 +74,7 @@ async function persistSession(sessionId: string): Promise<void> {
       id: session.id,
       task: session.task,
       frames: serializeSession(session),
+      events: JSON.stringify(session.events),
       totalCostUsd: session.totalCostUsd,
       provider: session.provider,
       shareToken: session.shareToken,
@@ -80,6 +84,7 @@ async function persistSession(sessionId: string): Promise<void> {
     update: {
       task: session.task,
       frames: serializeSession(session),
+      events: JSON.stringify(session.events),
       totalCostUsd: session.totalCostUsd,
       provider: session.provider,
       shareToken: session.shareToken,
@@ -94,6 +99,7 @@ export async function createSession(id: string, task: string, userId?: string, p
     task,
     createdAt: Date.now(),
     frames: [],
+    events: [],
     totalCostUsd: 0,
     provider,
     userId,
@@ -105,6 +111,7 @@ export async function createSession(id: string, task: string, userId?: string, p
       id,
       task,
       frames: "[]",
+      events: "[]",
       totalCostUsd: 0,
       provider,
       userId,
@@ -113,6 +120,7 @@ export async function createSession(id: string, task: string, userId?: string, p
     update: {
       task,
       frames: "[]",
+      events: "[]",
       totalCostUsd: 0,
       provider,
       shareToken: null,
@@ -129,6 +137,13 @@ export function recordFrame(sessionId: string, agents: Agent[]): void {
     timestamp: Date.now(),
     agents: JSON.parse(JSON.stringify(agents)) as Agent[],
   });
+  schedulePersist(sessionId);
+}
+
+export function recordEvent(sessionId: string, event: WorkflowEvent): void {
+  const session = sessions.get(sessionId);
+  if (!session) return;
+  session.events.push(JSON.parse(JSON.stringify(event)) as WorkflowEvent);
   schedulePersist(sessionId);
 }
 

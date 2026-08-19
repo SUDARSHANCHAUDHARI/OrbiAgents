@@ -16,6 +16,15 @@ export interface Agent {
   y: number;
 }
 
+export interface WorkflowEvent {
+  type: string;
+  timestamp: number;
+  nodeId?: string;
+  detail?: string;
+  senderAgentId?: string;
+  recipientAgentId?: string;
+}
+
 export type ClientMessage =
   | { type: "pause"; agentId: string }
   | { type: "resume"; agentId: string };
