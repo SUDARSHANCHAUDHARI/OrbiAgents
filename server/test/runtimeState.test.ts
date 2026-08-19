@@ -86,3 +86,10 @@ test("requestRuntimeCancel marks running agents and blocks further progress", ()
   assert.equal(runtime.agents[0]?.task, "Stopping workflow…");
   assert.throws(() => ensureRuntimeActive(runtime), WorkflowCancelledError);
 });
+
+test("requestRuntimeCancel aborts the active provider request", () => {
+  const runtime = createUserRuntime(makeAgents);
+  runtime.workflowAbortController = new AbortController();
+  requestRuntimeCancel(runtime);
+  assert.equal(runtime.workflowAbortController.signal.aborted, true);
+});

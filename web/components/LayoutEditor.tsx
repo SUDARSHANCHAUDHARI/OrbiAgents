@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { Agent, Workflow } from "@/lib/types";
+import type { Agent, Workflow, WorkflowEvent } from "@/lib/types";
 import GameCanvas from "./GameCanvas";
 import {
   loadCustomFurniture,
@@ -20,6 +20,7 @@ interface Props {
   selectedId: string | null;
   isReplaying: boolean;
   workflow?: Workflow | null;
+  events?: WorkflowEvent[];
   onAgentClick: (agent: Agent) => void;
   soundEnabled?: boolean;
 }

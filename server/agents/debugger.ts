@@ -1,4 +1,5 @@
-import { streamMessage, StreamResult, OnChunk, Provider, DEFAULT_PROVIDER } from "../ai";
+import { StreamResult, OnChunk, Provider, DEFAULT_PROVIDER } from "../ai";
+import { apiRuntime, RuntimeAdapter } from "../runtimeAdapter";
 
 const DEBUGGER_SYSTEM = `You are Orbi-Epsilon, a debugging specialist AI agent.
 You receive code and a review, then produce a fixed version.
@@ -10,12 +11,15 @@ export async function debuggerAgent(
   code: string,
   review: string,
   onChunk: OnChunk,
-  provider: Provider = DEFAULT_PROVIDER
+  provider: Provider = DEFAULT_PROVIDER,
+  runtime: RuntimeAdapter = apiRuntime,
+  signal?: AbortSignal
 ): Promise<StreamResult> {
-  return streamMessage(
-    DEBUGGER_SYSTEM,
-    `Original task: ${originalTask}\n\nOriginal code:\n${code}\n\nReview findings:\n${review}\n\nProvide fixed code:`,
+  return runtime.execute({
+    systemPrompt: DEBUGGER_SYSTEM,
+    userMessage: `Original task: ${originalTask}\n\nOriginal code:\n${code}\n\nReview findings:\n${review}\n\nProvide fixed code:`,
     onChunk,
-    provider
-  );
+    provider,
+    signal,
+  });
 }

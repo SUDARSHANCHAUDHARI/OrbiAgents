@@ -8,6 +8,7 @@ function makeSession(userId?: string): Session {
     task: "Build feature",
     createdAt: Date.now(),
     frames: [],
+    events: [],
     totalCostUsd: 0,
     userId,
   };

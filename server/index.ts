@@ -3,14 +3,16 @@ import express from "express";
 import type { Server } from "http";
 import type { AddressInfo } from "net";
 import { WebSocketServer, WebSocket } from "ws";
-import { Agent, AgentState, ClientMessage } from "./types";
+import { Agent, AgentState, ClientMessage, WorkflowEvent } from "./types";
 import { runWorkflow } from "./orchestrator";
 import { availableProviders, Provider } from "./ai";
 import { runWorkflowDynamic } from "./workflowRunner";
+import { availableRuntimeIds, createRuntimeExecution, RuntimeId } from "./runtimeConfig";
 import { Workflow } from "./workflowTypes";
 import {
   createSession,
   recordFrame,
+  recordEvent,
   updateSessionCost,
   getSession,
   getSessionByShareToken,
@@ -34,6 +36,9 @@ import {
 import { createRateLimit } from "./rateLimit";
 import { validateServerEnv } from "./env";
 import { logServerEvent, requestLogger } from "./logger";
+import { listMemory, MemoryScope, writeMemory } from "./memoryStore";
+import { markMessageRead, MessageKind, readInbox, sendMessage } from "./mailboxStore";
+import { OrbiPrimeSupervisor } from "./supervisor";
 
 const app = express();
 const PORT = 4000;
@@ -45,6 +50,7 @@ const WORKFLOW_RATE_LIMIT_MAX = Number(process.env.RATE_LIMIT_WORKFLOW_MAX ?? "1
 const MAX_RUNS_PER_HOUR = Number(process.env.MAX_RUNS_PER_HOUR ?? "30");
 const MAX_DAILY_COST_USD = Number(process.env.MAX_DAILY_COST_USD ?? "10");
 const MAX_WORKFLOW_NODES = Number(process.env.MAX_WORKFLOW_NODES ?? "12");
+const MAX_PARALLEL_AGENTS = Number(process.env.MAX_PARALLEL_AGENTS ?? "3");
 let server: Server | null = null;
 let wss: WebSocketServer | null = null;
 
@@ -123,6 +129,19 @@ function broadcast(runtime: UserRuntime) {
   runtime.sockets.forEach((socket) => {
     if (socket.readyState === WebSocket.OPEN) socket.send(payload);
   });
+}
+
+function sendRuntimeEvent(runtime: UserRuntime, payload: unknown): void {
+  const serialized = JSON.stringify(payload);
+  runtime.sockets.forEach((socket) => {
+    if (socket.readyState === WebSocket.OPEN) socket.send(serialized);
+  });
+}
+
+function publishWorkflowEvent(userId: string, event: WorkflowEvent): void {
+  const runtime = getRuntime(userId);
+  if (runtime.activeSessionId) recordEvent(runtime.activeSessionId, event);
+  sendRuntimeEvent(runtime, { type: "workflow-event", event });
 }
 
 function updateAgent(userId: string, id: string, patch: Partial<Agent>) {
@@ -342,6 +361,83 @@ app.get("/workflows/:id", protect, async (req, res) => {
   res.json({ id: wf.id, name: wf.name, data: JSON.parse(wf.data) as unknown });
 });
 
+// ── Agent memory and mailbox ──────────────────────────────────────
+app.post("/memory", protect, async (req, res) => {
+  const { projectKey, scope, agentId, content } = req.body as {
+    projectKey?: string;
+    scope?: MemoryScope;
+    agentId?: string;
+    content?: string;
+  };
+  if (scope !== "agent" && scope !== "shared") {
+    res.status(400).json({ error: "scope must be agent or shared" }); return;
+  }
+  try {
+    const memory = await writeMemory({ userId: req.userId!, projectKey, scope, agentId, content: content ?? "" });
+    res.status(201).json(memory);
+  } catch (error) {
+    res.status(400).json({ error: error instanceof Error ? error.message : String(error) });
+  }
+});
+
+app.get("/memory", protect, async (req, res) => {
+  const scope = req.query.scope === "agent" || req.query.scope === "shared" ? req.query.scope : undefined;
+  res.json(await listMemory(req.userId!, {
+    projectKey: typeof req.query.projectKey === "string" ? req.query.projectKey : undefined,
+    scope,
+    agentId: typeof req.query.agentId === "string" ? req.query.agentId : undefined,
+  }));
+});
+
+app.post("/messages", protect, async (req, res) => {
+  const body = req.body as {
+    projectKey?: string;
+    senderAgentId?: string;
+    recipientAgentId?: string;
+    kind?: MessageKind;
+    body?: string;
+    conversationId?: string;
+    replyToId?: string;
+    hopCount?: number;
+  };
+  try {
+    const message = await sendMessage({
+      userId: req.userId!,
+      projectKey: body.projectKey,
+      senderAgentId: body.senderAgentId ?? "",
+      recipientAgentId: body.recipientAgentId ?? "",
+      kind: body.kind ?? "inform",
+      body: body.body ?? "",
+      conversationId: body.conversationId,
+      replyToId: body.replyToId,
+      hopCount: body.hopCount,
+    });
+    publishWorkflowEvent(req.userId!, {
+      type: "mailbox-message",
+      timestamp: Date.now(),
+      detail: message.kind,
+      senderAgentId: message.senderAgentId,
+      recipientAgentId: message.recipientAgentId,
+    });
+    res.status(201).json(message);
+  } catch (error) {
+    res.status(400).json({ error: error instanceof Error ? error.message : String(error) });
+  }
+});
+
+app.get("/messages/:agentId", protect, async (req, res) => {
+  res.json(await readInbox(req.userId!, req.params.agentId, {
+    projectKey: typeof req.query.projectKey === "string" ? req.query.projectKey : undefined,
+    includeRead: req.query.includeRead === "true",
+  }));
+});
+
+app.post("/messages/:id/read", protect, async (req, res) => {
+  const message = await markMessageRead(req.userId!, req.params.id);
+  if (!message) { res.status(404).json({ error: "Message not found" }); return; }
+  res.json(message);
+});
+
 app.delete("/workflows/:id", protect, async (req, res) => {
   const deleted = await db.savedWorkflow.deleteMany({
     where: { id: req.params.id, userId: req.userId! },
@@ -353,6 +449,10 @@ app.delete("/workflows/:id", protect, async (req, res) => {
 // ── Available providers ────────────────────────────────────────────
 app.get("/providers", (_req, res) => {
   res.json({ providers: availableProviders(), default: process.env.DEFAULT_PROVIDER ?? "anthropic" });
+});
+
+app.get("/runtimes", (_req, res) => {
+  res.json({ runtimes: availableRuntimeIds(), default: "provider-api" });
 });
 
 app.get("/usage", protect, async (req, res) => {
@@ -386,6 +486,7 @@ app.post("/run", protect, workflowRateLimit, async (req, res) => {
   await createSession(sessionId, task.trim(), userId, provider);
   runtime.activeSessionId = sessionId;
   runtime.workflowRunning = true;
+  runtime.workflowAbortController = new AbortController();
   runtime.cancelRequested = false;
   touchRuntime(runtime);
   res.status(202).json({ status: "started", sessionId });
@@ -395,7 +496,8 @@ app.post("/run", protect, workflowRateLimit, async (req, res) => {
       task.trim(),
       (id, patch) => updateAgent(userId, id, patch),
       (id) => waitIfPaused(userId, id),
-      provider
+      provider,
+      runtime.workflowAbortController.signal
     );
     updateSessionCost(sessionId, result.totalCostUsd);
     runtime.sockets.forEach((socket) => {
@@ -403,7 +505,7 @@ app.post("/run", protect, workflowRateLimit, async (req, res) => {
         socket.send(JSON.stringify({ type: "result", sessionId, ...result }));
     });
   } catch (err) {
-    if (err instanceof WorkflowCancelledError) {
+    if (err instanceof WorkflowCancelledError || runtime.cancelRequested) {
       resetRuntime(userId);
       runtime.sockets.forEach((socket) => {
         if (socket.readyState === WebSocket.OPEN) {
@@ -420,6 +522,7 @@ app.post("/run", protect, workflowRateLimit, async (req, res) => {
     resetRuntime(userId);
   } finally {
     runtime.workflowRunning = false;
+    runtime.workflowAbortController = null;
     runtime.activeSessionId = null;
     touchRuntime(runtime);
   }
@@ -427,16 +530,26 @@ app.post("/run", protect, workflowRateLimit, async (req, res) => {
 
 // ── Dynamic workflow ──────────────────────────────────────────────
 app.post("/workflow", protect, workflowRateLimit, async (req, res) => {
-  const { workflow, task, provider } = req.body as {
+  const { workflow, task, provider, runtimeId = "provider-api" } = req.body as {
     workflow?: Workflow;
     task?: string;
     provider?: Provider;
+    runtimeId?: RuntimeId;
   };
   if (!workflow || !task?.trim()) {
     res.status(400).json({ error: "workflow and task required" }); return;
   }
   if (workflow.nodes.length > MAX_WORKFLOW_NODES) {
     res.status(400).json({ error: `Workflow exceeds node limit (${MAX_WORKFLOW_NODES})` }); return;
+  }
+  if (!["provider-api", "codex-cli", "claude-cli"].includes(runtimeId)) {
+    res.status(400).json({ error: "Invalid runtimeId" }); return;
+  }
+  let execution;
+  try {
+    execution = createRuntimeExecution(runtimeId);
+  } catch (error) {
+    res.status(400).json({ error: error instanceof Error ? error.message : String(error) }); return;
   }
   const userId = req.userId!;
   const usageError = await enforceUsageGuardrails(userId);
@@ -448,6 +561,7 @@ app.post("/workflow", protect, workflowRateLimit, async (req, res) => {
   await createSession(sessionId, task.trim(), userId, provider);
   runtime.activeSessionId = sessionId;
   runtime.workflowRunning = true;
+  runtime.workflowAbortController = new AbortController();
   runtime.cancelRequested = false;
   touchRuntime(runtime);
   res.status(202).json({ status: "started", sessionId });
@@ -458,7 +572,15 @@ app.post("/workflow", protect, workflowRateLimit, async (req, res) => {
       task.trim(),
       (id, patch) => updateAgent(userId, id, patch),
       (id) => waitIfPaused(userId, id),
-      provider
+      provider,
+      {
+        maxConcurrency: MAX_PARALLEL_AGENTS,
+        runtime: execution.runtime,
+        workspaceIsolation: execution.workspaceIsolation,
+        runId: `${userId}-${sessionId}`,
+        supervisor: new OrbiPrimeSupervisor((event) => publishWorkflowEvent(userId, event)),
+        signal: runtime.workflowAbortController.signal,
+      }
     );
     updateSessionCost(sessionId, result.totalCostUsd);
     runtime.sockets.forEach((socket) => {
@@ -472,7 +594,7 @@ app.post("/workflow", protect, workflowRateLimit, async (req, res) => {
         }));
     });
   } catch (err) {
-    if (err instanceof WorkflowCancelledError) {
+    if (err instanceof WorkflowCancelledError || runtime.cancelRequested) {
       resetRuntime(userId);
       runtime.sockets.forEach((socket) => {
         if (socket.readyState === WebSocket.OPEN) {
@@ -489,6 +611,7 @@ app.post("/workflow", protect, workflowRateLimit, async (req, res) => {
     resetRuntime(userId);
   } finally {
     runtime.workflowRunning = false;
+    runtime.workflowAbortController = null;
     runtime.activeSessionId = null;
     touchRuntime(runtime);
   }

@@ -1,4 +1,5 @@
-import { streamMessage, StreamResult, OnChunk, Provider, DEFAULT_PROVIDER } from "../ai";
+import { StreamResult, OnChunk, Provider, DEFAULT_PROVIDER } from "../ai";
+import { apiRuntime, RuntimeAdapter } from "../runtimeAdapter";
 
 const CODER_SYSTEM = `You are Orbi-Beta, an expert software engineer AI agent.
 You receive an implementation plan and write production-ready TypeScript code.
@@ -9,12 +10,15 @@ export async function coderAgent(
   originalTask: string,
   plan: string,
   onChunk: OnChunk,
-  provider: Provider = DEFAULT_PROVIDER
+  provider: Provider = DEFAULT_PROVIDER,
+  runtime: RuntimeAdapter = apiRuntime,
+  signal?: AbortSignal
 ): Promise<StreamResult> {
-  return streamMessage(
-    CODER_SYSTEM,
-    `Original task: ${originalTask}\n\nImplementation plan:\n${plan}\n\nWrite the code:`,
+  return runtime.execute({
+    systemPrompt: CODER_SYSTEM,
+    userMessage: `Original task: ${originalTask}\n\nImplementation plan:\n${plan}\n\nWrite the code:`,
     onChunk,
-    provider
-  );
+    provider,
+    signal,
+  });
 }
