@@ -5,6 +5,10 @@ import { Workflow } from "../workflowTypes";
 import { StreamResult } from "../ai";
 import { OrbiPrimeSupervisor, SupervisorEvent } from "../supervisor";
 
+function streamResult(text: string): StreamResult {
+  return { text, inputTokens: 1, outputTokens: 1, cacheReadTokens: 0, costUsd: 0, provider: "anthropic", model: "test" };
+}
+
 test("topoSort returns dependency-safe order", () => {
   const workflow: Workflow = {
     nodes: [
@@ -175,4 +179,49 @@ test("dynamic workflow aborts an in-flight runtime when the workflow is cancelle
   controller.abort();
   await assert.rejects(run, /aborted/);
   assert.equal(runtimeAborted, true);
+});
+
+test("local CLI workflow acquires and releases an isolated workspace per node", async () => {
+  const leases: string[] = [];
+  const releases: string[] = [];
+  const workspaces: Array<string | undefined> = [];
+  const workflow = { nodes: [{ id: "code", type: "coder" as const }], edges: [] };
+  const result = await runWorkflowDynamic(workflow, "task", () => {}, async () => {}, "anthropic", {
+    runId: "session-1",
+    runtime: {
+      id: "test-cli",
+      kind: "local-cli",
+      async isAvailable() { return true; },
+      async execute() { throw new Error("unused"); },
+    },
+    workspaceIsolation: {
+      async acquire(runId, agentId) {
+        leases.push(`${runId}:${agentId}`);
+        return { id: agentId, path: `/worktrees/${agentId}`, async release() { releases.push(agentId); } };
+      },
+    },
+    executeNode: async (_node, _inputs, _onChunk, _signal, workspacePath) => {
+      workspaces.push(workspacePath);
+      return streamResult("done");
+    },
+  });
+  assert.equal(result.outputs.code, "done");
+  assert.deepEqual(leases, ["session-1:code"]);
+  assert.deepEqual(workspaces, ["/worktrees/code"]);
+  assert.deepEqual(releases, ["code"]);
+});
+
+test("local CLI workflow refuses to run without isolation", async () => {
+  const workflow = { nodes: [{ id: "code", type: "coder" as const }], edges: [] };
+  await assert.rejects(
+    runWorkflowDynamic(workflow, "task", () => {}, async () => {}, "anthropic", {
+      runtime: {
+        id: "test-cli",
+        kind: "local-cli",
+        async isAvailable() { return true; },
+        async execute() { return streamResult("unused"); },
+      },
+    }),
+    /require workspace isolation/
+  );
 });

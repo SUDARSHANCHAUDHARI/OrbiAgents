@@ -1,4 +1,5 @@
 import path from "node:path";
+import { ProcessRunner } from "./processRunner";
 
 export interface WorkspaceLease {
   id: string;
@@ -25,6 +26,26 @@ export class NoopWorkspaceIsolation implements WorkspaceIsolation {
 export interface WorktreeCommandRunner {
   add(repoPath: string, worktreePath: string, branchName: string): Promise<void>;
   remove(repoPath: string, worktreePath: string): Promise<void>;
+}
+
+export class GitCliWorktreeCommandRunner implements WorktreeCommandRunner {
+  constructor(private readonly processRunner: ProcessRunner) {}
+
+  async add(repoPath: string, worktreePath: string, branchName: string): Promise<void> {
+    await this.processRunner.run({
+      command: "git",
+      args: ["-C", repoPath, "worktree", "add", "-b", branchName, worktreePath, "HEAD"],
+      cwd: repoPath,
+    });
+  }
+
+  async remove(repoPath: string, worktreePath: string): Promise<void> {
+    await this.processRunner.run({
+      command: "git",
+      args: ["-C", repoPath, "worktree", "remove", worktreePath],
+      cwd: repoPath,
+    });
+  }
 }
 
 export class GitWorktreeIsolation implements WorkspaceIsolation {

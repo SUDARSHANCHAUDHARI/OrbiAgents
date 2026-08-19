@@ -4,6 +4,8 @@ import { CircuitOpenError, WorkflowCircuitBreaker } from "../circuitBreaker";
 import { ApiRuntimeAdapter, codexCliDescriptor, LocalCliRuntimeAdapter } from "../runtimeAdapter";
 import { SpawnProcessRunner } from "../processRunner";
 import { GitWorktreeIsolation } from "../workspaceIsolation";
+import { availableRuntimeIds, createRuntimeExecution } from "../runtimeConfig";
+import { validateServerEnv } from "../env";
 
 test("API runtime remains the available default", async () => {
   const adapter = new ApiRuntimeAdapter();
@@ -73,4 +75,31 @@ test("circuit breaker opens on runtime, retry, token, cost, and failure limits",
   assert.throws(() => new WorkflowCircuitBreaker(limits).recordSuccess(3, 3, 0), /token budget/);
   assert.throws(() => new WorkflowCircuitBreaker(limits).recordSuccess(1, 1, 2), /cost budget/);
   assert.throws(() => new WorkflowCircuitBreaker(limits).recordFailure(), /failure limit/);
+});
+
+test("local runtimes are opt-in and require absolute isolation paths", () => {
+  assert.deepEqual(availableRuntimeIds({}), ["provider-api"]);
+  assert.throws(() => createRuntimeExecution("codex-cli", {}), /not enabled/);
+  assert.throws(
+    () => createRuntimeExecution("codex-cli", { LOCAL_CLI_ENABLED: "true" }),
+    /LOCAL_CLI_REPO_PATH is required/
+  );
+  const execution = createRuntimeExecution("claude-cli", {
+    LOCAL_CLI_ENABLED: "true",
+    LOCAL_CLI_REPO_PATH: "/repo",
+    LOCAL_CLI_WORKTREE_ROOT: "/tmp/orbi-worktrees",
+  });
+  assert.equal(execution.runtime.id, "claude-cli");
+  assert.ok(execution.workspaceIsolation);
+});
+
+test("environment validation rejects unsafe local CLI configuration", () => {
+  assert.throws(
+    () => validateServerEnv({ LOCAL_CLI_ENABLED: "yes" }),
+    /must be true or false/
+  );
+  assert.throws(
+    () => validateServerEnv({ LOCAL_CLI_ENABLED: "true", LOCAL_CLI_REPO_PATH: "relative", LOCAL_CLI_WORKTREE_ROOT: "/tmp/worktrees" }),
+    /LOCAL_CLI_REPO_PATH must be an absolute normalized path/
+  );
 });

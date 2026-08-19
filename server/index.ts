@@ -7,6 +7,7 @@ import { Agent, AgentState, ClientMessage, WorkflowEvent } from "./types";
 import { runWorkflow } from "./orchestrator";
 import { availableProviders, Provider } from "./ai";
 import { runWorkflowDynamic } from "./workflowRunner";
+import { availableRuntimeIds, createRuntimeExecution, RuntimeId } from "./runtimeConfig";
 import { Workflow } from "./workflowTypes";
 import {
   createSession,
@@ -450,6 +451,10 @@ app.get("/providers", (_req, res) => {
   res.json({ providers: availableProviders(), default: process.env.DEFAULT_PROVIDER ?? "anthropic" });
 });
 
+app.get("/runtimes", (_req, res) => {
+  res.json({ runtimes: availableRuntimeIds(), default: "provider-api" });
+});
+
 app.get("/usage", protect, async (req, res) => {
   const userId = req.userId!;
   const dayStart = new Date();
@@ -525,16 +530,26 @@ app.post("/run", protect, workflowRateLimit, async (req, res) => {
 
 // ── Dynamic workflow ──────────────────────────────────────────────
 app.post("/workflow", protect, workflowRateLimit, async (req, res) => {
-  const { workflow, task, provider } = req.body as {
+  const { workflow, task, provider, runtimeId = "provider-api" } = req.body as {
     workflow?: Workflow;
     task?: string;
     provider?: Provider;
+    runtimeId?: RuntimeId;
   };
   if (!workflow || !task?.trim()) {
     res.status(400).json({ error: "workflow and task required" }); return;
   }
   if (workflow.nodes.length > MAX_WORKFLOW_NODES) {
     res.status(400).json({ error: `Workflow exceeds node limit (${MAX_WORKFLOW_NODES})` }); return;
+  }
+  if (!["provider-api", "codex-cli", "claude-cli"].includes(runtimeId)) {
+    res.status(400).json({ error: "Invalid runtimeId" }); return;
+  }
+  let execution;
+  try {
+    execution = createRuntimeExecution(runtimeId);
+  } catch (error) {
+    res.status(400).json({ error: error instanceof Error ? error.message : String(error) }); return;
   }
   const userId = req.userId!;
   const usageError = await enforceUsageGuardrails(userId);
@@ -560,6 +575,9 @@ app.post("/workflow", protect, workflowRateLimit, async (req, res) => {
       provider,
       {
         maxConcurrency: MAX_PARALLEL_AGENTS,
+        runtime: execution.runtime,
+        workspaceIsolation: execution.workspaceIsolation,
+        runId: sessionId,
         supervisor: new OrbiPrimeSupervisor((event) => publishWorkflowEvent(userId, event)),
         signal: runtime.workflowAbortController.signal,
       }

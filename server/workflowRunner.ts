@@ -10,6 +10,7 @@ import { AgentState } from "./types";
 import { WorkflowCircuitBreaker } from "./circuitBreaker";
 import { apiRuntime, RuntimeAdapter } from "./runtimeAdapter";
 import { OrbiPrimeSupervisor } from "./supervisor";
+import { WorkspaceIsolation, WorkspaceLease } from "./workspaceIsolation";
 
 function timestamp(): string {
   return new Date().toLocaleTimeString("en-US", { hour12: false });
@@ -105,7 +106,8 @@ export type WorkflowNodeExecutor = (
   node: WorkflowNode,
   inputs: WorkflowInputs,
   onChunk: (chunk: string) => void | Promise<void>,
-  signal: AbortSignal
+  signal: AbortSignal,
+  workspacePath?: string
 ) => Promise<StreamResult>;
 
 export interface WorkflowRunOptions {
@@ -116,6 +118,8 @@ export interface WorkflowRunOptions {
   supervisor?: OrbiPrimeSupervisor;
   executeNode?: WorkflowNodeExecutor;
   signal?: AbortSignal;
+  workspaceIsolation?: WorkspaceIsolation;
+  runId?: string;
 }
 
 export async function runWorkflowDynamic(
@@ -141,6 +145,9 @@ export async function runWorkflowDynamic(
   const supervisor = options.supervisor ?? new OrbiPrimeSupervisor();
   const runtime = options.runtime ?? apiRuntime;
   const executor = options.executeNode ?? createDefaultExecutor(task, provider, runtime);
+  if (runtime.kind === "local-cli" && !options.workspaceIsolation) {
+    throw new Error("Local CLI workflows require workspace isolation");
+  }
   const rank = new Map(order.map((node, index) => [node.id, index]));
   const remainingDependencies = new Map(
     workflow.nodes.map((node) => [
@@ -191,7 +198,12 @@ export async function runWorkflowDynamic(
 
     let result: StreamResult | undefined;
     let lastError: unknown;
-    for (let attempt = 0; attempt < 2; attempt += 1) {
+    let lease: WorkspaceLease | undefined;
+    try {
+      if (options.workspaceIsolation) {
+        lease = await options.workspaceIsolation.acquire(options.runId ?? `run-${Date.now()}`, node.id);
+      }
+      for (let attempt = 0; attempt < 2; attempt += 1) {
       if (attempt > 0) {
         const retry = breaker.recordRetry(node.id);
         supervisor.report("node-retrying", { nodeId: node.id, detail: `attempt ${retry + 1}` });
@@ -202,7 +214,7 @@ export async function runWorkflowDynamic(
       if (options.signal?.aborted) abortFromWorkflow();
       else options.signal?.addEventListener("abort", abortFromWorkflow, { once: true });
       try {
-        result = await withTimeout(executor(node, inputs, onChunk, controller.signal), nodeTimeoutMs, node.id, controller);
+        result = await withTimeout(executor(node, inputs, onChunk, controller.signal, lease?.path), nodeTimeoutMs, node.id, controller);
         break;
       } catch (error) {
         lastError = error;
@@ -211,6 +223,9 @@ export async function runWorkflowDynamic(
         options.signal?.removeEventListener("abort", abortFromWorkflow);
         activeController = null;
       }
+      }
+    } finally {
+      await lease?.release();
     }
     if (!result) {
       supervisor.report("node-failed", { nodeId: node.id, detail: errorMessage(lastError) });
@@ -289,19 +304,27 @@ function createDefaultExecutor(
   provider: Provider,
   runtime: RuntimeAdapter
 ): WorkflowNodeExecutor {
-  return async (node, inputs, onChunk, signal) => {
+  return async (node, inputs, onChunk, signal, workspacePath) => {
+    const scopedRuntime: RuntimeAdapter = workspacePath
+      ? {
+          id: runtime.id,
+          kind: runtime.kind,
+          isAvailable: () => runtime.isAvailable(),
+          execute: (request) => runtime.execute({ ...request, workspacePath }),
+        }
+      : runtime;
     switch (node.type) {
-      case "planner": return plannerAgent(inputs.combined, onChunk, provider, runtime, signal);
-      case "coder": return coderAgent(task, inputs.combined, onChunk, provider, runtime, signal);
-      case "tester": return testerAgent(task, inputs.latestCode ?? inputs.combined, onChunk, provider, runtime, signal);
-      case "reviewer": return reviewerAgent(task, inputs.latestCode ?? inputs.combined, onChunk, provider, runtime, signal);
+      case "planner": return plannerAgent(inputs.combined, onChunk, provider, scopedRuntime, signal);
+      case "coder": return coderAgent(task, inputs.combined, onChunk, provider, scopedRuntime, signal);
+      case "tester": return testerAgent(task, inputs.latestCode ?? inputs.combined, onChunk, provider, scopedRuntime, signal);
+      case "reviewer": return reviewerAgent(task, inputs.latestCode ?? inputs.combined, onChunk, provider, scopedRuntime, signal);
       case "debugger": return debuggerAgent(
         task,
         inputs.latestCode ?? inputs.combined,
         inputs.latestReview ?? inputs.combined,
         onChunk,
         provider,
-        runtime,
+        scopedRuntime,
         signal
       );
     }
