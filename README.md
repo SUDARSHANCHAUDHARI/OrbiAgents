@@ -390,6 +390,12 @@ Contributions are welcome.
 3. Make and test your changes
 4. Open a pull request with the problem, approach, and validation clearly described
 
+## Inspiration and credits
+
+The coworking-space presentation and its animated sense of agent activity were inspired in part by **Munder** and by the pixel-art environment work of **LimeZu**. Thank you to their creators for demonstrating how a shared virtual workspace can make collaboration feel understandable and alive.
+
+OrbiAgents' current interface, animations, and visual assets are original implementations. No Munder or LimeZu artwork, source assets, branding, or other third-party files are included in this repository. Their respective projects and assets remain subject to their own license terms.
+
 ## License
 
 MIT License. See [LICENSE](LICENSE).
