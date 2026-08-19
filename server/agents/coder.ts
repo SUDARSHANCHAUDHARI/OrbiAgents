@@ -11,12 +11,14 @@ export async function coderAgent(
   plan: string,
   onChunk: OnChunk,
   provider: Provider = DEFAULT_PROVIDER,
-  runtime: RuntimeAdapter = apiRuntime
+  runtime: RuntimeAdapter = apiRuntime,
+  signal?: AbortSignal
 ): Promise<StreamResult> {
   return runtime.execute({
     systemPrompt: CODER_SYSTEM,
     userMessage: `Original task: ${originalTask}\n\nImplementation plan:\n${plan}\n\nWrite the code:`,
     onChunk,
     provider,
+    signal,
   });
 }

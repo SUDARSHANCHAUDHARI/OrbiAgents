@@ -58,7 +58,8 @@ export type OnChunk = (text: string) => void | Promise<void>;
 async function streamAnthropic(
   systemPrompt: string,
   userMessage: string,
-  onChunk: OnChunk
+  onChunk: OnChunk,
+  signal?: AbortSignal
 ): Promise<StreamResult> {
   const client = getAnthropic();
   const model = MODELS.anthropic;
@@ -69,7 +70,7 @@ async function streamAnthropic(
     max_tokens: 4096,
     system: [{ type: "text", text: systemPrompt, cache_control: { type: "ephemeral" } }],
     messages: [{ role: "user", content: userMessage }],
-  });
+  }, { signal });
 
   for await (const event of stream) {
     if (event.type === "content_block_delta" && event.delta.type === "text_delta") {
@@ -94,7 +95,8 @@ async function streamAnthropic(
 async function streamOpenAI(
   systemPrompt: string,
   userMessage: string,
-  onChunk: OnChunk
+  onChunk: OnChunk,
+  signal?: AbortSignal
 ): Promise<StreamResult> {
   const client = getOpenAI();
   const model = MODELS.openai;
@@ -111,7 +113,7 @@ async function streamOpenAI(
       { role: "system", content: systemPrompt },
       { role: "user", content: userMessage },
     ],
-  });
+  }, { signal });
 
   for await (const chunk of stream) {
     const delta = chunk.choices[0]?.delta?.content;
@@ -134,7 +136,8 @@ async function streamOpenAI(
 async function streamGemini(
   systemPrompt: string,
   userMessage: string,
-  onChunk: OnChunk
+  onChunk: OnChunk,
+  signal?: AbortSignal
 ): Promise<StreamResult> {
   const ai = getGemini();
   const model = ai.getGenerativeModel({
@@ -146,7 +149,8 @@ async function streamGemini(
   let inputTokens = 0;
   let outputTokens = 0;
 
-  const result = await model.generateContentStream(userMessage);
+  const requestOptions = { signal } as Parameters<typeof model.generateContentStream>[1];
+  const result = await model.generateContentStream(userMessage, requestOptions);
 
   for await (const chunk of result.stream) {
     const text = chunk.text();
@@ -171,12 +175,13 @@ export async function streamMessage(
   systemPrompt: string,
   userMessage: string,
   onChunk: OnChunk,
-  provider: Provider = DEFAULT_PROVIDER
+  provider: Provider = DEFAULT_PROVIDER,
+  signal?: AbortSignal
 ): Promise<StreamResult> {
   switch (provider) {
-    case "anthropic": return streamAnthropic(systemPrompt, userMessage, onChunk);
-    case "openai":    return streamOpenAI(systemPrompt, userMessage, onChunk);
-    case "gemini":    return streamGemini(systemPrompt, userMessage, onChunk);
+    case "anthropic": return streamAnthropic(systemPrompt, userMessage, onChunk, signal);
+    case "openai":    return streamOpenAI(systemPrompt, userMessage, onChunk, signal);
+    case "gemini":    return streamGemini(systemPrompt, userMessage, onChunk, signal);
   }
 }
 

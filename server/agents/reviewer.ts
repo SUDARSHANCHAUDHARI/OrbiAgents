@@ -11,12 +11,14 @@ export async function reviewerAgent(
   code: string,
   onChunk: OnChunk,
   provider: Provider = DEFAULT_PROVIDER,
-  runtime: RuntimeAdapter = apiRuntime
+  runtime: RuntimeAdapter = apiRuntime,
+  signal?: AbortSignal
 ): Promise<StreamResult> {
   return runtime.execute({
     systemPrompt: REVIEWER_SYSTEM,
     userMessage: `Original task: ${originalTask}\n\nCode to review:\n${code}\n\nProvide your review:`,
     onChunk,
     provider,
+    signal,
   });
 }

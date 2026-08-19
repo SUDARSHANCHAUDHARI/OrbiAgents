@@ -12,12 +12,14 @@ export async function debuggerAgent(
   review: string,
   onChunk: OnChunk,
   provider: Provider = DEFAULT_PROVIDER,
-  runtime: RuntimeAdapter = apiRuntime
+  runtime: RuntimeAdapter = apiRuntime,
+  signal?: AbortSignal
 ): Promise<StreamResult> {
   return runtime.execute({
     systemPrompt: DEBUGGER_SYSTEM,
     userMessage: `Original task: ${originalTask}\n\nOriginal code:\n${code}\n\nReview findings:\n${review}\n\nProvide fixed code:`,
     onChunk,
     provider,
+    signal,
   });
 }

@@ -481,6 +481,7 @@ app.post("/run", protect, workflowRateLimit, async (req, res) => {
   await createSession(sessionId, task.trim(), userId, provider);
   runtime.activeSessionId = sessionId;
   runtime.workflowRunning = true;
+  runtime.workflowAbortController = new AbortController();
   runtime.cancelRequested = false;
   touchRuntime(runtime);
   res.status(202).json({ status: "started", sessionId });
@@ -490,7 +491,8 @@ app.post("/run", protect, workflowRateLimit, async (req, res) => {
       task.trim(),
       (id, patch) => updateAgent(userId, id, patch),
       (id) => waitIfPaused(userId, id),
-      provider
+      provider,
+      runtime.workflowAbortController.signal
     );
     updateSessionCost(sessionId, result.totalCostUsd);
     runtime.sockets.forEach((socket) => {
@@ -498,7 +500,7 @@ app.post("/run", protect, workflowRateLimit, async (req, res) => {
         socket.send(JSON.stringify({ type: "result", sessionId, ...result }));
     });
   } catch (err) {
-    if (err instanceof WorkflowCancelledError) {
+    if (err instanceof WorkflowCancelledError || runtime.cancelRequested) {
       resetRuntime(userId);
       runtime.sockets.forEach((socket) => {
         if (socket.readyState === WebSocket.OPEN) {
@@ -515,6 +517,7 @@ app.post("/run", protect, workflowRateLimit, async (req, res) => {
     resetRuntime(userId);
   } finally {
     runtime.workflowRunning = false;
+    runtime.workflowAbortController = null;
     runtime.activeSessionId = null;
     touchRuntime(runtime);
   }
@@ -543,6 +546,7 @@ app.post("/workflow", protect, workflowRateLimit, async (req, res) => {
   await createSession(sessionId, task.trim(), userId, provider);
   runtime.activeSessionId = sessionId;
   runtime.workflowRunning = true;
+  runtime.workflowAbortController = new AbortController();
   runtime.cancelRequested = false;
   touchRuntime(runtime);
   res.status(202).json({ status: "started", sessionId });
@@ -557,6 +561,7 @@ app.post("/workflow", protect, workflowRateLimit, async (req, res) => {
       {
         maxConcurrency: MAX_PARALLEL_AGENTS,
         supervisor: new OrbiPrimeSupervisor((event) => publishWorkflowEvent(userId, event)),
+        signal: runtime.workflowAbortController.signal,
       }
     );
     updateSessionCost(sessionId, result.totalCostUsd);
@@ -571,7 +576,7 @@ app.post("/workflow", protect, workflowRateLimit, async (req, res) => {
         }));
     });
   } catch (err) {
-    if (err instanceof WorkflowCancelledError) {
+    if (err instanceof WorkflowCancelledError || runtime.cancelRequested) {
       resetRuntime(userId);
       runtime.sockets.forEach((socket) => {
         if (socket.readyState === WebSocket.OPEN) {
@@ -588,6 +593,7 @@ app.post("/workflow", protect, workflowRateLimit, async (req, res) => {
     resetRuntime(userId);
   } finally {
     runtime.workflowRunning = false;
+    runtime.workflowAbortController = null;
     runtime.activeSessionId = null;
     touchRuntime(runtime);
   }

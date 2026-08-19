@@ -30,4 +30,8 @@ test("mailbox prevents self-messages and runaway hops", () => {
     () => validateMessage({ userId: "u1", senderAgentId: "a", recipientAgentId: "b", kind: "unknown" as "inform", body: "x" }),
     /Unsupported message kind/
   );
+  assert.throws(
+    () => validateMessage({ userId: "u1", senderAgentId: "2", recipientAgentId: " 2 ", kind: "inform", body: "x" }),
+    /cannot message themselves/
+  );
 });

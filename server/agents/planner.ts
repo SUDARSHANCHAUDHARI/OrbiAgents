@@ -10,12 +10,14 @@ export async function plannerAgent(
   task: string,
   onChunk: OnChunk,
   provider: Provider = DEFAULT_PROVIDER,
-  runtime: RuntimeAdapter = apiRuntime
+  runtime: RuntimeAdapter = apiRuntime,
+  signal?: AbortSignal
 ): Promise<StreamResult> {
   return runtime.execute({
     systemPrompt: PLANNER_SYSTEM,
     userMessage: `Task: ${task}\n\nProvide the implementation plan:`,
     onChunk,
     provider,
+    signal,
   });
 }

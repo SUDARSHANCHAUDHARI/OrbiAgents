@@ -104,7 +104,8 @@ export interface WorkflowRunResult {
 export type WorkflowNodeExecutor = (
   node: WorkflowNode,
   inputs: WorkflowInputs,
-  onChunk: (chunk: string) => void | Promise<void>
+  onChunk: (chunk: string) => void | Promise<void>,
+  signal: AbortSignal
 ) => Promise<StreamResult>;
 
 export interface WorkflowRunOptions {
@@ -114,6 +115,7 @@ export interface WorkflowRunOptions {
   circuitBreaker?: WorkflowCircuitBreaker;
   supervisor?: OrbiPrimeSupervisor;
   executeNode?: WorkflowNodeExecutor;
+  signal?: AbortSignal;
 }
 
 export async function runWorkflowDynamic(
@@ -170,9 +172,15 @@ export async function runWorkflowDynamic(
 
     let buffer = "";
     let lastBroadcast = 0;
+    let activeController: AbortController | null = null;
 
     const onChunk = async (chunk: string) => {
-      await waitIfPaused(agentId);
+      try {
+        await waitIfPaused(agentId);
+      } catch (error) {
+        activeController?.abort(error);
+        throw error;
+      }
       buffer += chunk;
       const now = Date.now();
       if (now - lastBroadcast > 500) {
@@ -188,12 +196,20 @@ export async function runWorkflowDynamic(
         const retry = breaker.recordRetry(node.id);
         supervisor.report("node-retrying", { nodeId: node.id, detail: `attempt ${retry + 1}` });
       }
+      const controller = new AbortController();
+      activeController = controller;
+      const abortFromWorkflow = () => controller.abort(options.signal?.reason);
+      if (options.signal?.aborted) abortFromWorkflow();
+      else options.signal?.addEventListener("abort", abortFromWorkflow, { once: true });
       try {
-        result = await withTimeout(executor(node, inputs, onChunk), nodeTimeoutMs, node.id);
+        result = await withTimeout(executor(node, inputs, onChunk, controller.signal), nodeTimeoutMs, node.id, controller);
         break;
       } catch (error) {
         lastError = error;
-        if (error instanceof NodeTimeoutError) break;
+        if (error instanceof NodeTimeoutError || controller.signal.aborted) break;
+      } finally {
+        options.signal?.removeEventListener("abort", abortFromWorkflow);
+        activeController = null;
       }
     }
     if (!result) {
@@ -273,31 +289,40 @@ function createDefaultExecutor(
   provider: Provider,
   runtime: RuntimeAdapter
 ): WorkflowNodeExecutor {
-  return async (node, inputs, onChunk) => {
+  return async (node, inputs, onChunk, signal) => {
     switch (node.type) {
-      case "planner": return plannerAgent(inputs.combined, onChunk, provider, runtime);
-      case "coder": return coderAgent(task, inputs.combined, onChunk, provider, runtime);
-      case "tester": return testerAgent(task, inputs.latestCode ?? inputs.combined, onChunk, provider, runtime);
-      case "reviewer": return reviewerAgent(task, inputs.latestCode ?? inputs.combined, onChunk, provider, runtime);
+      case "planner": return plannerAgent(inputs.combined, onChunk, provider, runtime, signal);
+      case "coder": return coderAgent(task, inputs.combined, onChunk, provider, runtime, signal);
+      case "tester": return testerAgent(task, inputs.latestCode ?? inputs.combined, onChunk, provider, runtime, signal);
+      case "reviewer": return reviewerAgent(task, inputs.latestCode ?? inputs.combined, onChunk, provider, runtime, signal);
       case "debugger": return debuggerAgent(
         task,
         inputs.latestCode ?? inputs.combined,
         inputs.latestReview ?? inputs.combined,
         onChunk,
         provider,
-        runtime
+        runtime,
+        signal
       );
     }
   };
 }
 
-async function withTimeout<T>(promise: Promise<T>, timeoutMs: number, nodeId: string): Promise<T> {
+async function withTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  nodeId: string,
+  controller: AbortController
+): Promise<T> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     return await Promise.race([
       promise,
       new Promise<T>((_, reject) => {
-        timer = setTimeout(() => reject(new NodeTimeoutError(nodeId)), timeoutMs);
+        timer = setTimeout(() => {
+          controller.abort(new NodeTimeoutError(nodeId));
+          reject(new NodeTimeoutError(nodeId));
+        }, timeoutMs);
       }),
     ]);
   } finally {

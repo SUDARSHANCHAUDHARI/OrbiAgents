@@ -8,6 +8,7 @@ export interface RuntimeRequest {
   onChunk: OnChunk;
   provider?: Provider;
   workspacePath?: string;
+  signal?: AbortSignal;
 }
 
 export interface RuntimeAdapter {
@@ -30,7 +31,8 @@ export class ApiRuntimeAdapter implements RuntimeAdapter {
       request.systemPrompt,
       request.userMessage,
       request.onChunk,
-      request.provider ?? DEFAULT_PROVIDER
+      request.provider ?? DEFAULT_PROVIDER,
+      request.signal
     );
   }
 }

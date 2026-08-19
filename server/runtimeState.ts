@@ -6,6 +6,7 @@ export interface UserRuntime {
   workflowRunning: boolean;
   cancelRequested: boolean;
   activeSessionId: string | null;
+  workflowAbortController: AbortController | null;
   sockets: Set<WebSocket>;
   lastTouchedAt: number;
 }
@@ -25,6 +26,7 @@ export function createUserRuntime(makeAgents: () => Agent[]): UserRuntime {
     workflowRunning: false,
     cancelRequested: false,
     activeSessionId: null,
+    workflowAbortController: null,
     sockets: new Set(),
     lastTouchedAt: Date.now(),
   };
@@ -97,6 +99,7 @@ export function despawnSubAgent(runtime: UserRuntime, subId: string): void {
 
 export function requestRuntimeCancel(runtime: UserRuntime): void {
   runtime.cancelRequested = true;
+  runtime.workflowAbortController?.abort(new WorkflowCancelledError());
   runtime.agents = runtime.agents.map((agent) =>
     agent.state === "idle" || agent.state === "done"
       ? agent

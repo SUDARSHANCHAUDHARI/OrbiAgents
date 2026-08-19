@@ -148,3 +148,31 @@ test("dynamic workflow falls back from invalid concurrency and emits a terminal 
   );
   assert.equal(events.at(-1)?.type, "workflow-failed");
 });
+
+test("dynamic workflow aborts an in-flight runtime when the workflow is cancelled", async () => {
+  const controller = new AbortController();
+  let runtimeAborted = false;
+  let markStarted: (() => void) | undefined;
+  const started = new Promise<void>((resolve) => { markStarted = resolve; });
+  const run = runWorkflowDynamic(
+    { nodes: [{ id: "plan", type: "planner" }], edges: [] },
+    "task",
+    () => {},
+    async () => {},
+    "anthropic",
+    {
+      signal: controller.signal,
+      executeNode: async (_node, _inputs, _onChunk, signal) => new Promise<StreamResult>((_resolve, reject) => {
+        markStarted?.();
+        signal.addEventListener("abort", () => {
+          runtimeAborted = true;
+          reject(new Error("aborted"));
+        }, { once: true });
+      }),
+    }
+  );
+  await started;
+  controller.abort();
+  await assert.rejects(run, /aborted/);
+  assert.equal(runtimeAborted, true);
+});

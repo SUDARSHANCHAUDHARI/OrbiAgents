@@ -26,10 +26,12 @@ export class MessageHopLimitError extends Error {
 }
 
 export function validateMessage(input: SendMessageInput): void {
-  if (!input.senderAgentId.trim() || !input.recipientAgentId.trim()) {
+  const senderAgentId = input.senderAgentId.trim();
+  const recipientAgentId = input.recipientAgentId.trim();
+  if (!senderAgentId || !recipientAgentId) {
     throw new Error("Sender and recipient are required");
   }
-  if (input.senderAgentId === input.recipientAgentId) {
+  if (senderAgentId === recipientAgentId) {
     throw new Error("Agents cannot message themselves");
   }
   if (!input.body.trim()) throw new Error("Message body is required");
@@ -41,18 +43,35 @@ export function validateMessage(input: SendMessageInput): void {
 }
 
 export async function sendMessage(input: SendMessageInput) {
-  validateMessage(input);
+  const normalized: SendMessageInput = {
+    ...input,
+    senderAgentId: input.senderAgentId.trim(),
+    recipientAgentId: input.recipientAgentId.trim(),
+    hopCount: 0,
+  };
+  if (input.replyToId) {
+    const parent = await db.mailboxMessage.findFirst({
+      where: { id: input.replyToId, userId: input.userId },
+    });
+    if (!parent) throw new Error("Reply message not found");
+    if (normalized.senderAgentId !== parent.recipientAgentId || normalized.recipientAgentId !== parent.senderAgentId) {
+      throw new Error("Reply sender and recipient must match the parent conversation");
+    }
+    normalized.conversationId = parent.conversationId;
+    normalized.hopCount = parent.hopCount + 1;
+  }
+  validateMessage(normalized);
   return db.mailboxMessage.create({
     data: {
-      userId: input.userId,
-      projectKey: input.projectKey?.trim() || "default",
-      senderAgentId: input.senderAgentId.trim(),
-      recipientAgentId: input.recipientAgentId.trim(),
-      kind: input.kind,
-      body: input.body.trim(),
-      conversationId: input.conversationId ?? randomUUID(),
-      replyToId: input.replyToId,
-      hopCount: input.hopCount ?? 0,
+      userId: normalized.userId,
+      projectKey: normalized.projectKey?.trim() || "default",
+      senderAgentId: normalized.senderAgentId,
+      recipientAgentId: normalized.recipientAgentId,
+      kind: normalized.kind,
+      body: normalized.body.trim(),
+      conversationId: normalized.conversationId ?? randomUUID(),
+      replyToId: normalized.replyToId,
+      hopCount: normalized.hopCount ?? 0,
     },
   });
 }

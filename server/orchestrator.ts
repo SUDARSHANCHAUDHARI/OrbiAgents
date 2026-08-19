@@ -2,6 +2,7 @@ import { plannerAgent } from "./agents/planner";
 import { coderAgent } from "./agents/coder";
 import { Provider, DEFAULT_PROVIDER } from "./ai";
 import { Agent } from "./types";
+import { apiRuntime } from "./runtimeAdapter";
 
 export interface WorkflowResult {
   plan: string;
@@ -20,7 +21,8 @@ export async function runWorkflow(
   task: string,
   update: AgentUpdater,
   waitIfPaused: PauseWaiter,
-  provider: Provider = DEFAULT_PROVIDER
+  provider: Provider = DEFAULT_PROVIDER,
+  signal?: AbortSignal
 ): Promise<WorkflowResult> {
   await waitIfPaused("1");
 
@@ -43,7 +45,7 @@ export async function runWorkflow(
       lastPlanBroadcast = now;
       update("1", { task: planBuffer.slice(0, 80) + "…" });
     }
-  }, provider);
+  }, provider, apiRuntime, signal);
 
   update("1", {
     state: "done",
@@ -81,7 +83,7 @@ export async function runWorkflow(
         lastAction: `Wrote ${lines} lines`,
       });
     }
-  }, provider);
+  }, provider, apiRuntime, signal);
 
   const lineCount = codeResult.text.split("\n").length;
   update("2", {

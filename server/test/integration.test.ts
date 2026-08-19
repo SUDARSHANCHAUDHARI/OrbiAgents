@@ -167,7 +167,7 @@ test("memory and mailbox APIs persist user-scoped agent context", async () => {
     }),
   });
   assert.equal(messageRes.status, 201);
-  const message = (await messageRes.json()) as { id: string };
+  const message = (await messageRes.json()) as { id: string; conversationId: string };
 
   const inboxRes = await fetch(`${baseUrl}/messages/2`, { headers: makeHeaders(user.token) });
   const inbox = (await inboxRes.json()) as Array<{ id: string; body: string }>;
@@ -178,4 +178,22 @@ test("memory and mailbox APIs persist user-scoped agent context", async () => {
     headers: makeHeaders(user.token),
   });
   assert.equal(readRes.status, 200);
+
+  const replyRes = await fetch(`${baseUrl}/messages`, {
+    method: "POST",
+    headers: makeJsonHeaders(user.token),
+    body: JSON.stringify({
+      senderAgentId: "2",
+      recipientAgentId: "3",
+      kind: "agree",
+      body: "I will fix it",
+      replyToId: message.id,
+      hopCount: 0,
+      conversationId: "client-cannot-replace-this",
+    }),
+  });
+  assert.equal(replyRes.status, 201);
+  const reply = (await replyRes.json()) as { hopCount: number; conversationId: string };
+  assert.equal(reply.hopCount, 1);
+  assert.equal(reply.conversationId, message.conversationId);
 });

@@ -11,12 +11,14 @@ export async function testerAgent(
   code: string,
   onChunk: OnChunk,
   provider: Provider = DEFAULT_PROVIDER,
-  runtime: RuntimeAdapter = apiRuntime
+  runtime: RuntimeAdapter = apiRuntime,
+  signal?: AbortSignal
 ): Promise<StreamResult> {
   return runtime.execute({
     systemPrompt: TESTER_SYSTEM,
     userMessage: `Original task: ${originalTask}\n\nCode to test:\n${code}\n\nWrite comprehensive tests:`,
     onChunk,
     provider,
+    signal,
   });
 }
