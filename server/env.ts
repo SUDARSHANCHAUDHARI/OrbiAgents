@@ -58,6 +58,12 @@ export function validateServerEnv(env: NodeJS.ProcessEnv = process.env): void {
         throw new Error(`${key} must be an absolute normalized path when local CLI execution is enabled`);
       }
     }
+    const repoPath = path.resolve(env.LOCAL_CLI_REPO_PATH!);
+    const worktreeRoot = path.resolve(env.LOCAL_CLI_WORKTREE_ROOT!);
+    const relativeRoot = path.relative(repoPath, worktreeRoot);
+    if (relativeRoot === "" || (!relativeRoot.startsWith(`..${path.sep}`) && relativeRoot !== "..")) {
+      throw new Error("LOCAL_CLI_WORKTREE_ROOT must be outside LOCAL_CLI_REPO_PATH");
+    }
   }
 
   if (isProduction && jwtSecret === FALLBACK_JWT_SECRET) {

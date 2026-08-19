@@ -45,17 +45,20 @@ export class SpawnProcessRunner implements ProcessRunner {
       let outputBytes = 0;
       let killTimer: ReturnType<typeof setTimeout> | undefined;
       const maxOutputBytes = request.maxOutputBytes ?? 2 * 1024 * 1024;
-      const abort = () => {
+      const terminate = () => {
         child.kill("SIGTERM");
-        killTimer = setTimeout(() => child.kill("SIGKILL"), 2_000);
-        killTimer.unref();
+        if (!killTimer) {
+          killTimer = setTimeout(() => child.kill("SIGKILL"), 2_000);
+          killTimer.unref();
+        }
       };
+      const abort = () => terminate();
 
       request.signal?.addEventListener("abort", abort, { once: true });
       child.stdout.on("data", (value: Buffer) => {
         outputBytes += value.byteLength;
         if (outputBytes > maxOutputBytes) {
-          child.kill("SIGTERM");
+          terminate();
           return;
         }
         const chunk = value.toString("utf8");
@@ -65,7 +68,7 @@ export class SpawnProcessRunner implements ProcessRunner {
       child.stderr.on("data", (value: Buffer) => {
         outputBytes += value.byteLength;
         if (outputBytes > maxOutputBytes) {
-          child.kill("SIGTERM");
+          terminate();
           return;
         }
         const chunk = value.toString("utf8");

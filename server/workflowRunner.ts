@@ -98,6 +98,8 @@ export interface WorkflowRunResult {
     type: WorkflowNode["type"];
     label: string;
     output: string;
+    workspacePath?: string;
+    workspaceDisposition?: "removed" | "preserved";
   }>;
   totalCostUsd: number;
 }
@@ -199,6 +201,7 @@ export async function runWorkflowDynamic(
     let result: StreamResult | undefined;
     let lastError: unknown;
     let lease: WorkspaceLease | undefined;
+    let workspaceDisposition: "removed" | "preserved" | undefined;
     try {
       if (options.workspaceIsolation) {
         lease = await options.workspaceIsolation.acquire(options.runId ?? `run-${Date.now()}`, node.id);
@@ -225,7 +228,7 @@ export async function runWorkflowDynamic(
       }
       }
     } finally {
-      await lease?.release();
+      workspaceDisposition = await lease?.release();
     }
     if (!result) {
       supervisor.report("node-failed", { nodeId: node.id, detail: errorMessage(lastError) });
@@ -239,7 +242,15 @@ export async function runWorkflowDynamic(
     }
 
     outputs.set(node.id, result.text);
-    completedSteps.set(node.id, { nodeId: node.id, type: node.type, label, output: result.text });
+    completedSteps.set(node.id, {
+      nodeId: node.id,
+      type: node.type,
+      label,
+      output: result.text,
+      ...(workspaceDisposition === "preserved" && lease
+        ? { workspacePath: lease.path, workspaceDisposition }
+        : workspaceDisposition ? { workspaceDisposition } : {}),
+    });
     totalCostUsd += result.costUsd;
     try {
       breaker.recordSuccess(result.inputTokens, result.outputTokens, result.costUsd);

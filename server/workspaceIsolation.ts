@@ -4,7 +4,7 @@ import { ProcessRunner } from "./processRunner";
 export interface WorkspaceLease {
   id: string;
   path: string;
-  release(): Promise<void>;
+  release(): Promise<"removed" | "preserved">;
 }
 
 export interface WorkspaceIsolation {
@@ -18,13 +18,14 @@ export class NoopWorkspaceIsolation implements WorkspaceIsolation {
     return {
       id: `${runId}:${agentId}`,
       path: this.workspacePath,
-      async release() {},
+      async release() { return "preserved"; },
     };
   }
 }
 
 export interface WorktreeCommandRunner {
   add(repoPath: string, worktreePath: string, branchName: string): Promise<void>;
+  isClean(repoPath: string, worktreePath: string): Promise<boolean>;
   remove(repoPath: string, worktreePath: string): Promise<void>;
 }
 
@@ -45,6 +46,15 @@ export class GitCliWorktreeCommandRunner implements WorktreeCommandRunner {
       args: ["-C", repoPath, "worktree", "remove", worktreePath],
       cwd: repoPath,
     });
+  }
+
+  async isClean(repoPath: string, worktreePath: string): Promise<boolean> {
+    const result = await this.processRunner.run({
+      command: "git",
+      args: ["-C", worktreePath, "status", "--porcelain"],
+      cwd: repoPath,
+    });
+    return result.stdout.trim().length === 0;
   }
 }
 
@@ -69,9 +79,13 @@ export class GitWorktreeIsolation implements WorkspaceIsolation {
       id: leaseId,
       path: worktreePath,
       release: async () => {
-        if (released) return;
+        if (released) return "preserved";
         released = true;
-        await this.runner.remove(this.repoPath, worktreePath);
+        if (await this.runner.isClean(this.repoPath, worktreePath)) {
+          await this.runner.remove(this.repoPath, worktreePath);
+          return "removed";
+        }
+        return "preserved";
       },
     };
   }

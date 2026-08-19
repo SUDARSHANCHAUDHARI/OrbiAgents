@@ -33,6 +33,10 @@ export function createRuntimeExecution(
 
   const repoPath = requiredAbsolutePath("LOCAL_CLI_REPO_PATH", env.LOCAL_CLI_REPO_PATH);
   const worktreeRoot = requiredAbsolutePath("LOCAL_CLI_WORKTREE_ROOT", env.LOCAL_CLI_WORKTREE_ROOT);
+  const relativeRoot = path.relative(repoPath, worktreeRoot);
+  if (relativeRoot === "" || (!relativeRoot.startsWith(`..${path.sep}`) && relativeRoot !== "..")) {
+    throw new Error("LOCAL_CLI_WORKTREE_ROOT must be outside LOCAL_CLI_REPO_PATH");
+  }
   const runner = new SpawnProcessRunner(new Set(["codex", "claude", "git"]));
   const descriptor = runtimeId === "codex-cli"
     ? codexCliDescriptor(true)

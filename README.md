@@ -319,6 +319,12 @@ The server currently exposes runtime capabilities for:
 
 The implementation in `server/` is the source of truth for current runtime behavior.
 
+### Opt-in local coding runtimes
+
+After setting the three `LOCAL_CLI_*` variables above and restarting the server, `GET /runtimes` lists the enabled adapters. Select one on a dynamic workflow request with `"runtimeId": "codex-cli"` or `"runtimeId": "claude-cli"`. Omitting `runtimeId` keeps the existing provider API path.
+
+Local commands are spawned without a shell from a fixed allowlist. Each node runs in a dedicated branch and Git worktree outside the source repository. Clean worktrees are removed after the node finishes; worktrees containing agent changes are preserved, and their path is returned in the corresponding workflow result step for operator review. OrbiAgents does not automatically commit, merge, push, or delete those changes.
+
 ## Current status
 
 | Capability | Status |

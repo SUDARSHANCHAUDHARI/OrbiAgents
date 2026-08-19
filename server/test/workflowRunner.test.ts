@@ -197,7 +197,7 @@ test("local CLI workflow acquires and releases an isolated workspace per node", 
     workspaceIsolation: {
       async acquire(runId, agentId) {
         leases.push(`${runId}:${agentId}`);
-        return { id: agentId, path: `/worktrees/${agentId}`, async release() { releases.push(agentId); } };
+        return { id: agentId, path: `/worktrees/${agentId}`, async release() { releases.push(agentId); return "preserved" as const; } };
       },
     },
     executeNode: async (_node, _inputs, _onChunk, _signal, workspacePath) => {
@@ -209,6 +209,8 @@ test("local CLI workflow acquires and releases an isolated workspace per node", 
   assert.deepEqual(leases, ["session-1:code"]);
   assert.deepEqual(workspaces, ["/worktrees/code"]);
   assert.deepEqual(releases, ["code"]);
+  assert.equal(result.steps[0].workspacePath, "/worktrees/code");
+  assert.equal(result.steps[0].workspaceDisposition, "preserved");
 });
 
 test("local CLI workflow refuses to run without isolation", async () => {

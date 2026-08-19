@@ -95,13 +95,26 @@ test("worktree isolation sanitizes names and releases once", async () => {
   const calls: string[] = [];
   const isolation = new GitWorktreeIsolation("/repo", "/tmp/orbi-worktrees", {
     async add(_repo, target, branch) { calls.push(`add:${target}:${branch}`); },
+    async isClean(_repo, target) { calls.push(`clean:${target}`); return true; },
     async remove(_repo, target) { calls.push(`remove:${target}`); },
   });
   const lease = await isolation.acquire("run/one", "coder:primary");
   assert.equal(lease.path, "/tmp/orbi-worktrees/run-one-coder-primary");
   await lease.release();
   await lease.release();
-  assert.equal(calls.length, 2);
+  assert.equal(calls.length, 3);
+});
+
+test("worktree isolation preserves dirty agent changes", async () => {
+  let removed = false;
+  const isolation = new GitWorktreeIsolation("/repo", "/tmp/orbi-worktrees", {
+    async add() {},
+    async isClean() { return false; },
+    async remove() { removed = true; },
+  });
+  const lease = await isolation.acquire("run", "coder");
+  await lease.release();
+  assert.equal(removed, false);
 });
 
 test("circuit breaker opens on runtime, retry, token, cost, and failure limits", () => {
@@ -137,5 +150,9 @@ test("environment validation rejects unsafe local CLI configuration", () => {
   assert.throws(
     () => validateServerEnv({ LOCAL_CLI_ENABLED: "true", LOCAL_CLI_REPO_PATH: "relative", LOCAL_CLI_WORKTREE_ROOT: "/tmp/worktrees" }),
     /LOCAL_CLI_REPO_PATH must be an absolute normalized path/
+  );
+  assert.throws(
+    () => validateServerEnv({ LOCAL_CLI_ENABLED: "true", LOCAL_CLI_REPO_PATH: "/repo", LOCAL_CLI_WORKTREE_ROOT: "/repo/worktrees" }),
+    /must be outside/
   );
 });
