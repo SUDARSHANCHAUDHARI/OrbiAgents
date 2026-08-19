@@ -1,7 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { CircuitOpenError, WorkflowCircuitBreaker } from "../circuitBreaker";
-import { ApiRuntimeAdapter, LocalCliRuntimeAdapter } from "../runtimeAdapter";
+import { ApiRuntimeAdapter, codexCliDescriptor, LocalCliRuntimeAdapter } from "../runtimeAdapter";
+import { SpawnProcessRunner } from "../processRunner";
 import { GitWorktreeIsolation } from "../workspaceIsolation";
 
 test("API runtime remains the available default", async () => {
@@ -11,11 +12,44 @@ test("API runtime remains the available default", async () => {
 });
 
 test("local CLI runtime is disabled unless explicitly configured", async () => {
-  const adapter = new LocalCliRuntimeAdapter({ id: "codex-cli", command: "codex", enabled: false });
+  const adapter = new LocalCliRuntimeAdapter(codexCliDescriptor(false));
   assert.equal(await adapter.isAvailable(), false);
   await assert.rejects(
     adapter.execute({ systemPrompt: "x", userMessage: "y", onChunk: () => {} }),
     /not enabled/
+  );
+});
+
+test("local CLI runtime sends prompts through an injected no-shell runner", async () => {
+  const calls: Array<{ command: string; args: string[]; cwd: string; stdin?: string }> = [];
+  const adapter = new LocalCliRuntimeAdapter(codexCliDescriptor(true), {
+    async run(request) {
+      calls.push(request);
+      await request.onStdout?.("working");
+      return { stdout: "complete", stderr: "", exitCode: 0 };
+    },
+  });
+  const chunks: string[] = [];
+  const result = await adapter.execute({
+    systemPrompt: "system",
+    userMessage: "task",
+    workspacePath: "/isolated/repo",
+    onChunk: (chunk) => { chunks.push(chunk); },
+  });
+  assert.equal(await adapter.isAvailable(), true);
+  assert.equal(calls[0].command, "codex");
+  assert.deepEqual(calls[0].args.slice(0, 2), ["exec", "-"]);
+  assert.equal(calls[0].cwd, "/isolated/repo");
+  assert.equal(calls[0].stdin, "system\n\ntask");
+  assert.deepEqual(chunks, ["working"]);
+  assert.equal(result.text, "complete");
+});
+
+test("spawn runner rejects commands outside its allowlist before spawning", async () => {
+  const runner = new SpawnProcessRunner(new Set(["codex"]));
+  await assert.rejects(
+    runner.run({ command: "sh", args: ["-c", "echo unsafe"], cwd: "/tmp" }),
+    /not allowlisted/
   );
 });
 
