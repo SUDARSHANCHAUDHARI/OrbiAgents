@@ -222,7 +222,7 @@ export interface UsageStats {
   hourlyRuns: number;
   maxRunsPerHour: number;
 }
-export interface EmbeddingCacheStats { entries: number; removed: number; ttlDays: number; maxEntries: number }
+export interface EmbeddingCacheStats { entries: number; removed: number; ttlDays: number; maxEntries: number; hits: number; misses: number; hitRate: number }
 export async function getEmbeddingCacheStats(): Promise<EmbeddingCacheStats> { const res = await fetch(`${API}/memory/embedding-cache`, { headers: authHeaders() }); if (!res.ok) throw new Error("Could not load embedding cache metrics"); return res.json() as Promise<EmbeddingCacheStats>; }
 
 export async function getUsage(): Promise<UsageStats> {
