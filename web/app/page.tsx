@@ -110,6 +110,8 @@ export default function Home() {
   const [replayFrame, setReplayFrame] = useState(0);
   const [replaySpeed, setReplaySpeed] = useState<ReplaySpeed>(1);
   const [replayPlaying, setReplayPlaying] = useState(false);
+  const [replayBookmarks, setReplayBookmarks] = useState<number[]>([]);
+  const [replayEventFilter, setReplayEventFilter] = useState("all");
   const replayRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const replaySpeedRef = useRef<ReplaySpeed>(1);
   const replayIndexRef = useRef(0);
@@ -223,6 +225,8 @@ export default function Home() {
   }, [historyMessage]);
 
   const isReplaying = replaySession !== null;
+  const replayEventTypes = Array.from(new Set(replaySession?.events?.map((event) => event.type) ?? []));
+  const replayVisibleEvents = replaySession ? eventsThroughFrame(replaySession.events ?? [], replaySession.frames[replayFrame - 1], replayFrame === replaySession.frames.length).filter((event) => replayEventFilter === "all" || event.type === replayEventFilter) : [];
 
   useKeyboardShortcuts({
     enabled: isAuthed,
@@ -369,6 +373,7 @@ export default function Home() {
 
       setReplaySession(session);
       setReplayFrame(0);
+      setReplayBookmarks([]); setReplayEventFilter("all");
       setSelected(null);
       setResult(null);
       setSelectedSession(null);
@@ -915,13 +920,13 @@ export default function Home() {
             selectedId={selected?.id ?? null}
             isReplaying={isReplaying}
             workflow={workflow}
-            events={isReplaying ? eventsThroughFrame(replaySession?.events ?? [], replaySession?.frames[replayFrame - 1], replayFrame === replaySession?.frames.length) : workflowEvents}
+            events={isReplaying ? replayVisibleEvents : workflowEvents}
             onAgentClick={isReplaying ? () => {} : setSelected}
           />
 
           <WorkflowActivityPanel
             agents={agents}
-            events={isReplaying ? eventsThroughFrame(replaySession?.events ?? [], replaySession?.frames[replayFrame - 1], replayFrame === replaySession?.frames.length) : workflowEvents}
+            events={isReplaying ? replayVisibleEvents : workflowEvents}
           />
 
           {/* Scanline overlay */}
@@ -995,6 +1000,11 @@ export default function Home() {
               onTogglePlaying={toggleReplayPlaying}
               onSeek={seekReplay}
               onStep={(delta) => seekReplay(replayFrame + delta)}
+              bookmarked={replayBookmarks.includes(replayFrame)}
+              onToggleBookmark={() => setReplayBookmarks((current) => current.includes(replayFrame) ? current.filter((frame) => frame !== replayFrame) : [...current, replayFrame].sort((a,b)=>a-b))}
+              eventTypes={replayEventTypes}
+              eventFilter={replayEventFilter}
+              onEventFilterChange={setReplayEventFilter}
             />
           )}
         </main>
