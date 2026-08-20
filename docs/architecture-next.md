@@ -20,7 +20,7 @@ The dynamic runner maintains dependency counts, starts ready nodes up to `MAX_PA
 
 ### Workspace isolation boundary
 
-`WorkspaceIsolation` represents acquisition and release of a coding workspace. The default no-op implementation preserves API-agent behavior. `GitWorktreeIsolation` validates and scopes paths through an injected command runner; no shell runner is enabled by default.
+`WorkspaceIsolation` represents acquisition and release of a coding workspace. The default no-op implementation preserves API-agent behavior. `GitWorktreeIsolation` validates and scopes paths through an injected command runner. The operator UI can inspect registered dirty worktrees and explicitly discard them, but it never merges, commits, or pushes changes automatically.
 
 ### Observability
 
@@ -28,11 +28,11 @@ Supervisor events are broadcast through the authenticated WebSocket and persiste
 
 ## Deliberately not claimed as complete
 
-- UI controls for choosing an operator-enabled local runtime
-- Patch review, selective merge, and cleanup flows for dirty agent worktrees
+- Persistent discovery of preserved worktrees after a server restart
+- Patch-level review and selective merge flows for dirty agent worktrees
 - Autonomous supervisor changes to user workflows
 - Automatic memory extraction, semantic retrieval, or prompt injection
-- Full mailbox conversation and memory editing screens
+- Editing or deleting existing memory entries and threaded mailbox replies
 - Exact event-to-frame replay synchronization
 
 These boundaries keep existing API workflows safe and working while providing tested extension points for local coding agents.
