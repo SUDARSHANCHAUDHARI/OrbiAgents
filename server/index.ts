@@ -44,7 +44,7 @@ import { OrbiPrimeSupervisor } from "./supervisor";
 import { proposeWorkflowImprovement } from "./workflowProposal";
 import { listReplayBookmarks, listSharedReplayBookmarks, replaceReplayBookmarks, validateReplayBookmarks } from "./replayBookmarks";
 import { getProposalPolicies, recordProposal, saveProposalPolicies, validateProposalPolicies } from "./supervisorPreferences";
-import { clearEmbeddingCache, embeddingCacheLimits, pruneEmbeddingCache } from "./embeddingCache";
+import { clearEmbeddingCache, embeddingCacheLimits, embeddingCacheTelemetry, pruneEmbeddingCache } from "./embeddingCache";
 
 const app = express();
 const PORT = 4000;
@@ -613,7 +613,7 @@ app.patch("/workflow/proposal/history/:id", protect, async (req, res) => {
   const result = await db.workflowProposalHistory.updateMany({ where: { id: req.params.id, userId: req.userId! }, data: { status: req.body.status } });
   if (!result.count) { res.status(404).json({ error: "Proposal not found" }); return; } res.json({ status: req.body.status });
 });
-app.get("/memory/embedding-cache", protect, async (req, res) => { res.json({ ...(await pruneEmbeddingCache(req.userId!)), ...embeddingCacheLimits() }); });
+app.get("/memory/embedding-cache", protect, async (req, res) => { res.json({ ...(await pruneEmbeddingCache(req.userId!)), ...embeddingCacheLimits(), ...embeddingCacheTelemetry(req.userId!) }); });
 app.delete("/memory/embedding-cache", protect, async (req, res) => { res.json({ removed: await clearEmbeddingCache(req.userId!) }); });
 
 app.post("/workflow", protect, workflowRateLimit, async (req, res) => {

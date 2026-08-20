@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { configuredMemoryEmbedder, rankByCachedEmbeddings, rankByEmbeddings } from "../memoryEmbedding";
+import { embeddingCacheTelemetry, recordEmbeddingCacheLookup } from "../embeddingCache";
 
 test("embedding retrieval is opt-in and ranks by vector similarity", async () => {
   assert.equal(configuredMemoryEmbedder({}), null);
@@ -8,6 +9,7 @@ test("embedding retrieval is opt-in and ranks by vector similarity", async () =>
   const ranked = await rankByEmbeddings(entries, "query", (value) => value, { async embed() { return [[1, 0], [0, 1], [0.9, 0.1]]; } });
   assert.deepEqual(ranked, ["relevant", "unrelated"]);
 });
+test("cache telemetry records only aggregate hits and misses",()=>{const id=`telemetry-${Date.now()}`;recordEmbeddingCacheLookup(id,3,1);assert.deepEqual(embeddingCacheTelemetry(id),{hits:3,misses:1,hitRate:.75});});
 
 test("embedding retrieval reuses cached vectors and embeds only misses", async () => {
   const values = new Map<string, number[]>(); let embedded = 0;

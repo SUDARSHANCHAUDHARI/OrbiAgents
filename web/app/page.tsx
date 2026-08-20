@@ -133,7 +133,7 @@ export default function Home() {
       setIsAuthed(true);
     }
   }, [router]);
-  useEffect(() => { if (isAuthed) void getEmbeddingCacheStats().then(setEmbeddingCache, () => undefined); }, [isAuthed]);
+  useEffect(() => { if (!isAuthed) return; const refresh=()=>void getEmbeddingCacheStats().then(setEmbeddingCache,()=>undefined); refresh(); const timer=setInterval(refresh,30_000); return()=>clearInterval(timer); }, [isAuthed]);
 
   // WebSocket — all hooks must be before any conditional return
   useEffect(() => {
@@ -466,12 +466,15 @@ export default function Home() {
     replayBookmarkSavingRef.current = true;
     const previous = replayBookmarks;
     const existing = previous.find((bookmark) => bookmark.frame === replayFrame);
-    const next = existing ? previous.filter((bookmark) => bookmark.frame !== replayFrame) : [...previous, { frame: replayFrame, label: window.prompt("Bookmark label (optional)")?.trim() || undefined, shared: window.confirm("Include this bookmark on shared replay links?") }].sort((a, b) => a.frame - b.frame);
+    const label = window.prompt("Bookmark label (optional)", existing?.label ?? ""); if (label === null) { replayBookmarkSavingRef.current=false; return; }
+    const updated = { frame: replayFrame, label: label.trim() || undefined, shared: window.confirm("Include this bookmark on shared replay links?") };
+    const next = existing ? previous.map((bookmark) => bookmark.frame === replayFrame ? updated : bookmark) : [...previous, updated].sort((a, b) => a.frame - b.frame);
     setReplayBookmarks(next);
     try { setReplayBookmarks(await saveReplayBookmarks(replaySession.id, next)); }
     catch (error) { setReplayBookmarks(previous); setError(error instanceof Error ? error.message : "Could not save replay bookmark"); }
     finally { replayBookmarkSavingRef.current = false; }
   }
+  async function removeReplayBookmark() { if (!replaySession || replayBookmarkSavingRef.current) return; replayBookmarkSavingRef.current=true; const previous=replayBookmarks; const next=previous.filter((bookmark)=>bookmark.frame!==replayFrame); setReplayBookmarks(next); try{setReplayBookmarks(await saveReplayBookmarks(replaySession.id,next));}catch{setReplayBookmarks(previous);}finally{replayBookmarkSavingRef.current=false;} }
 
   async function handleStopRun() {
     if (!running || stopping) return;
@@ -498,7 +501,7 @@ export default function Home() {
     { label: `${agents.length} AGENTS`, color: "#E5E7EB" },
     { label: `${thinkingCount} THINKING`, color: "#FDE68A" },
     { label: `${codingCount} CODING`, color: "#BFDBFE" },
-    { label: `${embeddingCache?.entries ?? 0} MEMORY VECTORS`, color: "#C4B5FD" },
+    { label: `${embeddingCache?.entries ?? 0} VECTORS · ${Math.round((embeddingCache?.hitRate ?? 0)*100)}% HIT`, color: "#C4B5FD" },
   ];
 
   return (
@@ -1021,6 +1024,7 @@ export default function Home() {
               onStep={(delta) => seekReplay(replayFrame + delta)}
               bookmarked={replayBookmarks.some((bookmark) => bookmark.frame === replayFrame)}
               onToggleBookmark={toggleReplayBookmark}
+              onRemoveBookmark={removeReplayBookmark}
               bookmarkFrames={replayBookmarks.map((bookmark) => bookmark.frame)}
               eventTypes={replayEventTypes}
               eventFilter={replayEventFilter}

@@ -1,6 +1,6 @@
 import { db } from "./db";
 import { configuredMemoryEmbedder, rankByCachedEmbeddings } from "./memoryEmbedding";
-import { pruneEmbeddingCache } from "./embeddingCache";
+import { pruneEmbeddingCache, recordEmbeddingCacheLookup } from "./embeddingCache";
 
 export type MemoryScope = "agent" | "shared";
 
@@ -108,6 +108,7 @@ export async function buildRelevantMemoryContext(userId: string, projectKey: str
       ranked = await rankByCachedEmbeddings(entries, query, (entry) => entry.content, embedder, {
         async get(keys) {
           const rows = await db.memoryEmbeddingCache.findMany({ where: { userId, model, contentHash: { in: keys } } });
+          recordEmbeddingCacheLookup(userId, rows.length, Math.max(0, new Set(keys).size - rows.length));
           return new Map(rows.map((row) => [row.contentHash, JSON.parse(row.vector) as number[]]));
         },
         async set(values) {

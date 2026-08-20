@@ -1,0 +1,2 @@
+import assert from "node:assert/strict"; import test from "node:test"; import { workflowGraphDiff } from "../lib/workflowDiff";
+test("workflow graph diff reports exact node and edge changes",()=>{const before={nodes:[{id:"a",type:"planner" as const}],edges:[]};const after={nodes:[...before.nodes,{id:"b",type:"coder" as const}],edges:[{from:"a",to:"b"}]};assert.deepEqual(workflowGraphDiff(before,after),{addedNodes:["b"],removedNodes:[],addedEdges:["a → b"],removedEdges:[]});});

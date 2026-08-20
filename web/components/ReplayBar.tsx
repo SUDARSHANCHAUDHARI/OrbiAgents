@@ -18,13 +18,14 @@ interface Props {
   onStep: (delta: number) => void;
   bookmarked?: boolean;
   onToggleBookmark?: () => void;
+  onRemoveBookmark?: () => void;
   bookmarkFrames?: number[];
   eventTypes?: string[];
   eventFilter?: string;
   onEventFilterChange?: (value: string) => void;
 }
 
-export default function ReplayBar({ task, current, total, speed, playing, onStop, onSpeedChange, onTogglePlaying, onSeek, onStep, bookmarked, onToggleBookmark, bookmarkFrames = [], eventTypes = [], eventFilter = "all", onEventFilterChange }: Props) {
+export default function ReplayBar({ task, current, total, speed, playing, onStop, onSpeedChange, onTogglePlaying, onSeek, onStep, bookmarked, onToggleBookmark, onRemoveBookmark, bookmarkFrames = [], eventTypes = [], eventFilter = "all", onEventFilterChange }: Props) {
   const pct = total > 0 ? Math.round((current / total) * 100) : 0;
   const previousBookmark = [...bookmarkFrames].reverse().find((frame) => frame < current);
   const nextBookmark = bookmarkFrames.find((frame) => frame > current);
@@ -97,7 +98,7 @@ export default function ReplayBar({ task, current, total, speed, playing, onStop
         <button onClick={onTogglePlaying} aria-label={playing ? "Pause replay" : "Play replay"}>{playing ? "Pause" : "Play"}</button>
         <button onClick={() => onStep(1)} disabled={current >= total} aria-label="Next replay frame">▶</button>
         <input aria-label="Replay timeline" type="range" min={1} max={Math.max(total, 1)} value={Math.max(current, 1)} onChange={(event) => onSeek(Number(event.target.value))} style={{ flex: 1 }} />
-        {onToggleBookmark&&<button onClick={onToggleBookmark} aria-label={bookmarked?"Remove replay bookmark":"Add replay bookmark"}>{bookmarked?"★":"☆"}</button>}
+        {onToggleBookmark&&<button onClick={onToggleBookmark} aria-label={bookmarked?"Edit replay bookmark":"Add replay bookmark"}>{bookmarked?"★":"☆"}</button>}{bookmarked&&onRemoveBookmark&&<button onClick={onRemoveBookmark} aria-label="Remove replay bookmark">🗑</button>}
       </div>
       {eventTypes.length>0&&<label className="text-[10px]" style={{color:chrome.textMuted}}>Events <select aria-label="Replay event filter" value={eventFilter} onChange={(event)=>onEventFilterChange?.(event.target.value)}><option value="all">All</option>{eventTypes.map((type)=><option key={type} value={type}>{type}</option>)}</select></label>}
       <div
