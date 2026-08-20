@@ -18,13 +18,16 @@ interface Props {
   onStep: (delta: number) => void;
   bookmarked?: boolean;
   onToggleBookmark?: () => void;
+  bookmarkFrames?: number[];
   eventTypes?: string[];
   eventFilter?: string;
   onEventFilterChange?: (value: string) => void;
 }
 
-export default function ReplayBar({ task, current, total, speed, playing, onStop, onSpeedChange, onTogglePlaying, onSeek, onStep, bookmarked, onToggleBookmark, eventTypes = [], eventFilter = "all", onEventFilterChange }: Props) {
+export default function ReplayBar({ task, current, total, speed, playing, onStop, onSpeedChange, onTogglePlaying, onSeek, onStep, bookmarked, onToggleBookmark, bookmarkFrames = [], eventTypes = [], eventFilter = "all", onEventFilterChange }: Props) {
   const pct = total > 0 ? Math.round((current / total) * 100) : 0;
+  const previousBookmark = [...bookmarkFrames].reverse().find((frame) => frame < current);
+  const nextBookmark = bookmarkFrames.find((frame) => frame > current);
   const chrome = {
     bg: "rgba(15, 23, 42, 0.96)",
     bgMid: "rgba(31, 41, 55, 0.96)",
@@ -88,6 +91,8 @@ export default function ReplayBar({ task, current, total, speed, playing, onStop
 
       {/* Progress bar */}
       <div className="flex items-center gap-2 mb-2">
+        <button disabled={!previousBookmark} onClick={() => previousBookmark && onSeek(previousBookmark)} aria-label="Previous bookmark">★←</button>
+        <button disabled={!nextBookmark} onClick={() => nextBookmark && onSeek(nextBookmark)} aria-label="Next bookmark">→★</button>
         <button onClick={() => onStep(-1)} disabled={current <= 1} aria-label="Previous replay frame">◀</button>
         <button onClick={onTogglePlaying} aria-label={playing ? "Pause replay" : "Play replay"}>{playing ? "Pause" : "Play"}</button>
         <button onClick={() => onStep(1)} disabled={current >= total} aria-label="Next replay frame">▶</button>
