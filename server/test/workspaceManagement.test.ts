@@ -60,6 +60,14 @@ test("workspace apply copies an explicitly selected regular untracked file", asy
   } finally { await rm(root, { recursive: true, force: true }); }
 });
 
+test("workspace inspection previews new text files and classifies binary files", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "orbi-preview-")); const repo = path.join(root, "repo"); const worktrees = path.join(root, "worktrees"); const worktree = path.join(worktrees, "run");
+  await mkdir(worktree, { recursive: true }); await mkdir(repo); await writeFile(path.join(worktree, "note.txt"), "hello preview"); await writeFile(path.join(worktree, "asset.bin"), Buffer.from([0, 1, 2]));
+  const operations = new WorkspaceOperations(repo, worktrees, { async run(request) { return { stdout: request.args.includes("ls-files") ? "note.txt\0asset.bin\0" : "", stderr: "", exitCode: 0 }; } });
+  try { const result = await operations.inspect(worktree); assert.equal(result.untrackedPreviews[0].preview, "hello preview"); assert.equal(result.untrackedPreviews[1].kind, "binary"); }
+  finally { await rm(root, { recursive: true, force: true }); }
+});
+
 test("workspace apply validates paths, checks a clean target, and applies only selected tracked files", async () => {
   const calls: Array<{ args: string[]; stdin?: string }> = [];
   const operations = new WorkspaceOperations("/repo", "/managed/worktrees", {

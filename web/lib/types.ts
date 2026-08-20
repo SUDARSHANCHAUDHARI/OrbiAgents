@@ -78,6 +78,7 @@ export interface WorkspaceChanges {
   patch: string;
   files: string[];
   untrackedFiles: string[];
+  untrackedPreviews: Array<{ path: string; kind: "text" | "binary" | "unavailable"; size: number; preview?: string }>;
 }
 
 export type MemoryScope = "agent" | "shared";
