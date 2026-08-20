@@ -372,6 +372,9 @@ Memory prompt injection is disabled by default. A user can enable it for a run; 
 | Configurable supervisor proposal policies and history | ✅ Built |
 | Bounded embedding-cache retention and metrics | ✅ Built |
 | Labeled private/shared replay bookmarks | ✅ Built |
+| Proposal comparison and restore previews | ✅ Built; approval-gated |
+| Dashboard embedding-cache metrics | ✅ Built |
+| Previous/next bookmark navigation | ✅ Built |
 | Autonomous supervisor workflow mutation | 🧭 Not enabled |
 
 ## Product direction
@@ -386,9 +389,9 @@ That direction is captured in the [coworking-space roadmap](docs/coworking-space
 
 The next architectural milestones are focused on making orchestration deeper rather than adding decorative complexity:
 
-1. Add proposal comparison and rollback previews
-2. Add cache metrics to the main operator dashboard
-3. Add direct navigation between labeled replay bookmarks
+1. Add richer proposal diff visualization for large workflow graphs
+2. Add bookmark editing without recreating a bookmark
+3. Add cache hit-rate telemetry without logging memory content
 4. Consider server-side image decoding only if richer inspection is needed
 
 ## Why OrbiAgents
