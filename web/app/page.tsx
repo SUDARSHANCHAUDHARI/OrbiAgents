@@ -892,13 +892,13 @@ export default function Home() {
             selectedId={selected?.id ?? null}
             isReplaying={isReplaying}
             workflow={workflow}
-            events={isReplaying ? eventsThroughFrame(replaySession?.events ?? [], replaySession?.frames[replayFrame - 1]) : workflowEvents}
+            events={isReplaying ? eventsThroughFrame(replaySession?.events ?? [], replaySession?.frames[replayFrame - 1], replayFrame === replaySession?.frames.length) : workflowEvents}
             onAgentClick={isReplaying ? () => {} : setSelected}
           />
 
           <WorkflowActivityPanel
             agents={agents}
-            events={isReplaying ? eventsThroughFrame(replaySession?.events ?? [], replaySession?.frames[replayFrame - 1]) : workflowEvents}
+            events={isReplaying ? eventsThroughFrame(replaySession?.events ?? [], replaySession?.frames[replayFrame - 1], replayFrame === replaySession?.frames.length) : workflowEvents}
           />
 
           {/* Scanline overlay */}
