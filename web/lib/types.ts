@@ -78,7 +78,7 @@ export interface WorkspaceChanges {
   patch: string;
   files: string[];
   untrackedFiles: string[];
-  untrackedPreviews: Array<{ path: string; kind: "text" | "binary" | "unavailable"; size: number; preview?: string }>;
+  untrackedPreviews: Array<{ path: string; kind: "text" | "binary" | "image" | "unavailable"; size: number; preview?: string; mimeType?: string; imagePreview?: string; width?: number; height?: number; truncated?: boolean }>;
 }
 
 export type MemoryScope = "agent" | "shared";
@@ -106,7 +106,7 @@ export interface Workflow {
 }
 
 export interface WorkflowProposal {
-  kind: "add-role" | "normalize-label" | "none";
+  kind: "add-role" | "remove-duplicate-role" | "normalize-label" | "none";
   summary: string;
   rationale: string;
   changes: string[];
