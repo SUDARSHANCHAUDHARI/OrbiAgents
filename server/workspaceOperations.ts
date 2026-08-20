@@ -1,5 +1,5 @@
 import path from "node:path";
-import { copyFile, lstat, mkdir, realpath, unlink } from "node:fs/promises";
+import { copyFile, lstat, mkdir, open, realpath, unlink } from "node:fs/promises";
 import { ProcessRunner, SpawnProcessRunner } from "./processRunner";
 
 export class WorkspaceOperations {
@@ -9,7 +9,7 @@ export class WorkspaceOperations {
     private readonly runner: ProcessRunner = new SpawnProcessRunner(new Set(["git"]))
   ) {}
 
-  async inspect(worktreePath: string): Promise<{ status: string; diffStat: string; patch: string; files: string[]; untrackedFiles: string[] }> {
+  async inspect(worktreePath: string): Promise<{ status: string; diffStat: string; patch: string; files: string[]; untrackedFiles: string[]; untrackedPreviews: UntrackedPreview[] }> {
     this.assertManagedPath(worktreePath);
     const [status, diffStat, patch, names, untracked] = await Promise.all([
       this.runner.run({ command: "git", args: ["-C", worktreePath, "status", "--short"], cwd: this.repoPath, maxOutputBytes: 256_000 }),
@@ -18,7 +18,20 @@ export class WorkspaceOperations {
       this.runner.run({ command: "git", args: ["-C", worktreePath, "diff", "--name-only", "-z"], cwd: this.repoPath, maxOutputBytes: 256_000 }),
       this.runner.run({ command: "git", args: ["-C", worktreePath, "ls-files", "--others", "--exclude-standard", "-z"], cwd: this.repoPath, maxOutputBytes: 256_000 }),
     ]);
-    return { status: status.stdout, diffStat: diffStat.stdout, patch: patch.stdout, files: names.stdout.split("\0").filter(Boolean), untrackedFiles: untracked.stdout.split("\0").filter(Boolean) };
+    const untrackedFiles = untracked.stdout.split("\0").filter(Boolean);
+    const untrackedPreviews = await Promise.all(untrackedFiles.map((file) => this.previewUntracked(worktreePath, file).catch(() => ({ path: file, kind: "unavailable" as const, size: 0 }))));
+    return { status: status.stdout, diffStat: diffStat.stdout, patch: patch.stdout, files: names.stdout.split("\0").filter(Boolean), untrackedFiles, untrackedPreviews };
+  }
+
+  private async previewUntracked(worktreePath: string, file: string): Promise<UntrackedPreview> {
+    const safeFile = validateRelativeFile(file); const resolvedRoot = await realpath(worktreePath); const resolvedFile = await realpath(path.resolve(worktreePath, safeFile));
+    if (!isInside(resolvedRoot, resolvedFile)) throw new Error("Preview path escapes workspace");
+    const stat = await lstat(resolvedFile); if (!stat.isFile()) return { path: safeFile, kind: "unavailable", size: stat.size };
+    const handle = await open(resolvedFile, "r");
+    try {
+      const buffer = Buffer.alloc(Math.min(stat.size, 4096)); await handle.read(buffer, 0, buffer.length, 0);
+      const binary = buffer.includes(0); return { path: safeFile, kind: binary ? "binary" : "text", size: stat.size, ...(binary ? {} : { preview: buffer.toString("utf8") }) };
+    } finally { await handle.close(); }
   }
 
   async applyFiles(worktreePath: string, files: string[], untrackedFiles: string[] = []): Promise<void> {
@@ -87,6 +100,8 @@ function isInside(root: string, candidate: string): boolean {
   const relative = path.relative(root, candidate);
   return relative !== "" && !relative.startsWith(`..${path.sep}`) && relative !== ".." && !path.isAbsolute(relative);
 }
+
+export interface UntrackedPreview { path: string; kind: "text" | "binary" | "unavailable"; size: number; preview?: string }
 
 export function configuredWorkspaceOperations(env: NodeJS.ProcessEnv = process.env): WorkspaceOperations {
   if (env.LOCAL_CLI_ENABLED !== "true" || !env.LOCAL_CLI_REPO_PATH || !env.LOCAL_CLI_WORKTREE_ROOT) {

@@ -2,8 +2,10 @@ import { topoSort } from "./workflowRunner";
 import { Workflow, WorkflowNodeType } from "./workflowTypes";
 
 export interface WorkflowProposal {
+  kind: "add-role" | "normalize-label" | "none";
   summary: string;
   rationale: string;
+  changes: string[];
   workflow: Workflow;
   changed: boolean;
 }
@@ -34,7 +36,19 @@ export function proposeWorkflowImprovement(workflow: Workflow, maxNodes = 12): W
   validateWorkflowGraph(workflow, maxNodes);
   const improvement = IMPROVEMENT_ORDER.find((item) => !workflow.nodes.some((node) => node.type === item.type));
   if (!improvement || workflow.nodes.length >= maxNodes) {
-    return { summary: "No bounded structural change proposed", rationale: "The workflow already contains the standard verification and recovery roles, or has reached its node limit.", workflow, changed: false };
+    const unlabeled = workflow.nodes.find((node) => !node.label?.trim());
+    if (unlabeled) {
+      const label = unlabeled.type[0].toUpperCase() + unlabeled.type.slice(1);
+      return {
+        kind: "normalize-label",
+        summary: `Label ${unlabeled.type} node`,
+        rationale: "Give the operator a stable human-readable step name.",
+        changes: [`Set ${unlabeled.id} label to ${label}`],
+        workflow: { ...workflow, nodes: workflow.nodes.map((node) => node.id === unlabeled.id ? { ...node, label } : node) },
+        changed: true,
+      };
+    }
+    return { kind: "none", summary: "No bounded structural change proposed", rationale: "The workflow already satisfies the current safe proposal policies.", changes: [], workflow, changed: false };
   }
   const source = [...workflow.nodes].reverse().find((node) => node.type === "coder") ?? workflow.nodes.at(-1)!;
   let suffix = 1;
@@ -47,5 +61,5 @@ export function proposeWorkflowImprovement(workflow: Workflow, maxNodes = 12): W
     edges: [...retained, { from: source.id, to: id }, ...outgoing.map((edge) => ({ from: id, to: edge.to }))],
   };
   validateWorkflowGraph(proposed, maxNodes);
-  return { summary: `Add ${improvement.label} after ${source.label ?? source.type}`, rationale: improvement.rationale, workflow: proposed, changed: true };
+  return { kind: "add-role", summary: `Add ${improvement.label} after ${source.label ?? source.type}`, rationale: improvement.rationale, changes: [`Add ${improvement.type} node ${id}`, `Rewire ${outgoing.length} outgoing edge(s)`], workflow: proposed, changed: true };
 }

@@ -78,6 +78,7 @@ export interface WorkspaceChanges {
   patch: string;
   files: string[];
   untrackedFiles: string[];
+  untrackedPreviews: Array<{ path: string; kind: "text" | "binary" | "unavailable"; size: number; preview?: string }>;
 }
 
 export type MemoryScope = "agent" | "shared";
@@ -105,8 +106,10 @@ export interface Workflow {
 }
 
 export interface WorkflowProposal {
+  kind: "add-role" | "normalize-label" | "none";
   summary: string;
   rationale: string;
+  changes: string[];
   workflow: Workflow;
   changed: boolean;
 }

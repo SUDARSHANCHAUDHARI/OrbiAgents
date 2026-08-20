@@ -28,10 +28,12 @@ test("workflow proposal panel makes approval gating explicit", () => {
   assert.match(html, /Nothing changes until you explicitly confirm/);
 });
 
-test("replay bar exposes timeline seeking and frame stepping", () => {
-  const html = renderToStaticMarkup(React.createElement(ReplayBar, { task: "test", current: 2, total: 5, speed: 1, playing: false, onStop() {}, onSpeedChange() {}, onTogglePlaying() {}, onSeek() {}, onStep() {} }));
+test("replay bar exposes timeline seeking, bookmarks, and event filters", () => {
+  const html = renderToStaticMarkup(React.createElement(ReplayBar, { task: "test", current: 2, total: 5, speed: 1, playing: false, onStop() {}, onSpeedChange() {}, onTogglePlaying() {}, onSeek() {}, onStep() {}, bookmarked: true, onToggleBookmark() {}, eventTypes: ["node-started"], eventFilter: "all", onEventFilterChange() {} }));
   assert.match(html, /Replay timeline/);
   assert.match(html, /Previous replay frame/);
   assert.match(html, /Next replay frame/);
   assert.match(html, />Play</);
+  assert.match(html, /Remove replay bookmark/);
+  assert.match(html, /Replay event filter/);
 });

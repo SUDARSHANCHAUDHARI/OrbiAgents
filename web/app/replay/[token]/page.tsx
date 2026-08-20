@@ -6,7 +6,7 @@ import { Agent, Session } from "@/lib/types";
 import { getApiBaseUrl } from "@/lib/config";
 import AgentBox from "@/components/Agent";
 import ReplayBar, { ReplaySpeed } from "@/components/ReplayBar";
-import { replayDelay } from "@/lib/replayTiming";
+import { eventsThroughFrame, replayDelay } from "@/lib/replayTiming";
 
 export default function PublicReplayPage({
   params,
@@ -20,6 +20,8 @@ export default function PublicReplayPage({
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState<ReplaySpeed>(1);
   const [notFound, setNotFound] = useState(false);
+  const [bookmarks, setBookmarks] = useState<number[]>([]);
+  const [eventFilter, setEventFilter] = useState("all");
   const intervalRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const speedRef = useRef<ReplaySpeed>(1);
 
@@ -29,7 +31,10 @@ export default function PublicReplayPage({
         if (!res.ok) { setNotFound(true); return; }
         const s = (await res.json()) as Session;
         setSession(s);
-        if (s.frames.length > 0) setAgents(s.frames[0].agents);
+        if (s.frames.length > 0) {
+          setAgents(s.frames[0].agents);
+          setFrame(1);
+        }
       })
       .catch(() => setNotFound(true));
   }, [token]);
@@ -91,6 +96,8 @@ export default function PublicReplayPage({
       </div>
     );
   }
+  const eventTypes = Array.from(new Set((session.events ?? []).map((event) => event.type)));
+  const visibleEvents = eventsThroughFrame(session.events ?? [], session.frames[frame - 1], frame === session.frames.length).filter((event) => eventFilter === "all" || event.type === eventFilter);
 
   return (
     <div className="min-h-screen bg-gray-900 text-white flex flex-col">
@@ -134,6 +141,7 @@ export default function PublicReplayPage({
             onClick={() => {}}
           />
         ))}
+        <aside aria-label="Replay events" className="absolute top-12 right-4 w-72 max-h-64 overflow-auto bg-gray-900/90 border border-gray-700 rounded-lg p-3 text-xs">{visibleEvents.slice(-8).map((event,index)=><div key={`${event.timestamp}-${index}`}>{event.type}{event.nodeId?` · ${event.nodeId}`:""}</div>)}</aside>
 
         <ReplayBar
             task={session.task}
@@ -146,6 +154,11 @@ export default function PublicReplayPage({
             onTogglePlaying={playing ? stopPlay : startPlay}
             onSeek={seek}
             onStep={(delta) => seek(frame + delta)}
+            bookmarked={bookmarks.includes(frame)}
+            onToggleBookmark={() => setBookmarks((current) => current.includes(frame) ? current.filter((item) => item !== frame) : [...current, frame].sort((a,b)=>a-b))}
+            eventTypes={eventTypes}
+            eventFilter={eventFilter}
+            onEventFilterChange={setEventFilter}
         />
       </main>
     </div>
