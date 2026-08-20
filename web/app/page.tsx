@@ -18,13 +18,14 @@ import {
   authHeaders,
   clearToken,
   createReplayShareLink,
+  deleteReplayBookmark,
   getReplayBookmarks,
   getSessionDetails,
   getToken,
   listProviders,
   listRuntimes,
   listSessions,
-  saveReplayBookmarks,
+  saveReplayBookmark,
 } from "@/lib/auth";
 import { getApiBaseUrl, getWebSocketBaseUrl } from "@/lib/config";
 import { useAlerts } from "@/lib/useAlerts";
@@ -468,13 +469,12 @@ export default function Home() {
     const existing = previous.find((bookmark) => bookmark.frame === replayFrame);
     const label = window.prompt("Bookmark label (optional)", existing?.label ?? ""); if (label === null) { replayBookmarkSavingRef.current=false; return; }
     const updated = { frame: replayFrame, label: label.trim() || undefined, shared: window.confirm("Include this bookmark on shared replay links?") };
-    const next = existing ? previous.map((bookmark) => bookmark.frame === replayFrame ? updated : bookmark) : [...previous, updated].sort((a, b) => a.frame - b.frame);
-    setReplayBookmarks(next);
-    try { setReplayBookmarks(await saveReplayBookmarks(replaySession.id, next)); }
+    const next = existing ? previous.map((bookmark) => bookmark.frame === replayFrame ? updated : bookmark) : [...previous, updated].sort((a, b) => a.frame - b.frame); setReplayBookmarks(next);
+    try { const saved=await saveReplayBookmark(replaySession.id,updated); setReplayBookmarks((current)=>[...current.filter((bookmark)=>bookmark.frame!==saved.frame),saved].sort((a,b)=>a.frame-b.frame)); }
     catch (error) { setReplayBookmarks(previous); setError(error instanceof Error ? error.message : "Could not save replay bookmark"); }
     finally { replayBookmarkSavingRef.current = false; }
   }
-  async function removeReplayBookmark() { if (!replaySession || replayBookmarkSavingRef.current) return; replayBookmarkSavingRef.current=true; const previous=replayBookmarks; const next=previous.filter((bookmark)=>bookmark.frame!==replayFrame); setReplayBookmarks(next); try{setReplayBookmarks(await saveReplayBookmarks(replaySession.id,next));}catch{setReplayBookmarks(previous);}finally{replayBookmarkSavingRef.current=false;} }
+  async function removeReplayBookmark() { if (!replaySession || replayBookmarkSavingRef.current) return; replayBookmarkSavingRef.current=true; const previous=replayBookmarks; setReplayBookmarks(previous.filter((bookmark)=>bookmark.frame!==replayFrame)); try{await deleteReplayBookmark(replaySession.id,replayFrame);}catch(error){setReplayBookmarks(previous);setError(error instanceof Error?error.message:"Could not remove bookmark");}finally{replayBookmarkSavingRef.current=false;} }
 
   async function handleStopRun() {
     if (!running || stopping) return;

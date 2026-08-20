@@ -10,6 +10,7 @@ test("embedding retrieval is opt-in and ranks by vector similarity", async () =>
   assert.deepEqual(ranked, ["relevant", "unrelated"]);
 });
 test("cache telemetry records only aggregate hits and misses",()=>{const id=`telemetry-${Date.now()}`;recordEmbeddingCacheLookup(id,3,1);assert.deepEqual(embeddingCacheTelemetry(id),{hits:3,misses:1,hitRate:.75});});
+test("cache telemetry bounds distinct user counters",()=>{const prefix=`bounded-${Date.now()}`;for(let index=0;index<1001;index+=1)recordEmbeddingCacheLookup(`${prefix}-${index}`,1,0);assert.deepEqual(embeddingCacheTelemetry(`${prefix}-0`),{hits:0,misses:0,hitRate:0});assert.equal(embeddingCacheTelemetry(`${prefix}-1000`).hits,1);});
 
 test("embedding retrieval reuses cached vectors and embeds only misses", async () => {
   const values = new Map<string, number[]>(); let embedded = 0;

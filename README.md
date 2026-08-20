@@ -390,12 +390,9 @@ That direction is captured in the [coworking-space roadmap](docs/coworking-space
 
 ## Roadmap
 
-The next architectural milestones are focused on making orchestration deeper rather than adding decorative complexity:
+The agreed architecture foundation is implemented. The current priority is release stability: preserving API workflow compatibility, validating migrations, maintaining user isolation, and fixing verified defects.
 
-1. Add a dedicated full-screen graph comparison for very large workflows
-2. Add optional bookmark notes beyond the bounded label
-3. Persist aggregate cache telemetry across server restarts if operationally needed
-4. Consider server-side image decoding only if richer inspection is needed
+No additional feature batch is implicitly committed here. Future work should begin from a concrete user need or tracked issue rather than extending this roadmap automatically. Autonomous workflow mutation and general untrusted binary rendering remain deliberately disabled safety boundaries.
 
 ## Why OrbiAgents
 

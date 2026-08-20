@@ -17,7 +17,7 @@ export default function WorkflowProposalPanel({ workflow, onApply, onClose }: { 
     onApply(proposal.workflow); if (proposal.id) void setProposalStatus(proposal.id, "applied"); onClose();
   }
   function dismiss() { if (proposal?.id) void setProposalStatus(proposal.id, "dismissed"); onClose(); }
-  async function togglePolicy(policy: WorkflowProposalPolicy, checked: boolean) { const next = checked ? [...policies, policy] : policies.filter((item) => item !== policy); setPolicies(next); await saveProposalSettings(next); setProposal(await proposeWorkflow(workflow)); }
+  async function togglePolicy(policy: WorkflowProposalPolicy, checked: boolean) { const previous=policies;const next = checked ? [...policies, policy] : policies.filter((item) => item !== policy); setPolicies(next);setError(null);try{await saveProposalSettings(next);setProposal(await proposeWorkflow(workflow));}catch(reason){setPolicies(previous);setError(reason instanceof Error?reason.message:"Could not save proposal settings");} }
   const diff = proposal ? workflowGraphDiff(workflow, proposal.workflow) : null;
   return <aside aria-label="Orbi-Prime workflow proposal" style={{position:"absolute",inset:"16px 16px auto auto",zIndex:35,width:420,maxWidth:"calc(100% - 32px)",padding:16,border:"1px solid #7C3AED",borderRadius:12,background:"#0F172A",color:"#E5E7EB"}}>
     <header style={{display:"flex",justifyContent:"space-between"}}><strong>Orbi-Prime proposal</strong><button onClick={dismiss} aria-label="Close workflow proposal">✕</button></header>

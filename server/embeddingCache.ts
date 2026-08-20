@@ -1,6 +1,6 @@
 import { db } from "./db";
 const telemetry = new Map<string,{hits:number;misses:number}>();
-export function recordEmbeddingCacheLookup(userId:string,hits:number,misses:number){const value=telemetry.get(userId)??{hits:0,misses:0};value.hits+=hits;value.misses+=misses;telemetry.set(userId,value);}
+export function recordEmbeddingCacheLookup(userId:string,hits:number,misses:number){if(!telemetry.has(userId)&&telemetry.size>=1000){const oldest=telemetry.keys().next().value;if(oldest)telemetry.delete(oldest);}const value=telemetry.get(userId)??{hits:0,misses:0};value.hits+=Math.max(0,hits);value.misses+=Math.max(0,misses);telemetry.set(userId,value);}
 export function embeddingCacheTelemetry(userId:string){const value=telemetry.get(userId)??{hits:0,misses:0};const total=value.hits+value.misses;return {...value,hitRate:total?value.hits/total:0};}
 
 export function embeddingCacheLimits(env: NodeJS.ProcessEnv = process.env) {
