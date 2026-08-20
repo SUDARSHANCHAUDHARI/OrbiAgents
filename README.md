@@ -268,12 +268,14 @@ MAX_RUNS_PER_HOUR=30
 MAX_DAILY_COST_USD=10
 MAX_WORKFLOW_NODES=12
 MAX_PARALLEL_AGENTS=3
+TRUST_PROXY=false
 LOCAL_CLI_ENABLED=false
 # LOCAL_CLI_REPO_PATH=/absolute/path/to/repository
 # LOCAL_CLI_WORKTREE_ROOT=/absolute/path/to/orbi-worktrees
 ```
 
 Use a strong `JWT_SECRET` outside local development.
+Set `TRUST_PROXY=true` only when the server is directly behind one trusted reverse proxy. Leaving it disabled prevents clients from spoofing forwarded addresses to evade rate limits.
 
 ### 4. Run server tests
 
@@ -410,6 +412,9 @@ Rather than hiding orchestration behind a chat window, OrbiAgents makes the work
 - Protected endpoints require authentication
 - User workflows and sessions are scoped by user ID
 - WebSocket connections require a valid token
+- Browser WebSocket tokens are sent as a subprotocol instead of being placed in URLs; legacy query-token clients remain accepted for compatibility
+- Request logs omit query strings so credentials and share parameters are not retained accidentally
+- Known package advisories are checked independently in the root, server, web, extension, and extension-webview lockfiles
 - Configure rate limits and usage caps for the deployment environment
 - Treat public replay links as shareable access to the associated replay
 
