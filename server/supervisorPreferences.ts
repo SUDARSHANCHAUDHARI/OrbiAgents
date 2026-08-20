@@ -9,7 +9,19 @@ export function validateProposalPolicies(value: unknown): WorkflowProposalPolicy
 }
 export async function getProposalPolicies(userId: string): Promise<WorkflowProposalPolicy[]> {
   const row = await db.supervisorPreference.findUnique({ where: { userId } });
-  return row ? validateProposalPolicies(JSON.parse(row.enabledPolicies)) : WORKFLOW_PROPOSAL_POLICIES;
+  if (!row) return WORKFLOW_PROPOSAL_POLICIES;
+  try { return validateProposalPolicies(JSON.parse(row.enabledPolicies)); }
+  catch { return WORKFLOW_PROPOSAL_POLICIES; }
+}
+export function parseProposalHistoryPayload(value: string): { proposal: WorkflowProposal; beforeWorkflow?: unknown } | null {
+  try {
+    const parsed = JSON.parse(value);
+    const proposal = parsed?.proposal ?? parsed;
+    const workflow = proposal?.workflow;
+    if (!proposal || typeof proposal !== "object" || typeof proposal.kind !== "string" || typeof proposal.summary !== "string" || !workflow || !Array.isArray(workflow.nodes) || !Array.isArray(workflow.edges)) return null;
+    return { proposal, beforeWorkflow: parsed?.beforeWorkflow };
+  }
+  catch { return null; }
 }
 export async function saveProposalPolicies(userId: string, policies: WorkflowProposalPolicy[]) {
   await db.supervisorPreference.upsert({ where: { userId }, create: { userId, enabledPolicies: JSON.stringify(policies) }, update: { enabledPolicies: JSON.stringify(policies) } });

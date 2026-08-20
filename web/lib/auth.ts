@@ -131,8 +131,8 @@ export async function proposeWorkflow(workflow: Workflow): Promise<WorkflowPropo
 }
 export async function getProposalSettings(): Promise<WorkflowProposalPolicy[]> { const res = await fetch(`${API}/workflow/proposal/settings`, { headers: authHeaders() }); const body = await res.json() as { enabledPolicies: WorkflowProposalPolicy[] }; if (!res.ok) throw new Error("Could not load proposal settings"); return body.enabledPolicies; }
 export async function saveProposalSettings(enabledPolicies: WorkflowProposalPolicy[]): Promise<void> { const res = await fetch(`${API}/workflow/proposal/settings`, { method: "PUT", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ enabledPolicies }) }); if (!res.ok) throw new Error("Could not save proposal settings"); }
-export async function getProposalHistory(): Promise<WorkflowProposalHistory[]> { const res = await fetch(`${API}/workflow/proposal/history`, { headers: authHeaders() }); return res.ok ? res.json() as Promise<WorkflowProposalHistory[]> : []; }
-export async function setProposalStatus(id: string, status: "applied" | "dismissed"): Promise<void> { await fetch(`${API}/workflow/proposal/history/${encodeURIComponent(id)}`, { method: "PATCH", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ status }) }); }
+export async function getProposalHistory(): Promise<WorkflowProposalHistory[]> { const res = await fetch(`${API}/workflow/proposal/history`, { headers: authHeaders() }); if(!res.ok)throw new Error("Could not load proposal history");return res.json() as Promise<WorkflowProposalHistory[]>; }
+export async function setProposalStatus(id: string, status: "applied" | "dismissed"): Promise<void> { const res=await fetch(`${API}/workflow/proposal/history/${encodeURIComponent(id)}`, { method: "PATCH", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ status }) });if(!res.ok)throw new Error("Could not update proposal status"); }
 
 export async function listPreservedWorkspaces(): Promise<PreservedWorkspace[]> {
   const res = await fetch(`${API}/workspaces`, { headers: authHeaders() });
@@ -275,3 +275,5 @@ export async function saveReplayBookmarks(sessionId: string, bookmarks: ReplayBo
   if (!res.ok) throw new Error(body.error ?? "Could not save replay bookmarks");
   return body.bookmarks ?? [];
 }
+export async function saveReplayBookmark(sessionId: string, bookmark: ReplayBookmark): Promise<ReplayBookmark> { const res=await fetch(`${API}/replay/${encodeURIComponent(sessionId)}/bookmarks/${bookmark.frame}`,{method:"PATCH",headers:{"Content-Type":"application/json",...authHeaders()},body:JSON.stringify({label:bookmark.label,shared:bookmark.shared})});const body=await res.json() as {bookmark?:ReplayBookmark;error?:string};if(!res.ok||!body.bookmark)throw new Error(body.error??"Could not save bookmark");return body.bookmark; }
+export async function deleteReplayBookmark(sessionId:string,frame:number):Promise<void>{const res=await fetch(`${API}/replay/${encodeURIComponent(sessionId)}/bookmarks/${frame}`,{method:"DELETE",headers:authHeaders()});if(!res.ok)throw new Error("Could not remove bookmark");}

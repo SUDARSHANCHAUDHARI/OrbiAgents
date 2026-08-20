@@ -95,6 +95,35 @@ test("replay bookmarks persist per owner and reject invalid frames", async () =>
   assert.deepEqual(await loaded.json(), { bookmarks: [{ frame: 1, shared: false }, { frame: 2, label: "Key result", shared: true }] });
   assert.equal((await fetch(`${baseUrl}/replay/${sessionId}/bookmarks`, { headers: makeHeaders(other.token) })).status, 404);
   assert.equal((await fetch(`${baseUrl}/replay/${sessionId}/bookmarks`, { method: "PUT", headers: makeJsonHeaders(owner.token), body: JSON.stringify({ frames: [3] }) })).status, 400);
+
+  const edited = await fetch(`${baseUrl}/replay/${sessionId}/bookmarks/2`, { method: "PATCH", headers: makeJsonHeaders(owner.token), body: JSON.stringify({ label: "Edited", shared: false }) });
+  assert.equal(edited.status, 200); assert.deepEqual(await edited.json(), { bookmark: { frame: 2, label: "Edited", shared: false } });
+  assert.equal((await fetch(`${baseUrl}/replay/${sessionId}/bookmarks/2`, { method: "PATCH", headers: makeJsonHeaders(owner.token), body: JSON.stringify({ shared: "yes" }) })).status, 400);
+  assert.equal((await fetch(`${baseUrl}/replay/${sessionId}/bookmarks/2`, { method: "PATCH", headers: makeJsonHeaders(other.token), body: JSON.stringify({ label: "stolen" }) })).status, 404);
+  assert.equal((await fetch(`${baseUrl}/replay/${sessionId}/bookmarks/1`, { method: "DELETE", headers: makeHeaders(owner.token) })).status, 200);
+});
+
+test("proposal settings and history are user-scoped and tolerate malformed stored history", async () => {
+  const owner = await createTestUser("proposal-owner"); const other = await createTestUser("proposal-other");
+  const settings = await fetch(`${baseUrl}/workflow/proposal/settings`, { method: "PUT", headers: makeJsonHeaders(owner.token), body: JSON.stringify({ enabledPolicies: ["normalize-label"] }) });
+  assert.equal(settings.status, 200);
+  const workflow = { nodes: [{ id: "plan", type: "planner", label: "Planner" }], edges: [] };
+  const proposed = await fetch(`${baseUrl}/workflow/proposal`, { method: "POST", headers: makeJsonHeaders(owner.token), body: JSON.stringify({ workflow: { ...workflow, nodes: [{ id: "plan", type: "planner" }] } }) });
+  assert.equal(proposed.status, 200); const proposal = await proposed.json() as { id?: string }; assert.ok(proposal.id);
+  assert.equal((await fetch(`${baseUrl}/workflow/proposal/history/${proposal.id}`, { method: "PATCH", headers: makeJsonHeaders(other.token), body: JSON.stringify({ status: "applied" }) })).status, 404);
+  await db.workflowProposalHistory.create({ data: { userId: owner.id, kind: "none", summary: "corrupt", proposal: "not-json" } });
+  await db.workflowProposalHistory.create({ data: { userId: owner.id, kind: "none", summary: "incomplete", proposal: JSON.stringify({ summary: "incomplete" }) } });
+  const history = await fetch(`${baseUrl}/workflow/proposal/history`, { headers: makeHeaders(owner.token) }); assert.equal(history.status, 200); const historyBody = await history.json() as Array<{summary:string}>; assert.equal(historyBody.some((item)=>item.summary==="corrupt"),false); assert.equal(historyBody.some((item)=>item.summary==="incomplete"),false);
+  await db.supervisorPreference.update({where:{userId:owner.id},data:{enabledPolicies:"not-json"}}); const recovered=await fetch(`${baseUrl}/workflow/proposal/settings`,{headers:makeHeaders(owner.token)});assert.equal(recovered.status,200);assert.equal((await recovered.json() as {enabledPolicies:string[]}).enabledPolicies.length,3);
+  assert.equal((await fetch(`${baseUrl}/workflow/proposal/settings`, { method: "PUT", headers: makeJsonHeaders(owner.token), body: JSON.stringify({ enabledPolicies: ["unsafe"] }) })).status, 400);
+});
+
+test("embedding cache controls are authenticated and user-scoped", async () => {
+  const owner=await createTestUser("cache-owner"); const other=await createTestUser("cache-other");
+  await db.memoryEmbeddingCache.create({data:{userId:owner.id,model:"test",contentHash:"hash",vector:"[1]"}});
+  const metrics=await fetch(`${baseUrl}/memory/embedding-cache`,{headers:makeHeaders(owner.token)});assert.equal(metrics.status,200);assert.equal((await metrics.json() as {entries:number}).entries,1);
+  await fetch(`${baseUrl}/memory/embedding-cache`,{method:"DELETE",headers:makeHeaders(other.token)});assert.equal(await db.memoryEmbeddingCache.count({where:{userId:owner.id}}),1);
+  assert.equal((await fetch(`${baseUrl}/memory/embedding-cache`,{method:"DELETE",headers:makeHeaders(owner.token)})).status,200);
 });
 
 test("health endpoint reports basic server status", async () => {
