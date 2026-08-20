@@ -19,6 +19,18 @@ test("supervisor can propose a non-structural label normalization", () => {
   assert.equal(proposal.workflow.nodes[0].label, "Planner");
 });
 
+test("supervisor removes a duplicate role and safely rewires its dependencies", () => {
+  const workflow = {
+    nodes: [{ id: "plan", type: "planner" as const }, { id: "code-a", type: "coder" as const }, { id: "code-b", type: "coder" as const }, { id: "test", type: "tester" as const }],
+    edges: [{ from: "plan", to: "code-a" }, { from: "code-a", to: "code-b" }, { from: "code-b", to: "test" }],
+  };
+  const proposal = proposeWorkflowImprovement(workflow);
+  assert.equal(proposal.kind, "remove-duplicate-role");
+  assert.deepEqual(proposal.workflow.nodes.map((node) => node.id), ["plan", "code-a", "test"]);
+  assert.deepEqual(proposal.workflow.edges, [{ from: "plan", to: "code-a" }, { from: "code-a", to: "test" }]);
+  validateWorkflowGraph(proposal.workflow);
+});
+
 test("workflow proposal validation rejects cycles and duplicate ids", () => {
   assert.throws(() => validateWorkflowGraph({ nodes: [{ id: "a", type: "planner" }, { id: "a", type: "coder" }], edges: [] }), /unique/);
   assert.throws(() => validateWorkflowGraph({ nodes: [{ id: "a", type: "unknown" as "planner" }], edges: [] }), /unsupported/);
