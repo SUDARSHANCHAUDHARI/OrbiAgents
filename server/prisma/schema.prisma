@@ -16,6 +16,8 @@ model User {
   memories       MemoryEntry[]
   messages       MailboxMessage[]
   workspaces     ManagedWorkspace[]
+  embeddingCache MemoryEmbeddingCache[]
+  replayBookmarks ReplayBookmark[]
   createdAt      DateTime        @default(now())
 }
 
@@ -46,6 +48,20 @@ model MemoryEntry {
   updatedAt  DateTime @updatedAt
 
   @@index([userId, projectKey, scope, agentId, updatedAt])
+}
+
+model MemoryEmbeddingCache {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  model       String
+  contentHash String
+  vector      String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, model, contentHash])
+  @@index([userId, updatedAt])
 }
 
 model MailboxMessage {
@@ -88,7 +104,21 @@ model StoredSession {
   shareToken   String?  @unique
   userId       String?
   user         User?    @relation(fields: [userId], references: [id])
+  bookmarks    ReplayBookmark[]
   createdAt     DateTime @default(now())
+}
+
+model ReplayBookmark {
+  id        String        @id @default(cuid())
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sessionId String
+  session   StoredSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  frame     Int
+  createdAt DateTime      @default(now())
+
+  @@unique([userId, sessionId, frame])
+  @@index([userId, sessionId])
 }
 
 model RateLimitBucket {

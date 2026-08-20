@@ -42,6 +42,7 @@ import { buildRelevantMemoryContext, deleteMemory, listMemory, MemoryScope, upda
 import { markMessageRead, MessageKind, readInbox, sendMessage } from "./mailboxStore";
 import { OrbiPrimeSupervisor } from "./supervisor";
 import { proposeWorkflowImprovement } from "./workflowProposal";
+import { listReplayBookmarks, replaceReplayBookmarks, validateReplayBookmarks } from "./replayBookmarks";
 
 const app = express();
 const PORT = 4000;
@@ -63,7 +64,7 @@ app.use(requestLogger);
 app.use((_req, res, next) => {
   const origin = _req.headers.origin ?? "";
   res.setHeader("Access-Control-Allow-Origin", CORS_ORIGINS.has(origin) ? origin : CORS_ORIGIN);
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
   if (_req.method === "OPTIONS") { res.sendStatus(204); return; }
   next();
@@ -715,6 +716,21 @@ app.get("/replay/:id", protect, async (req, res) => {
   const session = await getSession(req.params.id, req.userId);
   if (!session) { res.status(404).json({ error: "Session not found" }); return; }
   res.json(session);
+});
+
+app.get("/replay/:id/bookmarks", protect, async (req, res) => {
+  const session = await getSession(req.params.id, req.userId);
+  if (!session) { res.status(404).json({ error: "Session not found" }); return; }
+  res.json({ frames: await listReplayBookmarks(req.userId!, session.id) });
+});
+
+app.put("/replay/:id/bookmarks", protect, async (req, res) => {
+  const session = await getSession(req.params.id, req.userId);
+  if (!session) { res.status(404).json({ error: "Session not found" }); return; }
+  try {
+    const frames = validateReplayBookmarks(req.body?.frames, session.frames.length);
+    res.json({ frames: await replaceReplayBookmarks(req.userId!, session.id, frames) });
+  } catch (error) { res.status(400).json({ error: error instanceof Error ? error.message : "Invalid bookmarks" }); }
 });
 
 // Create share link (auth required to share your own sessions)

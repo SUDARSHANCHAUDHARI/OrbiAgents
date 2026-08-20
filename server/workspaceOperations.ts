@@ -30,7 +30,13 @@ export class WorkspaceOperations {
     const handle = await open(resolvedFile, "r");
     try {
       const buffer = Buffer.alloc(Math.min(stat.size, 4096)); await handle.read(buffer, 0, buffer.length, 0);
-      const binary = buffer.includes(0); return { path: safeFile, kind: binary ? "binary" : "text", size: stat.size, ...(binary ? {} : { preview: buffer.toString("utf8") }) };
+      const image = detectImage(buffer); const binary = buffer.includes(0) || image !== null;
+      if (image && stat.size <= 64 * 1024) {
+        const full = Buffer.alloc(stat.size); await handle.read(full, 0, full.length, 0);
+        const dimensions = imageDimensions(full, image);
+        return { path: safeFile, kind: "image", size: stat.size, mimeType: image, imagePreview: `data:${image};base64,${full.toString("base64")}`, ...dimensions };
+      }
+      return { path: safeFile, kind: binary ? "binary" : "text", size: stat.size, ...(binary ? { mimeType: "application/octet-stream" } : { preview: buffer.toString("utf8"), truncated: stat.size > buffer.length }) };
     } finally { await handle.close(); }
   }
 
@@ -101,7 +107,21 @@ function isInside(root: string, candidate: string): boolean {
   return relative !== "" && !relative.startsWith(`..${path.sep}`) && relative !== ".." && !path.isAbsolute(relative);
 }
 
-export interface UntrackedPreview { path: string; kind: "text" | "binary" | "unavailable"; size: number; preview?: string }
+function detectImage(buffer: Buffer): "image/png" | "image/jpeg" | "image/gif" | "image/webp" | null {
+  if (buffer.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))) return "image/png";
+  if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) return "image/jpeg";
+  if (buffer.subarray(0, 6).toString("ascii") === "GIF87a" || buffer.subarray(0, 6).toString("ascii") === "GIF89a") return "image/gif";
+  if (buffer.subarray(0, 4).toString("ascii") === "RIFF" && buffer.subarray(8, 12).toString("ascii") === "WEBP") return "image/webp";
+  return null;
+}
+
+function imageDimensions(buffer: Buffer, mimeType: string): { width?: number; height?: number } {
+  if (mimeType === "image/png" && buffer.length >= 24) return { width: buffer.readUInt32BE(16), height: buffer.readUInt32BE(20) };
+  if (mimeType === "image/gif" && buffer.length >= 10) return { width: buffer.readUInt16LE(6), height: buffer.readUInt16LE(8) };
+  return {};
+}
+
+export interface UntrackedPreview { path: string; kind: "text" | "binary" | "image" | "unavailable"; size: number; preview?: string; mimeType?: string; imagePreview?: string; width?: number; height?: number; truncated?: boolean }
 
 export function configuredWorkspaceOperations(env: NodeJS.ProcessEnv = process.env): WorkspaceOperations {
   if (env.LOCAL_CLI_ENABLED !== "true" || !env.LOCAL_CLI_REPO_PATH || !env.LOCAL_CLI_WORKTREE_ROOT) {

@@ -365,6 +365,10 @@ Memory prompt injection is disabled by default. A user can enable it for a run; 
 | Replay bookmarks and event-type filters | ✅ Built |
 | Optional OpenAI embedding memory retrieval with local fallback | ✅ Built; opt-in |
 | Text preview and binary classification for new workspace files | ✅ Built |
+| Duplicate-role removal with validated dependency rewiring | ✅ Built; approval-gated |
+| Persistent local embedding cache | ✅ Built; user-scoped |
+| Persistent replay bookmarks per user/session | ✅ Built |
+| Bounded PNG/JPEG/GIF/WebP preview metadata | ✅ Built |
 | Autonomous supervisor workflow mutation | 🧭 Not enabled |
 
 ## Product direction
@@ -379,10 +383,10 @@ That direction is captured in the [coworking-space roadmap](docs/coworking-space
 
 The next architectural milestones are focused on making orchestration deeper rather than adding decorative complexity:
 
-1. Add more approval-gated proposal policies such as duplicate-role removal and safe rewiring
-2. Cache optional embeddings locally to reduce repeated API calls
-3. Persist replay bookmarks per user and session
-4. Add richer binary metadata and image previews without exposing unsafe file content
+1. Add operator-configurable supervisor proposal policies and proposal history
+2. Add bounded embedding-cache retention and observability controls
+3. Add bookmark labels and optional sharing controls
+4. Add server-side image decoding only if richer inspection is needed
 
 ## Why OrbiAgents
 

@@ -2,7 +2,7 @@ import { topoSort } from "./workflowRunner";
 import { Workflow, WorkflowNodeType } from "./workflowTypes";
 
 export interface WorkflowProposal {
-  kind: "add-role" | "normalize-label" | "none";
+  kind: "add-role" | "remove-duplicate-role" | "normalize-label" | "none";
   summary: string;
   rationale: string;
   changes: string[];
@@ -34,6 +34,29 @@ export function validateWorkflowGraph(workflow: Workflow, maxNodes = 12): void {
 
 export function proposeWorkflowImprovement(workflow: Workflow, maxNodes = 12): WorkflowProposal {
   validateWorkflowGraph(workflow, maxNodes);
+  const duplicate = workflow.nodes.find((node, index) => workflow.nodes.findIndex((candidate) => candidate.type === node.type) !== index);
+  if (duplicate) {
+    const incoming = workflow.edges.filter((edge) => edge.to === duplicate.id);
+    const outgoing = workflow.edges.filter((edge) => edge.from === duplicate.id);
+    const retained = workflow.edges.filter((edge) => edge.from !== duplicate.id && edge.to !== duplicate.id);
+    const bypasses = incoming.flatMap((left) => outgoing.map((right) => ({ from: left.from, to: right.to })));
+    const edgeKeys = new Set<string>();
+    const edges = [...retained, ...bypasses].filter((edge) => {
+      const key = `${edge.from}\0${edge.to}`;
+      if (edge.from === edge.to || edgeKeys.has(key)) return false;
+      edgeKeys.add(key); return true;
+    });
+    const proposed = { nodes: workflow.nodes.filter((node) => node.id !== duplicate.id), edges };
+    validateWorkflowGraph(proposed, maxNodes);
+    return {
+      kind: "remove-duplicate-role",
+      summary: `Remove duplicate ${duplicate.type} node`,
+      rationale: "Keep one owner for each workflow role and preserve dependency flow through validated bypass edges.",
+      changes: [`Remove ${duplicate.id}`, `Replace ${incoming.length + outgoing.length} connected edge(s) with ${bypasses.length} safe bypass edge(s)`],
+      workflow: proposed,
+      changed: true,
+    };
+  }
   const improvement = IMPROVEMENT_ORDER.find((item) => !workflow.nodes.some((node) => node.type === item.type));
   if (!improvement || workflow.nodes.length >= maxNodes) {
     const unlabeled = workflow.nodes.find((node) => !node.label?.trim());

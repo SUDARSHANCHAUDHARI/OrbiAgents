@@ -68,6 +68,18 @@ test("workspace inspection previews new text files and classifies binary files",
   finally { await rm(root, { recursive: true, force: true }); }
 });
 
+test("workspace inspection provides bounded image metadata and previews", async () => {
+  const worktree = await mkdtemp(path.join(os.tmpdir(), "orbi-workspace-image-"));
+  const image = Buffer.alloc(24); Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]).copy(image); image.writeUInt32BE(32, 16); image.writeUInt32BE(16, 20);
+  await writeFile(path.join(worktree, "preview.png"), image);
+  const runner = { async run(request: { args: string[] }) { return { stdout: request.args.includes("ls-files") ? "preview.png\0" : "", stderr: "", exitCode: 0 }; } };
+  const operations = new WorkspaceOperations("/repo", path.dirname(worktree), runner);
+  try {
+    const result = await operations.inspect(worktree); const preview = result.untrackedPreviews[0];
+    assert.equal(preview.kind, "image"); assert.equal(preview.mimeType, "image/png"); assert.equal(preview.width, 32); assert.equal(preview.height, 16); assert.match(preview.imagePreview ?? "", /^data:image\/png;base64,/);
+  } finally { await rm(worktree, { recursive: true, force: true }); }
+});
+
 test("workspace apply validates paths, checks a clean target, and applies only selected tracked files", async () => {
   const calls: Array<{ args: string[]; stdin?: string }> = [];
   const operations = new WorkspaceOperations("/repo", "/managed/worktrees", {

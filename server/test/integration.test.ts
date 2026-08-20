@@ -6,6 +6,7 @@ import { signToken } from "../auth";
 import { db } from "../db";
 import { startServer, stopServer } from "../index";
 import { Agent } from "../types";
+import { PrismaClient } from "@prisma/client";
 
 let baseUrl = "";
 let wsUrl = "";
@@ -74,6 +75,26 @@ test("protected replay endpoints enforce session ownership", async () => {
     headers: makeHeaders(other.token),
   });
   assert.equal(otherRes.status, 404);
+});
+
+test("replay bookmarks persist per owner and reject invalid frames", async () => {
+  const sessionId = `bookmark-session-${Date.now()}`;
+  const owner = await createTestUser("bookmark-owner");
+  const other = await createTestUser("bookmark-other");
+  await createSession(sessionId, "Bookmark replay", owner.id);
+  recordFrame(sessionId, [makeAgent()]); recordFrame(sessionId, [makeAgent()]);
+
+  const saved = await fetch(`${baseUrl}/replay/${sessionId}/bookmarks`, { method: "PUT", headers: makeJsonHeaders(owner.token), body: JSON.stringify({ frames: [2, 1, 2] }) });
+  assert.equal(saved.status, 200); assert.deepEqual(await saved.json(), { frames: [1, 2] });
+  assert.deepEqual((await db.replayBookmark.findMany({ where: { userId: owner.id, sessionId }, orderBy: { frame: "asc" } })).map((row) => row.frame), [1, 2]);
+  const restartedClient = new PrismaClient();
+  try { assert.deepEqual((await restartedClient.replayBookmark.findMany({ where: { userId: owner.id, sessionId }, orderBy: { frame: "asc" } })).map((row) => row.frame), [1, 2]); }
+  finally { await restartedClient.$disconnect(); }
+
+  const loaded = await fetch(`${baseUrl}/replay/${sessionId}/bookmarks`, { headers: makeHeaders(owner.token) });
+  assert.deepEqual(await loaded.json(), { frames: [1, 2] });
+  assert.equal((await fetch(`${baseUrl}/replay/${sessionId}/bookmarks`, { headers: makeHeaders(other.token) })).status, 404);
+  assert.equal((await fetch(`${baseUrl}/replay/${sessionId}/bookmarks`, { method: "PUT", headers: makeJsonHeaders(owner.token), body: JSON.stringify({ frames: [3] }) })).status, 400);
 });
 
 test("health endpoint reports basic server status", async () => {
