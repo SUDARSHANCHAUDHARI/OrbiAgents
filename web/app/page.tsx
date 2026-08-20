@@ -109,8 +109,10 @@ export default function Home() {
   const [replaySession, setReplaySession] = useState<Session | null>(null);
   const [replayFrame, setReplayFrame] = useState(0);
   const [replaySpeed, setReplaySpeed] = useState<ReplaySpeed>(1);
+  const [replayPlaying, setReplayPlaying] = useState(false);
   const replayRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const replaySpeedRef = useRef<ReplaySpeed>(1);
+  const replayIndexRef = useRef(0);
 
   const wsRef = useRef<WebSocket | null>(null);
   const liveAgentsRef = useRef<Agent[]>([]);
@@ -220,7 +222,7 @@ export default function Home() {
     return () => clearTimeout(timeout);
   }, [historyMessage]);
 
-  const isReplaying = replayRef.current !== null;
+  const isReplaying = replaySession !== null;
 
   useKeyboardShortcuts({
     enabled: isAuthed,
@@ -371,21 +373,8 @@ export default function Home() {
       setResult(null);
       setSelectedSession(null);
 
-      let i = 0;
       replaySpeedRef.current = replaySpeed;
-      const tick = () => {
-        if (i >= session.frames.length) {
-          stopReplay();
-          setAgents(liveAgentsRef.current);
-          return;
-        }
-        setAgents(session.frames[i].agents);
-        setReplayFrame(i + 1);
-        const delay = replayDelay(session.frames, i, replaySpeedRef.current);
-        i++;
-        replayRef.current = setTimeout(tick, delay) as unknown as ReturnType<typeof setInterval>;
-      };
-      replayRef.current = setTimeout(tick, 0) as unknown as ReturnType<typeof setInterval>;
+      playReplay(session, 0);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not start replay");
     }
@@ -416,13 +405,44 @@ export default function Home() {
   }
 
   function stopReplay() {
-    if (replayRef.current) {
-      clearTimeout(replayRef.current as unknown as ReturnType<typeof setTimeout>);
-      replayRef.current = null;
-    }
+    clearReplayTimer();
     setReplaySession(null);
     setReplayFrame(0);
+    setReplayPlaying(false);
     setAgents(liveAgentsRef.current);
+  }
+
+  function clearReplayTimer() {
+    if (replayRef.current) clearTimeout(replayRef.current as unknown as ReturnType<typeof setTimeout>);
+    replayRef.current = null;
+  }
+
+  function showReplayFrame(session: Session, index: number) {
+    const safeIndex = Math.max(0, Math.min(index, session.frames.length - 1));
+    replayIndexRef.current = safeIndex; setAgents(session.frames[safeIndex].agents); setReplayFrame(safeIndex + 1);
+  }
+
+  function playReplay(session: Session, startIndex: number) {
+    clearReplayTimer(); setReplayPlaying(true);
+    let index = Math.max(0, Math.min(startIndex, session.frames.length - 1));
+    const tick = () => {
+      showReplayFrame(session, index);
+      if (index >= session.frames.length - 1) { replayRef.current = null; setReplayPlaying(false); return; }
+      const delay = replayDelay(session.frames, index, replaySpeedRef.current); index += 1;
+      replayRef.current = setTimeout(tick, delay) as unknown as ReturnType<typeof setInterval>;
+    };
+    tick();
+  }
+
+  function seekReplay(frame: number) {
+    if (!replaySession) return;
+    clearReplayTimer(); setReplayPlaying(false); showReplayFrame(replaySession, frame - 1);
+  }
+
+  function toggleReplayPlaying() {
+    if (!replaySession) return;
+    if (replayPlaying) { clearReplayTimer(); setReplayPlaying(false); }
+    else playReplay(replaySession, replayIndexRef.current >= replaySession.frames.length - 1 ? 0 : replayIndexRef.current);
   }
 
   function handleReplaySpeedChange(speed: ReplaySpeed) {
@@ -969,8 +989,12 @@ export default function Home() {
               current={replayFrame}
               total={replaySession.frames.length}
               speed={replaySpeed}
+              playing={replayPlaying}
               onStop={stopReplay}
               onSpeedChange={handleReplaySpeedChange}
+              onTogglePlaying={toggleReplayPlaying}
+              onSeek={seekReplay}
+              onStep={(delta) => seekReplay(replayFrame + delta)}
             />
           )}
         </main>
@@ -1022,7 +1046,7 @@ export default function Home() {
           sessions={sessions}
           loading={sessionsLoading}
           compact={compactSidebar}
-          activeSessionId={replaySession?.id ?? null}
+          activeSessionId={null}
           selectedSessionId={null}
           onReplay={startReplay}
           onShare={handleShareSession}

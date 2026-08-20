@@ -6,6 +6,7 @@ import { Agent, Session } from "@/lib/types";
 import { getApiBaseUrl } from "@/lib/config";
 import AgentBox from "@/components/Agent";
 import ReplayBar, { ReplaySpeed } from "@/components/ReplayBar";
+import { replayDelay } from "@/lib/replayTiming";
 
 export default function PublicReplayPage({
   params,
@@ -19,7 +20,7 @@ export default function PublicReplayPage({
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState<ReplaySpeed>(1);
   const [notFound, setNotFound] = useState(false);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     fetch(`${getApiBaseUrl()}/replay/public/${token}`)
@@ -35,16 +36,16 @@ export default function PublicReplayPage({
   function startPlay() {
     if (!session || intervalRef.current) return;
     setPlaying(true);
-    let i = frame;
-    intervalRef.current = setInterval(() => {
-      if (i >= session.frames.length) {
-        stopPlay();
-        return;
-      }
+    let i = frame >= session.frames.length ? 0 : frame;
+    const tick = () => {
       setAgents(session.frames[i].agents);
       setFrame(i + 1);
+      if (i >= session.frames.length - 1) { intervalRef.current = null; setPlaying(false); return; }
+      const delay = replayDelay(session.frames, i, speed);
       i++;
-    }, 900 / speed);
+      intervalRef.current = setTimeout(tick, delay);
+    };
+    tick();
   }
 
   function stopPlay() {
@@ -59,6 +60,13 @@ export default function PublicReplayPage({
     stopPlay();
     setFrame(0);
     if (session?.frames[0]) setAgents(session.frames[0].agents);
+  }
+
+  function seek(nextFrame: number) {
+    stopPlay();
+    const safeFrame = Math.max(1, Math.min(nextFrame, session?.frames.length ?? 1));
+    setFrame(safeFrame);
+    if (session?.frames[safeFrame - 1]) setAgents(session.frames[safeFrame - 1].agents);
   }
 
   if (notFound) {
@@ -153,14 +161,18 @@ export default function PublicReplayPage({
           </span>
         </div>
 
-        {playing && (
+        {(
           <ReplayBar
             task={session.task}
             current={frame}
             total={session.frames.length}
             speed={speed}
+            playing={playing}
             onSpeedChange={setSpeed}
             onStop={stopPlay}
+            onTogglePlaying={playing ? stopPlay : startPlay}
+            onSeek={seek}
+            onStep={(delta) => seek(frame + delta)}
           />
         )}
       </main>
