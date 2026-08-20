@@ -4,7 +4,7 @@
 
 ### Local-first state
 
-OrbiAgents uses its existing Prisma/SQLite database for user-scoped memory and mailbox records. Memory supports per-agent and shared project scopes. Mailbox messages include sender, recipient, kind, conversation, reply, status, and hop count.
+OrbiAgents uses its existing Prisma/SQLite database for user-scoped memory, mailbox records, and preserved-workspace registry metadata. Memory supports per-agent and shared project scopes. Mailbox messages include sender, recipient, kind, conversation, reply, status, and hop count. Registered dirty worktrees remain discoverable across server restarts.
 
 ### Runtime boundary
 
@@ -28,7 +28,6 @@ Supervisor events are broadcast through the authenticated WebSocket and persiste
 
 ## Deliberately not claimed as complete
 
-- Persistent discovery of preserved worktrees after a server restart
 - Patch-level review and selective merge flows for dirty agent worktrees
 - Autonomous supervisor changes to user workflows
 - Automatic memory extraction, semantic retrieval, or prompt injection
