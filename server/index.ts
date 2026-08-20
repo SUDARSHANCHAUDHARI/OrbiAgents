@@ -457,12 +457,12 @@ app.get("/runtimes", (_req, res) => {
   res.json({ runtimes: availableRuntimeIds(), default: "provider-api" });
 });
 
-app.get("/workspaces", protect, (req, res) => {
-  res.json(workspaceRegistry.list(req.userId!));
+app.get("/workspaces", protect, async (req, res) => {
+  res.json(await workspaceRegistry.list(req.userId!));
 });
 
 app.get("/workspaces/:id/changes", protect, async (req, res) => {
-  const workspace = workspaceRegistry.get(req.userId!, req.params.id);
+  const workspace = await workspaceRegistry.get(req.userId!, req.params.id);
   if (!workspace) { res.status(404).json({ error: "Workspace not found" }); return; }
   try {
     res.json(await configuredWorkspaceOperations().inspect(workspace.path));
@@ -475,11 +475,11 @@ app.delete("/workspaces/:id", protect, async (req, res) => {
   if (req.body?.confirm !== true) {
     res.status(400).json({ error: "confirm must be true to discard a workspace" }); return;
   }
-  const workspace = workspaceRegistry.get(req.userId!, req.params.id);
+  const workspace = await workspaceRegistry.get(req.userId!, req.params.id);
   if (!workspace) { res.status(404).json({ error: "Workspace not found" }); return; }
   try {
     await configuredWorkspaceOperations().discard(workspace.path);
-    workspaceRegistry.remove(req.userId!, workspace.id);
+    await workspaceRegistry.remove(req.userId!, workspace.id);
     res.status(204).send();
   } catch (error) {
     res.status(400).json({ error: error instanceof Error ? error.message : String(error) });
@@ -609,8 +609,8 @@ app.post("/workflow", protect, workflowRateLimit, async (req, res) => {
         runtime: execution.runtime,
         workspaceIsolation: execution.workspaceIsolation,
         runId: `${userId}-${sessionId}`,
-        onWorkspacePreserved: ({ runId, nodeId, path }) => {
-          workspaceRegistry.register({ userId, runId, nodeId, path });
+        onWorkspacePreserved: async ({ runId, nodeId, path }) => {
+          await workspaceRegistry.register({ userId, runId, nodeId, path });
         },
         supervisor: new OrbiPrimeSupervisor((event) => publishWorkflowEvent(userId, event)),
         signal: runtime.workflowAbortController.signal,

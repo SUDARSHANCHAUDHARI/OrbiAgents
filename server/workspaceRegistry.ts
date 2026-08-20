@@ -1,4 +1,5 @@
-import { randomUUID } from "node:crypto";
+import { PrismaClient } from "@prisma/client";
+import { db } from "./db";
 
 export interface PreservedWorkspace {
   id: string;
@@ -10,29 +11,38 @@ export interface PreservedWorkspace {
 }
 
 export class WorkspaceRegistry {
-  private readonly records = new Map<string, PreservedWorkspace>();
+  constructor(private readonly client: PrismaClient = db) {}
 
-  register(input: Omit<PreservedWorkspace, "id" | "createdAt">): PreservedWorkspace {
-    const record = { ...input, id: randomUUID(), createdAt: Date.now() };
-    this.records.set(record.id, record);
-    return record;
+  async register(input: Omit<PreservedWorkspace, "id" | "createdAt">): Promise<PreservedWorkspace> {
+    const record = await this.client.managedWorkspace.upsert({
+      where: { userId_path: { userId: input.userId, path: input.path } },
+      create: input,
+      update: { runId: input.runId, nodeId: input.nodeId },
+    });
+    return serialize(record);
   }
 
-  list(userId: string): PreservedWorkspace[] {
-    return [...this.records.values()]
-      .filter((record) => record.userId === userId)
-      .sort((a, b) => b.createdAt - a.createdAt);
+  async list(userId: string): Promise<PreservedWorkspace[]> {
+    const records = await this.client.managedWorkspace.findMany({
+      where: { userId },
+      orderBy: { createdAt: "desc" },
+    });
+    return records.map(serialize);
   }
 
-  get(userId: string, id: string): PreservedWorkspace | null {
-    const record = this.records.get(id);
-    return record?.userId === userId ? record : null;
+  async get(userId: string, id: string): Promise<PreservedWorkspace | null> {
+    const record = await this.client.managedWorkspace.findFirst({ where: { id, userId } });
+    return record ? serialize(record) : null;
   }
 
-  remove(userId: string, id: string): boolean {
-    if (!this.get(userId, id)) return false;
-    return this.records.delete(id);
+  async remove(userId: string, id: string): Promise<boolean> {
+    const result = await this.client.managedWorkspace.deleteMany({ where: { id, userId } });
+    return result.count === 1;
   }
+}
+
+function serialize(record: { id: string; userId: string; runId: string; nodeId: string; path: string; createdAt: Date }): PreservedWorkspace {
+  return { ...record, createdAt: record.createdAt.getTime() };
 }
 
 export const workspaceRegistry = new WorkspaceRegistry();

@@ -15,7 +15,22 @@ model User {
   sessions       StoredSession[]
   memories       MemoryEntry[]
   messages       MailboxMessage[]
+  workspaces     ManagedWorkspace[]
   createdAt      DateTime        @default(now())
+}
+
+model ManagedWorkspace {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  runId     String
+  nodeId    String
+  path      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, path])
+  @@index([userId, createdAt])
 }
 
 model MemoryEntry {
