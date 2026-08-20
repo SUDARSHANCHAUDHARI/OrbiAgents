@@ -2,15 +2,29 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { WorkspaceRegistry } from "../workspaceRegistry";
 import { WorkspaceOperations } from "../workspaceOperations";
+import { db } from "../db";
+import { PrismaClient } from "@prisma/client";
 
-test("workspace registry isolates records by user", () => {
-  const registry = new WorkspaceRegistry();
-  const first = registry.register({ userId: "user-a", runId: "run", nodeId: "coder", path: "/worktrees/a" });
-  registry.register({ userId: "user-b", runId: "run", nodeId: "coder", path: "/worktrees/b" });
-  assert.deepEqual(registry.list("user-a").map((record) => record.id), [first.id]);
-  assert.equal(registry.get("user-b", first.id), null);
-  assert.equal(registry.remove("user-b", first.id), false);
-  assert.equal(registry.remove("user-a", first.id), true);
+test("workspace registry survives a fresh client and isolates records by user", async () => {
+  const suffix = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  const [userA, userB] = await Promise.all([
+    db.user.create({ data: { email: `workspace-a-${suffix}@test.local`, password: "test" } }),
+    db.user.create({ data: { email: `workspace-b-${suffix}@test.local`, password: "test" } }),
+  ]);
+  const registry = new WorkspaceRegistry(db);
+  const first = await registry.register({ userId: userA.id, runId: "run", nodeId: "coder", path: `/worktrees/a-${suffix}` });
+  await registry.register({ userId: userB.id, runId: "run", nodeId: "coder", path: `/worktrees/b-${suffix}` });
+  const restartedClient = new PrismaClient();
+  try {
+    const restartedRegistry = new WorkspaceRegistry(restartedClient);
+    assert.deepEqual((await restartedRegistry.list(userA.id)).map((record) => record.id), [first.id]);
+    assert.equal(await restartedRegistry.get(userB.id, first.id), null);
+    assert.equal(await restartedRegistry.remove(userB.id, first.id), false);
+    assert.equal(await restartedRegistry.remove(userA.id, first.id), true);
+  } finally {
+    await restartedClient.$disconnect();
+    await db.user.deleteMany({ where: { id: { in: [userA.id, userB.id] } } });
+  }
 });
 
 test("workspace operations inspect only paths below the configured root", async () => {
