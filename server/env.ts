@@ -25,6 +25,8 @@ export function validateServerEnv(env: NodeJS.ProcessEnv = process.env): void {
     "MAX_RUNS_PER_HOUR",
     "MAX_DAILY_COST_USD",
     "MAX_WORKFLOW_NODES",
+    "MEMORY_EMBEDDING_CACHE_TTL_DAYS",
+    "MEMORY_EMBEDDING_CACHE_MAX_ENTRIES",
   ] as const;
 
   if (!isValidUrl(appUrl)) {

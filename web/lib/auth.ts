@@ -1,5 +1,5 @@
 import { getApiBaseUrl } from "./config";
-import { MailboxMessage, MemoryEntry, MemoryScope, MessageKind, PreservedWorkspace, Provider, RuntimeId, Session, SessionMeta, Workflow, WorkflowProposal, WorkspaceChanges } from "./types";
+import { MailboxMessage, MemoryEntry, MemoryScope, MessageKind, PreservedWorkspace, Provider, ReplayBookmark, RuntimeId, Session, SessionMeta, Workflow, WorkflowProposal, WorkflowProposalHistory, WorkflowProposalPolicy, WorkspaceChanges } from "./types";
 
 const API = getApiBaseUrl();
 const TOKEN_KEY = "orbi_token";
@@ -129,6 +129,10 @@ export async function proposeWorkflow(workflow: Workflow): Promise<WorkflowPropo
   if (!res.ok) throw new Error(body.error ?? "Could not create workflow proposal");
   return body;
 }
+export async function getProposalSettings(): Promise<WorkflowProposalPolicy[]> { const res = await fetch(`${API}/workflow/proposal/settings`, { headers: authHeaders() }); const body = await res.json() as { enabledPolicies: WorkflowProposalPolicy[] }; if (!res.ok) throw new Error("Could not load proposal settings"); return body.enabledPolicies; }
+export async function saveProposalSettings(enabledPolicies: WorkflowProposalPolicy[]): Promise<void> { const res = await fetch(`${API}/workflow/proposal/settings`, { method: "PUT", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ enabledPolicies }) }); if (!res.ok) throw new Error("Could not save proposal settings"); }
+export async function getProposalHistory(): Promise<WorkflowProposalHistory[]> { const res = await fetch(`${API}/workflow/proposal/history`, { headers: authHeaders() }); return res.ok ? res.json() as Promise<WorkflowProposalHistory[]> : []; }
+export async function setProposalStatus(id: string, status: "applied" | "dismissed"): Promise<void> { await fetch(`${API}/workflow/proposal/history/${encodeURIComponent(id)}`, { method: "PATCH", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ status }) }); }
 
 export async function listPreservedWorkspaces(): Promise<PreservedWorkspace[]> {
   const res = await fetch(`${API}/workspaces`, { headers: authHeaders() });
@@ -256,16 +260,16 @@ export async function createReplayShareLink(sessionId: string): Promise<{ token:
   return { token: body.token, url: body.url };
 }
 
-export async function getReplayBookmarks(sessionId: string): Promise<number[]> {
+export async function getReplayBookmarks(sessionId: string): Promise<ReplayBookmark[]> {
   const res = await fetch(`${API}/replay/${encodeURIComponent(sessionId)}/bookmarks`, { headers: authHeaders() });
-  const body = (await res.json()) as { frames?: number[]; error?: string };
+  const body = (await res.json()) as { bookmarks?: ReplayBookmark[]; error?: string };
   if (!res.ok) throw new Error(body.error ?? "Could not load replay bookmarks");
-  return body.frames ?? [];
+  return body.bookmarks ?? [];
 }
 
-export async function saveReplayBookmarks(sessionId: string, frames: number[]): Promise<number[]> {
-  const res = await fetch(`${API}/replay/${encodeURIComponent(sessionId)}/bookmarks`, { method: "PUT", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ frames }) });
-  const body = (await res.json()) as { frames?: number[]; error?: string };
+export async function saveReplayBookmarks(sessionId: string, bookmarks: ReplayBookmark[]): Promise<ReplayBookmark[]> {
+  const res = await fetch(`${API}/replay/${encodeURIComponent(sessionId)}/bookmarks`, { method: "PUT", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ bookmarks }) });
+  const body = (await res.json()) as { bookmarks?: ReplayBookmark[]; error?: string };
   if (!res.ok) throw new Error(body.error ?? "Could not save replay bookmarks");
-  return body.frames ?? [];
+  return body.bookmarks ?? [];
 }

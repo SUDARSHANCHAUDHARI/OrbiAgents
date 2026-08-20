@@ -36,3 +36,9 @@ test("workflow proposal validation rejects cycles and duplicate ids", () => {
   assert.throws(() => validateWorkflowGraph({ nodes: [{ id: "a", type: "unknown" as "planner" }], edges: [] }), /unsupported/);
   assert.throws(() => validateWorkflowGraph({ nodes: [{ id: "a", type: "planner" }, { id: "b", type: "coder" }], edges: [{ from: "a", to: "b" }, { from: "b", to: "a" }] }), /cycle/);
 });
+
+test("supervisor proposal policies can disable structural changes", () => {
+  const workflow = { nodes: [{ id: "plan", type: "planner" as const }, { id: "code", type: "coder" as const }], edges: [{ from: "plan", to: "code" }] };
+  assert.equal(proposeWorkflowImprovement(workflow, 12, ["normalize-label"]).kind, "normalize-label");
+  assert.equal(proposeWorkflowImprovement({ ...workflow, nodes: workflow.nodes.map((node) => ({ ...node, label: node.type })) }, 12, []).changed, false);
+});

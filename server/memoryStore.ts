@@ -1,5 +1,6 @@
 import { db } from "./db";
 import { configuredMemoryEmbedder, rankByCachedEmbeddings } from "./memoryEmbedding";
+import { pruneEmbeddingCache } from "./embeddingCache";
 
 export type MemoryScope = "agent" | "shared";
 
@@ -102,6 +103,7 @@ export async function buildRelevantMemoryContext(userId: string, projectKey: str
   let ranked = rankMemoryEntries(entries, query);
   if (embedder) {
     try {
+      await pruneEmbeddingCache(userId);
       const model = embedder.cacheKey ?? "default";
       ranked = await rankByCachedEmbeddings(entries, query, (entry) => entry.content, embedder, {
         async get(keys) {

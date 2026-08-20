@@ -2,6 +2,7 @@ import { topoSort } from "./workflowRunner";
 import { Workflow, WorkflowNodeType } from "./workflowTypes";
 
 export interface WorkflowProposal {
+  id?: string;
   kind: "add-role" | "remove-duplicate-role" | "normalize-label" | "none";
   summary: string;
   rationale: string;
@@ -9,6 +10,8 @@ export interface WorkflowProposal {
   workflow: Workflow;
   changed: boolean;
 }
+export type WorkflowProposalPolicy = "add-role" | "remove-duplicate-role" | "normalize-label";
+export const WORKFLOW_PROPOSAL_POLICIES: WorkflowProposalPolicy[] = ["add-role", "remove-duplicate-role", "normalize-label"];
 
 const IMPROVEMENT_ORDER: Array<{ type: WorkflowNodeType; label: string; rationale: string }> = [
   { type: "tester", label: "Tester", rationale: "Add an explicit verification step after implementation." },
@@ -32,10 +35,11 @@ export function validateWorkflowGraph(workflow: Workflow, maxNodes = 12): void {
   topoSort(workflow);
 }
 
-export function proposeWorkflowImprovement(workflow: Workflow, maxNodes = 12): WorkflowProposal {
+export function proposeWorkflowImprovement(workflow: Workflow, maxNodes = 12, policies: WorkflowProposalPolicy[] = WORKFLOW_PROPOSAL_POLICIES): WorkflowProposal {
   validateWorkflowGraph(workflow, maxNodes);
+  const enabled = new Set(policies);
   const duplicate = workflow.nodes.find((node, index) => workflow.nodes.findIndex((candidate) => candidate.type === node.type) !== index);
-  if (duplicate) {
+  if (duplicate && enabled.has("remove-duplicate-role")) {
     const incoming = workflow.edges.filter((edge) => edge.to === duplicate.id);
     const outgoing = workflow.edges.filter((edge) => edge.from === duplicate.id);
     const retained = workflow.edges.filter((edge) => edge.from !== duplicate.id && edge.to !== duplicate.id);
@@ -58,9 +62,9 @@ export function proposeWorkflowImprovement(workflow: Workflow, maxNodes = 12): W
     };
   }
   const improvement = IMPROVEMENT_ORDER.find((item) => !workflow.nodes.some((node) => node.type === item.type));
-  if (!improvement || workflow.nodes.length >= maxNodes) {
+  if (!improvement || workflow.nodes.length >= maxNodes || !enabled.has("add-role")) {
     const unlabeled = workflow.nodes.find((node) => !node.label?.trim());
-    if (unlabeled) {
+    if (unlabeled && enabled.has("normalize-label")) {
       const label = unlabeled.type[0].toUpperCase() + unlabeled.type.slice(1);
       return {
         kind: "normalize-label",
