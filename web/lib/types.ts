@@ -105,8 +105,10 @@ export interface Workflow {
 }
 
 export interface WorkflowProposal {
+  kind: "add-role" | "normalize-label" | "none";
   summary: string;
   rationale: string;
+  changes: string[];
   workflow: Workflow;
   changed: boolean;
 }
