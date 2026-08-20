@@ -75,6 +75,8 @@ export interface PreservedWorkspace {
 export interface WorkspaceChanges {
   status: string;
   diffStat: string;
+  patch: string;
+  files: string[];
 }
 
 export type MemoryScope = "agent" | "shared";

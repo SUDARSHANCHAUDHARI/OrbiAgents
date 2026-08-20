@@ -148,6 +148,18 @@ export async function discardPreservedWorkspace(id: string): Promise<void> {
   }
 }
 
+export async function applyWorkspaceFiles(id: string, files: string[]): Promise<void> {
+  const res = await fetch(`${API}/workspaces/${encodeURIComponent(id)}/apply`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ confirm: true, files }),
+  });
+  if (!res.ok) {
+    const body = (await res.json()) as { error?: string };
+    throw new Error(body.error ?? "Could not apply workspace files");
+  }
+}
+
 export async function listMemory(scope: MemoryScope, agentId?: string): Promise<MemoryEntry[]> {
   const query = new URLSearchParams({ scope });
   if (agentId) query.set("agentId", agentId);

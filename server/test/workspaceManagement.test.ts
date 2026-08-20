@@ -32,13 +32,42 @@ test("workspace operations inspect only paths below the configured root", async 
   const operations = new WorkspaceOperations("/repo", "/managed/worktrees", {
     async run(request) {
       calls.push(request.args);
-      return { stdout: request.args.includes("--short") ? " M file.ts\n" : " file.ts | 1 +\n", stderr: "", exitCode: 0 };
+      const stdout = request.args.includes("--short") ? " M file.ts\n" : request.args.includes("--name-only") ? "file.ts\0" : " file.ts | 1 +\n";
+      return { stdout, stderr: "", exitCode: 0 };
     },
   });
   const result = await operations.inspect("/managed/worktrees/run-node");
   assert.match(result.status, /file.ts/);
-  assert.equal(calls.length, 2);
+  assert.deepEqual(result.files, ["file.ts"]);
+  assert.equal(calls.length, 4);
   await assert.rejects(operations.inspect("/repo"), /outside the managed root/);
+});
+
+test("workspace apply validates paths, checks a clean target, and applies only selected tracked files", async () => {
+  const calls: Array<{ args: string[]; stdin?: string }> = [];
+  const operations = new WorkspaceOperations("/repo", "/managed/worktrees", {
+    async run(request) {
+      calls.push({ args: request.args, stdin: request.stdin });
+      const isDiff = request.args.includes("diff");
+      return { stdout: isDiff ? "diff --git a/src/a.ts b/src/a.ts\n" : "", stderr: "", exitCode: 0 };
+    },
+  });
+  await operations.applyFiles("/managed/worktrees/run-node", ["src/a.ts"]);
+  assert.deepEqual(calls.map((call) => call.args), [
+    ["-C", "/repo", "status", "--porcelain"],
+    ["-C", "/managed/worktrees/run-node", "diff", "--binary", "--", "src/a.ts"],
+    ["-C", "/repo", "apply", "--check", "-"],
+    ["-C", "/repo", "apply", "-"],
+  ]);
+  assert.match(calls[2].stdin ?? "", /diff --git/);
+  await assert.rejects(operations.applyFiles("/managed/worktrees/run-node", ["../secret"]), /Unsafe file path/);
+});
+
+test("workspace apply refuses a dirty target repository", async () => {
+  const operations = new WorkspaceOperations("/repo", "/managed/worktrees", {
+    async run() { return { stdout: " M user-change.ts\n", stderr: "", exitCode: 0 }; },
+  });
+  await assert.rejects(operations.applyFiles("/managed/worktrees/run-node", ["src/a.ts"]), /must be clean/);
 });
 
 test("workspace discard uses an explicit force-removal argument for a managed record", async () => {

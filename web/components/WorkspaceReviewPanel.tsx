@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { discardPreservedWorkspace, inspectPreservedWorkspace, listPreservedWorkspaces } from "@/lib/auth";
+import { applyWorkspaceFiles, discardPreservedWorkspace, inspectPreservedWorkspace, listPreservedWorkspaces } from "@/lib/auth";
 import { PreservedWorkspace, WorkspaceChanges } from "@/lib/types";
 
 export default function WorkspaceReviewPanel({ onClose }: { onClose: () => void }) {
@@ -10,6 +10,7 @@ export default function WorkspaceReviewPanel({ onClose }: { onClose: () => void 
   const [changes, setChanges] = useState<WorkspaceChanges | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
 
   useEffect(() => { void refresh(); }, []);
 
@@ -25,8 +26,26 @@ export default function WorkspaceReviewPanel({ onClose }: { onClose: () => void 
     setSelected(item);
     setChanges(null);
     setError(null);
-    try { setChanges(await inspectPreservedWorkspace(item.id)); }
+    try {
+      const next = await inspectPreservedWorkspace(item.id);
+      setChanges(next);
+      setSelectedFiles(next.files);
+    }
     catch (reason) { setError(reason instanceof Error ? reason.message : "Could not inspect workspace"); }
+  }
+
+  async function applySelected() {
+    if (!selected || selectedFiles.length === 0) return;
+    if (!window.confirm(`Apply ${selectedFiles.length} selected file(s) to the main workspace? The target must be clean.`)) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await applyWorkspaceFiles(selected.id, selectedFiles);
+      setChanges(await inspectPreservedWorkspace(selected.id));
+      setSelectedFiles([]);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Could not apply workspace files");
+    } finally { setBusy(false); }
   }
 
   async function discard(item: PreservedWorkspace) {
@@ -69,6 +88,13 @@ export default function WorkspaceReviewPanel({ onClose }: { onClose: () => void 
           <strong style={{ fontSize: 12 }}>Changed files</strong>
           <pre style={{ whiteSpace: "pre-wrap", color: "#D1D5DB", fontSize: 11 }}>{changes.status || "No current changes"}</pre>
           {changes.diffStat && <pre style={{ whiteSpace: "pre-wrap", color: "#93C5FD", fontSize: 11 }}>{changes.diffStat}</pre>}
+          {changes.files.map((file) => (
+            <label key={file} style={{ display: "block", margin: "6px 0", fontSize: 12 }}>
+              <input type="checkbox" checked={selectedFiles.includes(file)} onChange={(event) => setSelectedFiles((current) => event.target.checked ? [...current, file] : current.filter((value) => value !== file))} /> {file}
+            </label>
+          ))}
+          <button onClick={() => void applySelected()} disabled={busy || selectedFiles.length === 0} style={{ marginTop: 8, padding: "7px 10px", borderRadius: 6, border: "1px solid #16A34A", background: "#166534", color: "white" }}>Apply selected…</button>
+          {changes.patch && <details style={{ marginTop: 10 }}><summary style={{ cursor: "pointer", fontSize: 12 }}>Review patch</summary><pre style={{ whiteSpace: "pre-wrap", color: "#D1D5DB", fontSize: 10, overflowWrap: "anywhere" }}>{changes.patch}</pre></details>}
         </section>
       )}
     </aside>
