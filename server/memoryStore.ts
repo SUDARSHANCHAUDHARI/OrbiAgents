@@ -68,11 +68,35 @@ export async function deleteMemory(userId: string, id: string): Promise<boolean>
   return (await db.memoryEntry.deleteMany({ where: { id, userId } })).count === 1;
 }
 
-export async function buildMemoryContext(userId: string, projectKey: string, agentId: string): Promise<string> {
+export interface RankableMemory { content: string; updatedAt: Date }
+
+export function rankMemoryEntries<T extends RankableMemory>(entries: T[], query: string, limit = 20): T[] {
+  const queryTerms = termFrequency(query);
+  if (queryTerms.size === 0) return entries.slice(0, limit);
+  return entries.map((entry, index) => ({ entry, index, score: cosineSimilarity(queryTerms, termFrequency(entry.content)) }))
+    .sort((a, b) => b.score - a.score || b.entry.updatedAt.getTime() - a.entry.updatedAt.getTime() || a.index - b.index)
+    .slice(0, limit).map(({ entry }) => entry);
+}
+
+function termFrequency(value: string): Map<string, number> {
+  const terms = value.toLowerCase().match(/[a-z0-9]{2,}/g) ?? [];
+  const frequencies = new Map<string, number>();
+  for (const term of terms) frequencies.set(term, (frequencies.get(term) ?? 0) + 1);
+  return frequencies;
+}
+
+function cosineSimilarity(a: Map<string, number>, b: Map<string, number>): number {
+  let dot = 0; let aMagnitude = 0; let bMagnitude = 0;
+  for (const value of a.values()) aMagnitude += value * value;
+  for (const [term, value] of b) { bMagnitude += value * value; dot += value * (a.get(term) ?? 0); }
+  return aMagnitude && bMagnitude ? dot / Math.sqrt(aMagnitude * bMagnitude) : 0;
+}
+
+export async function buildRelevantMemoryContext(userId: string, projectKey: string, agentId: string, query: string): Promise<string> {
   const entries = await db.memoryEntry.findMany({
     where: { userId, projectKey, OR: [{ scope: "shared" }, { scope: "agent", agentId }], AND: [{ OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] }] },
-    orderBy: { updatedAt: "desc" }, take: 20,
+    orderBy: { updatedAt: "desc" }, take: 100,
   });
-  const content = entries.map((entry) => `- ${entry.content}`).join("\n").slice(0, 8_000);
+  const content = rankMemoryEntries(entries, query).map((entry) => `- ${entry.content}`).join("\n").slice(0, 8_000);
   return content ? `Relevant durable memory:\n${content}` : "";
 }

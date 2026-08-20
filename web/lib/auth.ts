@@ -175,8 +175,8 @@ export async function listMemory(scope: MemoryScope, agentId?: string): Promise<
   return res.json() as Promise<MemoryEntry[]>;
 }
 
-export async function createMemory(scope: MemoryScope, content: string, agentId?: string): Promise<MemoryEntry> {
-  const res = await fetch(`${API}/memory`, { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ scope, agentId: scope === "agent" ? agentId : undefined, content }) });
+export async function createMemory(scope: MemoryScope, content: string, agentId?: string, retentionDays?: number): Promise<MemoryEntry> {
+  const res = await fetch(`${API}/memory`, { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ scope, agentId: scope === "agent" ? agentId : undefined, content, retentionDays }) });
   const body = (await res.json()) as MemoryEntry & { error?: string };
   if (!res.ok) throw new Error(body.error ?? "Could not save memory");
   return body;

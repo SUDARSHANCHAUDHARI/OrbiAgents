@@ -38,7 +38,7 @@ import {
 import { createRateLimit } from "./rateLimit";
 import { validateServerEnv } from "./env";
 import { logServerEvent, requestLogger } from "./logger";
-import { buildMemoryContext, deleteMemory, listMemory, MemoryScope, updateMemory, writeMemory } from "./memoryStore";
+import { buildRelevantMemoryContext, deleteMemory, listMemory, MemoryScope, updateMemory, writeMemory } from "./memoryStore";
 import { markMessageRead, MessageKind, readInbox, sendMessage } from "./mailboxStore";
 import { OrbiPrimeSupervisor } from "./supervisor";
 import { proposeWorkflowImprovement } from "./workflowProposal";
@@ -653,7 +653,7 @@ app.post("/workflow", protect, workflowRateLimit, async (req, res) => {
         supervisor: new OrbiPrimeSupervisor((event) => publishWorkflowEvent(userId, event)),
         signal: runtime.workflowAbortController.signal,
         getMemoryContext: memory?.enabled
-          ? (_node, agentId) => buildMemoryContext(userId, memory.projectKey?.trim() || "default", agentId)
+          ? (node, agentId) => buildRelevantMemoryContext(userId, memory.projectKey?.trim() || "default", agentId, `${task.trim()} ${node.label ?? node.type}`)
           : undefined,
       }
     );
