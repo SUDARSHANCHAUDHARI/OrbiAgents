@@ -13,6 +13,7 @@ const IMPROVEMENT_ORDER: Array<{ type: WorkflowNodeType; label: string; rational
   { type: "reviewer", label: "Reviewer", rationale: "Add an independent review step before the workflow completes." },
   { type: "debugger", label: "Debugger", rationale: "Add a bounded recovery step for issues found downstream." },
 ];
+const NODE_TYPES = new Set<WorkflowNodeType>(["planner", "coder", "tester", "reviewer", "debugger"]);
 
 export function validateWorkflowGraph(workflow: Workflow, maxNodes = 12): void {
   if (!workflow || !Array.isArray(workflow.nodes) || !Array.isArray(workflow.edges)) throw new Error("Invalid workflow");
@@ -20,6 +21,7 @@ export function validateWorkflowGraph(workflow: Workflow, maxNodes = 12): void {
   const ids = new Set<string>();
   for (const node of workflow.nodes) {
     if (!node.id?.trim() || ids.has(node.id)) throw new Error("Workflow node ids must be non-empty and unique");
+    if (!NODE_TYPES.has(node.type)) throw new Error("Workflow contains an unsupported node type");
     ids.add(node.id);
   }
   for (const edge of workflow.edges) {

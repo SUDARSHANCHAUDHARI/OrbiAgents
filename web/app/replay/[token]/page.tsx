@@ -21,6 +21,7 @@ export default function PublicReplayPage({
   const [speed, setSpeed] = useState<ReplaySpeed>(1);
   const [notFound, setNotFound] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const speedRef = useRef<ReplaySpeed>(1);
 
   useEffect(() => {
     fetch(`${getApiBaseUrl()}/replay/public/${token}`)
@@ -41,7 +42,7 @@ export default function PublicReplayPage({
       setAgents(session.frames[i].agents);
       setFrame(i + 1);
       if (i >= session.frames.length - 1) { intervalRef.current = null; setPlaying(false); return; }
-      const delay = replayDelay(session.frames, i, speed);
+      const delay = replayDelay(session.frames, i, speedRef.current);
       i++;
       intervalRef.current = setTimeout(tick, delay);
     };
@@ -68,6 +69,8 @@ export default function PublicReplayPage({
     setFrame(safeFrame);
     if (session?.frames[safeFrame - 1]) setAgents(session.frames[safeFrame - 1].agents);
   }
+
+  function changeSpeed(nextSpeed: ReplaySpeed) { speedRef.current = nextSpeed; setSpeed(nextSpeed); }
 
   if (notFound) {
     return (
@@ -132,49 +135,18 @@ export default function PublicReplayPage({
           />
         ))}
 
-        {/* Controls */}
-        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-3 bg-gray-900 border border-gray-700 rounded-xl px-5 py-3 shadow-2xl z-10">
-          <button
-            onClick={reset}
-            className="text-gray-400 hover:text-white text-sm transition-colors"
-          >
-            ↺ Reset
-          </button>
-          {playing ? (
-            <button
-              onClick={stopPlay}
-              className="px-4 py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded-lg"
-            >
-              ⏸ Pause
-            </button>
-          ) : (
-            <button
-              onClick={startPlay}
-              disabled={frame >= session.frames.length}
-              className="px-4 py-1.5 bg-purple-700 hover:bg-purple-600 disabled:opacity-40 text-white text-sm font-medium rounded-lg"
-            >
-              ▶ Play
-            </button>
-          )}
-          <span className="text-gray-600 text-xs font-mono">
-            {frame} / {session.frames.length}
-          </span>
-        </div>
-
-        {(
-          <ReplayBar
+        <ReplayBar
             task={session.task}
             current={frame}
             total={session.frames.length}
             speed={speed}
             playing={playing}
-            onSpeedChange={setSpeed}
-            onStop={stopPlay}
+            onSpeedChange={changeSpeed}
+            onStop={reset}
             onTogglePlaying={playing ? stopPlay : startPlay}
             onSeek={seek}
             onStep={(delta) => seek(frame + delta)}
-          />
-        )}
+        />
       </main>
     </div>
   );

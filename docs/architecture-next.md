@@ -24,13 +24,15 @@ The dynamic runner maintains dependency counts, starts ready nodes up to `MAX_PA
 
 ### Observability
 
-Supervisor events are broadcast through the authenticated WebSocket and persisted with session replay. The web dashboard shows live supervisor state, active agents, recent lifecycle events, concurrent work, and mailbox delivery using original OrbiAgents visuals. Replay uses recorded frame intervals and reveals events only when their recorded frame time is reached.
+Supervisor events are broadcast through the authenticated WebSocket and persisted with session replay. The web dashboard shows live supervisor state, active agents, recent lifecycle events, concurrent work, and mailbox delivery using original OrbiAgents visuals. Replay uses recorded frame intervals, reveals events only when their recorded frame time is reached, and supports play/pause, stepping, and timeline seeking.
+
+Orbi-Prime can propose one bounded, validated role insertion at a time. The proposal is previewed separately and cannot alter the active workflow until the user confirms it. Memory retrieval remains local-first: it ranks a bounded candidate set by deterministic text-vector similarity and filters expired entries. Preserved worktrees expose untracked files separately; each new regular file must be selected explicitly and passes size, symlink, destination, and clean-target checks before copying.
 
 ## Deliberately not claimed as complete
 
-- Autonomous supervisor changes to user workflows
-- Automatic memory extraction and semantic retrieval (bounded prompt injection is opt-in and implemented)
-- Selective inclusion of newly created untracked files from agent worktrees
+- Autonomous supervisor changes to user workflows without approval
+- Automatic memory extraction or external embedding/vector infrastructure
+- Patch previews for untracked binary files (safe explicit copying is implemented)
 - Arbitrary or destructive recovery actions
 
 These boundaries keep existing API workflows safe and working while providing tested extension points for local coding agents.

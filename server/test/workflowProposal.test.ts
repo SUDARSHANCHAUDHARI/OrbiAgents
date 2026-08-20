@@ -13,5 +13,6 @@ test("supervisor proposes a bounded tester insertion without mutating the input"
 
 test("workflow proposal validation rejects cycles and duplicate ids", () => {
   assert.throws(() => validateWorkflowGraph({ nodes: [{ id: "a", type: "planner" }, { id: "a", type: "coder" }], edges: [] }), /unique/);
+  assert.throws(() => validateWorkflowGraph({ nodes: [{ id: "a", type: "unknown" as "planner" }], edges: [] }), /unsupported/);
   assert.throws(() => validateWorkflowGraph({ nodes: [{ id: "a", type: "planner" }, { id: "b", type: "coder" }], edges: [{ from: "a", to: "b" }, { from: "b", to: "a" }] }), /cycle/);
 });
