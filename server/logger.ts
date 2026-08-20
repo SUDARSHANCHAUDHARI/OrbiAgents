@@ -13,11 +13,16 @@ export function requestLogger(req: Request, res: Response, next: NextFunction): 
     const durationMs = Date.now() - startedAt;
     const userId = req.userId ?? "anon";
     console.log(
-      `[${isoNow()}] ${requestId} ${req.method} ${req.originalUrl} ${res.statusCode} ${durationMs}ms user=${userId}`
+      `[${isoNow()}] ${requestId} ${req.method} ${safeRequestPath(req.originalUrl)} ${res.statusCode} ${durationMs}ms user=${userId}`
     );
   });
 
   next();
+}
+
+export function safeRequestPath(originalUrl: string): string {
+  const queryIndex = originalUrl.indexOf("?");
+  return queryIndex === -1 ? originalUrl : originalUrl.slice(0, queryIndex);
 }
 
 export function logServerEvent(message: string): void {

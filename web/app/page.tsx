@@ -141,7 +141,7 @@ export default function Home() {
     if (!isAuthed) return;
     const token = getToken();
     if (!token) return;
-    const ws = new WebSocket(`${getWebSocketBaseUrl()}?token=${encodeURIComponent(token)}`);
+    const ws = new WebSocket(getWebSocketBaseUrl(), ["orbiagents", token]);
     wsRef.current = ws;
 
     ws.onmessage = (event) => {

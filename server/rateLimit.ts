@@ -8,11 +8,8 @@ interface RateLimitOptions {
   message: string;
 }
 
-function getBucketKey(req: Request, key: string): string {
-  const forwarded = req.headers["x-forwarded-for"];
-  const ip = Array.isArray(forwarded)
-    ? forwarded[0]
-    : forwarded?.split(",")[0]?.trim() ?? req.socket.remoteAddress ?? "unknown";
+export function getBucketKey(req: Request, key: string): string {
+  const ip = req.ip || req.socket.remoteAddress || "unknown";
   const userId = req.userId ?? "anon";
   return `${key}:${userId}:${ip}`;
 }

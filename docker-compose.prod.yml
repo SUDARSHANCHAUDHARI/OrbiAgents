@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   server:
     build:
@@ -15,6 +13,8 @@ services:
       MAX_RUNS_PER_HOUR: ${MAX_RUNS_PER_HOUR:-30}
       MAX_DAILY_COST_USD: ${MAX_DAILY_COST_USD:-10}
       MAX_WORKFLOW_NODES: ${MAX_WORKFLOW_NODES:-12}
+      MAX_PARALLEL_AGENTS: ${MAX_PARALLEL_AGENTS:-3}
+      TRUST_PROXY: ${TRUST_PROXY:-false}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}

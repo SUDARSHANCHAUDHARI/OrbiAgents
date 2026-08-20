@@ -18,7 +18,11 @@ export function signToken(userId: string): string {
 }
 
 export function verifyToken(token: string): { sub: string } {
-  return jwt.verify(token, JWT_SECRET) as { sub: string };
+  const payload = jwt.verify(token, JWT_SECRET, { algorithms: ["HS256"] });
+  if (typeof payload === "string" || typeof payload.sub !== "string" || !payload.sub) {
+    throw new Error("Token subject is invalid");
+  }
+  return { sub: payload.sub };
 }
 
 // Express middleware — attaches userId to request or returns 401

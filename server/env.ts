@@ -25,6 +25,7 @@ export function validateServerEnv(env: NodeJS.ProcessEnv = process.env): void {
     "MAX_RUNS_PER_HOUR",
     "MAX_DAILY_COST_USD",
     "MAX_WORKFLOW_NODES",
+    "MAX_PARALLEL_AGENTS",
     "MEMORY_EMBEDDING_CACHE_TTL_DAYS",
     "MEMORY_EMBEDDING_CACHE_MAX_ENTRIES",
   ] as const;
@@ -52,6 +53,9 @@ export function validateServerEnv(env: NodeJS.ProcessEnv = process.env): void {
 
   if (env.LOCAL_CLI_ENABLED != null && !["true", "false"].includes(env.LOCAL_CLI_ENABLED)) {
     throw new Error("LOCAL_CLI_ENABLED must be true or false");
+  }
+  if (env.TRUST_PROXY != null && !["true", "false"].includes(env.TRUST_PROXY)) {
+    throw new Error("TRUST_PROXY must be true or false");
   }
   if (env.MEMORY_EMBEDDINGS_ENABLED != null && !["true", "false"].includes(env.MEMORY_EMBEDDINGS_ENABLED)) throw new Error("MEMORY_EMBEDDINGS_ENABLED must be true or false");
   if (env.MEMORY_EMBEDDINGS_ENABLED === "true" && !env.OPENAI_API_KEY) throw new Error("OPENAI_API_KEY is required when memory embeddings are enabled");

@@ -133,6 +133,10 @@ test("health endpoint reports basic server status", async () => {
   assert.equal(body.status, "ok");
   assert.equal(typeof body.uptimeSec, "number");
   assert.equal(typeof body.runtimes, "number");
+  assert.equal(res.headers.get("x-content-type-options"), "nosniff");
+  assert.equal(res.headers.get("referrer-policy"), "no-referrer");
+  assert.equal(res.headers.get("x-frame-options"), "DENY");
+  assert.equal(res.headers.get("vary"), "Origin");
 });
 
 test("share links can be created by the owner and viewed publicly", async () => {
@@ -168,7 +172,7 @@ test("websocket rejects missing token and accepts authenticated clients", async 
 
   await new Promise<void>((resolve, reject) => {
     const token = signToken(`ws-user-${Date.now()}`);
-    const ws = new WebSocket(`${wsUrl}?token=${encodeURIComponent(token)}`);
+    const ws = new WebSocket(wsUrl, ["orbiagents", token]);
 
     ws.on("message", (data) => {
       const payload = JSON.parse(data.toString()) as unknown;
@@ -177,6 +181,13 @@ test("websocket rejects missing token and accepts authenticated clients", async 
       resolve();
     });
 
+    ws.on("error", reject);
+  });
+
+  await new Promise<void>((resolve, reject) => {
+    const token = signToken(`legacy-ws-user-${Date.now()}`);
+    const ws = new WebSocket(`${wsUrl}?token=${encodeURIComponent(token)}`);
+    ws.on("message", () => { ws.close(); resolve(); });
     ws.on("error", reject);
   });
 });
