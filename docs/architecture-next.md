@@ -26,13 +26,13 @@ The dynamic runner maintains dependency counts, starts ready nodes up to `MAX_PA
 
 Supervisor events are broadcast through the authenticated WebSocket and persisted with session replay. The web dashboard shows live supervisor state, active agents, recent lifecycle events, concurrent work, and mailbox delivery using original OrbiAgents visuals. Replay uses recorded frame intervals, reveals events only when their recorded frame time is reached, and supports play/pause, stepping, timeline seeking, in-session bookmarks, and event-type filtering.
 
-Orbi-Prime proposes bounded, validated changes one at a time. Current policies cover role insertion and label normalization; each proposal includes an exact change list and cannot alter the active workflow until the user confirms it. Memory retrieval remains local-first: it ranks a bounded candidate set by deterministic text-vector similarity and filters expired entries. Operators may opt into OpenAI embeddings; any configuration or request failure falls back to local ranking. Preserved worktrees expose untracked files separately with bounded text previews or binary classification; each new regular file must be selected explicitly and passes size, symlink, destination, and clean-target checks before copying.
+Orbi-Prime proposes bounded, validated changes one at a time. Current policies cover role insertion, duplicate-role removal with dependency-preserving bypass edges, and label normalization; each proposal includes an exact change list and cannot alter the active workflow until the user confirms it. Memory retrieval remains local-first: it ranks a bounded candidate set by deterministic text-vector similarity and filters expired entries. Operators may opt into OpenAI embeddings; vectors are cached in user-scoped local SQLite records and any configuration, cache, or request failure falls back to local ranking. Replay bookmarks persist per authenticated user and session. Preserved worktrees expose untracked files separately with bounded text previews, binary metadata, or inline previews for recognized images under 64 KB; each new regular file must be selected explicitly and passes size, symlink, destination, and clean-target checks before copying.
 
 ## Deliberately not claimed as complete
 
 - Autonomous supervisor changes to user workflows without approval
 - Automatic memory extraction or a hosted vector database
-- Rendering untrusted binary content (safe classification and explicit copying are implemented)
+- General rendering of untrusted binary content (only bounded, signature-recognized raster images are previewed)
 - Arbitrary or destructive recovery actions
 
 These boundaries keep existing API workflows safe and working while providing tested extension points for local coding agents.
