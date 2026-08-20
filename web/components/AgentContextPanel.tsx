@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { createMemory, listInbox, listMemory, markMailboxMessageRead, sendMailboxMessage } from "@/lib/auth";
 import { MailboxMessage, MemoryEntry, MemoryScope, MessageKind } from "@/lib/types";
 

@@ -325,6 +325,8 @@ After setting the three `LOCAL_CLI_*` variables above and restarting the server,
 
 Local commands are spawned without a shell from a fixed allowlist. Each node runs in a dedicated branch and Git worktree outside the source repository. Clean worktrees are removed after the node finishes; worktrees containing agent changes are preserved, and their path is returned in the corresponding workflow result step for operator review. OrbiAgents does not automatically commit, merge, push, or delete those changes.
 
+The web workspace lists the runtime adapters enabled by the server, displays preserved worktrees, shows their changed-file and diff summaries, and requires confirmation before discarding one. Its Context panel supports agent/shared memory, typed mailbox messages, inbox review, and read status. Preserved-workspace registry entries currently live in server memory, so restart-safe discovery of older dirty worktrees remains future work; the worktrees themselves are not deleted on restart.
+
 ## Current status
 
 | Capability | Status |
@@ -350,6 +352,8 @@ Local commands are spawned without a shell from a fixed allowlist. Each node run
 | API runtime adapter | ✅ Built and default |
 | Codex and Claude Code CLI adapters | ✅ Opt-in for dynamic workflows; disabled by default |
 | Git worktree isolation | ✅ Required for local CLI nodes; dirty worktrees are preserved |
+| Runtime and preserved-workspace operator UI | ✅ Built |
+| Agent/shared memory and mailbox operator UI | ✅ Built |
 | Autonomous supervisor workflow mutation and recovery | 🧭 Planned |
 
 ## Product direction
@@ -366,7 +370,7 @@ The next architectural milestones are focused on making orchestration deeper rat
 
 1. Let Orbi-Prime safely modify workflows and choose recovery actions
 2. Inject selected memory into agent prompts with explicit retention controls
-3. Add mailbox conversation and memory-management UI
+3. Persist the preserved-workspace registry across server restarts
 4. Expand replay to synchronize event timing precisely with agent frames
 
 ## Why OrbiAgents

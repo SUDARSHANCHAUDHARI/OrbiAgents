@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { discardPreservedWorkspace, inspectPreservedWorkspace, listPreservedWorkspaces } from "@/lib/auth";
 import { PreservedWorkspace, WorkspaceChanges } from "@/lib/types";
 
