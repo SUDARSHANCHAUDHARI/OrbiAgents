@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { configuredMemoryEmbedder, rankByEmbeddings } from "./memoryEmbedding";
+import { configuredMemoryEmbedder, rankByCachedEmbeddings } from "./memoryEmbedding";
 
 export type MemoryScope = "agent" | "shared";
 
@@ -101,7 +101,22 @@ export async function buildRelevantMemoryContext(userId: string, projectKey: str
   const embedder = configuredMemoryEmbedder();
   let ranked = rankMemoryEntries(entries, query);
   if (embedder) {
-    try { ranked = await rankByEmbeddings(entries, query, (entry) => entry.content, embedder); }
+    try {
+      const model = embedder.cacheKey ?? "default";
+      ranked = await rankByCachedEmbeddings(entries, query, (entry) => entry.content, embedder, {
+        async get(keys) {
+          const rows = await db.memoryEmbeddingCache.findMany({ where: { userId, model, contentHash: { in: keys } } });
+          return new Map(rows.map((row) => [row.contentHash, JSON.parse(row.vector) as number[]]));
+        },
+        async set(values) {
+          await db.$transaction(values.map(({ key, vector }) => db.memoryEmbeddingCache.upsert({
+            where: { userId_model_contentHash: { userId, model, contentHash: key } },
+            create: { userId, model, contentHash: key, vector: JSON.stringify(vector) },
+            update: { vector: JSON.stringify(vector) },
+          })));
+        },
+      });
+    }
     catch (error) { console.warn(`[memory] Embedding retrieval failed; using local ranking: ${error instanceof Error ? error.message : String(error)}`); }
   }
   const content = ranked.map((entry) => `- ${entry.content}`).join("\n").slice(0, 8_000);

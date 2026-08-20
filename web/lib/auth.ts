@@ -255,3 +255,17 @@ export async function createReplayShareLink(sessionId: string): Promise<{ token:
   }
   return { token: body.token, url: body.url };
 }
+
+export async function getReplayBookmarks(sessionId: string): Promise<number[]> {
+  const res = await fetch(`${API}/replay/${encodeURIComponent(sessionId)}/bookmarks`, { headers: authHeaders() });
+  const body = (await res.json()) as { frames?: number[]; error?: string };
+  if (!res.ok) throw new Error(body.error ?? "Could not load replay bookmarks");
+  return body.frames ?? [];
+}
+
+export async function saveReplayBookmarks(sessionId: string, frames: number[]): Promise<number[]> {
+  const res = await fetch(`${API}/replay/${encodeURIComponent(sessionId)}/bookmarks`, { method: "PUT", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ frames }) });
+  const body = (await res.json()) as { frames?: number[]; error?: string };
+  if (!res.ok) throw new Error(body.error ?? "Could not save replay bookmarks");
+  return body.frames ?? [];
+}

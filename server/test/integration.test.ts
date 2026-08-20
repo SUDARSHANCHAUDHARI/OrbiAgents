@@ -76,6 +76,23 @@ test("protected replay endpoints enforce session ownership", async () => {
   assert.equal(otherRes.status, 404);
 });
 
+test("replay bookmarks persist per owner and reject invalid frames", async () => {
+  const sessionId = `bookmark-session-${Date.now()}`;
+  const owner = await createTestUser("bookmark-owner");
+  const other = await createTestUser("bookmark-other");
+  await createSession(sessionId, "Bookmark replay", owner.id);
+  recordFrame(sessionId, [makeAgent()]); recordFrame(sessionId, [makeAgent()]);
+
+  const saved = await fetch(`${baseUrl}/replay/${sessionId}/bookmarks`, { method: "PUT", headers: makeJsonHeaders(owner.token), body: JSON.stringify({ frames: [2, 1, 2] }) });
+  assert.equal(saved.status, 200); assert.deepEqual(await saved.json(), { frames: [1, 2] });
+  assert.deepEqual((await db.replayBookmark.findMany({ where: { userId: owner.id, sessionId }, orderBy: { frame: "asc" } })).map((row) => row.frame), [1, 2]);
+
+  const loaded = await fetch(`${baseUrl}/replay/${sessionId}/bookmarks`, { headers: makeHeaders(owner.token) });
+  assert.deepEqual(await loaded.json(), { frames: [1, 2] });
+  assert.equal((await fetch(`${baseUrl}/replay/${sessionId}/bookmarks`, { headers: makeHeaders(other.token) })).status, 404);
+  assert.equal((await fetch(`${baseUrl}/replay/${sessionId}/bookmarks`, { method: "PUT", headers: makeJsonHeaders(owner.token), body: JSON.stringify({ frames: [3] }) })).status, 400);
+});
+
 test("health endpoint reports basic server status", async () => {
   const res = await fetch(`${baseUrl}/health`);
   assert.equal(res.status, 200);
