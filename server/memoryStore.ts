@@ -1,4 +1,5 @@
 import { db } from "./db";
+import { configuredMemoryEmbedder, rankByEmbeddings } from "./memoryEmbedding";
 
 export type MemoryScope = "agent" | "shared";
 
@@ -97,6 +98,12 @@ export async function buildRelevantMemoryContext(userId: string, projectKey: str
     where: { userId, projectKey, OR: [{ scope: "shared" }, { scope: "agent", agentId }], AND: [{ OR: [{ expiresAt: null }, { expiresAt: { gt: new Date() } }] }] },
     orderBy: { updatedAt: "desc" }, take: 100,
   });
-  const content = rankMemoryEntries(entries, query).map((entry) => `- ${entry.content}`).join("\n").slice(0, 8_000);
+  const embedder = configuredMemoryEmbedder();
+  let ranked = rankMemoryEntries(entries, query);
+  if (embedder) {
+    try { ranked = await rankByEmbeddings(entries, query, (entry) => entry.content, embedder); }
+    catch (error) { console.warn(`[memory] Embedding retrieval failed; using local ranking: ${error instanceof Error ? error.message : String(error)}`); }
+  }
+  const content = ranked.map((entry) => `- ${entry.content}`).join("\n").slice(0, 8_000);
   return content ? `Relevant durable memory:\n${content}` : "";
 }
