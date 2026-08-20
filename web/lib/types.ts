@@ -77,6 +77,7 @@ export interface WorkspaceChanges {
   diffStat: string;
   patch: string;
   files: string[];
+  untrackedFiles: string[];
 }
 
 export type MemoryScope = "agent" | "shared";

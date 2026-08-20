@@ -155,11 +155,11 @@ export async function discardPreservedWorkspace(id: string): Promise<void> {
   }
 }
 
-export async function applyWorkspaceFiles(id: string, files: string[]): Promise<void> {
+export async function applyWorkspaceFiles(id: string, files: string[], untrackedFiles: string[] = []): Promise<void> {
   const res = await fetch(`${API}/workspaces/${encodeURIComponent(id)}/apply`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...authHeaders() },
-    body: JSON.stringify({ confirm: true, files }),
+    body: JSON.stringify({ confirm: true, files, untrackedFiles }),
   });
   if (!res.ok) {
     const body = (await res.json()) as { error?: string };

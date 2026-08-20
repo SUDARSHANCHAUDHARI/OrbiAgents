@@ -502,14 +502,14 @@ app.delete("/workspaces/:id", protect, async (req, res) => {
 });
 
 app.post("/workspaces/:id/apply", protect, async (req, res) => {
-  if (req.body?.confirm !== true || !Array.isArray(req.body?.files)) {
-    res.status(400).json({ error: "confirm must be true and files must be an array" }); return;
+  if (req.body?.confirm !== true || !Array.isArray(req.body?.files) || !Array.isArray(req.body?.untrackedFiles ?? [])) {
+    res.status(400).json({ error: "confirm must be true and file selections must be arrays" }); return;
   }
   const workspace = await workspaceRegistry.get(req.userId!, req.params.id);
   if (!workspace) { res.status(404).json({ error: "Workspace not found" }); return; }
   try {
-    await configuredWorkspaceOperations().applyFiles(workspace.path, req.body.files);
-    res.json({ status: "applied", files: req.body.files });
+    await configuredWorkspaceOperations().applyFiles(workspace.path, req.body.files, req.body.untrackedFiles ?? []);
+    res.json({ status: "applied", files: req.body.files, untrackedFiles: req.body.untrackedFiles ?? [] });
   } catch (error) {
     res.status(400).json({ error: error instanceof Error ? error.message : String(error) });
   }
