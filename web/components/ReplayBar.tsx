@@ -1,5 +1,7 @@
 "use client";
 
+import React from "react";
+
 const SPEEDS = [0.5, 1, 2, 4] as const;
 export type ReplaySpeed = (typeof SPEEDS)[number];
 
@@ -8,11 +10,15 @@ interface Props {
   current: number;
   total: number;
   speed: ReplaySpeed;
+  playing: boolean;
   onStop: () => void;
   onSpeedChange: (speed: ReplaySpeed) => void;
+  onTogglePlaying: () => void;
+  onSeek: (frame: number) => void;
+  onStep: (delta: number) => void;
 }
 
-export default function ReplayBar({ task, current, total, speed, onStop, onSpeedChange }: Props) {
+export default function ReplayBar({ task, current, total, speed, playing, onStop, onSpeedChange, onTogglePlaying, onSeek, onStep }: Props) {
   const pct = total > 0 ? Math.round((current / total) * 100) : 0;
   const chrome = {
     bg: "rgba(15, 23, 42, 0.96)",
@@ -76,6 +82,12 @@ export default function ReplayBar({ task, current, total, speed, onStop, onSpeed
       </div>
 
       {/* Progress bar */}
+      <div className="flex items-center gap-2 mb-2">
+        <button onClick={() => onStep(-1)} disabled={current <= 1} aria-label="Previous replay frame">◀</button>
+        <button onClick={onTogglePlaying} aria-label={playing ? "Pause replay" : "Play replay"}>{playing ? "Pause" : "Play"}</button>
+        <button onClick={() => onStep(1)} disabled={current >= total} aria-label="Next replay frame">▶</button>
+        <input aria-label="Replay timeline" type="range" min={1} max={Math.max(total, 1)} value={Math.max(current, 1)} onChange={(event) => onSeek(Number(event.target.value))} style={{ flex: 1 }} />
+      </div>
       <div
         className="h-1.5 rounded-full overflow-hidden"
         style={{ background: "rgba(11, 15, 20, 0.72)", boxShadow: "inset 0 1px 2px rgba(0,0,0,0.25)" }}

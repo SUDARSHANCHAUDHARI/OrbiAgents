@@ -11,6 +11,7 @@ export default function WorkspaceReviewPanel({ onClose }: { onClose: () => void 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<string[]>([]);
+  const [selectedUntracked, setSelectedUntracked] = useState<string[]>([]);
 
   useEffect(() => { void refresh(); }, []);
 
@@ -30,19 +31,21 @@ export default function WorkspaceReviewPanel({ onClose }: { onClose: () => void 
       const next = await inspectPreservedWorkspace(item.id);
       setChanges(next);
       setSelectedFiles(next.files);
+      setSelectedUntracked([]);
     }
     catch (reason) { setError(reason instanceof Error ? reason.message : "Could not inspect workspace"); }
   }
 
   async function applySelected() {
-    if (!selected || selectedFiles.length === 0) return;
-    if (!window.confirm(`Apply ${selectedFiles.length} selected file(s) to the main workspace? The target must be clean.`)) return;
+    if (!selected || selectedFiles.length + selectedUntracked.length === 0) return;
+    if (!window.confirm(`Apply ${selectedFiles.length + selectedUntracked.length} selected file(s) to the main workspace? The target must be clean. New files are copied only when they do not already exist.`)) return;
     setBusy(true);
     setError(null);
     try {
-      await applyWorkspaceFiles(selected.id, selectedFiles);
+      await applyWorkspaceFiles(selected.id, selectedFiles, selectedUntracked);
       setChanges(await inspectPreservedWorkspace(selected.id));
       setSelectedFiles([]);
+      setSelectedUntracked([]);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Could not apply workspace files");
     } finally { setBusy(false); }
@@ -93,7 +96,9 @@ export default function WorkspaceReviewPanel({ onClose }: { onClose: () => void 
               <input type="checkbox" checked={selectedFiles.includes(file)} onChange={(event) => setSelectedFiles((current) => event.target.checked ? [...current, file] : current.filter((value) => value !== file))} /> {file}
             </label>
           ))}
-          <button onClick={() => void applySelected()} disabled={busy || selectedFiles.length === 0} style={{ marginTop: 8, padding: "7px 10px", borderRadius: 6, border: "1px solid #16A34A", background: "#166534", color: "white" }}>Apply selected…</button>
+          {changes.untrackedFiles.length > 0 && <strong style={{ display: "block", fontSize: 12, marginTop: 10 }}>New untracked files</strong>}
+          {changes.untrackedFiles.map((file) => <label key={file} style={{ display: "block", margin: "6px 0", fontSize: 12 }}><input type="checkbox" checked={selectedUntracked.includes(file)} onChange={(event) => setSelectedUntracked((current) => event.target.checked ? [...current, file] : current.filter((value) => value !== file))} /> {file} <small style={{ color: "#FDE68A" }}>new</small></label>)}
+          <button onClick={() => void applySelected()} disabled={busy || selectedFiles.length + selectedUntracked.length === 0} style={{ marginTop: 8, padding: "7px 10px", borderRadius: 6, border: "1px solid #16A34A", background: "#166534", color: "white" }}>Apply selected…</button>
           {changes.patch && <details style={{ marginTop: 10 }}><summary style={{ cursor: "pointer", fontSize: 12 }}>Review patch</summary><pre style={{ whiteSpace: "pre-wrap", color: "#D1D5DB", fontSize: 10, overflowWrap: "anywhere" }}>{changes.patch}</pre></details>}
         </section>
       )}

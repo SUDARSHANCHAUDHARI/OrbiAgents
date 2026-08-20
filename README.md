@@ -358,7 +358,11 @@ Memory prompt injection is disabled by default. A user can enable it for a run; 
 | Restart-persistent preserved-workspace registry | ✅ Built |
 | Agent/shared memory and mailbox operator UI | ✅ Built |
 | Bounded supervisor retry/stop recovery selection | ✅ Built |
-| Autonomous supervisor workflow mutation | 🧭 Planned |
+| Approval-gated Orbi-Prime workflow proposals | ✅ Built |
+| Local memory relevance retrieval and retention presets | ✅ Built |
+| Explicit untracked-file workspace review/application | ✅ Built |
+| Replay seeking and timeline controls | ✅ Built |
+| Autonomous supervisor workflow mutation | 🧭 Not enabled |
 
 ## Product direction
 
@@ -372,10 +376,10 @@ That direction is captured in the [coworking-space roadmap](docs/coworking-space
 
 The next architectural milestones are focused on making orchestration deeper rather than adding decorative complexity:
 
-1. Add approval-gated workflow edits proposed by Orbi-Prime
-2. Add semantic memory retrieval and user-configurable retention presets
-3. Extend selective patch review to intentionally include new untracked files
-4. Add richer replay seeking while preserving frame-aligned event timing
+1. Expand Orbi-Prime proposals beyond the current bounded role-insertion policy
+2. Optionally add embedding-backed memory retrieval without weakening the local-first default
+3. Add richer patch previews for newly created text and binary files
+4. Add replay bookmarks and event-type filtering
 
 ## Why OrbiAgents
 

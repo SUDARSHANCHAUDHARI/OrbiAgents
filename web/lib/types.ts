@@ -77,6 +77,7 @@ export interface WorkspaceChanges {
   diffStat: string;
   patch: string;
   files: string[];
+  untrackedFiles: string[];
 }
 
 export type MemoryScope = "agent" | "shared";
@@ -101,6 +102,13 @@ export interface WorkflowEdge {
 export interface Workflow {
   nodes: WorkflowNode[];
   edges: WorkflowEdge[];
+}
+
+export interface WorkflowProposal {
+  summary: string;
+  rationale: string;
+  workflow: Workflow;
+  changed: boolean;
 }
 
 export interface WorkflowStepResult {

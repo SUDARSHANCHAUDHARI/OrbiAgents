@@ -38,9 +38,10 @@ import {
 import { createRateLimit } from "./rateLimit";
 import { validateServerEnv } from "./env";
 import { logServerEvent, requestLogger } from "./logger";
-import { buildMemoryContext, deleteMemory, listMemory, MemoryScope, updateMemory, writeMemory } from "./memoryStore";
+import { buildRelevantMemoryContext, deleteMemory, listMemory, MemoryScope, updateMemory, writeMemory } from "./memoryStore";
 import { markMessageRead, MessageKind, readInbox, sendMessage } from "./mailboxStore";
 import { OrbiPrimeSupervisor } from "./supervisor";
+import { proposeWorkflowImprovement } from "./workflowProposal";
 
 const app = express();
 const PORT = 4000;
@@ -501,14 +502,14 @@ app.delete("/workspaces/:id", protect, async (req, res) => {
 });
 
 app.post("/workspaces/:id/apply", protect, async (req, res) => {
-  if (req.body?.confirm !== true || !Array.isArray(req.body?.files)) {
-    res.status(400).json({ error: "confirm must be true and files must be an array" }); return;
+  if (req.body?.confirm !== true || !Array.isArray(req.body?.files) || !Array.isArray(req.body?.untrackedFiles ?? [])) {
+    res.status(400).json({ error: "confirm must be true and file selections must be arrays" }); return;
   }
   const workspace = await workspaceRegistry.get(req.userId!, req.params.id);
   if (!workspace) { res.status(404).json({ error: "Workspace not found" }); return; }
   try {
-    await configuredWorkspaceOperations().applyFiles(workspace.path, req.body.files);
-    res.json({ status: "applied", files: req.body.files });
+    await configuredWorkspaceOperations().applyFiles(workspace.path, req.body.files, req.body.untrackedFiles ?? []);
+    res.json({ status: "applied", files: req.body.files, untrackedFiles: req.body.untrackedFiles ?? [] });
   } catch (error) {
     res.status(400).json({ error: error instanceof Error ? error.message : String(error) });
   }
@@ -588,6 +589,14 @@ app.post("/run", protect, workflowRateLimit, async (req, res) => {
 });
 
 // ── Dynamic workflow ──────────────────────────────────────────────
+app.post("/workflow/proposal", protect, async (req, res) => {
+  try {
+    res.json(proposeWorkflowImprovement(req.body?.workflow as Workflow, MAX_WORKFLOW_NODES));
+  } catch (error) {
+    res.status(400).json({ error: error instanceof Error ? error.message : String(error) });
+  }
+});
+
 app.post("/workflow", protect, workflowRateLimit, async (req, res) => {
   const { workflow, task, provider, runtimeId = "provider-api", memory } = req.body as {
     workflow?: Workflow;
@@ -644,7 +653,7 @@ app.post("/workflow", protect, workflowRateLimit, async (req, res) => {
         supervisor: new OrbiPrimeSupervisor((event) => publishWorkflowEvent(userId, event)),
         signal: runtime.workflowAbortController.signal,
         getMemoryContext: memory?.enabled
-          ? (_node, agentId) => buildMemoryContext(userId, memory.projectKey?.trim() || "default", agentId)
+          ? (node, agentId) => buildRelevantMemoryContext(userId, memory.projectKey?.trim() || "default", agentId, `${task.trim()} ${node.label ?? node.type}`)
           : undefined,
       }
     );

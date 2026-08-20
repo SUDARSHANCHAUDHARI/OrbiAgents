@@ -1,5 +1,5 @@
 import { getApiBaseUrl } from "./config";
-import { MailboxMessage, MemoryEntry, MemoryScope, MessageKind, PreservedWorkspace, Provider, RuntimeId, Session, SessionMeta, WorkspaceChanges } from "./types";
+import { MailboxMessage, MemoryEntry, MemoryScope, MessageKind, PreservedWorkspace, Provider, RuntimeId, Session, SessionMeta, Workflow, WorkflowProposal, WorkspaceChanges } from "./types";
 
 const API = getApiBaseUrl();
 const TOKEN_KEY = "orbi_token";
@@ -123,6 +123,13 @@ export async function listRuntimes(): Promise<RuntimesResponse> {
   return res.json() as Promise<RuntimesResponse>;
 }
 
+export async function proposeWorkflow(workflow: Workflow): Promise<WorkflowProposal> {
+  const res = await fetch(`${API}/workflow/proposal`, { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ workflow }) });
+  const body = (await res.json()) as WorkflowProposal & { error?: string };
+  if (!res.ok) throw new Error(body.error ?? "Could not create workflow proposal");
+  return body;
+}
+
 export async function listPreservedWorkspaces(): Promise<PreservedWorkspace[]> {
   const res = await fetch(`${API}/workspaces`, { headers: authHeaders() });
   if (!res.ok) throw new Error("Could not load preserved workspaces");
@@ -148,11 +155,11 @@ export async function discardPreservedWorkspace(id: string): Promise<void> {
   }
 }
 
-export async function applyWorkspaceFiles(id: string, files: string[]): Promise<void> {
+export async function applyWorkspaceFiles(id: string, files: string[], untrackedFiles: string[] = []): Promise<void> {
   const res = await fetch(`${API}/workspaces/${encodeURIComponent(id)}/apply`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...authHeaders() },
-    body: JSON.stringify({ confirm: true, files }),
+    body: JSON.stringify({ confirm: true, files, untrackedFiles }),
   });
   if (!res.ok) {
     const body = (await res.json()) as { error?: string };
@@ -168,8 +175,8 @@ export async function listMemory(scope: MemoryScope, agentId?: string): Promise<
   return res.json() as Promise<MemoryEntry[]>;
 }
 
-export async function createMemory(scope: MemoryScope, content: string, agentId?: string): Promise<MemoryEntry> {
-  const res = await fetch(`${API}/memory`, { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ scope, agentId: scope === "agent" ? agentId : undefined, content }) });
+export async function createMemory(scope: MemoryScope, content: string, agentId?: string, retentionDays?: number): Promise<MemoryEntry> {
+  const res = await fetch(`${API}/memory`, { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ scope, agentId: scope === "agent" ? agentId : undefined, content, retentionDays }) });
   const body = (await res.json()) as MemoryEntry & { error?: string };
   if (!res.ok) throw new Error(body.error ?? "Could not save memory");
   return body;

@@ -4,6 +4,9 @@ import { WorkspaceRegistry } from "../workspaceRegistry";
 import { WorkspaceOperations } from "../workspaceOperations";
 import { db } from "../db";
 import { PrismaClient } from "@prisma/client";
+import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
 
 test("workspace registry survives a fresh client and isolates records by user", async () => {
   const suffix = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -32,15 +35,29 @@ test("workspace operations inspect only paths below the configured root", async 
   const operations = new WorkspaceOperations("/repo", "/managed/worktrees", {
     async run(request) {
       calls.push(request.args);
-      const stdout = request.args.includes("--short") ? " M file.ts\n" : request.args.includes("--name-only") ? "file.ts\0" : " file.ts | 1 +\n";
+      const stdout = request.args.includes("--short") ? " M file.ts\n" : request.args.includes("--name-only") ? "file.ts\0" : request.args.includes("ls-files") ? "new.ts\0" : " file.ts | 1 +\n";
       return { stdout, stderr: "", exitCode: 0 };
     },
   });
   const result = await operations.inspect("/managed/worktrees/run-node");
   assert.match(result.status, /file.ts/);
   assert.deepEqual(result.files, ["file.ts"]);
-  assert.equal(calls.length, 4);
+  assert.deepEqual(result.untrackedFiles, ["new.ts"]);
+  assert.equal(calls.length, 5);
   await assert.rejects(operations.inspect("/repo"), /outside the managed root/);
+});
+
+test("workspace apply copies an explicitly selected regular untracked file", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "orbi-workspace-"));
+  const repo = path.join(root, "repo"); const worktrees = path.join(root, "worktrees"); const worktree = path.join(worktrees, "run-node");
+  await mkdir(path.join(worktree, "src"), { recursive: true }); await mkdir(repo);
+  await writeFile(path.join(worktree, "src", "new.ts"), "export const safe = true;\n");
+  const operations = new WorkspaceOperations(repo, worktrees, { async run() { return { stdout: "", stderr: "", exitCode: 0 }; } });
+  try {
+    await operations.applyFiles(worktree, [], ["src/new.ts"]);
+    assert.equal(await readFile(path.join(repo, "src", "new.ts"), "utf8"), "export const safe = true;\n");
+    await assert.rejects(operations.applyFiles(worktree, [], ["src/new.ts"]), /must be clean|already exists/);
+  } finally { await rm(root, { recursive: true, force: true }); }
 });
 
 test("workspace apply validates paths, checks a clean target, and applies only selected tracked files", async () => {

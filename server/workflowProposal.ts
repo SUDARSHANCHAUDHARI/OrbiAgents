@@ -1,0 +1,51 @@
+import { topoSort } from "./workflowRunner";
+import { Workflow, WorkflowNodeType } from "./workflowTypes";
+
+export interface WorkflowProposal {
+  summary: string;
+  rationale: string;
+  workflow: Workflow;
+  changed: boolean;
+}
+
+const IMPROVEMENT_ORDER: Array<{ type: WorkflowNodeType; label: string; rationale: string }> = [
+  { type: "tester", label: "Tester", rationale: "Add an explicit verification step after implementation." },
+  { type: "reviewer", label: "Reviewer", rationale: "Add an independent review step before the workflow completes." },
+  { type: "debugger", label: "Debugger", rationale: "Add a bounded recovery step for issues found downstream." },
+];
+const NODE_TYPES = new Set<WorkflowNodeType>(["planner", "coder", "tester", "reviewer", "debugger"]);
+
+export function validateWorkflowGraph(workflow: Workflow, maxNodes = 12): void {
+  if (!workflow || !Array.isArray(workflow.nodes) || !Array.isArray(workflow.edges)) throw new Error("Invalid workflow");
+  if (workflow.nodes.length === 0 || workflow.nodes.length > maxNodes) throw new Error(`Workflow must contain 1 to ${maxNodes} nodes`);
+  const ids = new Set<string>();
+  for (const node of workflow.nodes) {
+    if (!node.id?.trim() || ids.has(node.id)) throw new Error("Workflow node ids must be non-empty and unique");
+    if (!NODE_TYPES.has(node.type)) throw new Error("Workflow contains an unsupported node type");
+    ids.add(node.id);
+  }
+  for (const edge of workflow.edges) {
+    if (!ids.has(edge.from) || !ids.has(edge.to) || edge.from === edge.to) throw new Error("Workflow edges must reference distinct existing nodes");
+  }
+  topoSort(workflow);
+}
+
+export function proposeWorkflowImprovement(workflow: Workflow, maxNodes = 12): WorkflowProposal {
+  validateWorkflowGraph(workflow, maxNodes);
+  const improvement = IMPROVEMENT_ORDER.find((item) => !workflow.nodes.some((node) => node.type === item.type));
+  if (!improvement || workflow.nodes.length >= maxNodes) {
+    return { summary: "No bounded structural change proposed", rationale: "The workflow already contains the standard verification and recovery roles, or has reached its node limit.", workflow, changed: false };
+  }
+  const source = [...workflow.nodes].reverse().find((node) => node.type === "coder") ?? workflow.nodes.at(-1)!;
+  let suffix = 1;
+  while (workflow.nodes.some((node) => node.id === `orbi-${improvement.type}-${suffix}`)) suffix += 1;
+  const id = `orbi-${improvement.type}-${suffix}`;
+  const outgoing = workflow.edges.filter((edge) => edge.from === source.id);
+  const retained = workflow.edges.filter((edge) => edge.from !== source.id);
+  const proposed: Workflow = {
+    nodes: [...workflow.nodes, { id, type: improvement.type, label: improvement.label }],
+    edges: [...retained, { from: source.id, to: id }, ...outgoing.map((edge) => ({ from: id, to: edge.to }))],
+  };
+  validateWorkflowGraph(proposed, maxNodes);
+  return { summary: `Add ${improvement.label} after ${source.label ?? source.type}`, rationale: improvement.rationale, workflow: proposed, changed: true };
+}
