@@ -1,5 +1,5 @@
 import { getApiBaseUrl } from "./config";
-import { MailboxMessage, MemoryEntry, MemoryScope, MessageKind, PreservedWorkspace, Provider, RuntimeId, Session, SessionMeta, WorkspaceChanges } from "./types";
+import { MailboxMessage, MemoryEntry, MemoryScope, MessageKind, PreservedWorkspace, Provider, RuntimeId, Session, SessionMeta, Workflow, WorkflowProposal, WorkspaceChanges } from "./types";
 
 const API = getApiBaseUrl();
 const TOKEN_KEY = "orbi_token";
@@ -121,6 +121,13 @@ export async function listRuntimes(): Promise<RuntimesResponse> {
   const res = await fetch(`${API}/runtimes`);
   if (!res.ok) throw new Error("Could not load runtimes");
   return res.json() as Promise<RuntimesResponse>;
+}
+
+export async function proposeWorkflow(workflow: Workflow): Promise<WorkflowProposal> {
+  const res = await fetch(`${API}/workflow/proposal`, { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ workflow }) });
+  const body = (await res.json()) as WorkflowProposal & { error?: string };
+  if (!res.ok) throw new Error(body.error ?? "Could not create workflow proposal");
+  return body;
 }
 
 export async function listPreservedWorkspaces(): Promise<PreservedWorkspace[]> {

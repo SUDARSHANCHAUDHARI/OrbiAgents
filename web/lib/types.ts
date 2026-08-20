@@ -103,6 +103,13 @@ export interface Workflow {
   edges: WorkflowEdge[];
 }
 
+export interface WorkflowProposal {
+  summary: string;
+  rationale: string;
+  workflow: Workflow;
+  changed: boolean;
+}
+
 export interface WorkflowStepResult {
   nodeId: string;
   type: WorkflowNodeType;

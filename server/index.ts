@@ -41,6 +41,7 @@ import { logServerEvent, requestLogger } from "./logger";
 import { buildMemoryContext, deleteMemory, listMemory, MemoryScope, updateMemory, writeMemory } from "./memoryStore";
 import { markMessageRead, MessageKind, readInbox, sendMessage } from "./mailboxStore";
 import { OrbiPrimeSupervisor } from "./supervisor";
+import { proposeWorkflowImprovement } from "./workflowProposal";
 
 const app = express();
 const PORT = 4000;
@@ -588,6 +589,14 @@ app.post("/run", protect, workflowRateLimit, async (req, res) => {
 });
 
 // ── Dynamic workflow ──────────────────────────────────────────────
+app.post("/workflow/proposal", protect, async (req, res) => {
+  try {
+    res.json(proposeWorkflowImprovement(req.body?.workflow as Workflow, MAX_WORKFLOW_NODES));
+  } catch (error) {
+    res.status(400).json({ error: error instanceof Error ? error.message : String(error) });
+  }
+});
+
 app.post("/workflow", protect, workflowRateLimit, async (req, res) => {
   const { workflow, task, provider, runtimeId = "provider-api", memory } = req.body as {
     workflow?: Workflow;

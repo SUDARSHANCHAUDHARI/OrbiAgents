@@ -41,6 +41,7 @@ import AgentLogsPanel from "@/components/AgentLogsPanel";
 import WorkflowActivityPanel from "@/components/WorkflowActivityPanel";
 import WorkspaceReviewPanel from "@/components/WorkspaceReviewPanel";
 import AgentContextPanel from "@/components/AgentContextPanel";
+import WorkflowProposalPanel from "@/components/WorkflowProposalPanel";
 import { eventsThroughFrame, replayDelay } from "@/lib/replayTiming";
 
 interface WorkflowResult {
@@ -89,6 +90,7 @@ export default function Home() {
   const [runtimes, setRuntimes] = useState<RuntimeId[]>(["provider-api"]);
   const [selectedRuntime, setSelectedRuntime] = useState<RuntimeId>("provider-api");
   const [useMemory, setUseMemory] = useState(false);
+  const [showProposal, setShowProposal] = useState(false);
   const [sessions, setSessions] = useState<SessionMeta[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
   const [historyMessage, setHistoryMessage] = useState<string | null>(null);
@@ -686,6 +688,7 @@ export default function Home() {
             >
               ⬡ WORKFLOW
             </button>
+            {showBuilder && <button className="orbi-control" onClick={() => setShowProposal(true)} disabled={running || isReplaying} style={{minHeight:40,background:"#4C1D95",border:"1px solid #7C3AED",color:"white",borderRadius:8,padding:"0 14px"}}>ORBI-PRIME</button>}
 
             <button
               className="orbi-control"
@@ -958,6 +961,7 @@ export default function Home() {
 
           {showWorkspaces && <WorkspaceReviewPanel onClose={() => setShowWorkspaces(false)} />}
           {showContext && <AgentContextPanel onClose={() => setShowContext(false)} />}
+          {showProposal && <WorkflowProposalPanel workflow={workflow} onApply={setWorkflow} onClose={() => setShowProposal(false)} />}
 
           {isReplaying && replaySession && (
             <ReplayBar
