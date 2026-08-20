@@ -175,13 +175,25 @@ export async function createMemory(scope: MemoryScope, content: string, agentId?
   return body;
 }
 
+export async function updateMemoryEntry(id: string, content: string): Promise<MemoryEntry> {
+  const res = await fetch(`${API}/memory/${encodeURIComponent(id)}`, { method: "PATCH", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify({ content }) });
+  const body = (await res.json()) as MemoryEntry & { error?: string };
+  if (!res.ok) throw new Error(body.error ?? "Could not update memory");
+  return body;
+}
+
+export async function deleteMemoryEntry(id: string): Promise<void> {
+  const res = await fetch(`${API}/memory/${encodeURIComponent(id)}`, { method: "DELETE", headers: authHeaders() });
+  if (!res.ok) throw new Error("Could not delete memory");
+}
+
 export async function listInbox(agentId: string): Promise<MailboxMessage[]> {
   const res = await fetch(`${API}/messages/${encodeURIComponent(agentId)}?includeRead=true`, { headers: authHeaders() });
   if (!res.ok) throw new Error("Could not load inbox");
   return res.json() as Promise<MailboxMessage[]>;
 }
 
-export async function sendMailboxMessage(input: { senderAgentId: string; recipientAgentId: string; kind: MessageKind; body: string }): Promise<MailboxMessage> {
+export async function sendMailboxMessage(input: { senderAgentId: string; recipientAgentId: string; kind: MessageKind; body: string; replyToId?: string }): Promise<MailboxMessage> {
   const res = await fetch(`${API}/messages`, { method: "POST", headers: { "Content-Type": "application/json", ...authHeaders() }, body: JSON.stringify(input) });
   const body = (await res.json()) as MailboxMessage & { error?: string };
   if (!res.ok) throw new Error(body.error ?? "Could not send message");

@@ -227,3 +227,22 @@ test("local CLI workflow refuses to run without isolation", async () => {
     /require workspace isolation/
   );
 });
+
+test("workflow injects opt-in memory and reports bounded supervisor recovery", async () => {
+  const events: SupervisorEvent[] = [];
+  const seenInputs: string[] = [];
+  let attempts = 0;
+  await runWorkflowDynamic({ nodes: [{ id: "plan", type: "planner" }], edges: [] }, "new task", () => {}, async () => {}, "anthropic", {
+    supervisor: new OrbiPrimeSupervisor((event) => events.push(event)),
+    getMemoryContext: async () => "Relevant durable memory:\n- prefer small changes",
+    executeNode: async (_node, inputs) => {
+      seenInputs.push(inputs.combined);
+      attempts += 1;
+      if (attempts === 1) throw new Error("transient");
+      return streamResult("done");
+    },
+  });
+  assert.match(seenInputs[0], /prefer small changes/);
+  assert.equal(events.find((event) => event.type === "recovery-selected")?.detail, "retry: transient");
+  assert.equal(attempts, 2);
+});

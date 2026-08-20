@@ -3,6 +3,7 @@ export type SupervisorEventType =
   | "node-ready"
   | "node-started"
   | "node-retrying"
+  | "recovery-selected"
   | "node-completed"
   | "node-failed"
   | "circuit-opened"
@@ -23,5 +24,12 @@ export class OrbiPrimeSupervisor {
 
   report(type: SupervisorEventType, input: Omit<SupervisorEvent, "type" | "timestamp"> = {}): void {
     this.observe({ type, timestamp: Date.now(), ...input });
+  }
+
+  selectRecovery(nodeId: string, error: unknown, attempt: number): "retry" | "stop" {
+    const name = error instanceof Error ? error.name : "Error";
+    const action = attempt === 0 && name !== "NodeTimeoutError" && name !== "AbortError" ? "retry" : "stop";
+    this.report("recovery-selected", { nodeId, detail: `${action}: ${error instanceof Error ? error.message : String(error)}` });
+    return action;
   }
 }

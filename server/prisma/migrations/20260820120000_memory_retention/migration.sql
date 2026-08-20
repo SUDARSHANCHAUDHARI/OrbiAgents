@@ -1,0 +1,1 @@
+ALTER TABLE "MemoryEntry" ADD COLUMN "expiresAt" DATETIME;

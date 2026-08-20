@@ -80,9 +80,9 @@ export interface WorkspaceChanges {
 }
 
 export type MemoryScope = "agent" | "shared";
-export interface MemoryEntry { id: string; projectKey: string; scope: MemoryScope; agentId?: string | null; content: string; updatedAt: string; }
+export interface MemoryEntry { id: string; projectKey: string; scope: MemoryScope; agentId?: string | null; content: string; expiresAt?: string | null; updatedAt: string; }
 export type MessageKind = "request" | "inform" | "propose" | "query" | "agree" | "refuse" | "done";
-export interface MailboxMessage { id: string; senderAgentId: string; recipientAgentId: string; kind: MessageKind; body: string; status: string; hopCount: number; createdAt: string; }
+export interface MailboxMessage { id: string; senderAgentId: string; recipientAgentId: string; kind: MessageKind; body: string; status: string; hopCount: number; replyToId?: string | null; createdAt: string; }
 
 // ── Workflow builder ───────────────────────────────────────────────
 export type WorkflowNodeType = "planner" | "coder" | "tester" | "reviewer" | "debugger";

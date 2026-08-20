@@ -17,6 +17,11 @@ test("shared memory rejects an agent id", () => {
   );
 });
 
+test("memory retention is explicit and bounded", () => {
+  assert.doesNotThrow(() => validateMemory({ userId: "u1", scope: "shared", content: "Keep", retentionDays: 30 }));
+  assert.throws(() => validateMemory({ userId: "u1", scope: "shared", content: "Keep", retentionDays: 0 }), /retentionDays/);
+});
+
 test("mailbox prevents self-messages and runaway hops", () => {
   assert.throws(
     () => validateMessage({ userId: "u1", senderAgentId: "a", recipientAgentId: "a", kind: "inform", body: "x" }),
