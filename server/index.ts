@@ -47,6 +47,7 @@ import { getProposalPolicies, parseProposalHistoryPayload, recordProposal, saveP
 import { clearEmbeddingCache, embeddingCacheLimits, embeddingCacheTelemetry, pruneEmbeddingCache } from "./embeddingCache";
 
 const app = express();
+app.set("trust proxy", process.env.TRUST_PROXY === "true" ? 1 : false);
 const PORT = 4000;
 const APP_URL = (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
 const CORS_ORIGIN = process.env.CORS_ORIGIN ?? APP_URL;
@@ -66,8 +67,12 @@ app.use(requestLogger);
 app.use((_req, res, next) => {
   const origin = _req.headers.origin ?? "";
   res.setHeader("Access-Control-Allow-Origin", CORS_ORIGINS.has(origin) ? origin : CORS_ORIGIN);
+  res.setHeader("Vary", "Origin");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Referrer-Policy", "no-referrer");
+  res.setHeader("X-Frame-Options", "DENY");
   if (_req.method === "OPTIONS") { res.sendStatus(204); return; }
   next();
 });
@@ -215,7 +220,8 @@ async function enforceUsageGuardrails(userId: string): Promise<string | null> {
 
 function getUserIdFromSocketRequest(req: import("http").IncomingMessage): string | null {
   const url = new URL(req.url ?? "/", "http://localhost:4000");
-  const token = url.searchParams.get("token");
+  const protocols = req.headers["sec-websocket-protocol"]?.split(",").map((value) => value.trim()) ?? [];
+  const token = protocols[0] === "orbiagents" ? protocols[1] : url.searchParams.get("token");
   if (!token) return null;
   try {
     return verifyToken(token).sub;

@@ -143,6 +143,8 @@ test("local runtimes are opt-in and require absolute isolation paths", () => {
 });
 
 test("environment validation rejects unsafe local CLI configuration", () => {
+  assert.throws(() => validateServerEnv({ MAX_PARALLEL_AGENTS: "not-a-number" }), /MAX_PARALLEL_AGENTS/);
+  assert.throws(() => validateServerEnv({ TRUST_PROXY: "sometimes" }), /TRUST_PROXY must be true or false/);
   assert.throws(
     () => validateServerEnv({ LOCAL_CLI_ENABLED: "yes" }),
     /must be true or false/
