@@ -42,7 +42,9 @@ import { buildRelevantMemoryContext, deleteMemory, listMemory, MemoryScope, upda
 import { markMessageRead, MessageKind, readInbox, sendMessage } from "./mailboxStore";
 import { OrbiPrimeSupervisor } from "./supervisor";
 import { proposeWorkflowImprovement } from "./workflowProposal";
-import { listReplayBookmarks, replaceReplayBookmarks, validateReplayBookmarks } from "./replayBookmarks";
+import { listReplayBookmarks, listSharedReplayBookmarks, replaceReplayBookmarks, validateReplayBookmarks } from "./replayBookmarks";
+import { getProposalPolicies, recordProposal, saveProposalPolicies, validateProposalPolicies } from "./supervisorPreferences";
+import { clearEmbeddingCache, embeddingCacheLimits, pruneEmbeddingCache } from "./embeddingCache";
 
 const app = express();
 const PORT = 4000;
@@ -592,11 +594,27 @@ app.post("/run", protect, workflowRateLimit, async (req, res) => {
 // ── Dynamic workflow ──────────────────────────────────────────────
 app.post("/workflow/proposal", protect, async (req, res) => {
   try {
-    res.json(proposeWorkflowImprovement(req.body?.workflow as Workflow, MAX_WORKFLOW_NODES));
+    const proposal = proposeWorkflowImprovement(req.body?.workflow as Workflow, MAX_WORKFLOW_NODES, await getProposalPolicies(req.userId!));
+    if (!proposal.changed) { res.json(proposal); return; }
+    const history = await recordProposal(req.userId!, proposal); res.json({ ...proposal, id: history.id });
   } catch (error) {
     res.status(400).json({ error: error instanceof Error ? error.message : String(error) });
   }
 });
+
+app.get("/workflow/proposal/settings", protect, async (req, res) => { res.json({ enabledPolicies: await getProposalPolicies(req.userId!) }); });
+app.put("/workflow/proposal/settings", protect, async (req, res) => {
+  try { const enabledPolicies = validateProposalPolicies(req.body?.enabledPolicies); res.json({ enabledPolicies: await saveProposalPolicies(req.userId!, enabledPolicies) }); }
+  catch (error) { res.status(400).json({ error: error instanceof Error ? error.message : "Invalid policies" }); }
+});
+app.get("/workflow/proposal/history", protect, async (req, res) => { res.json(await db.workflowProposalHistory.findMany({ where: { userId: req.userId! }, orderBy: { createdAt: "desc" }, take: 50 })); });
+app.patch("/workflow/proposal/history/:id", protect, async (req, res) => {
+  if (!["applied", "dismissed"].includes(req.body?.status)) { res.status(400).json({ error: "Invalid proposal status" }); return; }
+  const result = await db.workflowProposalHistory.updateMany({ where: { id: req.params.id, userId: req.userId! }, data: { status: req.body.status } });
+  if (!result.count) { res.status(404).json({ error: "Proposal not found" }); return; } res.json({ status: req.body.status });
+});
+app.get("/memory/embedding-cache", protect, async (req, res) => { res.json({ ...(await pruneEmbeddingCache(req.userId!)), ...embeddingCacheLimits() }); });
+app.delete("/memory/embedding-cache", protect, async (req, res) => { res.json({ removed: await clearEmbeddingCache(req.userId!) }); });
 
 app.post("/workflow", protect, workflowRateLimit, async (req, res) => {
   const { workflow, task, provider, runtimeId = "provider-api", memory } = req.body as {
@@ -721,15 +739,15 @@ app.get("/replay/:id", protect, async (req, res) => {
 app.get("/replay/:id/bookmarks", protect, async (req, res) => {
   const session = await getSession(req.params.id, req.userId);
   if (!session) { res.status(404).json({ error: "Session not found" }); return; }
-  res.json({ frames: await listReplayBookmarks(req.userId!, session.id) });
+  res.json({ bookmarks: await listReplayBookmarks(req.userId!, session.id) });
 });
 
 app.put("/replay/:id/bookmarks", protect, async (req, res) => {
   const session = await getSession(req.params.id, req.userId);
   if (!session) { res.status(404).json({ error: "Session not found" }); return; }
   try {
-    const frames = validateReplayBookmarks(req.body?.frames, session.frames.length);
-    res.json({ frames: await replaceReplayBookmarks(req.userId!, session.id, frames) });
+    const frames = validateReplayBookmarks(req.body?.bookmarks ?? req.body?.frames, session.frames.length);
+    res.json({ bookmarks: await replaceReplayBookmarks(req.userId!, session.id, frames) });
   } catch (error) { res.status(400).json({ error: error instanceof Error ? error.message : "Invalid bookmarks" }); }
 });
 
@@ -748,7 +766,7 @@ app.post("/replay/:id/share", protect, async (_req, res) => {
 app.get("/replay/public/:token", async (req, res) => {
   const session = await getSessionByShareToken(req.params.token);
   if (!session) { res.status(404).json({ error: "Share link invalid or expired" }); return; }
-  res.json(session);
+  res.json({ ...session, bookmarks: await listSharedReplayBookmarks(session.id) });
 });
 
 // ── WebSocket ──────────────────────────────────────────────────────

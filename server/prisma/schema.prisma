@@ -18,6 +18,8 @@ model User {
   workspaces     ManagedWorkspace[]
   embeddingCache MemoryEmbeddingCache[]
   replayBookmarks ReplayBookmark[]
+  supervisorPreference SupervisorPreference?
+  proposalHistory WorkflowProposalHistory[]
   createdAt      DateTime        @default(now())
 }
 
@@ -115,10 +117,33 @@ model ReplayBookmark {
   sessionId String
   session   StoredSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   frame     Int
+  label     String?
+  shared    Boolean       @default(false)
   createdAt DateTime      @default(now())
 
   @@unique([userId, sessionId, frame])
   @@index([userId, sessionId])
+}
+
+model SupervisorPreference {
+  userId          String   @id
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  enabledPolicies String
+  updatedAt       DateTime @updatedAt
+}
+
+model WorkflowProposalHistory {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  kind      String
+  summary   String
+  proposal  String
+  status    String   @default("proposed")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, createdAt])
 }
 
 model RateLimitBucket {

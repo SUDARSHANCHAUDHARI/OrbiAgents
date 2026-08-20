@@ -7,6 +7,7 @@ import {
   ClientMessage,
   Provider,
   RuntimeId,
+  ReplayBookmark,
   Session,
   SessionMeta,
   Workflow,
@@ -112,7 +113,7 @@ export default function Home() {
   const [replayFrame, setReplayFrame] = useState(0);
   const [replaySpeed, setReplaySpeed] = useState<ReplaySpeed>(1);
   const [replayPlaying, setReplayPlaying] = useState(false);
-  const [replayBookmarks, setReplayBookmarks] = useState<number[]>([]);
+  const [replayBookmarks, setReplayBookmarks] = useState<ReplayBookmark[]>([]);
   const replayBookmarkSavingRef = useRef(false);
   const [replayEventFilter, setReplayEventFilter] = useState("all");
   const replayRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -462,7 +463,8 @@ export default function Home() {
     if (!replaySession || replayFrame < 1 || replayBookmarkSavingRef.current) return;
     replayBookmarkSavingRef.current = true;
     const previous = replayBookmarks;
-    const next = previous.includes(replayFrame) ? previous.filter((frame) => frame !== replayFrame) : [...previous, replayFrame].sort((a, b) => a - b);
+    const existing = previous.find((bookmark) => bookmark.frame === replayFrame);
+    const next = existing ? previous.filter((bookmark) => bookmark.frame !== replayFrame) : [...previous, { frame: replayFrame, label: window.prompt("Bookmark label (optional)")?.trim() || undefined, shared: window.confirm("Include this bookmark on shared replay links?") }].sort((a, b) => a.frame - b.frame);
     setReplayBookmarks(next);
     try { setReplayBookmarks(await saveReplayBookmarks(replaySession.id, next)); }
     catch (error) { setReplayBookmarks(previous); setError(error instanceof Error ? error.message : "Could not save replay bookmark"); }
@@ -1014,7 +1016,7 @@ export default function Home() {
               onTogglePlaying={toggleReplayPlaying}
               onSeek={seekReplay}
               onStep={(delta) => seekReplay(replayFrame + delta)}
-              bookmarked={replayBookmarks.includes(replayFrame)}
+              bookmarked={replayBookmarks.some((bookmark) => bookmark.frame === replayFrame)}
               onToggleBookmark={toggleReplayBookmark}
               eventTypes={replayEventTypes}
               eventFilter={replayEventFilter}

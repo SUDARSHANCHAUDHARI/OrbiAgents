@@ -42,7 +42,9 @@ export interface Session {
   events?: WorkflowEvent[];
   totalCostUsd?: number;
   provider?: Provider;
+  bookmarks?: ReplayBookmark[];
 }
+export interface ReplayBookmark { frame: number; label?: string; shared?: boolean }
 
 export interface WorkflowEvent {
   type: string;
@@ -106,6 +108,7 @@ export interface Workflow {
 }
 
 export interface WorkflowProposal {
+  id?: string;
   kind: "add-role" | "remove-duplicate-role" | "normalize-label" | "none";
   summary: string;
   rationale: string;
@@ -113,6 +116,8 @@ export interface WorkflowProposal {
   workflow: Workflow;
   changed: boolean;
 }
+export type WorkflowProposalPolicy = "add-role" | "remove-duplicate-role" | "normalize-label";
+export interface WorkflowProposalHistory { id: string; kind: string; summary: string; status: string; createdAt: string }
 
 export interface WorkflowStepResult {
   nodeId: string;

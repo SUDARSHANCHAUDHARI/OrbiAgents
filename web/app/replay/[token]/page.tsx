@@ -30,7 +30,7 @@ export default function PublicReplayPage({
       .then(async (res) => {
         if (!res.ok) { setNotFound(true); return; }
         const s = (await res.json()) as Session;
-        setSession(s);
+        setSession(s); setBookmarks((s.bookmarks ?? []).map((bookmark) => bookmark.frame));
         if (s.frames.length > 0) {
           setAgents(s.frames[0].agents);
           setFrame(1);

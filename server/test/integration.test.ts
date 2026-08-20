@@ -84,15 +84,15 @@ test("replay bookmarks persist per owner and reject invalid frames", async () =>
   await createSession(sessionId, "Bookmark replay", owner.id);
   recordFrame(sessionId, [makeAgent()]); recordFrame(sessionId, [makeAgent()]);
 
-  const saved = await fetch(`${baseUrl}/replay/${sessionId}/bookmarks`, { method: "PUT", headers: makeJsonHeaders(owner.token), body: JSON.stringify({ frames: [2, 1, 2] }) });
-  assert.equal(saved.status, 200); assert.deepEqual(await saved.json(), { frames: [1, 2] });
+  const saved = await fetch(`${baseUrl}/replay/${sessionId}/bookmarks`, { method: "PUT", headers: makeJsonHeaders(owner.token), body: JSON.stringify({ bookmarks: [{ frame: 2, label: "Key result", shared: true }, { frame: 1 }] }) });
+  assert.equal(saved.status, 200); assert.deepEqual(await saved.json(), { bookmarks: [{ frame: 1, shared: false }, { frame: 2, label: "Key result", shared: true }] });
   assert.deepEqual((await db.replayBookmark.findMany({ where: { userId: owner.id, sessionId }, orderBy: { frame: "asc" } })).map((row) => row.frame), [1, 2]);
   const restartedClient = new PrismaClient();
   try { assert.deepEqual((await restartedClient.replayBookmark.findMany({ where: { userId: owner.id, sessionId }, orderBy: { frame: "asc" } })).map((row) => row.frame), [1, 2]); }
   finally { await restartedClient.$disconnect(); }
 
   const loaded = await fetch(`${baseUrl}/replay/${sessionId}/bookmarks`, { headers: makeHeaders(owner.token) });
-  assert.deepEqual(await loaded.json(), { frames: [1, 2] });
+  assert.deepEqual(await loaded.json(), { bookmarks: [{ frame: 1, shared: false }, { frame: 2, label: "Key result", shared: true }] });
   assert.equal((await fetch(`${baseUrl}/replay/${sessionId}/bookmarks`, { headers: makeHeaders(other.token) })).status, 404);
   assert.equal((await fetch(`${baseUrl}/replay/${sessionId}/bookmarks`, { method: "PUT", headers: makeJsonHeaders(owner.token), body: JSON.stringify({ frames: [3] }) })).status, 400);
 });
