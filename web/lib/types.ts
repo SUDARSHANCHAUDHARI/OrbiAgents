@@ -117,7 +117,7 @@ export interface WorkflowProposal {
   changed: boolean;
 }
 export type WorkflowProposalPolicy = "add-role" | "remove-duplicate-role" | "normalize-label";
-export interface WorkflowProposalHistory { id: string; kind: string; summary: string; status: string; createdAt: string }
+export interface WorkflowProposalHistory { id: string; kind: string; summary: string; status: string; createdAt: string; proposal: WorkflowProposal; beforeWorkflow?: Workflow }
 
 export interface WorkflowStepResult {
   nodeId: string;

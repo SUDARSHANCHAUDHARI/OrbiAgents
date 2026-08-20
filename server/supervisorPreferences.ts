@@ -15,6 +15,6 @@ export async function saveProposalPolicies(userId: string, policies: WorkflowPro
   await db.supervisorPreference.upsert({ where: { userId }, create: { userId, enabledPolicies: JSON.stringify(policies) }, update: { enabledPolicies: JSON.stringify(policies) } });
   return policies;
 }
-export async function recordProposal(userId: string, proposal: WorkflowProposal) {
-  return db.workflowProposalHistory.create({ data: { userId, kind: proposal.kind, summary: proposal.summary, proposal: JSON.stringify(proposal) } });
+export async function recordProposal(userId: string, proposal: WorkflowProposal, beforeWorkflow: unknown) {
+  return db.workflowProposalHistory.create({ data: { userId, kind: proposal.kind, summary: proposal.summary, proposal: JSON.stringify({ proposal, beforeWorkflow }) } });
 }

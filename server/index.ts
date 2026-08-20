@@ -596,7 +596,7 @@ app.post("/workflow/proposal", protect, async (req, res) => {
   try {
     const proposal = proposeWorkflowImprovement(req.body?.workflow as Workflow, MAX_WORKFLOW_NODES, await getProposalPolicies(req.userId!));
     if (!proposal.changed) { res.json(proposal); return; }
-    const history = await recordProposal(req.userId!, proposal); res.json({ ...proposal, id: history.id });
+    const history = await recordProposal(req.userId!, proposal, req.body.workflow); res.json({ ...proposal, id: history.id });
   } catch (error) {
     res.status(400).json({ error: error instanceof Error ? error.message : String(error) });
   }
@@ -607,7 +607,7 @@ app.put("/workflow/proposal/settings", protect, async (req, res) => {
   try { const enabledPolicies = validateProposalPolicies(req.body?.enabledPolicies); res.json({ enabledPolicies: await saveProposalPolicies(req.userId!, enabledPolicies) }); }
   catch (error) { res.status(400).json({ error: error instanceof Error ? error.message : "Invalid policies" }); }
 });
-app.get("/workflow/proposal/history", protect, async (req, res) => { res.json(await db.workflowProposalHistory.findMany({ where: { userId: req.userId! }, orderBy: { createdAt: "desc" }, take: 50 })); });
+app.get("/workflow/proposal/history", protect, async (req, res) => { const rows = await db.workflowProposalHistory.findMany({ where: { userId: req.userId! }, orderBy: { createdAt: "desc" }, take: 50 }); res.json(rows.map(({ proposal, ...row }) => { const parsed = JSON.parse(proposal); return { ...row, proposal: parsed.proposal ?? parsed, beforeWorkflow: parsed.beforeWorkflow }; })); });
 app.patch("/workflow/proposal/history/:id", protect, async (req, res) => {
   if (!["applied", "dismissed"].includes(req.body?.status)) { res.status(400).json({ error: "Invalid proposal status" }); return; }
   const result = await db.workflowProposalHistory.updateMany({ where: { id: req.params.id, userId: req.userId! }, data: { status: req.body.status } });

@@ -28,7 +28,7 @@ import {
 } from "@/lib/auth";
 import { getApiBaseUrl, getWebSocketBaseUrl } from "@/lib/config";
 import { useAlerts } from "@/lib/useAlerts";
-import { getUsage, UsageStats } from "@/lib/auth";
+import { EmbeddingCacheStats, getEmbeddingCacheStats, getUsage, UsageStats } from "@/lib/auth";
 import { useKeyboardShortcuts } from "@/lib/useKeyboardShortcuts";
 import { estimateRunCost, formatEstimate } from "@/lib/costEstimate";
 import LayoutEditor from "@/components/LayoutEditor";
@@ -103,6 +103,7 @@ export default function Home() {
   const [showAlertSettings, setShowAlertSettings] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [usage, setUsage] = useState<UsageStats | null>(null);
+  const [embeddingCache, setEmbeddingCache] = useState<EmbeddingCacheStats | null>(null);
   const [showLogs, setShowLogs] = useState(false);
   const [workflowEvents, setWorkflowEvents] = useState<WorkflowEvent[]>([]);
   const [showWorkspaces, setShowWorkspaces] = useState(false);
@@ -132,6 +133,7 @@ export default function Home() {
       setIsAuthed(true);
     }
   }, [router]);
+  useEffect(() => { if (isAuthed) void getEmbeddingCacheStats().then(setEmbeddingCache, () => undefined); }, [isAuthed]);
 
   // WebSocket — all hooks must be before any conditional return
   useEffect(() => {
@@ -496,6 +498,7 @@ export default function Home() {
     { label: `${agents.length} AGENTS`, color: "#E5E7EB" },
     { label: `${thinkingCount} THINKING`, color: "#FDE68A" },
     { label: `${codingCount} CODING`, color: "#BFDBFE" },
+    { label: `${embeddingCache?.entries ?? 0} MEMORY VECTORS`, color: "#C4B5FD" },
   ];
 
   return (
@@ -1018,6 +1021,7 @@ export default function Home() {
               onStep={(delta) => seekReplay(replayFrame + delta)}
               bookmarked={replayBookmarks.some((bookmark) => bookmark.frame === replayFrame)}
               onToggleBookmark={toggleReplayBookmark}
+              bookmarkFrames={replayBookmarks.map((bookmark) => bookmark.frame)}
               eventTypes={replayEventTypes}
               eventFilter={replayEventFilter}
               onEventFilterChange={setReplayEventFilter}

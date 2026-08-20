@@ -156,6 +156,7 @@ export default function PublicReplayPage({
             onStep={(delta) => seek(frame + delta)}
             bookmarked={bookmarks.includes(frame)}
             onToggleBookmark={() => setBookmarks((current) => current.includes(frame) ? current.filter((item) => item !== frame) : [...current, frame].sort((a,b)=>a-b))}
+            bookmarkFrames={bookmarks}
             eventTypes={eventTypes}
             eventFilter={eventFilter}
             onEventFilterChange={setEventFilter}
