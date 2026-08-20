@@ -6,6 +6,7 @@ import { signToken } from "../auth";
 import { db } from "../db";
 import { startServer, stopServer } from "../index";
 import { Agent } from "../types";
+import { PrismaClient } from "@prisma/client";
 
 let baseUrl = "";
 let wsUrl = "";
@@ -86,6 +87,9 @@ test("replay bookmarks persist per owner and reject invalid frames", async () =>
   const saved = await fetch(`${baseUrl}/replay/${sessionId}/bookmarks`, { method: "PUT", headers: makeJsonHeaders(owner.token), body: JSON.stringify({ frames: [2, 1, 2] }) });
   assert.equal(saved.status, 200); assert.deepEqual(await saved.json(), { frames: [1, 2] });
   assert.deepEqual((await db.replayBookmark.findMany({ where: { userId: owner.id, sessionId }, orderBy: { frame: "asc" } })).map((row) => row.frame), [1, 2]);
+  const restartedClient = new PrismaClient();
+  try { assert.deepEqual((await restartedClient.replayBookmark.findMany({ where: { userId: owner.id, sessionId }, orderBy: { frame: "asc" } })).map((row) => row.frame), [1, 2]); }
+  finally { await restartedClient.$disconnect(); }
 
   const loaded = await fetch(`${baseUrl}/replay/${sessionId}/bookmarks`, { headers: makeHeaders(owner.token) });
   assert.deepEqual(await loaded.json(), { frames: [1, 2] });

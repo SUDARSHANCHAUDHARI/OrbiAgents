@@ -41,7 +41,11 @@ export function proposeWorkflowImprovement(workflow: Workflow, maxNodes = 12): W
     const retained = workflow.edges.filter((edge) => edge.from !== duplicate.id && edge.to !== duplicate.id);
     const bypasses = incoming.flatMap((left) => outgoing.map((right) => ({ from: left.from, to: right.to })));
     const edgeKeys = new Set<string>();
-    const edges = [...retained, ...bypasses].filter((edge) => edge.from !== edge.to && !edgeKeys.has(`${edge.from}\0${edge.to}`) && edgeKeys.add(`${edge.from}\0${edge.to}`));
+    const edges = [...retained, ...bypasses].filter((edge) => {
+      const key = `${edge.from}\0${edge.to}`;
+      if (edge.from === edge.to || edgeKeys.has(key)) return false;
+      edgeKeys.add(key); return true;
+    });
     const proposed = { nodes: workflow.nodes.filter((node) => node.id !== duplicate.id), edges };
     validateWorkflowGraph(proposed, maxNodes);
     return {

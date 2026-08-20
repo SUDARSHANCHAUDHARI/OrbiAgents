@@ -34,7 +34,7 @@ export async function rankByCachedEmbeddings<T>(entries: T[], query: string, con
   const texts = [query, ...entries.map(content)];
   const keys = texts.map((text) => createHash("sha256").update(`${embedder.cacheKey ?? "default"}\0${text}`).digest("hex"));
   const cached = await cache.get(keys);
-  const missingIndexes = keys.map((key, index) => cached.has(key) ? -1 : index).filter((index) => index >= 0);
+  const missingIndexes = [...new Map(keys.map((key, index) => [key, index] as const).filter(([key]) => !cached.has(key))).values()];
   if (missingIndexes.length) {
     const vectors = await embedder.embed(missingIndexes.map((index) => texts[index]));
     if (vectors.length !== missingIndexes.length) throw new Error("Embedding response length mismatch");

@@ -113,6 +113,7 @@ export default function Home() {
   const [replaySpeed, setReplaySpeed] = useState<ReplaySpeed>(1);
   const [replayPlaying, setReplayPlaying] = useState(false);
   const [replayBookmarks, setReplayBookmarks] = useState<number[]>([]);
+  const replayBookmarkSavingRef = useRef(false);
   const [replayEventFilter, setReplayEventFilter] = useState("all");
   const replayRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const replaySpeedRef = useRef<ReplaySpeed>(1);
@@ -458,12 +459,14 @@ export default function Home() {
   }
 
   async function toggleReplayBookmark() {
-    if (!replaySession || replayFrame < 1) return;
+    if (!replaySession || replayFrame < 1 || replayBookmarkSavingRef.current) return;
+    replayBookmarkSavingRef.current = true;
     const previous = replayBookmarks;
     const next = previous.includes(replayFrame) ? previous.filter((frame) => frame !== replayFrame) : [...previous, replayFrame].sort((a, b) => a - b);
     setReplayBookmarks(next);
     try { setReplayBookmarks(await saveReplayBookmarks(replaySession.id, next)); }
     catch (error) { setReplayBookmarks(previous); setError(error instanceof Error ? error.message : "Could not save replay bookmark"); }
+    finally { replayBookmarkSavingRef.current = false; }
   }
 
   async function handleStopRun() {
