@@ -38,7 +38,7 @@ import {
 import { createRateLimit } from "./rateLimit";
 import { validateServerEnv } from "./env";
 import { logServerEvent, requestLogger } from "./logger";
-import { listMemory, MemoryScope, writeMemory } from "./memoryStore";
+import { buildMemoryContext, deleteMemory, listMemory, MemoryScope, updateMemory, writeMemory } from "./memoryStore";
 import { markMessageRead, MessageKind, readInbox, sendMessage } from "./mailboxStore";
 import { OrbiPrimeSupervisor } from "./supervisor";
 
@@ -62,7 +62,7 @@ app.use(requestLogger);
 app.use((_req, res, next) => {
   const origin = _req.headers.origin ?? "";
   res.setHeader("Access-Control-Allow-Origin", CORS_ORIGINS.has(origin) ? origin : CORS_ORIGIN);
-  res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
   if (_req.method === "OPTIONS") { res.sendStatus(204); return; }
   next();
@@ -365,17 +365,18 @@ app.get("/workflows/:id", protect, async (req, res) => {
 
 // ── Agent memory and mailbox ──────────────────────────────────────
 app.post("/memory", protect, async (req, res) => {
-  const { projectKey, scope, agentId, content } = req.body as {
+  const { projectKey, scope, agentId, content, retentionDays } = req.body as {
     projectKey?: string;
     scope?: MemoryScope;
     agentId?: string;
     content?: string;
+    retentionDays?: number;
   };
   if (scope !== "agent" && scope !== "shared") {
     res.status(400).json({ error: "scope must be agent or shared" }); return;
   }
   try {
-    const memory = await writeMemory({ userId: req.userId!, projectKey, scope, agentId, content: content ?? "" });
+    const memory = await writeMemory({ userId: req.userId!, projectKey, scope, agentId, content: content ?? "", retentionDays });
     res.status(201).json(memory);
   } catch (error) {
     res.status(400).json({ error: error instanceof Error ? error.message : String(error) });
@@ -389,6 +390,19 @@ app.get("/memory", protect, async (req, res) => {
     scope,
     agentId: typeof req.query.agentId === "string" ? req.query.agentId : undefined,
   }));
+});
+
+app.patch("/memory/:id", protect, async (req, res) => {
+  try {
+    const memory = await updateMemory(req.userId!, req.params.id, req.body?.content ?? "", req.body?.retentionDays);
+    if (!memory) { res.status(404).json({ error: "Memory not found" }); return; }
+    res.json(memory);
+  } catch (error) { res.status(400).json({ error: error instanceof Error ? error.message : String(error) }); }
+});
+
+app.delete("/memory/:id", protect, async (req, res) => {
+  if (!await deleteMemory(req.userId!, req.params.id)) { res.status(404).json({ error: "Memory not found" }); return; }
+  res.status(204).end();
 });
 
 app.post("/messages", protect, async (req, res) => {
@@ -486,6 +500,20 @@ app.delete("/workspaces/:id", protect, async (req, res) => {
   }
 });
 
+app.post("/workspaces/:id/apply", protect, async (req, res) => {
+  if (req.body?.confirm !== true || !Array.isArray(req.body?.files)) {
+    res.status(400).json({ error: "confirm must be true and files must be an array" }); return;
+  }
+  const workspace = await workspaceRegistry.get(req.userId!, req.params.id);
+  if (!workspace) { res.status(404).json({ error: "Workspace not found" }); return; }
+  try {
+    await configuredWorkspaceOperations().applyFiles(workspace.path, req.body.files);
+    res.json({ status: "applied", files: req.body.files });
+  } catch (error) {
+    res.status(400).json({ error: error instanceof Error ? error.message : String(error) });
+  }
+});
+
 app.get("/usage", protect, async (req, res) => {
   const userId = req.userId!;
   const dayStart = new Date();
@@ -561,11 +589,12 @@ app.post("/run", protect, workflowRateLimit, async (req, res) => {
 
 // ── Dynamic workflow ──────────────────────────────────────────────
 app.post("/workflow", protect, workflowRateLimit, async (req, res) => {
-  const { workflow, task, provider, runtimeId = "provider-api" } = req.body as {
+  const { workflow, task, provider, runtimeId = "provider-api", memory } = req.body as {
     workflow?: Workflow;
     task?: string;
     provider?: Provider;
     runtimeId?: RuntimeId;
+    memory?: { enabled?: boolean; projectKey?: string };
   };
   if (!workflow || !task?.trim()) {
     res.status(400).json({ error: "workflow and task required" }); return;
@@ -614,6 +643,9 @@ app.post("/workflow", protect, workflowRateLimit, async (req, res) => {
         },
         supervisor: new OrbiPrimeSupervisor((event) => publishWorkflowEvent(userId, event)),
         signal: runtime.workflowAbortController.signal,
+        getMemoryContext: memory?.enabled
+          ? (_node, agentId) => buildMemoryContext(userId, memory.projectKey?.trim() || "default", agentId)
+          : undefined,
       }
     );
     updateSessionCost(sessionId, result.totalCostUsd);

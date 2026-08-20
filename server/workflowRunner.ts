@@ -123,6 +123,7 @@ export interface WorkflowRunOptions {
   workspaceIsolation?: WorkspaceIsolation;
   runId?: string;
   onWorkspacePreserved?: (input: { runId: string; nodeId: string; path: string }) => void | Promise<void>;
+  getMemoryContext?: (node: WorkflowNode, agentId: string) => Promise<string>;
 }
 
 export async function runWorkflowDynamic(
@@ -168,6 +169,8 @@ export async function runWorkflowDynamic(
     const agentId = NODE_AGENT_ID[node.type];
     const label = node.label ?? node.type;
     const inputs = getWorkflowInputs(node.id, workflow.edges, outputs, workflow, task);
+    const memoryContext = await options.getMemoryContext?.(node, agentId);
+    if (memoryContext) inputs.combined = `${memoryContext}\n\nCurrent workflow input:\n${inputs.combined}`;
     const activeState = NODE_ACTIVE_STATE[node.type] ?? "thinking";
 
     breaker.check();
@@ -222,7 +225,7 @@ export async function runWorkflowDynamic(
         break;
       } catch (error) {
         lastError = error;
-        if (error instanceof NodeTimeoutError || controller.signal.aborted) break;
+        if (controller.signal.aborted || supervisor.selectRecovery(node.id, error, attempt) === "stop") break;
       } finally {
         options.signal?.removeEventListener("abort", abortFromWorkflow);
         activeController = null;

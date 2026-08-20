@@ -41,6 +41,7 @@ import AgentLogsPanel from "@/components/AgentLogsPanel";
 import WorkflowActivityPanel from "@/components/WorkflowActivityPanel";
 import WorkspaceReviewPanel from "@/components/WorkspaceReviewPanel";
 import AgentContextPanel from "@/components/AgentContextPanel";
+import { eventsThroughFrame, replayDelay } from "@/lib/replayTiming";
 
 interface WorkflowResult {
   sessionId: string;
@@ -87,6 +88,7 @@ export default function Home() {
   const [providersLoading, setProvidersLoading] = useState(false);
   const [runtimes, setRuntimes] = useState<RuntimeId[]>(["provider-api"]);
   const [selectedRuntime, setSelectedRuntime] = useState<RuntimeId>("provider-api");
+  const [useMemory, setUseMemory] = useState(false);
   const [sessions, setSessions] = useState<SessionMeta[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
   const [historyMessage, setHistoryMessage] = useState<string | null>(null);
@@ -331,7 +333,7 @@ export default function Home() {
       const res = await fetch(`${getApiBaseUrl()}/workflow`, {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeaders() },
-        body: JSON.stringify({ workflow, task: task.trim(), provider: selectedProvider, runtimeId: selectedRuntime }),
+        body: JSON.stringify({ workflow, task: task.trim(), provider: selectedProvider, runtimeId: selectedRuntime, memory: { enabled: useMemory } }),
       });
       if (!res.ok) {
         const body = (await res.json()) as { error?: string };
@@ -377,10 +379,11 @@ export default function Home() {
         }
         setAgents(session.frames[i].agents);
         setReplayFrame(i + 1);
+        const delay = replayDelay(session.frames, i, replaySpeedRef.current);
         i++;
-        replayRef.current = setTimeout(tick, 900 / replaySpeedRef.current) as unknown as ReturnType<typeof setInterval>;
+        replayRef.current = setTimeout(tick, delay) as unknown as ReturnType<typeof setInterval>;
       };
-      replayRef.current = setTimeout(tick, 900 / replaySpeedRef.current) as unknown as ReturnType<typeof setInterval>;
+      replayRef.current = setTimeout(tick, 0) as unknown as ReturnType<typeof setInterval>;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not start replay");
     }
@@ -537,6 +540,7 @@ export default function Home() {
                 </select>
               </div>
             )}
+            {showBuilder && <label style={{ color: sky.textMuted, fontSize: 12 }}><input type="checkbox" checked={useMemory} onChange={(event) => setUseMemory(event.target.checked)} disabled={running || isReplaying} /> Use memory</label>}
           </div>
 
           {/* Task input */}
@@ -888,13 +892,13 @@ export default function Home() {
             selectedId={selected?.id ?? null}
             isReplaying={isReplaying}
             workflow={workflow}
-            events={isReplaying ? replaySession?.events ?? [] : workflowEvents}
+            events={isReplaying ? eventsThroughFrame(replaySession?.events ?? [], replaySession?.frames[replayFrame - 1], replayFrame === replaySession?.frames.length) : workflowEvents}
             onAgentClick={isReplaying ? () => {} : setSelected}
           />
 
           <WorkflowActivityPanel
             agents={agents}
-            events={isReplaying ? replaySession?.events ?? [] : workflowEvents}
+            events={isReplaying ? eventsThroughFrame(replaySession?.events ?? [], replaySession?.frames[replayFrame - 1], replayFrame === replaySession?.frames.length) : workflowEvents}
           />
 
           {/* Scanline overlay */}

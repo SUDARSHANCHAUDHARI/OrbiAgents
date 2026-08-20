@@ -41,6 +41,7 @@ model MemoryEntry {
   scope      String
   agentId    String?
   content    String
+  expiresAt  DateTime?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 

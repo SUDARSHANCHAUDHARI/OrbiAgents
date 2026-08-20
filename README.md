@@ -45,7 +45,7 @@ The workflow engine resolves dependencies between nodes, passes predecessor outp
 
 OrbiAgents also includes a simpler fixed Planner → Coder execution path.
 
-> **Current runtime model:** OrbiAgents executes specialist agents through Anthropic, OpenAI, and Gemini APIs. It now has persistent agent/shared memory, durable mailboxes, a supervisor policy layer, and runtime/isolation contracts. Local Claude Code or Codex processes are not executed yet; those adapters remain disabled foundations until a secured process runner is implemented.
+> **Current runtime model:** OrbiAgents executes specialist agents through Anthropic, OpenAI, and Gemini APIs by default. Operators can explicitly enable local Claude Code or Codex CLI adapters; those runs use allowlisted, no-shell process execution and isolated Git worktrees.
 
 ## Features
 
@@ -325,7 +325,9 @@ After setting the three `LOCAL_CLI_*` variables above and restarting the server,
 
 Local commands are spawned without a shell from a fixed allowlist. Each node runs in a dedicated branch and Git worktree outside the source repository. Clean worktrees are removed after the node finishes; worktrees containing agent changes are preserved, and their path is returned in the corresponding workflow result step for operator review. OrbiAgents does not automatically commit, merge, push, or delete those changes.
 
-The web workspace lists the runtime adapters enabled by the server, displays preserved worktrees, shows their changed-file and diff summaries, and requires confirmation before discarding one. Its Context panel supports agent/shared memory, typed mailbox messages, inbox review, and read status. Preserved-workspace registry entries are stored in the same local Prisma/SQLite database, so registered dirty worktrees remain discoverable after a server restart.
+The web workspace lists the runtime adapters enabled by the server, displays preserved worktrees, shows their changed-file and patch summaries, and can apply explicitly selected tracked files only after confirmation and a clean-target check. Its Context panel supports agent/shared memory editing and deletion, typed threaded mailbox replies, inbox review, and read status. Preserved-workspace registry entries are stored in the same local Prisma/SQLite database, so registered dirty worktrees remain discoverable after a server restart.
+
+Memory prompt injection is disabled by default. A user can enable it for a run; OrbiAgents then supplies a bounded set of unexpired shared and per-agent memories. Memory entries can optionally carry retention periods.
 
 ## Current status
 
@@ -355,7 +357,8 @@ The web workspace lists the runtime adapters enabled by the server, displays pre
 | Runtime and preserved-workspace operator UI | ✅ Built |
 | Restart-persistent preserved-workspace registry | ✅ Built |
 | Agent/shared memory and mailbox operator UI | ✅ Built |
-| Autonomous supervisor workflow mutation and recovery | 🧭 Planned |
+| Bounded supervisor retry/stop recovery selection | ✅ Built |
+| Autonomous supervisor workflow mutation | 🧭 Planned |
 
 ## Product direction
 
@@ -369,10 +372,10 @@ That direction is captured in the [coworking-space roadmap](docs/coworking-space
 
 The next architectural milestones are focused on making orchestration deeper rather than adding decorative complexity:
 
-1. Let Orbi-Prime safely modify workflows and choose recovery actions
-2. Inject selected memory into agent prompts with explicit retention controls
-3. Add patch-level review and selective merge flows for preserved worktrees
-4. Expand replay to synchronize event timing precisely with agent frames
+1. Add approval-gated workflow edits proposed by Orbi-Prime
+2. Add semantic memory retrieval and user-configurable retention presets
+3. Extend selective patch review to intentionally include new untracked files
+4. Add richer replay seeking while preserving frame-aligned event timing
 
 ## Why OrbiAgents
 

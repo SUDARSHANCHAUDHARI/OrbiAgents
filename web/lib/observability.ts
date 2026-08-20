@@ -5,6 +5,7 @@ const LABELS: Record<string, string> = {
   "node-ready": "Agent is ready",
   "node-started": "Agent started work",
   "node-retrying": "Orbi-Prime scheduled a retry",
+  "recovery-selected": "Orbi-Prime selected recovery",
   "node-completed": "Agent completed work",
   "node-failed": "Agent failed",
   "circuit-opened": "Circuit breaker stopped execution",
