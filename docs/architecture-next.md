@@ -1,4 +1,4 @@
-# Architecture: implemented foundation and next steps
+# Architecture: implemented foundation and safety boundaries
 
 ## Implemented in this branch
 
@@ -36,3 +36,7 @@ Orbi-Prime proposes bounded, validated changes one at a time. Operators can enab
 - Arbitrary or destructive recovery actions
 
 These boundaries keep existing API workflows safe and working while providing tested extension points for local coding agents.
+
+## Release posture
+
+The planned architecture foundation is complete. Further features require a concrete product requirement. Maintenance work should prioritize compatibility, user isolation, bounded resource use, migration safety, and evidence-backed fixes instead of generating an open-ended sequence of roadmap additions.
