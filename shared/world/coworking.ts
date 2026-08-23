@@ -97,21 +97,20 @@ export function resolveAgentZone(state: string, paused = false): CoworkingZoneId
 
 function positionsForZone(zone: CoworkingZone, count: number): TileCoord[] {
   if (count === 0) return [];
-  const width = Math.max(1, zone.maxCol - zone.minCol);
-  const height = Math.max(1, zone.maxRow - zone.minRow);
-  const columns = Math.min(3, Math.max(1, Math.ceil(Math.sqrt(count))));
-  const rows = Math.ceil(count / columns);
-
-  return Array.from({ length: count }, (_, index) => {
-    const column = index % columns;
-    const row = Math.floor(index / columns);
-    const xRatio = columns === 1 ? 0.5 : (column + 1) / (columns + 1);
-    const yRatio = rows === 1 ? 0.5 : (row + 1) / (rows + 1);
-    return {
-      col: clamp(Math.round(zone.minCol + width * xRatio), zone.minCol, zone.maxCol),
-      row: clamp(Math.round(zone.minRow + height * yRatio), zone.minRow, zone.maxRow),
-    };
-  });
+  const candidates: TileCoord[] = [];
+  for (let row = zone.minRow + 1; row <= zone.maxRow; row += 2) {
+    for (let col = zone.minCol + 1; col <= zone.maxCol; col += 2) {
+      candidates.push({ col, row });
+    }
+  }
+  for (let row = zone.minRow; row <= zone.maxRow; row++) {
+    for (let col = zone.minCol; col <= zone.maxCol; col++) {
+      if (!candidates.some((candidate) => candidate.col === col && candidate.row === row)) {
+        candidates.push({ col, row });
+      }
+    }
+  }
+  return Array.from({ length: count }, (_, index) => candidates[index % candidates.length]);
 }
 
 export function assignCoworkingTiles(
