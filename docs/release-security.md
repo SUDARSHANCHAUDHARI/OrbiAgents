@@ -2,6 +2,8 @@
 
 OrbiAgents maintains five independent pnpm lockfiles: the root design application, API server, main web dashboard, VS Code extension, and extension webview. Release checks must audit each tree separately; auditing only the repository root does not cover the shipped server, dashboard, or extension.
 
+All five first-party package manifests use the repository release version. Internal packages remain independently installed and locked; matching version metadata does not turn them into a publishable workspace or change their deployment boundaries.
+
 ## Dependency baseline
 
 The August 2026 hardening pass moved every affected package to a patched, compatibility-tested line:

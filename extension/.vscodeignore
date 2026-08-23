@@ -1,0 +1,17 @@
+.vscode/**
+e2e/**
+src/**
+node_modules/**
+webview-ui/src/**
+webview-ui/node_modules/**
+webview-ui/index.html
+webview-ui/package.json
+webview-ui/pnpm-lock.yaml
+webview-ui/tsconfig.json
+webview-ui/vite.config.ts
+out/**/*.map
+.gitignore
+esbuild.mjs
+pnpm-lock.yaml
+tsconfig.json
+*.vsix

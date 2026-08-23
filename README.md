@@ -10,6 +10,8 @@ OrbiAgents is a visual multi-agent workflow engineering workspace. It combines w
 
 [Features](#features) · [Architecture](#architecture) · [Getting started](#getting-started) · [Current status](#current-status) · [Roadmap](#roadmap)
 
+Release candidate: **v0.2.0**. See the [changelog](CHANGELOG.md) and [acceptance checklist](docs/releases/v0.2.0.md).
+
 </div>
 
 ---
