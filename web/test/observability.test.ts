@@ -27,6 +27,8 @@ test("activity panel renders real supervisor and agent events", () => {
   assert.match(html, /Orbi-Prime/);
   assert.match(html, /supervising/);
   assert.match(html, /Orbi-Beta · coding/);
+  assert.match(html, /Focus desks/);
+  assert.match(html, /Zone activity/);
   assert.match(html, /Agent started work · code · Coder/);
 });
 

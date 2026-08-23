@@ -3,6 +3,7 @@
 import type { Agent } from "@/lib/types";
 import { TILE_SIZE } from "../../shared/engine/tileMap";
 import type { FurnitureInstance, TileCoord } from "../../shared/types";
+import { assignCoworkingTiles, buildCoworkingZones, type CoworkingZoneId } from "../../shared/world/coworking";
 import {
   BOOKSHELF_SPRITE,
   CHAIR_SPRITE,
@@ -57,6 +58,7 @@ export interface NamedAgentLayout {
   state: Agent["state"];
   paused: boolean;
   homeTile: TileCoord;
+  zoneId: CoworkingZoneId;
 }
 
 export interface OfficeLayout {
@@ -64,6 +66,7 @@ export interface OfficeLayout {
   homeTiles: Record<string, TileCoord>;
   furniture: FurnitureInstance[];
   contentBounds: Bounds;
+  zones: ReturnType<typeof buildCoworkingZones>;
 }
 
 export function calculateViewport(width: number, height: number): DashboardViewport {
@@ -109,42 +112,19 @@ export function layoutAgents(agents: Agent[], viewport: DashboardViewport): Offi
       homeTiles: {},
       furniture: placeFurniture({}, idleBounds, gridCols, gridRows),
       contentBounds: idleBounds,
+      zones: buildCoworkingZones(gridCols, gridRows),
     };
   }
 
-  const grid = resolveGrid(agents.length, viewport);
-  // Keep agents inside a centered safe zone first, then let decor use the outer ring.
-  const placementBounds = resolvePlacementBounds(grid.columns, grid.rows, CENTER_ZONE);
-  const usableWidth = placementBounds.maxCol - placementBounds.minCol;
-  const usableHeight = placementBounds.maxRow - placementBounds.minRow;
-  const spacingX = usableWidth / Math.max(1, grid.columns - 1 || 1);
-  const spacingY = usableHeight / Math.max(1, grid.rows - 1 || 1);
-
-  const laidOutAgents: NamedAgentLayout[] = [];
-  const occupied = new Set<string>();
-
-  agents.forEach((agent, index) => {
-    const row = Math.floor(index / grid.columns);
-    const col = index % grid.columns;
-
-    const desiredCol = grid.columns === 1
-      ? Math.round((placementBounds.minCol + placementBounds.maxCol) / 2)
-      : Math.round(placementBounds.minCol + spacingX * col);
-    const desiredRow = grid.rows === 1
-      ? Math.round((placementBounds.minRow + placementBounds.maxRow) / 2)
-      : Math.round(placementBounds.minRow + spacingY * row);
-
-    const homeTile = reserveNearestOpenTile(desiredCol, desiredRow, occupied, placementBounds);
-    occupied.add(`${homeTile.col}:${homeTile.row}`);
-
-    laidOutAgents.push({
+  const assignment = assignCoworkingTiles(agents, gridCols, gridRows);
+  const laidOutAgents: NamedAgentLayout[] = agents.map((agent) => ({
       id: agent.id,
       name: uniqueNames.get(agent.id) ?? agent.name,
       state: agent.state,
       paused: agent.paused,
-      homeTile,
-    });
-  });
+      homeTile: assignment.tiles[agent.id],
+      zoneId: assignment.zones[agent.id],
+    }));
 
   const homeTiles = Object.fromEntries(laidOutAgents.map((agent) => [agent.id, agent.homeTile]));
   const agentBounds = expandBounds(getBounds(Object.values(homeTiles), CENTER_ZONE), PADDING, FULL_MAP_BOUNDS);
@@ -158,13 +138,14 @@ export function layoutAgents(agents: Agent[], viewport: DashboardViewport): Offi
     0,
     FULL_MAP_BOUNDS,
   );
-  const furniture = placeFurniture(homeTiles, contentBounds, gridCols, gridRows);
+  const furniture = placeFurniture({}, contentBounds, gridCols, gridRows);
 
   return {
     agents: laidOutAgents,
     homeTiles,
     furniture,
     contentBounds,
+    zones: buildCoworkingZones(gridCols, gridRows),
   };
 }
 
@@ -228,74 +209,6 @@ export function calculateFocusedCamera(
     offsetX: clamp(focusOffsetX, minOffsetX, maxOffsetX),
     offsetY: clamp(focusOffsetY, minOffsetY, maxOffsetY),
   };
-}
-
-function resolveGrid(count: number, viewport: DashboardViewport): { columns: number; rows: number } {
-  if (count <= 3) {
-    return { columns: count, rows: 1 };
-  }
-
-  const aspectBias = viewport.contentWidth > viewport.contentHeight ? 1.15 : 1;
-  const columns = count >= 9
-    ? Math.ceil(Math.sqrt(count * aspectBias))
-    : Math.ceil(Math.sqrt(count));
-
-  return {
-    columns,
-    rows: Math.ceil(count / columns),
-  };
-}
-
-function resolvePlacementBounds(columns: number, rows: number, centerZone: Bounds): Bounds {
-  const { minCol, maxCol, minRow, maxRow } = centerZone;
-  const w = maxCol - minCol;
-  const h = maxRow - minRow;
-  if (columns <= 3 && rows === 1) {
-    return {
-      minCol: minCol + Math.round(w * 0.15),
-      maxCol: maxCol - Math.round(w * 0.08),
-      minRow: minRow + Math.round(h * 0.38),
-      maxRow: minRow + Math.round(h * 0.55),
-    };
-  }
-  if (columns <= 3 && rows <= 2) {
-    return {
-      minCol: minCol + Math.round(w * 0.08),
-      maxCol: maxCol,
-      minRow: minRow + Math.round(h * 0.10),
-      maxRow: maxRow - Math.round(h * 0.18),
-    };
-  }
-  return centerZone;
-}
-
-function reserveNearestOpenTile(
-  col: number,
-  row: number,
-  occupied: Set<string>,
-  bounds: Bounds,
-): TileCoord {
-  const candidates: TileCoord[] = [{ col, row }];
-
-  for (let radius = 1; radius <= 4; radius++) {
-    for (let y = row - radius; y <= row + radius; y++) {
-      for (let x = col - radius; x <= col + radius; x++) {
-        candidates.push({
-          col: clamp(x, bounds.minCol, bounds.maxCol),
-          row: clamp(y, bounds.minRow, bounds.maxRow),
-        });
-      }
-    }
-  }
-
-  for (const candidate of candidates) {
-    const key = `${candidate.col}:${candidate.row}`;
-    if (!occupied.has(key)) {
-      return candidate;
-    }
-  }
-
-  return { col, row };
 }
 
 export function placeFurniture(homeTiles: Record<string, TileCoord>, contentBounds: Bounds, gridCols: number, gridRows: number): FurnitureInstance[] {

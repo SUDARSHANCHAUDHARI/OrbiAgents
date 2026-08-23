@@ -279,14 +279,22 @@ export default function GameCanvas({ agents, selectedId, isReplaying, workflow, 
             const x2 = cameraFrame.offsetX + toTile.col * TILE_SIZE * cameraFrame.zoom;
             const y2 = cameraFrame.offsetY + toTile.row * TILE_SIZE * cameraFrame.zoom - 8 * cameraFrame.zoom;
             const midX = (x1 + x2) / 2;
+            const fromAgent = agents.find((agent) => agent.id === TYPE_TO_AGENT_ID[fromNode.type]);
+            const toAgent = agents.find((agent) => agent.id === TYPE_TO_AGENT_ID[toNode.type]);
+            const collaborating = Boolean(
+              fromAgent && toAgent &&
+              !["idle", "done"].includes(fromAgent.state) &&
+              !["idle", "done"].includes(toAgent.state),
+            );
 
             return (
               <path
                 key={`${edge.from}-${edge.to}`}
                 d={`M ${x1} ${y1} C ${midX} ${y1}, ${midX} ${y2}, ${x2} ${y2}`}
                 fill="none"
-                stroke="rgba(96,165,250,0.42)"
-                strokeWidth={2}
+                className={collaborating ? "orbi-pair-link" : undefined}
+                stroke={collaborating ? "rgba(52,211,153,0.82)" : "rgba(96,165,250,0.34)"}
+                strokeWidth={collaborating ? 3 : 2}
                 strokeDasharray="7 6"
                 strokeLinecap="round"
               />
@@ -328,6 +336,29 @@ export default function GameCanvas({ agents, selectedId, isReplaying, workflow, 
         onClick={handleClick}
         style={{ display: "block", imageRendering: "pixelated", cursor: "pointer", position: "relative", zIndex: 1 }}
       />
+      <div className="orbi-zone-layer" aria-label="Coworking zones">
+        {officeLayout.zones.map((zone) => {
+          const left = cameraFrame.offsetX + zone.minCol * TILE_SIZE * cameraFrame.zoom;
+          const top = cameraFrame.offsetY + zone.minRow * TILE_SIZE * cameraFrame.zoom;
+          const width = (zone.maxCol - zone.minCol + 1) * TILE_SIZE * cameraFrame.zoom;
+          const height = (zone.maxRow - zone.minRow + 1) * TILE_SIZE * cameraFrame.zoom;
+          const occupants = officeLayout.agents.filter((agent) => agent.zoneId === zone.id);
+          return (
+            <section
+              key={zone.id}
+              className={`orbi-zone orbi-zone--${zone.id}`}
+              aria-label={`${zone.label}: ${occupants.length} agents`}
+              style={{ left, top, width, height, "--zone-color": zone.color } as React.CSSProperties}
+            >
+              <header>
+                <strong>{zone.label}</strong>
+                <span>{occupants.length}</span>
+              </header>
+              <p>{zone.purpose}</p>
+            </section>
+          );
+        })}
+      </div>
     </div>
   );
 }

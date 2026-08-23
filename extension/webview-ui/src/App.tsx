@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { buildTileMap, buildFurnitureInstances, buildAgentHomeTiles, TILE_SIZE } from "shared/engine/tileMap";
+import { buildTileMap, buildFurnitureInstances, TILE_SIZE } from "shared/engine/tileMap";
+import { assignCoworkingTiles, buildCoworkingZones, summarizeZoneActivity } from "shared/world/coworking";
 import { createGameLoop } from "shared/engine/gameLoop";
 import { renderFrame } from "shared/engine/renderer";
 import { SoundSystem } from "shared/engine/soundSystem";
@@ -125,7 +126,7 @@ export default function App() {
     let currentTileMap = buildTileMap(cols, rows);
     rebuildFurniture(buildFurnitureInstances(cols, rows));
 
-    homeTilesRef.current = buildAgentHomeTiles(cols, rows);
+    homeTilesRef.current = assignCoworkingTiles(agentsRef.current, cols, rows).tiles;
     const loop = createGameLoop(currentTileMap, homeTilesRef.current, (chars) => {
       latestChars.current = chars.map(c => ({
         ...c,
@@ -146,7 +147,7 @@ export default function App() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
       currentTileMap = buildTileMap(c, r);
-      homeTilesRef.current = buildAgentHomeTiles(c, r);
+      homeTilesRef.current = assignCoworkingTiles(agentsRef.current, c, r).tiles;
       rebuildFurniture(buildFurnitureInstances(c, r));
       loop.setTileMap(currentTileMap);
       const ctx = canvas.getContext("2d");
@@ -176,6 +177,8 @@ export default function App() {
 
   // Feed agents to game loop when state changes
   useEffect(() => {
+    const { cols, rows } = gridFromWindow();
+    homeTilesRef.current = assignCoworkingTiles(agents, cols, rows).tiles;
     const inputs: AgentInput[] = agents.map(a => ({
       id: a.id,
       name: a.name,
@@ -282,6 +285,8 @@ export default function App() {
 
   // Build a lookup from agent id → agent for label rendering
   const agentById = new Map(agents.map(a => [a.id, a]));
+  const zoneActivity = summarizeZoneActivity(agents);
+  const zoneLabels = Object.fromEntries(buildCoworkingZones(20, 15).map(zone => [zone.id, zone.label]));
 
   return (
     <div style={{ position: "relative", width: "100%", height: "100%", overflow: "hidden" }}>
@@ -290,6 +295,14 @@ export default function App() {
         onClick={handleCanvasClick}
         style={{ display: "block", width: "100%", height: "100%", cursor: editMode ? "crosshair" : "pointer" }}
       />
+
+      <div aria-label="Coworking zone activity" style={{ position: "absolute", left: 8, top: 8, zIndex: 10, display: "grid", gridTemplateColumns: "repeat(2, minmax(110px, 1fr))", gap: 4, pointerEvents: "none" }}>
+        {Object.entries(zoneActivity).map(([zoneId, count]) => (
+          <div key={zoneId} style={{ padding: "4px 7px", color: "#94A3B8", background: "rgba(15,23,42,.82)", border: "1px solid #334155", borderRadius: 5, font: "9px monospace", textTransform: "uppercase" }}>
+            <b style={{ color: "#E2E8F0" }}>{count}</b> {zoneLabels[zoneId]}
+          </div>
+        ))}
+      </div>
 
       {/* Always-show label overlays */}
       {alwaysShowLabels && charPositions.map(pos => {
