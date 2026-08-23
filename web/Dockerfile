@@ -1,21 +1,22 @@
 FROM node:20-alpine AS base
-WORKDIR /app
+WORKDIR /app/web
 RUN corepack enable
 
 FROM base AS deps
-COPY package.json pnpm-lock.yaml ./
+COPY web/package.json web/pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
 FROM deps AS build
-COPY . .
+COPY web .
+COPY shared ../shared
 RUN pnpm build
 
 FROM node:20-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 
-COPY --from=build /app/.next/standalone ./
-COPY --from=build /app/.next/static ./.next/static
+COPY --from=build /app/web/.next/standalone ./
+COPY --from=build /app/web/.next/static ./.next/static
 
 EXPOSE 3000
 

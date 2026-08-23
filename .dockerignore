@@ -1,0 +1,12 @@
+*
+!web
+!web/**
+!shared
+!shared/**
+web/node_modules
+web/.next
+web/coverage
+web/test
+web/.env
+web/.env.*
+web/*.log
