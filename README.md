@@ -400,13 +400,16 @@ Memory prompt injection is disabled by default. A user can enable it for a run; 
 | Large-graph proposal diff details | ✅ Built |
 | In-place bookmark editing | ✅ Built |
 | Content-free embedding cache hit telemetry | ✅ Built |
+| Purposeful planning/focus/collaboration/lounge zones | ✅ Built; shared across web and VS Code |
+| Agent-state-driven zone movement and micro-animation | ✅ Built; replay-aware |
+| Live zone occupancy and active pair-work signals | ✅ Built from workflow state |
 | Autonomous supervisor workflow mutation | 🧭 Not enabled |
 
 ## Product direction
 
 The goal is not simply to display agents in an office.
 
-The visual environment is intended to become an **observability surface for the workflow**: where agents are working, what they are doing, what they received from upstream agents, what they produced, how much they cost, where a run failed, and how execution changed over time.
+The visual environment is an **observability surface for the workflow**: agent runtime states now move workers among planning, focus, collaboration, and lounge zones; active workflow relationships and mailbox deliveries are animated; and live/replay occupancy is visible in both the map and activity panel. Detailed outputs, cost, failures, and execution history remain available through the existing operator panels and replay controls.
 
 That direction is captured in the [coworking-space roadmap](docs/coworking-space-roadmap.md), which explores zone-aware agent behavior, collaboration states, session analytics, workflow-aware placement, and shared visual concepts across the web app and VS Code extension.
 

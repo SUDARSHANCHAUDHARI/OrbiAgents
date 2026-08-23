@@ -14,7 +14,7 @@ export interface AgentInput {
   activeToolName?: string;
 }
 
-const BUBBLE_PERMISSION: Bubble = { text: "...", color: "#F59E0B", fill: "#422006" };
+const BUBBLE_PERMISSION: Bubble = { text: "!", color: "#F59E0B", fill: "#422006" };
 const BUBBLE_DONE: Bubble       = { text: "✓",   color: "#22C55E", fill: "#052E16" };
 const DONE_BUBBLE_TTL = 2; // seconds
 
@@ -109,12 +109,11 @@ export function createGameLoop(
         motion.charState = CharacterState.WALKING;
       } else {
         motion.path = [];
-        motion.charState =
-          agent.agentState === "coding" || agent.agentState === "thinking"
-            ? CharacterState.TYPING
-            : agent.agentState === "reading"
-              ? CharacterState.READING
-              : CharacterState.IDLE;
+        motion.charState = ["coding", "debugging", "testing"].includes(agent.agentState)
+          ? CharacterState.TYPING
+          : ["thinking", "reading", "reviewing"].includes(agent.agentState)
+            ? CharacterState.READING
+            : CharacterState.IDLE;
         if (agent.agentState !== "idle") {
           motion.direction = Direction.DOWN;
         }

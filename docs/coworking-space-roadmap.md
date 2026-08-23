@@ -1,5 +1,19 @@
 # OrbiAgents Coworking Space Roadmap
 
+## Implemented foundation
+
+The core visual transformation is implemented with original OrbiAgents code and assets:
+
+- shared planning, focus, collaboration, and lounge zone definitions
+- runtime-state-driven agent placement and walking between zones
+- distinct thinking/reading, coding/testing/debugging, approval-waiting, and completion feedback
+- active pair-work links and mailbox delivery animation
+- live and replay-aware zone occupancy in the web dashboard
+- shared zone placement and occupancy language in the VS Code webview
+- responsive labels and reduced-motion behavior
+
+The analytics and customization ideas below remain optional product extensions, not prerequisites for the coworking environment to reflect real workflow activity.
+
 ## Goal
 
 Shift OrbiAgents from a pixel "office dashboard" into a more casual, modern coworking space where agents feel like workers sharing a creative environment instead of sitting in a rigid corporate grid.
@@ -133,14 +147,14 @@ Focus: keep the coworking-space concept aligned across the web app and extension
 - no major style mismatch between dashboard and extension
 - shared rendering/layout concepts live in one reusable layer
 
-## Recommended Build Order
+## Implemented Build Order
 
-1. Re-theme map into coworking zones
-2. Expand furniture catalog for casual/shared spaces
-3. Add zone-aware agent placement
-4. Add lightweight wandering / zone movement
-5. Add waiting / approval / pair-work indicators
-6. Add session analytics tied to zones
+1. ✅ Re-theme map into coworking zones
+2. ✅ Expand furniture catalog for casual/shared spaces
+3. ✅ Add zone-aware agent placement
+4. ✅ Add state-driven zone movement
+5. ✅ Add waiting / approval / pair-work indicators
+6. ✅ Add live and replay-aware zone occupancy
 
 ## Repo / Architecture Fit
 
