@@ -6,6 +6,16 @@ import {
   resolveAgentZone,
   summarizeZoneActivity,
 } from "../../shared/world/coworking";
+import { calculateViewport, layoutAgents } from "../lib/dashboardLayout";
+import type { Agent } from "../lib/types";
+
+function agent(state: Agent["state"]): Agent {
+  return {
+    id: "2", name: "Orbi-Beta", state, task: "Working", paused: false,
+    tokensUsed: 0, inputTokens: 0, outputTokens: 0, costUsd: 0,
+    lastAction: "", logs: [], x: 0, y: 0,
+  };
+}
 
 test("agent states map to purposeful coworking zones", () => {
   assert.equal(resolveAgentZone("thinking"), "planning");
@@ -48,4 +58,14 @@ test("zone activity summary reflects live and paused agent state", () => {
     collaboration: 1,
     lounge: 1,
   });
+});
+
+test("agent state changes move the agent without moving the coworking world", () => {
+  const viewport = calculateViewport(1200, 720);
+  const planning = layoutAgents([agent("thinking")], viewport);
+  const focus = layoutAgents([agent("coding")], viewport);
+
+  assert.notDeepEqual(planning.homeTiles["2"], focus.homeTiles["2"]);
+  assert.deepEqual(planning.contentBounds, focus.contentBounds);
+  assert.deepEqual(planning.furniture, focus.furniture);
 });

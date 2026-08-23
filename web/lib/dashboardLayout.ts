@@ -23,19 +23,6 @@ export const AGENT_SIZE = {
   heightTiles: 3,
 };
 
-function getCenterZone(gridCols: number, gridRows: number): Bounds {
-  return {
-    minCol: Math.max(2, Math.floor(gridCols * 0.13)),
-    maxCol: Math.min(gridCols - 3, Math.floor(gridCols * 0.53)),
-    minRow: Math.max(2, Math.floor(gridRows * 0.17)),
-    maxRow: Math.min(gridRows - 3, Math.floor(gridRows * 0.73)),
-  };
-}
-
-function getFullMapBounds(gridCols: number, gridRows: number): Bounds {
-  return { minCol: 0, maxCol: gridCols - 1, minRow: 0, maxRow: gridRows - 1 };
-}
-
 type Bounds = {
   minCol: number;
   maxCol: number;
@@ -96,23 +83,21 @@ export function ensureUniqueAgentNames(agents: Agent[]): Map<string, string> {
 
 export function layoutAgents(agents: Agent[], viewport: DashboardViewport): OfficeLayout {
   const { gridCols, gridRows } = viewport;
-  const CENTER_ZONE = getCenterZone(gridCols, gridRows);
-  const FULL_MAP_BOUNDS = getFullMapBounds(gridCols, gridRows);
+  const zones = buildCoworkingZones(gridCols, gridRows);
+  const contentBounds: Bounds = {
+    minCol: Math.min(...zones.map((zone) => zone.minCol)),
+    maxCol: Math.max(...zones.map((zone) => zone.maxCol)),
+    minRow: Math.min(...zones.map((zone) => zone.minRow)),
+    maxRow: Math.max(...zones.map((zone) => zone.maxRow)),
+  };
   const uniqueNames = ensureUniqueAgentNames(agents);
   if (agents.length === 0) {
-    const idleBounds = {
-      minCol: CENTER_ZONE.minCol,
-      maxCol: Math.min(gridCols - 3, CENTER_ZONE.maxCol + 7),
-      minRow: Math.max(1, CENTER_ZONE.minRow - 1),
-      maxRow: Math.min(gridRows - 2, CENTER_ZONE.maxRow + 2),
-    };
-
     return {
       agents: [],
       homeTiles: {},
-      furniture: placeFurniture({}, idleBounds, gridCols, gridRows),
-      contentBounds: idleBounds,
-      zones: buildCoworkingZones(gridCols, gridRows),
+      furniture: placeFurniture({}, contentBounds, gridCols, gridRows),
+      contentBounds,
+      zones,
     };
   }
 
@@ -127,17 +112,6 @@ export function layoutAgents(agents: Agent[], viewport: DashboardViewport): Offi
     }));
 
   const homeTiles = Object.fromEntries(laidOutAgents.map((agent) => [agent.id, agent.homeTile]));
-  const agentBounds = expandBounds(getBounds(Object.values(homeTiles), CENTER_ZONE), PADDING, FULL_MAP_BOUNDS);
-  const contentBounds = expandBounds(
-    {
-      minCol: Math.max(0, agentBounds.minCol - 2),
-      maxCol: Math.min(gridCols - 1, agentBounds.maxCol + 9),
-      minRow: Math.max(1, agentBounds.minRow - 4),
-      maxRow: Math.min(gridRows - 1, agentBounds.maxRow + 4),
-    },
-    0,
-    FULL_MAP_BOUNDS,
-  );
   const furniture = placeFurniture({}, contentBounds, gridCols, gridRows);
 
   return {
@@ -145,7 +119,7 @@ export function layoutAgents(agents: Agent[], viewport: DashboardViewport): Offi
     homeTiles,
     furniture,
     contentBounds,
-    zones: buildCoworkingZones(gridCols, gridRows),
+    zones,
   };
 }
 
@@ -398,28 +372,6 @@ export function placeFurniture(homeTiles: Record<string, TileCoord>, contentBoun
   }
 
   return items;
-}
-
-function getBounds(tiles: TileCoord[], fallback?: Bounds): Bounds {
-  if (tiles.length === 0) {
-    return fallback ?? { minCol: 6, maxCol: 24, minRow: 5, maxRow: 22 };
-  }
-
-  return {
-    minCol: Math.min(...tiles.map((tile) => tile.col)),
-    maxCol: Math.max(...tiles.map((tile) => tile.col)),
-    minRow: Math.min(...tiles.map((tile) => tile.row)),
-    maxRow: Math.max(...tiles.map((tile) => tile.row)),
-  };
-}
-
-function expandBounds(bounds: Bounds, padding: number, limits: Bounds): Bounds {
-  return {
-    minCol: clamp(bounds.minCol - padding, limits.minCol, limits.maxCol),
-    maxCol: clamp(bounds.maxCol + padding, limits.minCol, limits.maxCol),
-    minRow: clamp(bounds.minRow - padding, limits.minRow, limits.maxRow),
-    maxRow: clamp(bounds.maxRow + padding, limits.minRow, limits.maxRow),
-  };
 }
 
 function clamp(value: number, min: number, max: number): number {
