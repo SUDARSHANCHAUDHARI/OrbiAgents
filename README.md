@@ -228,6 +228,7 @@ OrbiAgents/
 | Data layer | Prisma |
 | Authentication | JWT, bcrypt |
 | VS Code integration | VS Code Extension API, webview UI |
+| Desktop foundation | Electron, electron-vite, React, node-pty, xterm.js |
 | E2E | Playwright |
 | Deployment | Docker / Docker Compose |
 | Package manager | pnpm |
@@ -322,6 +323,53 @@ Run its Playwright E2E suite with:
 pnpm e2e
 ```
 
+### 6. Run the desktop foundation
+
+The macOS-first desktop workspace is the first delivery milestone of the local agent-office roadmap. It currently provides a sandboxed Electron window, a typed preload bridge, built-in Codex, Claude, and Gemini PTY sessions, operator-allowlisted custom adapters, a dynamic agent roster, and embedded xterm terminals.
+
+From the repository root:
+
+```bash
+pnpm install
+pnpm desktop:check:security
+pnpm desktop:check:accessibility
+pnpm desktop:typecheck
+pnpm desktop:test
+pnpm desktop:build
+pnpm desktop:check:performance
+pnpm desktop:dev
+```
+
+Enter an existing absolute workspace path, select a configured runtime, and launch the agent. Built-in CLIs must already be installed and available on `PATH`. Custom adapters are added explicitly in Settings using an existing absolute executable path and bounded literal arguments. The renderer cannot inject a launch command, shell string, custom environment, or credentials; runtime descriptors are persisted and resolved by the desktop main process.
+
+The desktop workspace now includes the Orbi Hive and Orbi-Prime operator foundation plus the first PixiJS office slices: real normalized agent states determine movement between planning, focus, collaboration, and lounge zones, while active Hive tasks and delivered mailbox messages draw real collaboration paths to the Orbi-Prime station. The Command Center provides keyboard-accessible Floor, Terminals, Tasks, Messages, Approvals, Memory, Activity, Usage, Workspaces, and Settings views, a real selected-agent detail header, and a dependency-aware task board. The Usage view explicitly reports that desktop usage IPC is unavailable rather than estimating totals. Zoom, pointer selection, equivalent DOM controls, live Hive counts, and reduced-motion behavior are included. Agent worktree isolation is opt-in and enabled by default in the launch form: clean worktrees are removed after exit, while dirty worktrees are preserved with bounded tracked/untracked change metadata. Operators can select individual tracked and new files to apply after a clean-target preflight, or explicitly confirm permanent worktree discard. Restart recovery never presents a dead PTY as running and re-inspects preserved worktrees under the managed desktop root. Activity has one sanitized state/source contract. Claude sessions receive runtime-scoped hooks through an authenticated loopback receiver without rewriting global Claude settings. Codex rollout files are watched in bounded increments and attached only when their session metadata identifies exactly one matching live agent workspace. Provider prompt, command, and response content is not retained in activity events.
+
+Orbi Hive persists project-partitioned inboxes, outboxes, task state, blackboard results, approvals, and append-only delivery events under Electron user data rather than dirtying project repositories. Orbi-Prime can assign durable work to a running project agent, deliver it through the owned PTY, acknowledge only successful delivery, control task start/block/retry/completion, coordinate multiple agents, and synthesize completed results. Failed PTY delivery remains inspectable and unacknowledged. Spending increases, destructive operations, and scope expansion enter the operator approval queue. The PixiJS office and expanded Command Center are tracked in `.flow/PLAN.md`.
+
+Project memory is markdown-first and stored inside the same hashed Electron user-data partition, never in the selected repository. Operators can explicitly capture and search records from the Memory tab. Records and total bytes are bounded; retention creates a deterministic condensed record, malformed indexes rebuild from valid markdown, and deterministic text search remains available without embeddings.
+
+Scheduled missions are also project-partitioned and disabled by default. A single desktop heartbeat marks due runs and requests a spend approval bound to that exact run; it never launches an agent. After approval, the operator must explicitly run the mission, and its configured project agent must already be running. Failed PTY delivery keeps the same pending task available for a safe retry instead of creating duplicate work.
+
+Local OpenAI-compatible model endpoints can be configured in desktop Settings. Only loopback HTTP(S) URLs ending in `/v1` are accepted. Optional API keys are read directly by the main process from the system clipboard and encrypted with Electron `safeStorage`; plaintext credentials never enter renderer state or the endpoint metadata returned over IPC. A bounded `/models` probe verifies endpoint compatibility without exposing response bodies or credential-bearing network errors.
+
+The desktop Files tab embeds Monaco for recorded agent workspaces. Its file tree is bounded and excludes dependency/build directories, symlinks, common credential files, binaries, and files over 1 MB. Existing text files can be saved only after operator confirmation and an exact SHA-256 version match, using atomic replacement. Bounded Git history supplies validated commit hashes for a read-only Monaco comparison view; the editor never stages, commits, pushes, deletes, renames, or creates files.
+
+The desktop GitHub tab provides explicit, read-only issue and Actions ingestion through the locally authenticated `gh` CLI. Authentication checks and repository refreshes run only when the operator clicks them. Repository identity comes from the selected recorded agent workspace; fixed no-shell commands fetch at most 50 open issues and 30 recent runs. GitHub token environment overrides, command stderr, auth details, workflow mutations, login automation, and background polling are excluded.
+
+First-run onboarding checks macOS support, Git, Codex/Claude/Gemini CLI availability, GitHub CLI availability, and operating-system credential encryption. Checks inspect executable access directly without running version or authentication commands, include standard Homebrew/user-local macOS paths, and classify missing optional tools separately. Onboarding never installs software or blocks the Command Center, persists only a version and acknowledgment timestamp, and can be rerun from the Setup tab.
+
+Desktop app data now has an explicit schema boundary. Before adopting or upgrading managed state, OrbiAgents creates an owner-only, size-bounded backup of its agent, adapter, model-endpoint, onboarding, and Hive data; rejects links and unsafe paths; records SHA-256 checksums; and restores the verified snapshot if migration fails. Project repositories and managed worktrees are deliberately outside this rollback boundary.
+
+At startup, OrbiAgents also records a bounded recovery inventory before scheduled-mission heartbeats begin. It reports processes interrupted by the previous app exit, unfinished Hive tasks, pending operator approvals, and claimed mission runs. Recovery is observational: it preserves isolated workspaces and durable records but never restarts commands, delivers tasks, or makes approval decisions automatically.
+
+Approved scheduled missions are recorded in an owner-only append-only cost ledger before task creation or delivery. Entries are explicitly labeled as operator-authorized estimates—not provider invoices or actual charges—and use stable event keys plus a checksum chain. Retrying a run or restarting OrbiAgents cannot add the same authorization twice; an integrity failure preserves the readable prefix and blocks further appends for operator review.
+
+The Command Center exposes both systems through fixed, argument-free, read-only preload methods. The Recovery tab shows interrupted sessions and unfinished durable work; the Costs tab shows verified authorization estimates, bounded history, integrity warnings, and aggregate authorized estimates without inventing token counts or actual billing data.
+
+Apple-silicon macOS packaging now produces locally verified app, DMG, and ZIP artifacts with ASAR and rebuilt arm64 `node-pty`. The unsigned command is QA-only and cannot publish; the production command requires Developer ID signing, notarization, Gatekeeper/stapler verification, and accepted branded icon artwork. See `docs/releases/desktop-macos.md` and `docs/releases/desktop-v0.3.0.md`.
+
+The M6 source audit now enforces the Electron sandbox, context isolation, disabled Node/webview access, navigation/window/permission denial, trusted-sender IPC, and restrictive CSP. Every audited compact form control has an accessible name; first-run onboarding is modal to assistive technology; focus, reduced motion, terminal screen-reader mode, Monaco labels, and a DOM alternative to the office canvas are present. Production chunking reduced the initial renderer entry from 1,877,594 bytes to 600,610 bytes raw (381,578 to 108,648 gzip), with PixiJS, xterm, and Monaco delivered as separate lazy chunks. This is a code/build audit, not a substitute for the manual screen-reader, keyboard, signed-package, clean-account, and real-CLI acceptance listed in the macOS runbook.
+
 ## API and runtime highlights
 
 The server currently exposes runtime capabilities for:
@@ -368,6 +416,7 @@ Memory prompt injection is disabled by default. A user can enable it for a run; 
 | Shareable replay | ✅ Built |
 | Cost / usage guardrails | ✅ Built |
 | VS Code extension | ✅ Built |
+| Electron command center + interactive PTY/Hive/office | ✅ M6 implementation and static hardening complete; signed/manual release gates remain |
 | Server tests | ✅ Built |
 | Extension Playwright E2E setup | ✅ Built |
 | Bounded parallel execution of independent DAG branches | ✅ Built |
@@ -442,6 +491,7 @@ Rather than hiding orchestration behind a chat window, OrbiAgents makes the work
 - Known package advisories are checked independently in the root, server, web, extension, and extension-webview lockfiles
 - Configure rate limits and usage caps for the deployment environment
 - Treat public replay links as shareable access to the associated replay
+- Desktop security, accessibility, and renderer budget gates are available as `pnpm desktop:check:security`, `pnpm desktop:check:accessibility`, and `pnpm desktop:check:performance`
 
 ## Contributing
 
