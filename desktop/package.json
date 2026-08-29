@@ -1,0 +1,47 @@
+{
+  "name": "orbiagents-desktop",
+  "version": "0.3.0",
+  "private": true,
+  "description": "Local-first multi-agent command center and pixel office",
+  "author": "SudarshanTechLabs",
+  "license": "MIT",
+  "main": "out/main/index.js",
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "electron-vite build",
+    "preview": "electron-vite preview",
+    "package:mac:dir": "pnpm build && electron-builder --dir --mac --arm64 --publish never -c.forceCodeSigning=false -c.mac.identity=null -c.mac.hardenedRuntime=false -c.mac.notarize=false && node scripts/verify-macos-package.mjs --allow-unsigned --app-only",
+    "package:mac:unsigned": "pnpm build && electron-builder --mac dmg zip --arm64 --publish never -c.forceCodeSigning=false -c.mac.identity=null -c.mac.hardenedRuntime=false -c.mac.notarize=false && node scripts/verify-macos-package.mjs --allow-unsigned",
+    "package:mac:release": "node scripts/check-macos-release-readiness.mjs && pnpm build && electron-builder --mac dmg zip --arm64 --publish never && node scripts/verify-macos-package.mjs --require-release-signature",
+    "check:accessibility": "node scripts/check-accessibility-source.mjs",
+    "check:performance": "node scripts/check-renderer-budget.mjs",
+    "check:security": "node scripts/check-security-boundaries.mjs",
+    "typecheck:node": "tsc --noEmit -p tsconfig.node.json",
+    "typecheck:web": "tsc --noEmit -p tsconfig.web.json",
+    "typecheck": "pnpm typecheck:node && pnpm typecheck:web",
+    "test": "node --import tsx --test test/*.test.ts"
+  },
+  "dependencies": {
+    "@monaco-editor/react": "^4.7.0",
+    "@xterm/addon-fit": "^0.10.0",
+    "@xterm/xterm": "^5.5.0",
+    "monaco-editor": "^0.56.0",
+    "node-pty": "^1.0.0",
+    "pixi.js": "^8.20.1",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4"
+  },
+  "devDependencies": {
+    "@electron/asar": "3.4.1",
+    "@types/node": "^20.0.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "@vitejs/plugin-react": "^4.3.2",
+    "electron": "^32.2.0",
+    "electron-builder": "26.15.3",
+    "electron-vite": "^2.3.0",
+    "tsx": "^4.23.12",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.8"
+  }
+}
