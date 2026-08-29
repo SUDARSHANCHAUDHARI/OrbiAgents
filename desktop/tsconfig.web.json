@@ -1,0 +1,16 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "tsBuildInfoFile": "./out/types/web.tsbuildinfo",
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "strict": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "skipLibCheck": true,
+    "types": ["vite/client"]
+  },
+  "include": ["src/renderer/**/*.ts", "src/renderer/**/*.tsx", "src/preload/api.ts", "src/shared/**/*.ts"]
+}

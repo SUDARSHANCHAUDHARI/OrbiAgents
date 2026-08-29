@@ -2,10 +2,20 @@
   "name": "orbiagents-design",
   "version": "0.2.0",
   "private": true,
+  "packageManager": "pnpm@10.28.2",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "desktop:dev": "pnpm --dir desktop dev",
+    "desktop:build": "pnpm --dir desktop build",
+    "desktop:package:mac": "pnpm --dir desktop package:mac:unsigned",
+    "desktop:package:mac:release": "pnpm --dir desktop package:mac:release",
+    "desktop:check:security": "pnpm --dir desktop check:security",
+    "desktop:check:accessibility": "pnpm --dir desktop check:accessibility",
+    "desktop:check:performance": "pnpm --dir desktop check:performance",
+    "desktop:test": "pnpm --dir desktop test",
+    "desktop:typecheck": "pnpm --dir desktop typecheck"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.96.0",
@@ -23,6 +33,7 @@
   },
   "pnpm": {
     "overrides": {
+      "dompurify": "3.4.13",
       "nanoid": "3.3.18",
       "postcss": "8.5.26",
       "sharp": "0.35.3"
