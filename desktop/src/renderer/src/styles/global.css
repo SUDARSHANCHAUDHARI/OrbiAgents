@@ -83,13 +83,14 @@ input, select { height: 36px; padding: 0 10px; color: var(--orbi-ink); backgroun
 .agent-detail { display: flex; gap: 12px; align-items: center; min-height: 48px; padding: 8px 11px; color: #8fa6c0; background: #0b1523; border: 1px solid #263b56; border-radius: 8px 8px 0 0; font-size: 12px; }
 .agent-detail strong { color: #dce8f6; }
 .command-panel { min-height: 100%; padding: 16px; background: #0b1524; border: 1px solid #263850; border-radius: 8px; }
+.command-panel > .section-title { display: flex; align-items: center; justify-content: space-between; }
 .command-panel ul { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
 .command-panel li { display: grid; gap: 3px; padding: 11px; background: #08111e; border: 1px solid #20344c; border-radius: 7px; }
 .command-panel li small { color: #67e8f9; }
 .command-panel li span { color: #9fb0c6; white-space: pre-wrap; overflow-wrap: anywhere; }
 .memory-capture { display: grid; grid-template-columns: minmax(160px, 1fr) minmax(260px, 2fr) auto; gap: 8px; margin-bottom: 10px; }
 .memory-capture textarea { min-height: 60px; resize: vertical; }
-.memory-search { display: grid; grid-template-columns: minmax(200px, 1fr) auto; gap: 8px; margin-bottom: 14px; }
+.memory-search { display: grid; grid-template-columns: minmax(200px, 1fr) auto auto; gap: 8px; margin-bottom: 14px; }
 .memory-capture button, .memory-search button { padding: 0 13px; color: #07111f; background: #67e8f9; border: 0; border-radius: 6px; font-weight: 800; }
 .mission-panel > .section-title { display: flex; justify-content: space-between; align-items: center; }
 .mission-policy { color: #fbbf24; font-size: 12px; }
