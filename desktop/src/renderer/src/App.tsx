@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import type { ActivityEvent, AgentSession, CreateAgentRequest, HiveSnapshot, OnboardingStatus, RuntimeAdapterDescriptor } from "../../shared/contracts";
 import { AgentRoster } from "./components/AgentRoster";
 import { ActivityPanel } from "./components/ActivityPanel";
+import { ActivityOperationsPanel } from "./components/ActivityOperationsPanel";
 import { WorkspaceReview } from "./components/WorkspaceReview";
 import { HivePanel } from "./components/HivePanel";
 import { ApprovalPanel } from "./components/ApprovalPanel";
@@ -131,7 +132,7 @@ export default function App() {
             {commandView === "messages" ? <CommandList title="Prime inbox" empty="No durable messages for this project." items={hiveSnapshot?.primeInbox.map((message) => ({ id: message.id, title: `${message.senderAgentId} → ${message.recipientAgentId}`, meta: `${message.kind} · ${message.status}`, detail: message.body })) ?? []} /> : null}
             {commandView === "approvals" ? <ApprovalPanel projectPath={selectedProject} snapshot={hiveSnapshot} onSnapshot={setHiveSnapshot} onError={(message) => setError(message || null)} /> : null}
             {commandView === "memory" ? <MemoryPanel projectPath={selectedProject} onError={(message) => setError(message || null)} /> : null}
-            {commandView === "activity" ? <CommandList title="Normalized runtime activity" empty="No runtime activity recorded in this desktop session." items={activity.slice().reverse().map((event) => ({ id: event.id, title: `${event.agentId} · ${event.state ?? event.type}`, meta: `${event.source} · ${new Date(event.timestamp).toLocaleTimeString()}`, detail: event.summary }))} /> : null}
+            {commandView === "activity" ? <ActivityOperationsPanel events={activity} agents={agents} /> : null}
             {commandView === "usage" ? <CostPanel onError={(message) => setError(message || null)} /> : null}
             {commandView === "recovery" ? <RecoveryPanel onError={(message) => setError(message || null)} /> : null}
             {commandView === "workspaces" ? <CommandList title="Agent workspaces" empty="No agent workspaces recorded." items={agents.map((agent) => ({ id: agent.id, title: agent.name, meta: `${agent.workspace.status} · ${agent.workspace.branch ?? "direct"}`, detail: agent.workspace.path }))} /> : null}

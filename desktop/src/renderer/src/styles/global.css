@@ -132,6 +132,7 @@ input, select { height: 36px; padding: 0 10px; color: var(--orbi-ink); backgroun
 .activity-panel time { color: #617b98; font-variant-numeric: tabular-nums; }
 .activity-panel li span { display: grid; gap: 2px; }
 .activity-panel strong { color: #c6d8eb; font-size: 10px; text-transform: uppercase; }
+.activity-filters { display: grid; grid-template-columns: repeat(3, minmax(120px, 1fr)); gap: 8px; margin-bottom: 14px; }
 .workspace-review { display: grid; gap: 5px; margin-top: 10px; padding: 12px 14px; color: #fef3c7; background: #35270d; border: 1px solid #765b20; border-radius: 8px; font-size: 12px; }
 .workspace-review span { white-space: pre-wrap; overflow-wrap: anywhere; }
 .workspace-review label { display: flex; align-items: center; gap: 8px; color: #fde68a; text-transform: none; }
