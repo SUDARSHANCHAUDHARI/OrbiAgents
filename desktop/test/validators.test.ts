@@ -5,6 +5,7 @@ import path from "node:path";
 import test from "node:test";
 import {
   validateAgentId,
+  validateAgentProfile,
   validateCreateAgentRequest,
   validateDimension,
   validateTerminalInput,
@@ -34,7 +35,13 @@ test("terminal dimensions and input are bounded", () => {
 test("create request requires an existing absolute workspace and allowlisted runtime", async () => {
   const cwd = await mkdtemp(path.join(os.tmpdir(), "orbi-validator-"));
   const request = await validateCreateAgentRequest({ id: "alpha", name: " Orbi Alpha ", runtimeId: "codex", cwd });
-  assert.deepEqual(request, { id: "alpha", name: "Orbi Alpha", runtimeId: "codex", cwd, cols: 100, rows: 30, isolateWorkspace: false });
+  assert.deepEqual(request, { id: "alpha", name: "Orbi Alpha", runtimeId: "codex", cwd, cols: 100, rows: 30, isolateWorkspace: false, profile: { role: "generalist", goal: "", capabilities: ["planning", "coding", "testing"], budgetMinutes: 60, appearance: "cyan" } });
   await assert.rejects(validateCreateAgentRequest({ id: "alpha", name: "Alpha", runtimeId: "shell", cwd }), /Unsupported/);
   await assert.rejects(validateCreateAgentRequest({ id: "alpha", name: "Alpha", runtimeId: "codex", cwd: "relative" }), /absolute/);
+});
+
+test("agent profiles are bounded, normalized, and reject unknown options", () => {
+  assert.deepEqual(validateAgentProfile({ role: "builder", goal: "  Ship the feature  ", capabilities: ["coding", "testing"], budgetMinutes: 90, appearance: "violet" }), { role: "builder", goal: "Ship the feature", capabilities: ["coding", "testing"], budgetMinutes: 90, appearance: "violet" });
+  assert.throws(() => validateAgentProfile({ role: "admin", goal: "", capabilities: ["coding"], budgetMinutes: 60, appearance: "cyan" }), /role/);
+  assert.throws(() => validateAgentProfile({ role: "builder", goal: "", capabilities: ["coding", "coding"], budgetMinutes: 60, appearance: "cyan" }), /capabilities/);
 });

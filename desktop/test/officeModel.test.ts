@@ -22,6 +22,11 @@ test("office model gives same-zone agents distinct stable positions", () => {
   assert.deepEqual(buildOfficeAgents([session("a"), session("b"), session("c")], { a: "coding", b: "coding", c: "coding" }), agents);
 });
 
+test("office model uses the retained hiring appearance for agent identity", () => {
+  const agent = { ...session("violet"), profile: { role: "builder" as const, goal: "", capabilities: ["coding" as const], budgetMinutes: 60, appearance: "violet" as const } };
+  assert.equal(buildOfficeAgents([agent], { violet: "coding" })[0].color, 0xa78bfa);
+});
+
 test("office model keeps a large concurrent roster inside zones without overlapping positions", () => {
   const sessions = Array.from({ length: 64 }, (_, index) => session(`agent-${index}`));
   const states: Record<string, AgentActivityState> = Object.fromEntries(sessions.map((agent, index) => [agent.id, index % 2 ? "coding" : "thinking"]));

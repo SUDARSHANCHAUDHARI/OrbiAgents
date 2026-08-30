@@ -22,7 +22,7 @@ export function AgentRoster({ agents, selectedId, onSelect }: AgentRosterProps) 
           >
             <span className="agent-card__identity">
               <strong>{agent.name}</strong>
-              <small>{agent.runtimeId} · {agent.workspace.status} workspace</small>
+              <small>{agent.profile?.role ?? agent.runtimeId} · {agent.workspace.status} workspace</small>
             </span>
             <StatusBadge status={agent.status} />
           </button>

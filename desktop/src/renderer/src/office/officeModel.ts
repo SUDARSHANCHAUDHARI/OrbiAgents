@@ -7,6 +7,7 @@ export interface OfficeLink { id: string; fromAgentId: string; toAgentId: string
 
 const STATE_ZONE: Record<AgentActivityState, OfficeZoneId> = { idle: "lounge", thinking: "planning", reading: "planning", coding: "focus", "permission-waiting": "collaboration", done: "lounge", failed: "collaboration" };
 const COLORS = [0x67e8f9, 0xa78bfa, 0x34d399, 0xfbbf24, 0xfb7185];
+const APPEARANCE_COLORS = { cyan: 0x67e8f9, violet: 0xa78bfa, green: 0x34d399, gold: 0xfbbf24, rose: 0xfb7185 } as const;
 
 export function buildOfficeAgents(agents: AgentSession[], states: Record<string, AgentActivityState | undefined>, world: OrbitalWorld = createOrbitalWorld()): OfficeAgent[] {
   const grouped = new Map<OrbitalStationId, AgentSession[]>();
@@ -18,7 +19,7 @@ export function buildOfficeAgents(agents: AgentSession[], states: Record<string,
     const state = states[agent.id] ?? fallbackState(agent);
     const destination = closestAvailableTile(world, station.column, station.row, occupied);
     occupied.add(`${destination.column}:${destination.row}`);
-    result.push({ id: agent.id, name: agent.name, state, zone: STATE_ZONE[state], stationId: station.id, column: destination.column, row: destination.row, color: COLORS[result.length % COLORS.length] });
+    result.push({ id: agent.id, name: agent.name, state, zone: STATE_ZONE[state], stationId: station.id, column: destination.column, row: destination.row, color: agent.profile ? APPEARANCE_COLORS[agent.profile.appearance] : COLORS[result.length % COLORS.length] });
   }));
   return result;
 }

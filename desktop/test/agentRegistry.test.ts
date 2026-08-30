@@ -32,3 +32,10 @@ test("registry preserves id across updates", () => {
   assert.equal(updated.status, "running");
   assert.equal(updated.pid, 42);
 });
+
+test("registry returns defensive copies of nested hiring profiles", () => {
+  const profile = { role: "builder" as const, goal: "Ship", capabilities: ["coding" as const], budgetMinutes: 60, appearance: "cyan" as const };
+  const registry = new AgentRegistry([{ id: "alpha", name: "Alpha", runtimeId: "codex", cwd: "/repo", status: "running", outputTail: "", startedAt: 1, workspace: { sourcePath: "/repo", path: "/repo", status: "direct" }, profile }]);
+  registry.require("alpha").profile!.capabilities.push("testing");
+  assert.deepEqual(registry.require("alpha").profile?.capabilities, ["coding"]);
+});

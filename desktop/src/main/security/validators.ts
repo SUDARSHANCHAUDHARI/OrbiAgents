@@ -1,10 +1,14 @@
 import { stat } from "node:fs/promises";
 import path from "node:path";
-import { RUNTIME_IDS, type CreateAgentRequest, type RuntimeId } from "../../shared/contracts";
+import { RUNTIME_IDS, type AgentAppearance, type AgentCapability, type AgentProfile, type AgentRole, type CreateAgentRequest, type RuntimeId } from "../../shared/contracts";
 
 const ID_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$/;
 const MAX_NAME_LENGTH = 80;
 const MAX_INPUT_BYTES = 64 * 1024;
+const ROLES: AgentRole[] = ["generalist", "planner", "builder", "reviewer", "researcher"];
+const CAPABILITIES: AgentCapability[] = ["planning", "coding", "review", "research", "testing"];
+const APPEARANCES: AgentAppearance[] = ["cyan", "violet", "green", "gold", "rose"];
+const DEFAULT_PROFILE: AgentProfile = { role: "generalist", goal: "", capabilities: ["planning", "coding", "testing"], budgetMinutes: 60, appearance: "cyan" };
 
 export function validateAgentId(value: unknown): string {
   if (typeof value !== "string" || !ID_PATTERN.test(value)) {
@@ -59,7 +63,19 @@ export function validateRelativeFiles(value: unknown): string[] {
   });
 }
 
-export type ValidatedCreateAgentRequest = Required<Omit<CreateAgentRequest, "isolateWorkspace">> & { isolateWorkspace: boolean };
+export function validateAgentProfile(value: unknown): AgentProfile {
+  if (value === undefined) return { ...DEFAULT_PROFILE, capabilities: [...DEFAULT_PROFILE.capabilities] };
+  if (!value || typeof value !== "object") throw new Error("Agent profile is required");
+  const profile = value as Record<string, unknown>;
+  if (typeof profile.role !== "string" || !ROLES.includes(profile.role as AgentRole)) throw new Error("Unsupported agent role");
+  if (typeof profile.goal !== "string" || profile.goal.trim().length > 2_000) throw new Error("Agent goal must be at most 2,000 characters");
+  if (!Array.isArray(profile.capabilities) || profile.capabilities.length < 1 || profile.capabilities.length > CAPABILITIES.length || profile.capabilities.some((item) => typeof item !== "string" || !CAPABILITIES.includes(item as AgentCapability)) || new Set(profile.capabilities).size !== profile.capabilities.length) throw new Error("Agent capabilities are invalid");
+  if (!Number.isInteger(profile.budgetMinutes) || (profile.budgetMinutes as number) < 15 || (profile.budgetMinutes as number) > 480) throw new Error("Agent timebox must be 15-480 minutes");
+  if (typeof profile.appearance !== "string" || !APPEARANCES.includes(profile.appearance as AgentAppearance)) throw new Error("Unsupported agent appearance");
+  return { role: profile.role as AgentRole, goal: profile.goal.trim(), capabilities: [...profile.capabilities] as AgentCapability[], budgetMinutes: profile.budgetMinutes as number, appearance: profile.appearance as AgentAppearance };
+}
+
+export type ValidatedCreateAgentRequest = Required<Omit<CreateAgentRequest, "profile">> & { profile?: AgentProfile };
 
 export async function validateCreateAgentRequest(value: unknown): Promise<ValidatedCreateAgentRequest> {
   if (!value || typeof value !== "object") throw new Error("Agent request is required");
@@ -72,5 +88,6 @@ export async function validateCreateAgentRequest(value: unknown): Promise<Valida
     cols: validateDimension(request.cols, 100),
     rows: validateDimension(request.rows, 30),
     isolateWorkspace: request.isolateWorkspace === true,
+    profile: validateAgentProfile(request.profile),
   };
 }

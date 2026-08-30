@@ -1,6 +1,7 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { RUNTIME_IDS, type AgentSession, type AgentWorkspace, type RuntimeId } from "../../shared/contracts";
+import { validateAgentProfile } from "../security/validators";
 
 interface StoredAgent {
   id: string;
@@ -13,6 +14,7 @@ interface StoredAgent {
   exitCode?: number;
   signal?: number;
   workspace: AgentWorkspace;
+  profile?: AgentSession["profile"];
 }
 
 export interface InterruptedAgentSession { id: string; name: string; runtimeId: RuntimeId; sourcePath: string; workspacePath: string; startedAt: number; recoveredAt: number; }
@@ -83,7 +85,9 @@ function parseStoredAgent(value: unknown): StoredAgent | null {
     typeof row.startedAt !== "number"
   ) return null;
   const workspace = parseWorkspace(row.workspace, row.cwd);
-  return { ...(row as unknown as Omit<StoredAgent, "workspace">), workspace };
+  let profile: AgentSession["profile"];
+  try { profile = row.profile === undefined ? undefined : validateAgentProfile(row.profile); } catch { profile = undefined; }
+  return { ...(row as unknown as Omit<StoredAgent, "workspace" | "profile">), workspace, profile };
 }
 
 function parseWorkspace(value: unknown, cwd: unknown): AgentWorkspace {

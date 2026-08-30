@@ -18,6 +18,17 @@ export interface RuntimeAdapterCreateRequest {
 }
 
 export type AgentStatus = "starting" | "running" | "stopping" | "exited" | "failed";
+export type AgentRole = "generalist" | "planner" | "builder" | "reviewer" | "researcher";
+export type AgentCapability = "planning" | "coding" | "review" | "research" | "testing";
+export type AgentAppearance = "cyan" | "violet" | "green" | "gold" | "rose";
+
+export interface AgentProfile {
+  role: AgentRole;
+  goal: string;
+  capabilities: AgentCapability[];
+  budgetMinutes: number;
+  appearance: AgentAppearance;
+}
 
 export interface CreateAgentRequest {
   id: string;
@@ -27,6 +38,7 @@ export interface CreateAgentRequest {
   cols?: number;
   rows?: number;
   isolateWorkspace?: boolean;
+  profile?: AgentProfile;
 }
 
 export type WorkspaceStatus = "direct" | "active" | "cleaned" | "preserved";
@@ -73,6 +85,7 @@ export interface AgentSession {
   startedAt: number;
   exitedAt?: number;
   workspace: AgentWorkspace;
+  profile?: AgentProfile;
 }
 
 export interface TerminalOutputEvent {
