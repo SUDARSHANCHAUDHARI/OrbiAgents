@@ -74,6 +74,7 @@ input, select { height: 36px; padding: 0 10px; color: var(--orbi-ink); backgroun
 .editor-toolbar select { margin-left: auto; max-width: 45%; }
 @media (max-width: 960px) { .ide-layout { grid-template-columns: 1fr; } .file-tree { max-height: 220px; } }
 .github-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 12px; }
+.github-filters { display: flex; gap: 8px; margin-top: 12px; }
 .github-grid h4 { margin: 0 0 8px; }
 @media (max-width: 960px) { .github-grid { grid-template-columns: 1fr; } }
 .onboarding-overlay { position: fixed; inset: 0; z-index: 50; display: grid; place-items: center; padding: 24px; overflow: auto; background: rgba(3, 8, 16, .92); }
