@@ -14,6 +14,7 @@
     "package:mac:unsigned": "pnpm build && electron-builder --mac dmg zip --arm64 --publish never -c.forceCodeSigning=false -c.mac.identity=null -c.mac.hardenedRuntime=false -c.mac.notarize=false && node scripts/verify-macos-package.mjs --allow-unsigned",
     "package:mac:release": "node scripts/check-macos-release-readiness.mjs && pnpm build && electron-builder --mac dmg zip --arm64 --publish never && node scripts/verify-macos-package.mjs --require-release-signature",
     "check:accessibility": "node scripts/check-accessibility-source.mjs",
+    "check:design-system": "node scripts/check-design-system-source.mjs",
     "check:performance": "node scripts/check-renderer-budget.mjs",
     "check:security": "node scripts/check-security-boundaries.mjs",
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json",

@@ -1,0 +1,24 @@
+:root {
+  --orbi-void: #070b14;
+  --orbi-space: #0d1424;
+  --orbi-deck: #151f33;
+  --orbi-panel: #1c2940;
+  --orbi-panel-raised: #243451;
+  --orbi-edge: #334563;
+  --orbi-edge-bright: #526887;
+  --orbi-ink: #f4eedf;
+  --orbi-muted: #aab6c8;
+  --orbi-dim: #7f8da3;
+  --orbi-signal: #5eead4;
+  --orbi-signal-dark: #123d42;
+  --orbi-energy: #ffd166;
+  --orbi-energy-dark: #8b621c;
+  --orbi-alert: #ff6b6b;
+  --orbi-alert-dark: #57252d;
+  --orbi-violet: #a78bfa;
+  --orbi-success: #72e2a8;
+  --orbi-shadow: #03050a;
+  --orbi-unit: 4px;
+  --orbi-font-ui: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --orbi-font-display: "Arial Black", Impact, ui-sans-serif, system-ui, sans-serif;
+}
