@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Application, Container, Graphics, Text } from "pixi.js";
 import type { ActivityEvent, AgentActivityState, AgentSession, HiveSnapshot } from "../../../shared/contracts";
 import { activityBubbleForState, pointOnOfficeLink } from "../office/officeEffects";
+import { loadOfficeLayout, saveOfficeLayout } from "../office/officeLayoutStore";
 import { buildOfficeAgents, buildOfficeLinks, type OfficeAgent, type OfficeLink } from "../office/officeModel";
 import { clampOrbitalCamera, createOrbitalWorld, findOrbitalPath, floorForState, ORBITAL_FLOORS, ORBITAL_TILE_SIZE, stationById, type OrbitalCamera, type OrbitalFloorId, type OrbitalPosition, type OrbitalTileKind, type OrbitalWorld } from "../office/orbitalWorld";
 
@@ -18,8 +19,9 @@ export function PixelOffice({ agents, activity, hive, selectedId, onSelect }: { 
   const trafficRef = useRef<TrafficView[]>([]);
   const elapsedRef = useRef(0);
   const onSelectRef = useRef(onSelect); onSelectRef.current = onSelect;
-  const [floorId, setFloorId] = useState<OrbitalFloorId>("operations");
-  const [camera, setCamera] = useState<Pick<OrbitalCamera, "x" | "y" | "zoom">>({ x: 0, y: 0, zoom: 1 });
+  const [layout, setLayout] = useState(() => loadOfficeLayout(window.localStorage));
+  const floorId = layout.floorId;
+  const camera = layout.cameras[floorId];
   const [sizeVersion, setSizeVersion] = useState(0);
   const reducedMotion = useReducedMotion();
   const reducedRef = useRef(reducedMotion); reducedRef.current = reducedMotion;
@@ -28,6 +30,8 @@ export function PixelOffice({ agents, activity, hive, selectedId, onSelect }: { 
   const allOfficeAgents = useMemo(() => buildOfficeAgents(agents, states), [agents, states]);
   const officeAgents = useMemo(() => buildOfficeAgents(agents, states, world, floorId), [agents, states, world, floorId]);
   const officeLinks = useMemo(() => buildOfficeLinks(hive, new Set(officeAgents.map((agent) => agent.id))), [hive, officeAgents]);
+
+  useEffect(() => saveOfficeLayout(window.localStorage, layout), [layout]);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -102,15 +106,15 @@ export function PixelOffice({ agents, activity, hive, selectedId, onSelect }: { 
 
   function moveCamera(dx: number, dy: number): void {
     const app = appRef.current; if (!app) return;
-    setCamera((current) => clampOrbitalCamera({ ...current, x: current.x + dx, y: current.y + dy, viewportWidth: app.screen.width, viewportHeight: app.screen.height }, world));
+    setLayout((current) => ({ ...current, cameras: { ...current.cameras, [floorId]: clampOrbitalCamera({ ...current.cameras[floorId], x: current.cameras[floorId].x + dx, y: current.cameras[floorId].y + dy, viewportWidth: app.screen.width, viewportHeight: app.screen.height }, world) } }));
   }
 
   function toggleZoom(): void {
     const app = appRef.current; if (!app) return;
-    setCamera((current) => clampOrbitalCamera({ ...current, zoom: current.zoom === 1 ? 2 : 1, viewportWidth: app.screen.width, viewportHeight: app.screen.height }, world));
+    setLayout((current) => ({ ...current, cameras: { ...current.cameras, [floorId]: clampOrbitalCamera({ ...current.cameras[floorId], zoom: current.cameras[floorId].zoom === 1 ? 2 : 1, viewportWidth: app.screen.width, viewportHeight: app.screen.height }, world) } }));
   }
 
-  function selectFloor(next: OrbitalFloorId): void { viewsRef.current.clear(); setCamera({ x: 0, y: 0, zoom: 1 }); setFloorId(next); }
+  function selectFloor(next: OrbitalFloorId): void { viewsRef.current.clear(); setLayout((current) => ({ ...current, floorId: next })); }
 
   return <section className="pixel-office" aria-label="OrbiAgents pixel office">
     <header><div><span className="eyebrow">LIVE ORBITAL DECK</span><h2>Orbi Operations</h2></div><div className="office-zoom" aria-label="Office floor and camera controls"><select aria-label="Orbital office floor" value={floorId} onChange={(event) => selectFloor(event.target.value as OrbitalFloorId)}>{ORBITAL_FLOORS.map((floor) => <option key={floor.id} value={floor.id}>{floor.label} ({allOfficeAgents.filter((agent) => floorForState(agent.state) === floor.id).length})</option>)}</select><button aria-label="Pan office left" type="button" onClick={() => moveCamera(96, 0)}>←</button><button aria-label="Pan office up" type="button" onClick={() => moveCamera(0, 96)}>↑</button><button aria-label="Pan office down" type="button" onClick={() => moveCamera(0, -96)}>↓</button><button aria-label="Pan office right" type="button" onClick={() => moveCamera(-96, 0)}>→</button><button aria-label={`Set office zoom to ${camera.zoom === 1 ? 2 : 1}x`} type="button" onClick={toggleZoom}>{camera.zoom}×</button></div></header>
