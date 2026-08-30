@@ -13,7 +13,6 @@ h1 i { display: grid; width: 34px; height: 30px; place-items: center; color: var
 .fleet-actions { display: flex; align-items: center; gap: 12px; color: var(--orbi-dim); font: 800 11px var(--orbi-font-ui); text-transform: uppercase; letter-spacing: .08em; }
 label { display: grid; gap: 4px; color: #9fb0c6; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
 input, select { height: 36px; padding: 0 10px; color: var(--orbi-ink); background: var(--orbi-void); border: 2px solid var(--orbi-edge); border-radius: 0; text-transform: none; }
-.workspace-field { width: min(360px, 32vw); }
 .fleet-actions button, .terminal-toolbar button { height: 36px; }
 .hiring-overlay { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 24px; overflow: auto; background: rgba(3, 8, 16, .94); }
 .hiring-panel { width: min(920px, 100%); max-height: calc(100vh - 48px); overflow: auto; box-shadow: 8px 8px 0 #000; }
@@ -53,10 +52,6 @@ input, select { height: 36px; padding: 0 10px; color: var(--orbi-ink); backgroun
 .agent-card span:last-child { min-width: 0; display: grid; gap: 3px; }
 .agent-card strong, .agent-card small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .agent-card small { color: #8fa6c0; }
-.status-dot { width: 9px; height: 9px; flex: none; border-radius: 50%; background: #64748b; }
-.status-dot.running { background: #34d399; box-shadow: 0 0 9px #34d399; }
-.status-dot.failed { background: #fb7185; }
-.status-dot.stopping { background: #fbbf24; }
 .terminal-column { min-width: 0; min-height: 0; display: grid; grid-template-rows: auto minmax(0, 1fr); padding: 14px; overflow: hidden; }
 .command-tabs { display: flex; gap: 5px; padding: 0 0 10px; overflow-x: auto; }
 .command-tabs button { flex: none; }
@@ -168,7 +163,6 @@ input, select { height: 36px; padding: 0 10px; color: var(--orbi-ink); backgroun
   .role-picker { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .hiring-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .workspace { grid-template-columns: 220px minmax(0, 1fr); }
-  .workspace-field { width: min(330px, 38vw); }
   .task-columns { grid-template-columns: repeat(2, minmax(150px, 1fr)); }
 }
 .pixel-office { min-height: 250px; display: grid; grid-template-rows: auto 1fr auto auto; margin-bottom: 10px; overflow: hidden; background: #07111f; border: 1px solid #263b56; border-radius: 10px; }
