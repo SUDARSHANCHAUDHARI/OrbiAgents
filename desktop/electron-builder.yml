@@ -20,6 +20,7 @@ forceCodeSigning: true
 publish: null
 afterPack: scripts/after-pack.cjs
 mac:
+  icon: icon.icns
   category: public.app-category.developer-tools
   target:
     - dmg

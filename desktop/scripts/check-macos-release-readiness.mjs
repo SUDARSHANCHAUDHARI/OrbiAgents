@@ -3,6 +3,13 @@ import { readFile, stat } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 
+const sourceIcon = path.resolve("build", "icon-source.png");
+const sourceInfo = await stat(sourceIcon).catch(() => null);
+if (!sourceInfo?.isFile() || sourceInfo.size < 8) throw new Error("Release requires the branded build/icon-source.png artwork");
+const sourceMetadata = await promisify(execFile)("sips", ["-g", "pixelWidth", "-g", "pixelHeight", sourceIcon]);
+const sourceDimensions = [...sourceMetadata.stdout.matchAll(/pixel(?:Width|Height):\s+(\d+)/g)].map((match) => Number(match[1]));
+if (sourceDimensions.length !== 2 || sourceDimensions.some((value) => value !== 1024)) throw new Error("build/icon-source.png must be exactly 1024x1024");
+
 const icon = path.resolve("build", "icon.icns");
 const info = await stat(icon).catch(() => null);
 if (!info?.isFile() || info.size < 8) throw new Error("Release requires a branded build/icon.icns generated from a 1024x1024 source icon");
@@ -11,6 +18,10 @@ if (header !== "icns") throw new Error("build/icon.icns is not a valid ICNS cont
 const iconMetadata = await promisify(execFile)("sips", ["-g", "pixelWidth", "-g", "pixelHeight", icon]);
 const dimensions = [...iconMetadata.stdout.matchAll(/pixel(?:Width|Height):\s+(\d+)/g)].map((match) => Number(match[1]));
 if (dimensions.length !== 2 || dimensions.some((value) => value < 1024)) throw new Error("build/icon.icns must contain a 1024x1024 representation");
+if (process.argv.includes("--icon-only")) {
+  console.log("macOS branded icon prerequisite is present");
+  process.exit(0);
+}
 
 const environment = process.env;
 const hasApiKey = present("APPLE_API_KEY") && present("APPLE_API_KEY_ID") && present("APPLE_API_ISSUER");
