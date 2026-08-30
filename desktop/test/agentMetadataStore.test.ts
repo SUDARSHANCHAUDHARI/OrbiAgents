@@ -14,6 +14,14 @@ test("metadata store excludes terminal output and process ids", async () => {
   assert.doesNotMatch(raw, /secret terminal output|"pid"/);
 });
 
+test("metadata store preserves validated agent hiring profiles", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "orbi-metadata-")); const file = path.join(directory, "agents.json");
+  const profile = { role: "reviewer" as const, goal: "Audit the release", capabilities: ["review" as const, "testing" as const], budgetMinutes: 90, appearance: "violet" as const };
+  const store = new AgentMetadataStore(file);
+  await store.save([{ id: "review", name: "Review", runtimeId: "codex", cwd: "/workspace", status: "exited", outputTail: "", startedAt: 1, workspace: { sourcePath: "/workspace", path: "/workspace", status: "direct" }, profile }]);
+  assert.deepEqual((await store.load())[0].profile, profile);
+});
+
 test("metadata store never presents a previous process as still running", async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), "orbi-metadata-"));
   const file = path.join(directory, "agents.json");

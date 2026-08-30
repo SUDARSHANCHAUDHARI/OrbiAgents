@@ -65,6 +65,7 @@ export class PtyManager {
       outputTail: "",
       startedAt: Date.now(),
       workspace: lease.workspace,
+      profile: request.profile,
     });
 
     try {

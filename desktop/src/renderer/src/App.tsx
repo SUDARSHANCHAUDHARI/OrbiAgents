@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
-import type { ActivityEvent, AgentSession, HiveSnapshot, OnboardingStatus, RuntimeAdapterDescriptor, RuntimeId } from "../../shared/contracts";
+import type { ActivityEvent, AgentSession, CreateAgentRequest, HiveSnapshot, OnboardingStatus, RuntimeAdapterDescriptor } from "../../shared/contracts";
 import { AgentRoster } from "./components/AgentRoster";
 import { ActivityPanel } from "./components/ActivityPanel";
 import { WorkspaceReview } from "./components/WorkspaceReview";
@@ -14,6 +14,7 @@ import { OnboardingPanel } from "./components/OnboardingPanel";
 import { RecoveryPanel } from "./components/RecoveryPanel";
 import { CostPanel } from "./components/CostPanel";
 import { PixelButton } from "./components/ui/PixelButton";
+import { AgentHiringPanel } from "./components/AgentHiringPanel";
 
 const PixelOffice = lazy(() => import("./components/PixelOffice").then((module) => ({ default: module.PixelOffice })));
 const TerminalPanel = lazy(() => import("./components/TerminalPanel").then((module) => ({ default: module.TerminalPanel })));
@@ -29,11 +30,8 @@ const COMMAND_VIEWS: Array<{ id: CommandView; label: string }> = [
 export default function App() {
   const [agents, setAgents] = useState<AgentSession[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [name, setName] = useState("Orbi-Alpha");
-  const [runtimeId, setRuntimeId] = useState<RuntimeId>("codex");
   const [runtimeAdapters, setRuntimeAdapters] = useState<RuntimeAdapterDescriptor[]>([]);
-  const [cwd, setCwd] = useState("");
-  const [isolateWorkspace, setIsolateWorkspace] = useState(true);
+  const [hiringOpen, setHiringOpen] = useState(false);
   const [activity, setActivity] = useState<ActivityEvent[]>([]);
   const [hiveSnapshot, setHiveSnapshot] = useState<HiveSnapshot | null>(null);
   const [commandView, setCommandView] = useState<CommandView>("floor");
@@ -74,14 +72,14 @@ export default function App() {
     return () => { cancelled = true; };
   }, [selectedProject]);
 
-  async function launch(event: React.FormEvent) {
-    event.preventDefault();
+  async function launch(request: Omit<CreateAgentRequest, "id">) {
     setError(null);
     try {
       const id = `agent-${Date.now().toString(36)}`;
-      const agent = await window.orbi.agents.create({ id, name, runtimeId, cwd, isolateWorkspace });
+      const agent = await window.orbi.agents.create({ id, ...request });
       await refresh();
       setSelectedId(agent.id);
+      setHiringOpen(false);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : String(reason));
     }
@@ -106,15 +104,10 @@ export default function App() {
           <h1><i aria-hidden="true">OA</i> OrbiAgents</h1>
           <small className="topbar-subtitle">Local command deck · authenticated runtime telemetry</small>
         </div>
-        <form className="launch-form" onSubmit={launch}>
-          <label>Name<input aria-label="Agent name" value={name} onChange={(event) => setName(event.target.value)} required /></label>
-          <label>Runtime<select aria-label="Agent runtime" value={runtimeId} onChange={(event) => setRuntimeId(event.target.value as RuntimeId)}>{runtimeAdapters.map((adapter) => <option key={adapter.id} value={adapter.id}>{adapter.name}</option>)}</select></label>
-          <label className="workspace-field">Workspace<input aria-label="Agent workspace path" value={cwd} onChange={(event) => setCwd(event.target.value)} placeholder="/absolute/path/to/project" required /></label>
-          <label className="isolation-field"><span>Isolated worktree</span><input aria-label="Use isolated worktree" type="checkbox" checked={isolateWorkspace} onChange={(event) => setIsolateWorkspace(event.target.checked)} /></label>
-          <PixelButton type="submit" variant="primary">Launch agent</PixelButton>
-        </form>
+        <div className="fleet-actions"><span>{agents.filter((agent) => agent.status === "running").length} active</span><PixelButton type="button" variant="primary" onClick={() => setHiringOpen(true)}>Hire agent</PixelButton></div>
       </header>
       {error ? <div className="error-banner" role="alert">{error}</div> : null}
+      {hiringOpen ? <AgentHiringPanel adapters={runtimeAdapters} onClose={() => setHiringOpen(false)} onLaunch={launch} /> : null}
       {firstRun && onboarding ? <div className="onboarding-overlay" role="dialog" aria-modal="true" aria-labelledby="onboarding-title"><OnboardingPanel status={onboarding} firstRun onChanged={setOnboarding} onError={(message) => setError(message || null)} /></div> : null}
       <section className="workspace" inert={firstRun}>
         <div className="left-rail"><AgentRoster agents={agents} selectedId={selectedId} onSelect={setSelectedId} /><ActivityPanel events={activity} /></div>
@@ -140,7 +133,7 @@ export default function App() {
             {commandView === "usage" ? <CostPanel onError={(message) => setError(message || null)} /> : null}
             {commandView === "recovery" ? <RecoveryPanel onError={(message) => setError(message || null)} /> : null}
             {commandView === "workspaces" ? <CommandList title="Agent workspaces" empty="No agent workspaces recorded." items={agents.map((agent) => ({ id: agent.id, title: agent.name, meta: `${agent.workspace.status} · ${agent.workspace.branch ?? "direct"}`, detail: agent.workspace.path }))} /> : null}
-            {commandView === "settings" ? <div className="settings-panels"><ProviderAdapterPanel onChanged={(adapters) => { setRuntimeAdapters(adapters); if (!adapters.some((adapter) => adapter.id === runtimeId)) setRuntimeId("codex"); }} onError={(message) => setError(message || null)} /><LocalModelPanel onError={(message) => setError(message || null)} /><MissionPanel projectPath={selectedProject} agents={agents} onError={(message) => setError(message || null)} /></div> : null}
+            {commandView === "settings" ? <div className="settings-panels"><ProviderAdapterPanel onChanged={setRuntimeAdapters} onError={(message) => setError(message || null)} /><LocalModelPanel onError={(message) => setError(message || null)} /><MissionPanel projectPath={selectedProject} agents={agents} onError={(message) => setError(message || null)} /></div> : null}
             {commandView === "setup" && onboarding ? <OnboardingPanel status={onboarding} onChanged={setOnboarding} onError={(message) => setError(message || null)} /> : null}
           </section>
         </div>
