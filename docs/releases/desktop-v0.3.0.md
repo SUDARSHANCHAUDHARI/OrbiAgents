@@ -1,6 +1,6 @@
 # OrbiAgents Desktop v0.3.0 release candidate
 
-Status: unsigned local package verified; public release blocked on branded icon, Developer ID signing, notarization, and manual acceptance.
+Status: branded icon and unsigned local package verified; public release blocked on Developer ID signing, notarization, and manual acceptance.
 
 ## Highlights
 
@@ -24,8 +24,8 @@ Status: unsigned local package verified; public release blocked on branded icon,
 
 ## Known release gates
 
-- The verified local artifacts are unsigned and use Electron's default icon. They are not public release artifacts.
-- A branded 1024×1024 source icon and `desktop/build/icon.icns` are required.
+- The verified local artifacts are unsigned. They are not public release artifacts.
+- Original branded artwork is committed as a 1024×1024 source and ICNS container; final artwork acceptance remains part of manual release review.
 - Signed/notarized verification and clean-account installation have not yet been performed.
 - Update checks and installation are not implemented.
 - Intel, universal, Windows, Linux, and Mac App Store packages are outside this release candidate.

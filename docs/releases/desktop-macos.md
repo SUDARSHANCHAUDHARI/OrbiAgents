@@ -26,7 +26,7 @@ The verifier checks the bundle identifier and version, arm64 application executa
 
 Public direct distribution requires:
 
-1. A branded 1024×1024 source icon converted to `desktop/build/icon.icns`.
+1. The committed branded 1024×1024 `desktop/build/icon-source.png` and generated `desktop/build/icon.icns`. Verify both with `pnpm --dir desktop check:macos-icon`.
 2. Apple Developer Program membership and a Developer ID Application identity.
 3. One notarization credential set supported by Electron Builder:
    - App Store Connect API key environment names (`APPLE_API_KEY`, `APPLE_API_KEY_ID`, `APPLE_API_ISSUER`), or
@@ -71,7 +71,7 @@ Provider selection, release-channel policy, operator UX, and rollback acceptance
 
 ## Manual acceptance before publication
 
-- Replace the default Electron icon with accepted branded artwork.
+- Confirm the committed OrbiAgents artwork is the accepted release icon.
 - Run the signed release command and retain its successful verifier output.
 - Install from the DMG on a clean macOS user account.
 - Launch through Finder and confirm Gatekeeper shows the verified developer without an override.
