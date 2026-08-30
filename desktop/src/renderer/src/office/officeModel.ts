@@ -1,5 +1,5 @@
 import type { AgentActivityState, AgentSession, HiveSnapshot } from "../../../shared/contracts";
-import { createOrbitalWorld, isWalkable, stationForState, type OrbitalStationId, type OrbitalWorld } from "./orbitalWorld";
+import { createOrbitalWorld, floorForState, isWalkable, stationForState, type OrbitalFloorId, type OrbitalStationId, type OrbitalWorld } from "./orbitalWorld";
 
 export type OfficeZoneId = "planning" | "focus" | "collaboration" | "lounge";
 export interface OfficeAgent { id: string; name: string; state: AgentActivityState; zone: OfficeZoneId; stationId: OrbitalStationId; column: number; row: number; color: number; }
@@ -9,10 +9,14 @@ const STATE_ZONE: Record<AgentActivityState, OfficeZoneId> = { idle: "lounge", t
 const COLORS = [0x67e8f9, 0xa78bfa, 0x34d399, 0xfbbf24, 0xfb7185];
 const APPEARANCE_COLORS = { cyan: 0x67e8f9, violet: 0xa78bfa, green: 0x34d399, gold: 0xfbbf24, rose: 0xfb7185 } as const;
 
-export function buildOfficeAgents(agents: AgentSession[], states: Record<string, AgentActivityState | undefined>, world: OrbitalWorld = createOrbitalWorld()): OfficeAgent[] {
+export function buildOfficeAgents(agents: AgentSession[], states: Record<string, AgentActivityState | undefined>, world: OrbitalWorld = createOrbitalWorld(), floorId?: OrbitalFloorId): OfficeAgent[] {
   const grouped = new Map<OrbitalStationId, AgentSession[]>();
   world.stations.forEach((station) => grouped.set(station.id, []));
-  agents.forEach((agent) => grouped.get(stationForState(states[agent.id] ?? fallbackState(agent)))!.push(agent));
+  agents.forEach((agent) => {
+    const state = states[agent.id] ?? fallbackState(agent);
+    if (floorId && floorForState(state) !== floorId) return;
+    grouped.get(stationForState(state))?.push(agent);
+  });
   const result: OfficeAgent[] = [];
   const occupied = new Set<string>();
   world.stations.forEach((station) => (grouped.get(station.id) ?? []).forEach((agent) => {
