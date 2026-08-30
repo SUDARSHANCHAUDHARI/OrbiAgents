@@ -13,6 +13,7 @@ test("preload bridge exposes only fixed agent operations and removable event sub
   };
   const api = createDesktopApi(ipc as never);
   await api.agents.list();
+  await api.commands.list({ agentId: "alpha" });
   await api.hive.snapshot({ projectPath: "/repo" });
   await api.memory.search({ projectPath: "/repo", query: "retry" });
   await api.runtimeAdapters.list();
@@ -22,8 +23,9 @@ test("preload bridge exposes only fixed agent operations and removable event sub
   await api.onboarding.status();
   await api.recovery.status();
   await api.costs.snapshot();
-  assert.deepEqual(invocations, [[IPC_CHANNELS.list, undefined], [IPC_CHANNELS.hiveSnapshot, { projectPath: "/repo" }], [IPC_CHANNELS.memorySearch, { projectPath: "/repo", query: "retry" }], [IPC_CHANNELS.runtimeAdapterList, undefined], [IPC_CHANNELS.localModelList, undefined], [IPC_CHANNELS.fileList, { agentId: "alpha" }], [IPC_CHANNELS.githubAuthStatus, undefined], [IPC_CHANNELS.onboardingStatus, undefined], [IPC_CHANNELS.recoveryStatus, undefined], [IPC_CHANNELS.costSnapshot, undefined]]);
+  assert.deepEqual(invocations, [[IPC_CHANNELS.list, undefined], [IPC_CHANNELS.commandHistoryList, { agentId: "alpha" }], [IPC_CHANNELS.hiveSnapshot, { projectPath: "/repo" }], [IPC_CHANNELS.memorySearch, { projectPath: "/repo", query: "retry" }], [IPC_CHANNELS.runtimeAdapterList, undefined], [IPC_CHANNELS.localModelList, undefined], [IPC_CHANNELS.fileList, { agentId: "alpha" }], [IPC_CHANNELS.githubAuthStatus, undefined], [IPC_CHANNELS.onboardingStatus, undefined], [IPC_CHANNELS.recoveryStatus, undefined], [IPC_CHANNELS.costSnapshot, undefined]]);
   assert.deepEqual(Object.keys(api.agents).sort(), ["applyWorkspace", "create", "discardWorkspace", "list", "onActivity", "onExit", "onOutput", "resize", "stop", "write"]);
+  assert.deepEqual(Object.keys(api.commands).sort(), ["list", "upsert"]); assert.equal(Object.isFrozen(api.commands), true);
   assert.deepEqual(Object.keys(api.hive).sort(), ["assign", "decideApproval", "snapshot", "transitionTask"]);
   assert.equal(Object.isFrozen(api.hive), true);
   assert.deepEqual(Object.keys(api.memory).sort(), ["capture", "list", "search"]);

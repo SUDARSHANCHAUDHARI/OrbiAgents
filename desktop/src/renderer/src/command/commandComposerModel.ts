@@ -1,13 +1,14 @@
-export type CommandQueueStatus = "queued" | "sending" | "sent" | "failed";
-export interface CommandQueueEntry { id: string; agentId: string; body: string; status: CommandQueueStatus; createdAt: number; error?: string; }
+import type { CommandHistoryEntry, CommandHistoryStatus } from "../../../shared/contracts";
+export type CommandQueueStatus = CommandHistoryStatus;
+export type CommandQueueEntry = CommandHistoryEntry;
 
-const MAX_COMMAND_BYTES = 64 * 1024;
+const MAX_COMMAND_BYTES = 8 * 1024;
 const MAX_SESSION_ENTRIES = 100;
 
 export function createCommandEntry(agentId: string, body: string, createdAt: number, id: string): CommandQueueEntry {
   const command = body.trim();
   if (!command) throw new Error("Command is required");
-  if (new TextEncoder().encode(command).byteLength > MAX_COMMAND_BYTES - 1) throw new Error("Command must be smaller than 64 KB");
+  if (new TextEncoder().encode(command).byteLength > MAX_COMMAND_BYTES) throw new Error("Command must be no larger than 8 KB");
   return { id, agentId, body: command, status: "queued", createdAt };
 }
 

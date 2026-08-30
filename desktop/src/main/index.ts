@@ -21,13 +21,14 @@ import { OnboardingStore } from "./onboarding/onboardingStore";
 import { AppDataMigrator } from "./persistence/appDataMigrator";
 import { RecoveryStore } from "./persistence/recoveryStore";
 import { CostLedger } from "./costs/costLedger";
+import { CommandHistoryStore } from "./commands/commandHistoryStore";
 
 let manager: PtyManager | null = null;
 let activityServer: ActivityHookServer | null = null;
 
 async function createWindow(): Promise<void> {
   const userData = app.getPath("userData");
-  const migrator = new AppDataMigrator(userData, ["agents.json", "runtime-adapters.json", "local-model-endpoints.json", "onboarding.json", "recovery.json", "costs", "hive"], [{ fromVersion: 0, toVersion: 1, async migrate() { /* Version 1 adopts existing unversioned state without rewriting it. */ } }]);
+  const migrator = new AppDataMigrator(userData, ["agents.json", "runtime-adapters.json", "local-model-endpoints.json", "onboarding.json", "recovery.json", "command-history.json", "costs", "hive"], [{ fromVersion: 0, toVersion: 1, async migrate() { /* Version 1 adopts existing unversioned state without rewriting it. */ } }]);
   await migrator.run(1);
   const window = new BrowserWindow({
     width: 1280,
@@ -56,6 +57,8 @@ async function createWindow(): Promise<void> {
   const prerequisites = new PrerequisiteChecker({ encryptionAvailable: () => safeStorage.isEncryptionAvailable() });
   const onboarding = new OnboardingStore(join(userData, "onboarding.json"));
   await onboarding.load();
+  const commandHistory = new CommandHistoryStore(join(userData, "command-history.json"), { isAvailable: () => safeStorage.isEncryptionAvailable(), encrypt: (value) => safeStorage.encryptString(value), decrypt: (value) => safeStorage.decryptString(value) });
+  await commandHistory.load();
   const workspaceManager = new WorkspaceManager(join(userData, "worktrees"));
   const loadedMetadata = await metadata.loadWithRecovery();
   const loaded = loadedMetadata.sessions;
@@ -87,7 +90,7 @@ async function createWindow(): Promise<void> {
   const recovery = new RecoveryStore(join(userData, "recovery.json"));
   await recovery.create(loadedMetadata.interrupted, await Promise.all(projectPaths.map((projectPath) => hive.recoveryState(projectPath))));
   hive.startHeartbeat();
-  registerIpc(window, windowManager, hive, runtimeAdapters, localModels, localModelClient, workspaceFiles, github, prerequisites, onboarding, recovery);
+  registerIpc(window, windowManager, hive, runtimeAdapters, localModels, localModelClient, workspaceFiles, github, prerequisites, onboarding, recovery, commandHistory);
 
   window.once("ready-to-show", () => window.show());
   window.once("closed", () => {
