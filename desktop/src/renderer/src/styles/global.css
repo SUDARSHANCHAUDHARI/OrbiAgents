@@ -106,6 +106,21 @@ input, select { height: 36px; padding: 0 10px; color: var(--orbi-ink); backgroun
 .terminal-toolbar span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .terminal-toolbar button { height: 27px; color: #fecaca; background: #4c1820; }
 .terminal-toolbar button:disabled { cursor: default; opacity: .45; }
+.command-composer { display: grid; gap: 7px; padding: 9px; background: var(--orbi-space); border: 1px solid var(--orbi-edge); border-top: 0; }
+.composer-input { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 7px; align-items: end; }
+.composer-input label { grid-column: 1 / -1; }
+.composer-input textarea { min-height: 56px; padding: 9px 10px; color: var(--orbi-ink); background: var(--orbi-void); border: 2px solid var(--orbi-edge); resize: vertical; }
+.composer-input textarea:disabled { opacity: .55; }
+.composer-input button { min-width: 78px; height: 56px; }
+.composer-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--orbi-dim); font: 10px var(--orbi-font-ui); }
+.composer-history { display: grid; gap: 5px; max-height: 190px; margin: 0; padding: 0; overflow: auto; list-style: none; }
+.composer-history li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 8px; background: var(--orbi-void); border-left: 3px solid var(--orbi-edge); }
+.composer-history li[data-status="sent"] { border-color: var(--orbi-success); }
+.composer-history li[data-status="sending"] { border-color: var(--orbi-energy); }
+.composer-history li[data-status="failed"] { border-color: var(--orbi-alert); }
+.composer-history li > span { min-width: 0; display: grid; gap: 3px; }
+.composer-history strong { overflow: hidden; color: var(--orbi-ink); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.composer-history small { color: var(--orbi-dim); font-size: 9px; text-transform: uppercase; }
 .terminal-host, .terminal-empty { min-height: 0; padding: 10px; background: #080d16; border: 1px solid #263b56; border-radius: 0 0 8px 8px; overflow: hidden; }
 .terminal-empty { display: grid; place-items: center; color: #71869e; }
 .xterm { height: 100%; }

@@ -15,6 +15,7 @@ import { RecoveryPanel } from "./components/RecoveryPanel";
 import { CostPanel } from "./components/CostPanel";
 import { PixelButton } from "./components/ui/PixelButton";
 import { AgentHiringPanel } from "./components/AgentHiringPanel";
+import { CommandComposer } from "./components/CommandComposer";
 
 const PixelOffice = lazy(() => import("./components/PixelOffice").then((module) => ({ default: module.PixelOffice })));
 const TerminalPanel = lazy(() => import("./components/TerminalPanel").then((module) => ({ default: module.TerminalPanel })));
@@ -120,6 +121,7 @@ export default function App() {
             {commandView === "terminals" ? <>
               <div className="agent-detail" aria-label="Selected agent details">{selected ? <><strong>{selected.name}</strong><span>{selected.runtimeId} · {selected.status}</span><span>{selected.workspace.status} workspace · {selected.cwd}</span></> : <span>No agent selected</span>}</div>
               <div className="terminal-toolbar"><span>{selected ? `${selected.name} · ${selected.cwd}` : "Terminal"}</span><button type="button" onClick={() => void stop()} disabled={!selected || selected.status !== "running"}>Stop</button></div>
+              <CommandComposer agent={selected} onError={(message) => setError(message || null)} />
               <Suspense fallback={<CommandFallback label="Loading terminal…" />}><TerminalPanel agent={selected} /></Suspense>
               {selected?.workspace.status === "preserved" ? <WorkspaceReview key={`${selected.id}-${selected.exitedAt ?? 0}`} agent={selected} onChanged={refresh} onError={(message) => setError(message || null)} /> : null}
             </> : null}
