@@ -25,3 +25,11 @@ test("command history fails closed without encryption and ignores corrupted stat
   await writeFile(file, "not-json");
   assert.deepEqual(await new CommandHistoryStore(file, encryption).load(), []);
 });
+
+test("command history retains defensive workspace attachment paths and rejects traversal", async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), "orbi-commands-")); const file = path.join(directory, "history.json");
+  const store = new CommandHistoryStore(file, encryption); const value = { ...entry("00000000-0000-4000-8000-000000000003"), attachments: ["src/app.ts"] };
+  const saved = await store.upsert(value); saved[0].attachments!.push("changed.ts");
+  assert.deepEqual(store.list()[0].attachments, ["src/app.ts"]);
+  await assert.rejects(store.upsert({ ...value, id: "00000000-0000-4000-8000-000000000004", attachments: ["../.env"] }), /invalid/);
+});
