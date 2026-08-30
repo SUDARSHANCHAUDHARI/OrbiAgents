@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Application, Container, Graphics, Text } from "pixi.js";
 import type { ActivityEvent, AgentActivityState, AgentSession, HiveSnapshot } from "../../../shared/contracts";
+import { activityBubbleForState, pointOnOfficeLink } from "../office/officeEffects";
 import { buildOfficeAgents, buildOfficeLinks, type OfficeAgent, type OfficeLink } from "../office/officeModel";
 import { clampOrbitalCamera, createOrbitalWorld, findOrbitalPath, ORBITAL_TILE_SIZE, stationById, type OrbitalCamera, type OrbitalPosition, type OrbitalTileKind, type OrbitalWorld } from "../office/orbitalWorld";
 
-interface AgentView { container: Container; actor: Container; route: OrbitalPosition[]; targetX: number; targetY: number; }
+interface AgentView { container: Container; actor: Container; route: OrbitalPosition[]; phase: number; targetX: number; targetY: number; }
 interface AgentSprite { container: Container; actor: Container; }
+interface TrafficView { container: Container; from: { x: number; y: number }; to: { x: number; y: number }; phase: number; speed: number; }
 const ORBITAL_WORLD = createOrbitalWorld();
 
 export function PixelOffice({ agents, activity, hive, selectedId, onSelect }: { agents: AgentSession[]; activity: ActivityEvent[]; hive: HiveSnapshot | null; selectedId: string | null; onSelect(id: string): void }) {
@@ -15,6 +17,8 @@ export function PixelOffice({ agents, activity, hive, selectedId, onSelect }: { 
   const hiveLayerRef = useRef<Container | null>(null);
   const agentLayerRef = useRef<Container | null>(null);
   const viewsRef = useRef(new Map<string, AgentView>());
+  const trafficRef = useRef<TrafficView[]>([]);
+  const elapsedRef = useRef(0);
   const onSelectRef = useRef(onSelect); onSelectRef.current = onSelect;
   const [camera, setCamera] = useState<Pick<OrbitalCamera, "x" | "y" | "zoom">>({ x: 0, y: 0, zoom: 1 });
   const [sizeVersion, setSizeVersion] = useState(0);
@@ -39,7 +43,9 @@ export function PixelOffice({ agents, activity, hive, selectedId, onSelect }: { 
       const zones = new Container(); const hiveLayer = new Container(); const agentLayer = new Container();
       app.stage.addChild(zones, hiveLayer, agentLayer);
       zoneLayerRef.current = zones; hiveLayerRef.current = hiveLayer; agentLayerRef.current = agentLayer; appRef.current = app;
-      app.ticker.add(() => viewsRef.current.forEach((view) => {
+      app.ticker.add((ticker) => {
+        elapsedRef.current += ticker.deltaMS;
+        viewsRef.current.forEach((view) => {
         const factor = reducedRef.current ? 1 : 0.14;
         if (Math.abs(view.targetX - view.container.x) < 1 && Math.abs(view.targetY - view.container.y) < 1 && view.route.length) {
           const next = view.route.shift()!;
@@ -49,7 +55,15 @@ export function PixelOffice({ agents, activity, hive, selectedId, onSelect }: { 
         if (direction) view.actor.scale.x = direction;
         view.container.x += (view.targetX - view.container.x) * factor;
         view.container.y += (view.targetY - view.container.y) * factor;
-      }));
+        const moving = Math.abs(view.targetX - view.container.x) > 1 || Math.abs(view.targetY - view.container.y) > 1;
+        view.actor.y = reducedRef.current ? 0 : Math.round(Math.sin(elapsedRef.current / (moving ? 90 : 260) + view.phase) * (moving ? 2 : 1));
+        });
+        for (const traffic of trafficRef.current) {
+          if (!reducedRef.current) traffic.phase = (traffic.phase + ticker.deltaMS * traffic.speed) % 1;
+          const point = pointOnOfficeLink(traffic.from, traffic.to, reducedRef.current ? .5 : traffic.phase);
+          traffic.container.position.set(Math.round(point.x), Math.round(point.y));
+        }
+      });
       setSizeVersion((value) => value + 1);
     });
     const observer = new ResizeObserver(() => setSizeVersion((value) => value + 1)); observer.observe(host);
@@ -57,6 +71,7 @@ export function PixelOffice({ agents, activity, hive, selectedId, onSelect }: { 
       cancelled = true;
       observer.disconnect();
       viewsRef.current.clear();
+      trafficRef.current = [];
       if (appRef.current === app) appRef.current = null;
       if (initialized) app.destroy(true, { children: true });
     };
@@ -66,7 +81,7 @@ export function PixelOffice({ agents, activity, hive, selectedId, onSelect }: { 
     const app = appRef.current; const zones = zoneLayerRef.current; const hiveLayer = hiveLayerRef.current; const layer = agentLayerRef.current;
     if (!app || !zones || !hiveLayer || !layer || !app.screen.width || !app.screen.height) return;
     drawWorld(zones, ORBITAL_WORLD);
-    drawHive(hiveLayer, officeAgents, officeLinks, hive, ORBITAL_WORLD);
+    trafficRef.current = drawHive(hiveLayer, officeAgents, officeLinks, hive, ORBITAL_WORLD);
     const currentPositions = new Map([...viewsRef.current].map(([id, view]) => [id, { x: view.container.x, y: view.container.y }]));
     layer.removeChildren().forEach((child) => child.destroy({ children: true })); viewsRef.current.clear();
     for (const agent of officeAgents) {
@@ -78,7 +93,7 @@ export function PixelOffice({ agents, activity, hive, selectedId, onSelect }: { 
       sprite.container.position.set(current?.x ?? tileCenter(previous.column), current?.y ?? tileCenter(previous.row));
       const firstTarget = route.shift() ?? destination;
       layer.addChild(sprite.container);
-      viewsRef.current.set(agent.id, { ...sprite, route, targetX: tileCenter(firstTarget.column), targetY: tileCenter(firstTarget.row) });
+      viewsRef.current.set(agent.id, { ...sprite, route, phase: stablePhase(agent.id), targetX: tileCenter(firstTarget.column), targetY: tileCenter(firstTarget.row) });
     }
     const bounded = clampOrbitalCamera({ ...camera, viewportWidth: app.screen.width, viewportHeight: app.screen.height }, ORBITAL_WORLD);
     app.stage.scale.set(bounded.zoom); app.stage.position.set(bounded.x, bounded.y);
@@ -130,8 +145,9 @@ function drawWorld(layer: Container, world: OrbitalWorld): void {
   }
 }
 
-function drawHive(layer: Container, agents: OfficeAgent[], links: OfficeLink[], hive: HiveSnapshot | null, world: OrbitalWorld): void {
+function drawHive(layer: Container, agents: OfficeAgent[], links: OfficeLink[], hive: HiveSnapshot | null, world: OrbitalWorld): TrafficView[] {
   layer.removeChildren().forEach((child) => child.destroy({ children: true }));
+  const traffic: TrafficView[] = [];
   const primeStation = stationById(world, "prime"); const prime = { x: (primeStation.column + .5) * world.tileSize, y: (primeStation.row + .5) * world.tileSize };
   const positions = new Map(agents.map((agent) => [agent.id, { x: tileCenter(agent.column), y: tileCenter(agent.row) }]));
   for (const link of links) {
@@ -139,11 +155,16 @@ function drawHive(layer: Container, agents: OfficeAgent[], links: OfficeLink[], 
     if (!from) continue;
     const color = link.kind === "message" ? 0xfbbf24 : 0x34d399;
     layer.addChild(new Graphics().moveTo(from.x, from.y).lineTo(prime.x, prime.y).stroke({ color, alpha: .6, width: link.kind === "message" ? 2 : 1 }));
-    if (link.kind === "message") layer.addChild(new Graphics().roundRect((from.x + prime.x) / 2 - 5, (from.y + prime.y) / 2 - 4, 10, 8, 2).fill(color));
+    const packet = new Graphics();
+    if (link.kind === "message") packet.roundRect(-5, -4, 10, 8, 2).fill(color).rect(-3, -2, 6, 1).fill(0x07111f);
+    else packet.circle(0, 0, 3).fill(color);
+    layer.addChild(packet);
+    traffic.push({ container: packet, from, to: prime, phase: stablePhase(link.id) / (Math.PI * 2), speed: link.kind === "message" ? .00022 : .00014 });
   }
   const pending = hive?.approvals.filter((approval) => approval.status === "pending").length ?? 0;
   layer.addChild(new Graphics().roundRect(prime.x - 28, prime.y - 18, 56, 36, 7).fill(0x172554).stroke({ color: pending ? 0xfbbf24 : 0x818cf8, width: 2 }));
   const label = new Text({ text: "ORBI-PRIME", style: { fill: 0xe0e7ff, fontFamily: "monospace", fontSize: 9, fontWeight: "bold" } }); label.anchor.set(.5); label.position.set(prime.x, prime.y); layer.addChild(label);
+  return traffic;
 }
 
 function tileColor(kind: OrbitalTileKind, variant: number): number {
@@ -161,6 +182,10 @@ function drawAgent(agent: OfficeAgent, selected: boolean, select: () => void): A
   actor.addChild(new Graphics().circle(-5, -3, 2).fill(0x07111f).circle(5, -3, 2).fill(0x07111f).rect(-5, 6, 10, 2).fill(0x07111f));
   actor.addChild(new Graphics().circle(10, -10, 5).fill(stateColor(agent.state)).stroke({ color: 0x07111f, width: 2 }));
   container.addChild(actor);
+  const bubbleText = activityBubbleForState(agent.state);
+  const bubble = new Container(); bubble.position.set(16, -32);
+  bubble.addChild(new Graphics().roundRect(0, 0, bubbleText.length * 6 + 10, 17, 4).fill(0x07111f).stroke({ color: stateColor(agent.state), width: 1 }).moveTo(4, 17).lineTo(1, 21).lineTo(9, 17).fill(0x07111f));
+  const bubbleLabel = new Text({ text: bubbleText, style: { fill: 0xe5edf8, fontFamily: "monospace", fontSize: 8, fontWeight: "bold" } }); bubbleLabel.position.set(5, 4); bubble.addChild(bubbleLabel); container.addChild(bubble);
   const name = new Text({ text: agent.name, style: { fill: 0xe5edf8, fontFamily: "monospace", fontSize: 10, fontWeight: "bold" } }); name.anchor.set(.5, 0); name.position.set(0, 18); container.addChild(name);
   return { container, actor };
 }
@@ -168,4 +193,5 @@ function drawAgent(agent: OfficeAgent, selected: boolean, select: () => void): A
 function stateColor(state: AgentActivityState): number { return state === "failed" ? 0xfb7185 : state === "permission-waiting" ? 0xfbbf24 : state === "coding" ? 0x60a5fa : state === "done" || state === "idle" ? 0x94a3b8 : 0x34d399; }
 function tileCenter(coordinate: number): number { return (coordinate + .5) * ORBITAL_TILE_SIZE; }
 function positionFromPixels(x: number, y: number): OrbitalPosition { return { column: Math.max(0, Math.min(ORBITAL_WORLD.columns - 1, Math.floor(x / ORBITAL_TILE_SIZE))), row: Math.max(0, Math.min(ORBITAL_WORLD.rows - 1, Math.floor(y / ORBITAL_TILE_SIZE))) }; }
+function stablePhase(value: string): number { return [...value].reduce((total, character) => total + character.charCodeAt(0), 0) % 628 / 100; }
 function useReducedMotion(): boolean { const [reduced, setReduced] = useState(false); useEffect(() => { const query = window.matchMedia("(prefers-reduced-motion: reduce)"); const update = () => setReduced(query.matches); update(); query.addEventListener("change", update); return () => query.removeEventListener("change", update); }, []); return reduced; }
