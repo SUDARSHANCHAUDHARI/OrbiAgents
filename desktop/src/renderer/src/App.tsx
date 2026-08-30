@@ -13,6 +13,7 @@ import { GitHubPanel } from "./components/GitHubPanel";
 import { OnboardingPanel } from "./components/OnboardingPanel";
 import { RecoveryPanel } from "./components/RecoveryPanel";
 import { CostPanel } from "./components/CostPanel";
+import { PixelButton } from "./components/ui/PixelButton";
 
 const PixelOffice = lazy(() => import("./components/PixelOffice").then((module) => ({ default: module.PixelOffice })));
 const TerminalPanel = lazy(() => import("./components/TerminalPanel").then((module) => ({ default: module.TerminalPanel })));
@@ -101,15 +102,16 @@ export default function App() {
     <main className="app-shell">
       <header className="topbar" inert={firstRun}>
         <div>
-          <span className="eyebrow">LOCAL AGENT OFFICE</span>
-          <h1>OrbiAgents</h1>
+          <span className="eyebrow">ORBITAL AGENT OPERATIONS</span>
+          <h1><i aria-hidden="true">OA</i> OrbiAgents</h1>
+          <small className="topbar-subtitle">Local command deck · authenticated runtime telemetry</small>
         </div>
         <form className="launch-form" onSubmit={launch}>
           <label>Name<input aria-label="Agent name" value={name} onChange={(event) => setName(event.target.value)} required /></label>
           <label>Runtime<select aria-label="Agent runtime" value={runtimeId} onChange={(event) => setRuntimeId(event.target.value as RuntimeId)}>{runtimeAdapters.map((adapter) => <option key={adapter.id} value={adapter.id}>{adapter.name}</option>)}</select></label>
           <label className="workspace-field">Workspace<input aria-label="Agent workspace path" value={cwd} onChange={(event) => setCwd(event.target.value)} placeholder="/absolute/path/to/project" required /></label>
           <label className="isolation-field"><span>Isolated worktree</span><input aria-label="Use isolated worktree" type="checkbox" checked={isolateWorkspace} onChange={(event) => setIsolateWorkspace(event.target.checked)} /></label>
-          <button type="submit">Launch agent</button>
+          <PixelButton type="submit" variant="primary">Launch agent</PixelButton>
         </form>
       </header>
       {error ? <div className="error-banner" role="alert">{error}</div> : null}
@@ -154,7 +156,7 @@ function CommandTab({ id, label, active, select }: { id: CommandView; label: str
     select(next);
     requestAnimationFrame(() => document.getElementById(`command-tab-${next}`)?.focus());
   }
-  return <button id={`command-tab-${id}`} type="button" role="tab" aria-selected={active === id} aria-controls={`command-${id}`} tabIndex={active === id ? 0 : -1} onClick={() => select(id)} onKeyDown={(event) => { if (event.key === "ArrowRight") { event.preventDefault(); move(1); } else if (event.key === "ArrowLeft") { event.preventDefault(); move(-1); } }}>{label}</button>;
+  return <PixelButton id={`command-tab-${id}`} type="button" variant={active === id ? "primary" : "ghost"} role="tab" aria-selected={active === id} aria-controls={`command-${id}`} tabIndex={active === id ? 0 : -1} onClick={() => select(id)} onKeyDown={(event) => { if (event.key === "ArrowRight") { event.preventDefault(); move(1); } else if (event.key === "ArrowLeft") { event.preventDefault(); move(-1); } }}>{label}</PixelButton>;
 }
 
 function CommandList({ title, empty, items }: { title: string; empty: string; items: Array<{ id: string; title: string; meta: string; detail: string }> }) {

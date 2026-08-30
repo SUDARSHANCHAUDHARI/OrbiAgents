@@ -12,6 +12,7 @@
     "desktop:package:mac": "pnpm --dir desktop package:mac:unsigned",
     "desktop:package:mac:release": "pnpm --dir desktop package:mac:release",
     "desktop:check:security": "pnpm --dir desktop check:security",
+    "desktop:check:design-system": "pnpm --dir desktop check:design-system",
     "desktop:check:accessibility": "pnpm --dir desktop check:accessibility",
     "desktop:check:performance": "pnpm --dir desktop check:performance",
     "desktop:test": "pnpm --dir desktop test",
