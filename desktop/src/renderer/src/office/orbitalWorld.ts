@@ -6,6 +6,7 @@ export const ORBITAL_WORLD_ROWS = 24;
 
 export type OrbitalTileKind = "void" | "wall" | "deck" | "corridor" | "threshold";
 export type OrbitalStationId = "prime" | "planning" | "code" | "terminal" | "review" | "comms" | "recovery" | "lounge";
+export type OrbitalFloorId = "operations" | "engineering" | "support";
 
 export interface OrbitalTile { column: number; row: number; kind: OrbitalTileKind; variant: number; }
 export interface OrbitalRoom { id: string; label: string; column: number; row: number; width: number; height: number; accent: number; }
@@ -13,6 +14,13 @@ export interface OrbitalStation { id: OrbitalStationId; label: string; column: n
 export interface OrbitalWorld { columns: number; rows: number; tileSize: number; tiles: OrbitalTile[]; rooms: OrbitalRoom[]; stations: OrbitalStation[]; }
 export interface OrbitalCamera { x: number; y: number; zoom: 1 | 2; viewportWidth: number; viewportHeight: number; }
 export interface OrbitalPosition { column: number; row: number; }
+export interface OrbitalFloor { id: OrbitalFloorId; label: string; roomIds: string[]; stationIds: OrbitalStationId[]; }
+
+export const ORBITAL_FLOORS: OrbitalFloor[] = [
+  { id: "operations", label: "Operations", roomIds: ["bridge", "comms"], stationIds: ["prime", "planning", "comms"] },
+  { id: "engineering", label: "Engineering", roomIds: ["forge", "review"], stationIds: ["prime", "code", "terminal", "review"] },
+  { id: "support", label: "Support", roomIds: ["lab"], stationIds: ["prime", "recovery", "lounge"] },
+];
 
 const ROOMS: OrbitalRoom[] = [
   { id: "bridge", label: "Command Bridge", column: 2, row: 2, width: 12, height: 8, accent: 0xffd166 },
@@ -37,7 +45,7 @@ const STATE_STATION: Record<AgentActivityState, OrbitalStationId> = {
   idle: "lounge", thinking: "planning", reading: "review", coding: "code", "permission-waiting": "comms", done: "lounge", failed: "recovery",
 };
 
-export function createOrbitalWorld(): OrbitalWorld {
+export function createOrbitalWorld(floorId?: OrbitalFloorId): OrbitalWorld {
   const tiles = Array.from({ length: ORBITAL_WORLD_COLUMNS * ORBITAL_WORLD_ROWS }, (_, index): OrbitalTile => ({
     column: index % ORBITAL_WORLD_COLUMNS,
     row: Math.floor(index / ORBITAL_WORLD_COLUMNS),
@@ -49,10 +57,12 @@ export function createOrbitalWorld(): OrbitalWorld {
   paintCorridor(tiles, 14, 8, 2, 10);
   paintCorridor(tiles, 18, 10, 2, 7);
   for (const station of STATIONS) setKind(tiles, station.column, station.row, "threshold");
-  return { columns: ORBITAL_WORLD_COLUMNS, rows: ORBITAL_WORLD_ROWS, tileSize: ORBITAL_TILE_SIZE, tiles, rooms: ROOMS.map((room) => ({ ...room })), stations: STATIONS.map((station) => ({ ...station })) };
+  const floor = floorId ? ORBITAL_FLOORS.find((candidate) => candidate.id === floorId) : undefined;
+  return { columns: ORBITAL_WORLD_COLUMNS, rows: ORBITAL_WORLD_ROWS, tileSize: ORBITAL_TILE_SIZE, tiles, rooms: ROOMS.filter((room) => !floor || floor.roomIds.includes(room.id)).map((room) => ({ ...room })), stations: STATIONS.filter((station) => !floor || floor.stationIds.includes(station.id)).map((station) => ({ ...station })) };
 }
 
 export function stationForState(state: AgentActivityState): OrbitalStationId { return STATE_STATION[state]; }
+export function floorForState(state: AgentActivityState): OrbitalFloorId { return state === "coding" || state === "reading" ? "engineering" : state === "failed" || state === "idle" || state === "done" ? "support" : "operations"; }
 export function stationById(world: OrbitalWorld, id: OrbitalStationId): OrbitalStation { const station = world.stations.find((candidate) => candidate.id === id); if (!station) throw new Error(`Unknown orbital station: ${id}`); return station; }
 export function tileAt(world: OrbitalWorld, column: number, row: number): OrbitalTile | null { if (column < 0 || row < 0 || column >= world.columns || row >= world.rows) return null; return world.tiles[row * world.columns + column] ?? null; }
 export function isWalkable(tile: OrbitalTile | null): boolean { return Boolean(tile && tile.kind !== "void" && tile.kind !== "wall"); }

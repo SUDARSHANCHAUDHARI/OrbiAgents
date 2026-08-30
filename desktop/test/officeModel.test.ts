@@ -22,6 +22,14 @@ test("office model gives same-zone agents distinct stable positions", () => {
   assert.deepEqual(buildOfficeAgents([session("a"), session("b"), session("c")], { a: "coding", b: "coding", c: "coding" }), agents);
 });
 
+test("office model shows only agents assigned to the selected floor", () => {
+  const sessions = [session("planner"), session("coder"), session("idle")];
+  const states = { planner: "thinking", coder: "coding", idle: "idle" } as const;
+  assert.deepEqual(buildOfficeAgents(sessions, states, createOrbitalWorld("operations"), "operations").map(({ id }) => id), ["planner"]);
+  assert.deepEqual(buildOfficeAgents(sessions, states, createOrbitalWorld("engineering"), "engineering").map(({ id }) => id), ["coder"]);
+  assert.deepEqual(buildOfficeAgents(sessions, states, createOrbitalWorld("support"), "support").map(({ id }) => id), ["idle"]);
+});
+
 test("office model uses the retained hiring appearance for agent identity", () => {
   const agent = { ...session("violet"), profile: { role: "builder" as const, goal: "", capabilities: ["coding" as const], budgetMinutes: 60, appearance: "violet" as const } };
   assert.equal(buildOfficeAgents([agent], { violet: "coding" })[0].color, 0xa78bfa);

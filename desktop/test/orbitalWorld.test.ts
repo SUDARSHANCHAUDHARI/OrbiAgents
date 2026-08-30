@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { centerCameraOn, clampOrbitalCamera, createOrbitalWorld, findOrbitalPath, isWalkable, ORBITAL_WORLD_COLUMNS, ORBITAL_WORLD_ROWS, stationById, stationForState, tileAt } from "../src/renderer/src/office/orbitalWorld";
+import { centerCameraOn, clampOrbitalCamera, createOrbitalWorld, findOrbitalPath, floorForState, isWalkable, ORBITAL_FLOORS, ORBITAL_WORLD_COLUMNS, ORBITAL_WORLD_ROWS, stationById, stationForState, tileAt } from "../src/renderer/src/office/orbitalWorld";
 
 test("orbital world is deterministic, bounded, and contains unique stations", () => {
   const first = createOrbitalWorld(); const second = createOrbitalWorld();
@@ -16,6 +16,18 @@ test("runtime activity maps to purposeful orbital stations", () => {
   assert.equal(stationById(world, stationForState("coding")).label, "Code Console");
   assert.equal(stationById(world, stationForState("permission-waiting")).label, "Signal Array");
   assert.equal(stationById(world, stationForState("failed")).label, "Recovery Pod");
+});
+
+test("orbital floors partition purposeful runtime stations", () => {
+  assert.deepEqual(ORBITAL_FLOORS.map(({ id }) => id), ["operations", "engineering", "support"]);
+  assert.equal(floorForState("thinking"), "operations");
+  assert.equal(floorForState("coding"), "engineering");
+  assert.equal(floorForState("failed"), "support");
+  for (const floor of ORBITAL_FLOORS) {
+    const world = createOrbitalWorld(floor.id);
+    assert.deepEqual(world.stations.map(({ id }) => id), floor.stationIds);
+    assert.equal(world.stations.some(({ id }) => id === "prime"), true);
+  }
 });
 
 test("every orbital station has a stable walkable route to Orbi Prime", () => {
