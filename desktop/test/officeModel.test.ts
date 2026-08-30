@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { buildOfficeAgents, buildOfficeLinks } from "../src/renderer/src/office/officeModel";
+import { buildOfficeAgents, buildOfficeLinks, locateOfficeAgent } from "../src/renderer/src/office/officeModel";
 import { createOrbitalWorld, isWalkable, stationForState, tileAt } from "../src/renderer/src/office/orbitalWorld";
 import type { AgentActivityState, HiveSnapshot } from "../src/shared/contracts";
 
@@ -28,6 +28,14 @@ test("office model shows only agents assigned to the selected floor", () => {
   assert.deepEqual(buildOfficeAgents(sessions, states, createOrbitalWorld("operations"), "operations").map(({ id }) => id), ["planner"]);
   assert.deepEqual(buildOfficeAgents(sessions, states, createOrbitalWorld("engineering"), "engineering").map(({ id }) => id), ["coder"]);
   assert.deepEqual(buildOfficeAgents(sessions, states, createOrbitalWorld("support"), "support").map(({ id }) => id), ["idle"]);
+});
+
+test("office locator resolves a selected agent from real activity and fails safely", () => {
+  const agents = buildOfficeAgents([session("planner"), session("coder")], { planner: "thinking", coder: "coding" });
+  assert.deepEqual(locateOfficeAgent(agents, "planner"), { agentName: "planner", floorId: "operations", floorLabel: "Operations" });
+  assert.deepEqual(locateOfficeAgent(agents, "coder"), { agentName: "coder", floorId: "engineering", floorLabel: "Engineering" });
+  assert.equal(locateOfficeAgent(agents, "missing"), null);
+  assert.equal(locateOfficeAgent(agents, null), null);
 });
 
 test("office model uses the retained hiring appearance for agent identity", () => {

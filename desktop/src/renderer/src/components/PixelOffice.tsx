@@ -3,7 +3,7 @@ import { Application, Container, Graphics, Text } from "pixi.js";
 import type { ActivityEvent, AgentActivityState, AgentSession, HiveSnapshot } from "../../../shared/contracts";
 import { activityBubbleForState, pointOnOfficeLink } from "../office/officeEffects";
 import { loadOfficeLayout, saveOfficeLayout } from "../office/officeLayoutStore";
-import { buildOfficeAgents, buildOfficeLinks, type OfficeAgent, type OfficeLink } from "../office/officeModel";
+import { buildOfficeAgents, buildOfficeLinks, locateOfficeAgent, type OfficeAgent, type OfficeLink } from "../office/officeModel";
 import { clampOrbitalCamera, createOrbitalWorld, findOrbitalPath, floorForState, ORBITAL_FLOORS, ORBITAL_TILE_SIZE, stationById, type OrbitalCamera, type OrbitalFloorId, type OrbitalPosition, type OrbitalTileKind, type OrbitalWorld } from "../office/orbitalWorld";
 
 interface AgentView { container: Container; actor: Container; route: OrbitalPosition[]; phase: number; targetX: number; targetY: number; }
@@ -28,6 +28,7 @@ export function PixelOffice({ agents, activity, hive, selectedId, onSelect }: { 
   const states = useMemo(() => latestStates(activity), [activity]);
   const world = useMemo(() => createOrbitalWorld(floorId), [floorId]);
   const allOfficeAgents = useMemo(() => buildOfficeAgents(agents, states), [agents, states]);
+  const selectedLocation = useMemo(() => locateOfficeAgent(allOfficeAgents, selectedId), [allOfficeAgents, selectedId]);
   const officeAgents = useMemo(() => buildOfficeAgents(agents, states, world, floorId), [agents, states, world, floorId]);
   const officeLinks = useMemo(() => buildOfficeLinks(hive, new Set(officeAgents.map((agent) => agent.id))), [hive, officeAgents]);
 
@@ -117,9 +118,9 @@ export function PixelOffice({ agents, activity, hive, selectedId, onSelect }: { 
   function selectFloor(next: OrbitalFloorId): void { viewsRef.current.clear(); setLayout((current) => ({ ...current, floorId: next })); }
 
   return <section className="pixel-office" aria-label="OrbiAgents pixel office">
-    <header><div><span className="eyebrow">LIVE ORBITAL DECK</span><h2>Orbi Operations</h2></div><div className="office-zoom" aria-label="Office floor and camera controls"><select aria-label="Orbital office floor" value={floorId} onChange={(event) => selectFloor(event.target.value as OrbitalFloorId)}>{ORBITAL_FLOORS.map((floor) => <option key={floor.id} value={floor.id}>{floor.label} ({allOfficeAgents.filter((agent) => floorForState(agent.state) === floor.id).length})</option>)}</select><button aria-label="Pan office left" type="button" onClick={() => moveCamera(96, 0)}>←</button><button aria-label="Pan office up" type="button" onClick={() => moveCamera(0, 96)}>↑</button><button aria-label="Pan office down" type="button" onClick={() => moveCamera(0, -96)}>↓</button><button aria-label="Pan office right" type="button" onClick={() => moveCamera(-96, 0)}>→</button><button aria-label={`Set office zoom to ${camera.zoom === 1 ? 2 : 1}x`} type="button" onClick={toggleZoom}>{camera.zoom}×</button></div></header>
+    <header><div><span className="eyebrow">LIVE ORBITAL DECK</span><h2>{ORBITAL_FLOORS.find((floor) => floor.id === floorId)!.label} Floor</h2></div><div className="office-zoom" aria-label="Office floor and camera controls"><select aria-label="Orbital office floor" value={floorId} onChange={(event) => selectFloor(event.target.value as OrbitalFloorId)}>{ORBITAL_FLOORS.map((floor) => <option key={floor.id} value={floor.id}>{floor.label} ({allOfficeAgents.filter((agent) => floorForState(agent.state) === floor.id).length})</option>)}</select>{selectedLocation && selectedLocation.floorId !== floorId ? <button aria-label={`Locate selected agent on ${selectedLocation.floorLabel} floor`} type="button" onClick={() => selectFloor(selectedLocation.floorId)}>⌖</button> : null}<button aria-label="Pan office left" type="button" onClick={() => moveCamera(96, 0)}>←</button><button aria-label="Pan office up" type="button" onClick={() => moveCamera(0, 96)}>↑</button><button aria-label="Pan office down" type="button" onClick={() => moveCamera(0, -96)}>↓</button><button aria-label="Pan office right" type="button" onClick={() => moveCamera(-96, 0)}>→</button><button aria-label={`Set office zoom to ${camera.zoom === 1 ? 2 : 1}x`} type="button" onClick={toggleZoom}>{camera.zoom}×</button></div></header>
     <div ref={hostRef} className="pixel-office-canvas" />
-    <div className="office-hive-status" aria-live="polite">{hive ? `${hive.tasks.length} tasks · ${hive.primeInbox.length} messages · ${hive.approvals.filter((approval) => approval.status === "pending").length} pending approvals` : "No project Hive selected"}</div>
+    <div className="office-hive-status" aria-live="polite">{selectedLocation ? `${selectedLocation.agentName}: ${selectedLocation.floorLabel} floor · ` : ""}{hive ? `${hive.tasks.length} tasks · ${hive.primeInbox.length} messages · ${hive.approvals.filter((approval) => approval.status === "pending").length} pending approvals` : "No project Hive selected"}</div>
     <div className="office-agent-controls" aria-label="Accessible office agent controls">{officeAgents.map((agent) => <button type="button" key={agent.id} className={agent.id === selectedId ? "selected" : ""} onClick={() => onSelect(agent.id)}><i style={{ background: `#${agent.color.toString(16).padStart(6, "0")}` }} /><span>{agent.name}<small>{agent.state} · {agent.zone}</small></span></button>)}</div>
   </section>;
 }

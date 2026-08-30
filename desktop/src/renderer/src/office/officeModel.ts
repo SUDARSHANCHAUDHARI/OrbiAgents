@@ -1,9 +1,10 @@
 import type { AgentActivityState, AgentSession, HiveSnapshot } from "../../../shared/contracts";
-import { createOrbitalWorld, floorForState, isWalkable, stationForState, type OrbitalFloorId, type OrbitalStationId, type OrbitalWorld } from "./orbitalWorld";
+import { createOrbitalWorld, floorForState, isWalkable, ORBITAL_FLOORS, stationForState, type OrbitalFloorId, type OrbitalStationId, type OrbitalWorld } from "./orbitalWorld";
 
 export type OfficeZoneId = "planning" | "focus" | "collaboration" | "lounge";
 export interface OfficeAgent { id: string; name: string; state: AgentActivityState; zone: OfficeZoneId; stationId: OrbitalStationId; column: number; row: number; color: number; }
 export interface OfficeLink { id: string; fromAgentId: string; toAgentId: string | "orbi-prime"; kind: "task" | "message"; }
+export interface OfficeAgentLocation { agentName: string; floorId: OrbitalFloorId; floorLabel: string; }
 
 const STATE_ZONE: Record<AgentActivityState, OfficeZoneId> = { idle: "lounge", thinking: "planning", reading: "planning", coding: "focus", "permission-waiting": "collaboration", done: "lounge", failed: "collaboration" };
 const COLORS = [0x67e8f9, 0xa78bfa, 0x34d399, 0xfbbf24, 0xfb7185];
@@ -41,6 +42,15 @@ export function buildOfficeLinks(hive: HiveSnapshot | null, visibleAgentIds: Set
     links.push({ id: `message:${message.id}`, fromAgentId: message.senderAgentId, toAgentId: "orbi-prime", kind: "message" });
   }
   return links;
+}
+
+export function locateOfficeAgent(agents: OfficeAgent[], agentId: string | null): OfficeAgentLocation | null {
+  if (!agentId) return null;
+  const agent = agents.find((candidate) => candidate.id === agentId);
+  if (!agent) return null;
+  const floorId = floorForState(agent.state);
+  const floor = ORBITAL_FLOORS.find((candidate) => candidate.id === floorId);
+  return floor ? { agentName: agent.name, floorId, floorLabel: floor.label } : null;
 }
 
 function fallbackState(agent: AgentSession): AgentActivityState {
