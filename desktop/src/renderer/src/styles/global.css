@@ -218,6 +218,7 @@ input, select { height: 36px; padding: 0 10px; color: var(--orbi-ink); backgroun
 .onboarding-first-run { width: min(760px, 100%); height: auto; max-height: calc(100vh - 48px); }
 .onboarding-first-run .pixel-panel__body { overflow: auto; }
 .cost-panel, .recovery-panel { min-height: 100%; }
+.cost-filter { display: grid; gap: 4px; margin-bottom: 12px; }
 
 @media (prefers-reduced-motion: reduce) {
   .pixel-button { transition: none; }
