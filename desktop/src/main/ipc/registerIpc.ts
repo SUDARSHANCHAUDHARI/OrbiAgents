@@ -133,10 +133,15 @@ export function registerIpc(window: BrowserWindow, manager: PtyManager, hive: Hi
   ipcMain.handle(IPC_CHANNELS.recoveryStatus, (event) => { assertTrustedSender(event.sender.id); return recovery.load(); });
   ipcMain.handle(IPC_CHANNELS.costSnapshot, (event) => { assertTrustedSender(event.sender.id); return hive.costSnapshot(); });
   ipcMain.handle(IPC_CHANNELS.commandHistoryList, (event, value: unknown) => { assertTrustedSender(event.sender.id); return commandHistory.list(validateAgentId(asRecord(value).agentId)); });
-  ipcMain.handle(IPC_CHANNELS.commandHistoryUpsert, (event, value: unknown) => {
+  ipcMain.handle(IPC_CHANNELS.commandHistoryUpsert, async (event, value: unknown) => {
     assertTrustedSender(event.sender.id);
     const request = asRecord(value); const agentId = validateAgentId(request.agentId);
     if (!manager.list().some((agent) => agent.id === agentId)) throw new Error("Unknown command history agent");
+    if (request.attachments !== undefined) {
+      if (!Array.isArray(request.attachments)) throw new Error("Command attachments are invalid");
+      const allowed = new Set((await files.list(manager.workspaceRoot(agentId))).filter((entry) => entry.type === "file").map((entry) => entry.path));
+      if (request.attachments.some((file) => typeof file !== "string" || !allowed.has(file))) throw new Error("Command attachment is outside the safe workspace file list");
+    }
     return commandHistory.upsert({ ...request, agentId });
   });
 

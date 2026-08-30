@@ -18,3 +18,10 @@ test("command composer isolates agent queues and retains a bounded session histo
   for (let index = 0; index < 105; index += 1) entries = [...entries, createCommandEntry("alpha", String(index), index, `entry-${index}`)].slice(-100);
   assert.equal(entries.length, 100);
 });
+
+test("command composer adds only bounded workspace-relative attachments to payloads", () => {
+  const entry = createCommandEntry("alpha", "Review these files", 1, "files", ["src/app.ts", "test/app.test.ts"]);
+  assert.match(terminalPayload(entry), /Attached workspace files:\n- "src\/app.ts"\n- "test\/app.test.ts"\r$/);
+  assert.throws(() => createCommandEntry("alpha", "Unsafe", 1, "bad", ["../.env"]), /attachments/);
+  assert.throws(() => createCommandEntry("alpha", "Too many", 1, "many", ["1", "2", "3", "4", "5", "6"]), /attachments/);
+});

@@ -50,6 +50,9 @@ function parseEntry(value: unknown, resumeInterrupted = false): CommandHistoryEn
   const row = value as Partial<CommandHistoryEntry>;
   if (typeof row.id !== "string" || !/^[0-9a-f-]{36}$/i.test(row.id) || typeof row.agentId !== "string" || !/^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$/.test(row.agentId) || typeof row.body !== "string" || !row.body.trim() || Buffer.byteLength(row.body, "utf8") > MAX_BODY_BYTES || !["queued", "sending", "sent", "failed"].includes(row.status ?? "") || typeof row.createdAt !== "number" || !Number.isFinite(row.createdAt) || row.createdAt < 0 || row.error !== undefined && (typeof row.error !== "string" || row.error.length > 500)) return null;
   const status = row.status as CommandHistoryEntry["status"];
-  return { id: row.id, agentId: row.agentId, body: row.body.trim(), status: resumeInterrupted && status === "sending" ? "queued" : status, createdAt: row.createdAt, error: row.error };
+  let attachments: string[] | undefined;
+  if (row.attachments !== undefined) { const parsed = validAttachments(row.attachments); if (!parsed) return null; attachments = parsed; }
+  return { id: row.id, agentId: row.agentId, body: row.body.trim(), attachments, status: resumeInterrupted && status === "sending" ? "queued" : status, createdAt: row.createdAt, error: row.error };
 }
-function copyEntry(entry: CommandHistoryEntry): CommandHistoryEntry { return { ...entry }; }
+function validAttachments(value: unknown): string[] | null { if (!Array.isArray(value) || value.length > 5 || new Set(value).size !== value.length || value.some((file) => typeof file !== "string" || !file || file.length > 1_000 || path.isAbsolute(file) || file.includes("\\") || file.split("/").some((part) => !part || part === "." || part === ".."))) return null; return [...value] as string[]; }
+function copyEntry(entry: CommandHistoryEntry): CommandHistoryEntry { return { ...entry, attachments: entry.attachments ? [...entry.attachments] : undefined }; }

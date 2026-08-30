@@ -105,7 +105,7 @@ export interface TerminalWriteRequest {
 }
 
 export type CommandHistoryStatus = "queued" | "sending" | "sent" | "failed";
-export interface CommandHistoryEntry { id: string; agentId: string; body: string; status: CommandHistoryStatus; createdAt: number; error?: string; }
+export interface CommandHistoryEntry { id: string; agentId: string; body: string; attachments?: string[]; status: CommandHistoryStatus; createdAt: number; error?: string; }
 
 export interface TerminalResizeRequest {
   id: string;
