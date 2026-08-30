@@ -7,7 +7,7 @@ test("command composer validates bounded terminal payloads", () => {
   assert.deepEqual(entry, { id: "one", agentId: "alpha", body: "Run the focused tests", status: "queued", createdAt: 10 });
   assert.equal(terminalPayload(entry), "Run the focused tests\r");
   assert.throws(() => createCommandEntry("alpha", "   ", 10, "two"), /required/);
-  assert.throws(() => createCommandEntry("alpha", "😀".repeat(20_000), 10, "three"), /64 KB/);
+  assert.throws(() => createCommandEntry("alpha", "😀".repeat(3_000), 10, "three"), /8 KB/);
 });
 
 test("command composer isolates agent queues and retains a bounded session history", () => {

@@ -14,6 +14,10 @@ export function createDesktopApi(ipcRenderer: Pick<IpcRenderer, "invoke" | "on" 
     onExit: (listener) => subscribe<TerminalExitEvent>(ipcRenderer, IPC_CHANNELS.exit, listener),
     onActivity: (listener) => subscribe<ActivityEvent>(ipcRenderer, IPC_CHANNELS.activity, listener),
   };
+  const commands: OrbiDesktopApi["commands"] = {
+    list: (request) => ipcRenderer.invoke(IPC_CHANNELS.commandHistoryList, request),
+    upsert: (request) => ipcRenderer.invoke(IPC_CHANNELS.commandHistoryUpsert, request),
+  };
   const hive: OrbiDesktopApi["hive"] = {
     snapshot: (request) => ipcRenderer.invoke(IPC_CHANNELS.hiveSnapshot, request),
     assign: (request) => ipcRenderer.invoke(IPC_CHANNELS.hiveAssign, request),
@@ -64,6 +68,7 @@ export function createDesktopApi(ipcRenderer: Pick<IpcRenderer, "invoke" | "on" 
   const costs: OrbiDesktopApi["costs"] = { snapshot: () => ipcRenderer.invoke(IPC_CHANNELS.costSnapshot) };
   return Object.freeze({
     agents: Object.freeze(agents),
+    commands: Object.freeze(commands),
     hive: Object.freeze(hive),
     memory: Object.freeze(memory),
     missions: Object.freeze(missions),

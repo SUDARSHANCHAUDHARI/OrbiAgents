@@ -104,6 +104,9 @@ export interface TerminalWriteRequest {
   data: string;
 }
 
+export type CommandHistoryStatus = "queued" | "sending" | "sent" | "failed";
+export interface CommandHistoryEntry { id: string; agentId: string; body: string; status: CommandHistoryStatus; createdAt: number; error?: string; }
+
 export interface TerminalResizeRequest {
   id: string;
   cols: number;
@@ -132,6 +135,10 @@ export interface OrbiDesktopApi {
     onOutput(listener: (event: TerminalOutputEvent) => void): () => void;
     onExit(listener: (event: TerminalExitEvent) => void): () => void;
     onActivity(listener: (event: ActivityEvent) => void): () => void;
+  };
+  commands: {
+    list(request: { agentId: string }): Promise<CommandHistoryEntry[]>;
+    upsert(request: CommandHistoryEntry): Promise<CommandHistoryEntry[]>;
   };
   hive: {
     snapshot(request: HiveProjectRequest): Promise<HiveSnapshot>;
@@ -269,4 +276,6 @@ export const IPC_CHANNELS = {
   onboardingComplete: "onboarding:complete",
   recoveryStatus: "recovery:status",
   costSnapshot: "costs:snapshot",
+  commandHistoryList: "commands:history:list",
+  commandHistoryUpsert: "commands:history:upsert",
 } as const;
