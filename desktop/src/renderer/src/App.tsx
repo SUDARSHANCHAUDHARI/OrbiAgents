@@ -20,7 +20,7 @@ import { CommandComposer } from "./components/CommandComposer";
 import { SkillsPanel } from "./components/SkillsPanel";
 import { UpdatesPanel } from "./components/UpdatesPanel";
 import { LocalePanel } from "./components/LocalePanel";
-import { useI18n } from "./i18n";
+import { useI18n, type MessageKey } from "./i18n";
 
 const PixelOffice = lazy(() => import("./components/PixelOffice").then((module) => ({ default: module.PixelOffice })));
 const TerminalPanel = lazy(() => import("./components/TerminalPanel").then((module) => ({ default: module.TerminalPanel })));
@@ -48,6 +48,8 @@ const COMMAND_VIEWS: CommandViewDefinition[] = [
   { id: "setup", label: "System setup", shortLabel: "Setup", group: "System", description: "Re-run read-only prerequisite and platform checks." },
 ];
 const COMMAND_GROUPS: CommandGroup[] = ["Operate", "Coordinate", "Observe", "System"];
+const COMMAND_VIEW_MESSAGE_KEYS: Record<CommandView, MessageKey> = { floor: "floor", terminals: "terminals", files: "files", github: "repository", tasks: "tasks", messages: "messages", approvals: "approvals", memory: "memory", skills: "skills", activity: "activity", usage: "costs", recovery: "recovery", workspaces: "workspaces", settings: "settings", updates: "updates", setup: "setup" };
+const COMMAND_GROUP_MESSAGE_KEYS: Record<CommandGroup, MessageKey> = { Operate: "operate", Coordinate: "coordinate", Observe: "observe", System: "system" };
 
 export default function App() {
   const { t } = useI18n();
@@ -139,8 +141,8 @@ export default function App() {
       <section className="workspace" inert={firstRun}>
         <div className="left-rail"><AgentRoster agents={agents} selectedId={selectedId} onSelect={setSelectedId} /><ActivityPanel events={activity} /></div>
         <div className="terminal-column">
-          <nav className="command-tabs" aria-label="Command Center" role="tablist">
-            {COMMAND_GROUPS.map((group) => <div className="command-tab-group" key={group}><span>{group}</span><div>{COMMAND_VIEWS.filter((view) => view.group === group).map((view) => <CommandTab key={view.id} {...view} active={commandView} select={setCommandView} />)}</div></div>)}
+          <nav className="command-tabs" aria-label={t("commandCenter")} role="tablist">
+            {COMMAND_GROUPS.map((group) => <div className="command-tab-group" key={group}><span>{t(COMMAND_GROUP_MESSAGE_KEYS[group])}</span><div>{COMMAND_VIEWS.filter((view) => view.group === group).map((view) => <CommandTab key={view.id} {...view} translatedLabel={t(COMMAND_VIEW_MESSAGE_KEYS[view.id])} active={commandView} select={setCommandView} />)}</div></div>)}
           </nav>
           <header className="command-context"><div><span>{activeView.group}</span><h2>{activeView.label}</h2></div><p>{activeView.description}</p>{selected ? <small>{selected.name} · {selected.runtimeId} · {selected.status}</small> : <small>No agent selected</small>}</header>
           <section id={`command-${commandView}`} className="command-view" role="tabpanel" aria-labelledby={`command-tab-${commandView}`}>
@@ -173,14 +175,14 @@ export default function App() {
   );
 }
 
-function CommandTab({ id, shortLabel, active, select }: CommandViewDefinition & { active: CommandView; select(view: CommandView): void }) {
+function CommandTab({ id, translatedLabel, active, select }: CommandViewDefinition & { translatedLabel: string; active: CommandView; select(view: CommandView): void }) {
   function move(direction: number) {
     const index = COMMAND_VIEWS.findIndex((view) => view.id === id);
     const next = COMMAND_VIEWS[(index + direction + COMMAND_VIEWS.length) % COMMAND_VIEWS.length]!.id;
     select(next);
     requestAnimationFrame(() => document.getElementById(`command-tab-${next}`)?.focus());
   }
-  return <PixelButton id={`command-tab-${id}`} type="button" variant={active === id ? "primary" : "ghost"} role="tab" aria-selected={active === id} aria-controls={`command-${id}`} tabIndex={active === id ? 0 : -1} onClick={() => select(id)} onKeyDown={(event) => { if (event.key === "ArrowRight") { event.preventDefault(); move(1); } else if (event.key === "ArrowLeft") { event.preventDefault(); move(-1); } }}>{shortLabel}</PixelButton>;
+  return <PixelButton id={`command-tab-${id}`} type="button" variant={active === id ? "primary" : "ghost"} role="tab" aria-selected={active === id} aria-controls={`command-${id}`} tabIndex={active === id ? 0 : -1} onClick={() => select(id)} onKeyDown={(event) => { if (event.key === "ArrowRight") { event.preventDefault(); move(1); } else if (event.key === "ArrowLeft") { event.preventDefault(); move(-1); } }}>{translatedLabel}</PixelButton>;
 }
 
 function CommandList({ title, empty, items }: { title: string; empty: string; items: Array<{ id: string; title: string; meta: string; detail: string }> }) {
