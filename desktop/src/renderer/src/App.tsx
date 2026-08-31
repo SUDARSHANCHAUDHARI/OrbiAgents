@@ -23,11 +23,25 @@ const TerminalPanel = lazy(() => import("./components/TerminalPanel").then((modu
 const FileEditorPanel = lazy(() => import("./components/FileEditorPanel").then((module) => ({ default: module.FileEditorPanel })));
 
 type CommandView = "floor" | "terminals" | "files" | "github" | "tasks" | "messages" | "approvals" | "memory" | "activity" | "usage" | "recovery" | "workspaces" | "settings" | "setup";
-const COMMAND_VIEWS: Array<{ id: CommandView; label: string }> = [
-  { id: "floor", label: "Floor" }, { id: "terminals", label: "Terminals" }, { id: "files", label: "Files" }, { id: "github", label: "GitHub" }, { id: "tasks", label: "Tasks" },
-  { id: "messages", label: "Messages" }, { id: "approvals", label: "Approvals" }, { id: "memory", label: "Memory" },
-  { id: "activity", label: "Activity" }, { id: "usage", label: "Costs" }, { id: "recovery", label: "Recovery" }, { id: "workspaces", label: "Workspaces" }, { id: "settings", label: "Settings" }, { id: "setup", label: "Setup" },
+type CommandGroup = "Operate" | "Coordinate" | "Observe" | "System";
+interface CommandViewDefinition { id: CommandView; label: string; shortLabel: string; group: CommandGroup; description: string; }
+const COMMAND_VIEWS: CommandViewDefinition[] = [
+  { id: "floor", label: "Orbital floor", shortLabel: "Floor", group: "Operate", description: "Watch the live fleet and move between operational floors." },
+  { id: "terminals", label: "Agent terminals", shortLabel: "Terminals", group: "Operate", description: "Steer a selected agent through its real terminal session." },
+  { id: "files", label: "Workspace IDE", shortLabel: "Files", group: "Operate", description: "Inspect and safely edit the selected agent workspace." },
+  { id: "github", label: "GitHub operations", shortLabel: "GitHub", group: "Operate", description: "Review repository issues and workflow runs through the local GitHub CLI." },
+  { id: "tasks", label: "Mission board", shortLabel: "Tasks", group: "Coordinate", description: "Assign dependency-aware durable work through Orbi-Prime." },
+  { id: "messages", label: "Fleet messages", shortLabel: "Messages", group: "Coordinate", description: "Inspect durable agent-to-agent delivery and replies." },
+  { id: "approvals", label: "Operator approvals", shortLabel: "Approvals", group: "Coordinate", description: "Review spend, destructive-operation, and scope-expansion gates." },
+  { id: "memory", label: "Project memory", shortLabel: "Memory", group: "Coordinate", description: "Capture and retrieve bounded project knowledge." },
+  { id: "activity", label: "Live activity", shortLabel: "Activity", group: "Observe", description: "Filter verified runtime signals across the active fleet." },
+  { id: "usage", label: "Cost ledger", shortLabel: "Costs", group: "Observe", description: "Audit durable authorization estimates and integrity status." },
+  { id: "recovery", label: "Recovery center", shortLabel: "Recovery", group: "Observe", description: "Inspect interrupted work without automatically restarting it." },
+  { id: "workspaces", label: "Workspace registry", shortLabel: "Workspaces", group: "Observe", description: "Find direct, isolated, and preserved agent workspaces." },
+  { id: "settings", label: "Fleet settings", shortLabel: "Settings", group: "System", description: "Configure runtimes, local models, and scheduled missions." },
+  { id: "setup", label: "System setup", shortLabel: "Setup", group: "System", description: "Re-run read-only prerequisite and platform checks." },
 ];
+const COMMAND_GROUPS: CommandGroup[] = ["Operate", "Coordinate", "Observe", "System"];
 
 export default function App() {
   const [agents, setAgents] = useState<AgentSession[]>([]);
@@ -41,6 +55,7 @@ export default function App() {
   const [onboarding, setOnboarding] = useState<OnboardingStatus | null>(null);
   const firstRun = Boolean(onboarding && !onboarding.completed);
   const selected = useMemo(() => agents.find((agent) => agent.id === selectedId) ?? null, [agents, selectedId]);
+  const activeView = COMMAND_VIEWS.find((view) => view.id === commandView)!;
   const selectedProject = selected?.workspace.sourcePath ?? "";
 
   async function refresh() {
@@ -115,8 +130,9 @@ export default function App() {
         <div className="left-rail"><AgentRoster agents={agents} selectedId={selectedId} onSelect={setSelectedId} /><ActivityPanel events={activity} /></div>
         <div className="terminal-column">
           <nav className="command-tabs" aria-label="Command Center" role="tablist">
-            {COMMAND_VIEWS.map((view) => <CommandTab key={view.id} {...view} active={commandView} select={setCommandView} />)}
+            {COMMAND_GROUPS.map((group) => <div className="command-tab-group" key={group}><span>{group}</span><div>{COMMAND_VIEWS.filter((view) => view.group === group).map((view) => <CommandTab key={view.id} {...view} active={commandView} select={setCommandView} />)}</div></div>)}
           </nav>
+          <header className="command-context"><div><span>{activeView.group}</span><h2>{activeView.label}</h2></div><p>{activeView.description}</p>{selected ? <small>{selected.name} · {selected.runtimeId} · {selected.status}</small> : <small>No agent selected</small>}</header>
           <section id={`command-${commandView}`} className="command-view" role="tabpanel" aria-labelledby={`command-tab-${commandView}`}>
             {commandView === "floor" ? <Suspense fallback={<CommandFallback label="Loading pixel office…" />}><PixelOffice agents={agents} activity={activity} hive={hiveSnapshot} selectedId={selectedId} onSelect={setSelectedId} /></Suspense> : null}
             {commandView === "terminals" ? <>
@@ -145,14 +161,14 @@ export default function App() {
   );
 }
 
-function CommandTab({ id, label, active, select }: { id: CommandView; label: string; active: CommandView; select(view: CommandView): void }) {
+function CommandTab({ id, shortLabel, active, select }: CommandViewDefinition & { active: CommandView; select(view: CommandView): void }) {
   function move(direction: number) {
     const index = COMMAND_VIEWS.findIndex((view) => view.id === id);
     const next = COMMAND_VIEWS[(index + direction + COMMAND_VIEWS.length) % COMMAND_VIEWS.length]!.id;
     select(next);
     requestAnimationFrame(() => document.getElementById(`command-tab-${next}`)?.focus());
   }
-  return <PixelButton id={`command-tab-${id}`} type="button" variant={active === id ? "primary" : "ghost"} role="tab" aria-selected={active === id} aria-controls={`command-${id}`} tabIndex={active === id ? 0 : -1} onClick={() => select(id)} onKeyDown={(event) => { if (event.key === "ArrowRight") { event.preventDefault(); move(1); } else if (event.key === "ArrowLeft") { event.preventDefault(); move(-1); } }}>{label}</PixelButton>;
+  return <PixelButton id={`command-tab-${id}`} type="button" variant={active === id ? "primary" : "ghost"} role="tab" aria-selected={active === id} aria-controls={`command-${id}`} tabIndex={active === id ? 0 : -1} onClick={() => select(id)} onKeyDown={(event) => { if (event.key === "ArrowRight") { event.preventDefault(); move(1); } else if (event.key === "ArrowLeft") { event.preventDefault(); move(-1); } }}>{shortLabel}</PixelButton>;
 }
 
 function CommandList({ title, empty, items }: { title: string; empty: string; items: Array<{ id: string; title: string; meta: string; detail: string }> }) {

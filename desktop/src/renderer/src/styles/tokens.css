@@ -17,8 +17,20 @@
   --orbi-alert-dark: #57252d;
   --orbi-violet: #a78bfa;
   --orbi-success: #72e2a8;
+  --orbi-info: #67e8f9;
+  --orbi-info-dark: #123047;
+  --orbi-warning: #fbbf24;
+  --orbi-warning-dark: #35270d;
+  --orbi-danger-surface: #451a1a;
+  --orbi-terminal: #080d16;
+  --orbi-surface-inset: #0b1524;
+  --orbi-surface-deep: #08111e;
+  --orbi-text-soft: #c6d8eb;
+  --orbi-text-subtle: #8fa6c0;
   --orbi-shadow: #03050a;
   --orbi-unit: 4px;
+  --orbi-border: 2px;
+  --orbi-shadow-offset: 4px;
   --orbi-font-ui: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   --orbi-font-display: "Arial Black", Impact, ui-sans-serif, system-ui, sans-serif;
 }

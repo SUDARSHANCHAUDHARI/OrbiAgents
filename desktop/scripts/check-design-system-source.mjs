@@ -19,6 +19,7 @@ for (const [source, value, label] of [
   [activity, "<PixelPanel", "activity PixelPanel"], [onboarding, "<PixelPanel", "onboarding PixelPanel"], [recovery, "<PixelPanel", "recovery PixelPanel"], [costs, "<PixelPanel", "cost PixelPanel"],
   [panel, "pixel-panel", "panel primitive"], [button, "pixel-button", "button primitive"], [badge, "status-badge", "status primitive"],
   [css, "box-shadow: inset", "layered panel edge"], [css, "translateY(2px)", "pressed button state"], [css, "@media (prefers-reduced-motion: reduce)", "reduced motion"],
+  [css, ".command-tab-group", "grouped command navigation"], [css, ".command-context", "command context header"], [app, "COMMAND_GROUPS", "command information architecture"],
 ]) requireText(source, value, label);
 
 for (const [file, source] of [["PixelPanel.tsx", panel], ["PixelButton.tsx", button], ["StatusBadge.tsx", badge]]) {
