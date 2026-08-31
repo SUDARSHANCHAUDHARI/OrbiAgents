@@ -10,10 +10,5 @@ export function filterActivity(events: ActivityEvent[], filters: ActivityFilters
   ).slice().reverse();
 }
 
-export function activityOverview(events: ActivityEvent[]): string {
-  if (!events.length) return "No runtime signals in this desktop session";
-  const agents = new Set(events.map((event) => event.agentId)).size;
-  const provider = events.filter((event) => event.type === "provider-activity").length;
-  const attention = events.filter((event) => event.state === "failed" || event.state === "permission-waiting").length;
-  return `${events.length} signals · ${agents} agent${agents === 1 ? "" : "s"} · ${provider} provider events${attention ? ` · ${attention} need attention` : ""}`;
-}
+export interface ActivityOverview { signals: number; agents: number; providerEvents: number; attention: number; }
+export function activityOverview(events: ActivityEvent[]): ActivityOverview { return { signals: events.length, agents: new Set(events.map((event) => event.agentId)).size, providerEvents: events.filter((event) => event.type === "provider-activity").length, attention: events.filter((event) => event.state === "failed" || event.state === "permission-waiting").length }; }
