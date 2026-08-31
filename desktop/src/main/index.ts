@@ -27,6 +27,7 @@ import { SkillCatalog } from "./skills/skillCatalog";
 import { UpdateService } from "./updates/updateService";
 import { decodeHireProfile } from "./agents/hireProfileCodec";
 import type { HireProfile } from "../shared/contracts";
+import { WebhookReceiver } from "./webhooks/webhookReceiver";
 
 let manager: PtyManager | null = null;
 let activityServer: ActivityHookServer | null = null;
@@ -115,11 +116,12 @@ async function createWindow(): Promise<void> {
     } catch { reasons.push("project safety state could not be verified"); }
     return [...new Set(reasons)];
   });
+  const webhooks = new WebhookReceiver();
   const projectPaths = [...new Set(recovered.map((session) => session.workspace.sourcePath))];
   const recovery = new RecoveryStore(join(userData, "recovery.json"));
   await recovery.create(loadedMetadata.interrupted, await Promise.all(projectPaths.map((projectPath) => hive.recoveryState(projectPath))));
   hive.startHeartbeat();
-  registerIpc(window, windowManager, hive, runtimeAdapters, localModels, localModelClient, workspaceFiles, github, git, prerequisites, onboarding, recovery, commandHistory, skills, updates);
+  registerIpc(window, windowManager, hive, runtimeAdapters, localModels, localModelClient, workspaceFiles, github, git, prerequisites, onboarding, recovery, commandHistory, skills, updates, webhooks);
 
   window.once("ready-to-show", () => { window.show(); if (pendingHire) { window.webContents.send(IPC_CHANNELS.hireImported, pendingHire); pendingHire = null; } });
   window.once("closed", () => {
@@ -127,6 +129,7 @@ async function createWindow(): Promise<void> {
     void windowActivityServer.stop();
     rolloutWatcher.stop();
     hive.stopHeartbeat();
+    void webhooks.stop();
     if (activityServer === windowActivityServer) activityServer = null;
     if (manager === windowManager) manager = null;
     if (primaryWindow === window) primaryWindow = null;

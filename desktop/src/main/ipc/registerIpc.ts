@@ -14,6 +14,7 @@ import type { RecoveryStore } from "../persistence/recoveryStore";
 import type { CommandHistoryStore } from "../commands/commandHistoryStore";
 import type { SkillCatalog } from "../skills/skillCatalog";
 import type { UpdateService } from "../updates/updateService";
+import type { WebhookReceiver } from "../webhooks/webhookReceiver";
 import { decodeHireProfile, encodeHireProfile } from "../agents/hireProfileCodec";
 import {
   validateAgentId,
@@ -25,7 +26,7 @@ import {
   validateWorkspace,
 } from "../security/validators";
 
-export function registerIpc(window: BrowserWindow, manager: PtyManager, hive: HiveCoordinator, runtimeAdapters: RuntimeAdapterStore, localModels: LocalModelEndpointStore, localModelClient: LocalModelClient, files: WorkspaceFileService, github: GitHubIngestion, git: GitWorkspaceService, prerequisites: PrerequisiteChecker, onboarding: OnboardingStore, recovery: RecoveryStore, commandHistory: CommandHistoryStore, skills: SkillCatalog, updates: UpdateService): () => void {
+export function registerIpc(window: BrowserWindow, manager: PtyManager, hive: HiveCoordinator, runtimeAdapters: RuntimeAdapterStore, localModels: LocalModelEndpointStore, localModelClient: LocalModelClient, files: WorkspaceFileService, github: GitHubIngestion, git: GitWorkspaceService, prerequisites: PrerequisiteChecker, onboarding: OnboardingStore, recovery: RecoveryStore, commandHistory: CommandHistoryStore, skills: SkillCatalog, updates: UpdateService, webhooks: WebhookReceiver): () => void {
   const assertTrustedSender = (senderId: number) => {
     if (senderId !== window.webContents.id) throw new Error("Untrusted IPC sender");
   };
@@ -163,6 +164,10 @@ export function registerIpc(window: BrowserWindow, manager: PtyManager, hive: Hi
   ipcMain.handle(IPC_CHANNELS.updateCheck, (event) => { assertTrustedSender(event.sender.id); return updates.check(); });
   ipcMain.handle(IPC_CHANNELS.updateDownload, (event) => { assertTrustedSender(event.sender.id); return updates.download(); });
   ipcMain.handle(IPC_CHANNELS.updateInstall, (event) => { assertTrustedSender(event.sender.id); return updates.install(); });
+  ipcMain.handle(IPC_CHANNELS.webhookStatus, (event) => { assertTrustedSender(event.sender.id); return webhooks.status(); });
+  ipcMain.handle(IPC_CHANNELS.webhookStart, (event) => { assertTrustedSender(event.sender.id); return webhooks.start(); });
+  ipcMain.handle(IPC_CHANNELS.webhookStop, (event) => { assertTrustedSender(event.sender.id); return webhooks.stop(); });
+  ipcMain.handle(IPC_CHANNELS.webhookCopySecret, (event) => { assertTrustedSender(event.sender.id); clipboard.writeText(webhooks.copySecret()); });
 
   const dispose = () => {
     for (const channel of Object.values(IPC_CHANNELS)) {

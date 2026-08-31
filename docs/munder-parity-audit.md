@@ -23,9 +23,10 @@ Compared on 2026-08-31 against `chaitanyagiri/munder-difflin` commit `49126393` 
 | Shareable hire profiles | Built (clipboard) | Versioned bounded links exclude workspace paths and credentials; import only prefills the form and never launches |
 | OS hire-link registration / local gallery | Built | Packaged single-instance protocol handling reuses strict validation and only opens a prefilled form; three local presets ship in-app |
 | Hosted agent gallery | Not built | Requires hosted catalog ownership, provenance, moderation, and update policy |
-| Slack and inbound webhooks | Not built | Requires provider credentials, secret lifecycle, replay protection, and an operator-approved network boundary |
+| Inbound webhooks | Built (local foundation) | Operator-enabled loopback receiver with per-launch secret, constant-time Bearer verification, replay IDs, bounded payloads, and an in-memory event inbox; secrets never enter renderer state |
+| Slack integration | Not built | Requires provider credentials, OAuth/secret lifecycle, scopes, and an operator-approved external network boundary |
 | Voice control | Not built | Microphone permission is deliberately denied; provider, consent, retention, and transcription behavior are undecided |
-| Full English/Chinese/Arabic localization and RTL | Not built | Requires complete string extraction, bundled fonts, translation review, and RTL/IME acceptance |
+| English/Chinese/Arabic localization and RTL | Built, translation review pending | Typed lazy-loaded catalogs, explicit locale selection, RTL direction, IME-safe commands, and localized canvas/DOM controls; native system fallback fonts are used pending licensed bundled-font selection |
 | Signed/notarized release-to-release update | Blocked externally | Requires Apple Developer ID/notary credentials and publication of a later signed release |
 | Windows/Linux distribution | Outside current macOS release scope | Current desktop release target is Apple Silicon macOS |
 

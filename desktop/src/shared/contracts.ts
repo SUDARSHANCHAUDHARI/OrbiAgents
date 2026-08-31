@@ -193,7 +193,11 @@ export interface OrbiDesktopApi {
   costs: { snapshot(): Promise<CostLedgerSnapshot>; };
   skills: { list(request?: { query?: string }): Promise<SkillCatalogEntry[]>; remove(request: { id: string }): Promise<SkillCatalogEntry[]>; };
   updates: { status(): Promise<UpdateState>; check(): Promise<UpdateState>; download(): Promise<UpdateState>; install(): Promise<void>; };
+  webhooks: { status(): Promise<WebhookStatus>; start(): Promise<WebhookStatus>; stop(): Promise<WebhookStatus>; copySecret(): Promise<void>; };
 }
+
+export interface WebhookEvent { id: string; title: string; detail: string; source: string; receivedAt: number; }
+export interface WebhookStatus { enabled: boolean; endpoint?: string; events: WebhookEvent[]; }
 
 export interface SkillCatalogEntry { id: string; name: string; description: string; source: string; relativePath: string; }
 export type UpdatePhase = "idle" | "checking" | "available" | "not-available" | "downloading" | "downloaded" | "error";
@@ -298,4 +302,8 @@ export const IPC_CHANNELS = {
   updateCheck: "updates:check",
   updateDownload: "updates:download",
   updateInstall: "updates:install",
+  webhookStatus: "webhooks:status",
+  webhookStart: "webhooks:start",
+  webhookStop: "webhooks:stop",
+  webhookCopySecret: "webhooks:secret:copy",
 } as const;

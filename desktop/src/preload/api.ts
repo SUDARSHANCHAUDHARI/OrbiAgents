@@ -75,6 +75,7 @@ export function createDesktopApi(ipcRenderer: Pick<IpcRenderer, "invoke" | "on" 
     download: () => ipcRenderer.invoke(IPC_CHANNELS.updateDownload),
     install: () => ipcRenderer.invoke(IPC_CHANNELS.updateInstall),
   };
+  const webhooks: OrbiDesktopApi["webhooks"] = { status: () => ipcRenderer.invoke(IPC_CHANNELS.webhookStatus), start: () => ipcRenderer.invoke(IPC_CHANNELS.webhookStart), stop: () => ipcRenderer.invoke(IPC_CHANNELS.webhookStop), copySecret: () => ipcRenderer.invoke(IPC_CHANNELS.webhookCopySecret) };
   return Object.freeze({
     agents: Object.freeze(agents),
     hires: Object.freeze(hires),
@@ -92,6 +93,7 @@ export function createDesktopApi(ipcRenderer: Pick<IpcRenderer, "invoke" | "on" 
     costs: Object.freeze(costs),
     skills: Object.freeze(skills),
     updates: Object.freeze(updates),
+    webhooks: Object.freeze(webhooks),
   });
 }
 
