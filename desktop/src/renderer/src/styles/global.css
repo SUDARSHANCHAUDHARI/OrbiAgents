@@ -246,6 +246,9 @@ input, select { height: 36px; padding: 0 10px; color: var(--orbi-ink); backgroun
 .onboarding-first-run .pixel-panel__body { overflow: auto; }
 .cost-panel, .recovery-panel { min-height: 100%; }
 .cost-filter { display: grid; gap: 4px; margin-bottom: 12px; }
+.usage-summary { display: grid; grid-template-columns: repeat(3, auto 1fr); gap: 4px 8px; align-items: baseline; padding: 10px; background: var(--orbi-space); border: 1px solid var(--orbi-edge); }
+.usage-summary strong { color: var(--orbi-energy); font: 900 18px var(--orbi-font-display); }
+.usage-summary span { color: var(--orbi-muted); font-size: 10px; text-transform: uppercase; }
 
 @media (prefers-reduced-motion: reduce) {
   .pixel-button { transition: none; }

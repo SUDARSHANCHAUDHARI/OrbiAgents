@@ -154,7 +154,7 @@ export default function App() {
             {commandView === "memory" ? <MemoryPanel projectPath={selectedProject} onError={(message) => setError(message || null)} /> : null}
             {commandView === "skills" ? <SkillsPanel onError={(message) => setError(message || null)} /> : null}
             {commandView === "activity" ? <ActivityOperationsPanel events={activity} agents={agents} /> : null}
-            {commandView === "usage" ? <CostPanel onError={(message) => setError(message || null)} /> : null}
+            {commandView === "usage" ? <CostPanel events={activity} agents={agents} onError={(message) => setError(message || null)} /> : null}
             {commandView === "recovery" ? <RecoveryPanel onError={(message) => setError(message || null)} /> : null}
             {commandView === "workspaces" ? <CommandList title="Agent workspaces" empty="No agent workspaces recorded." items={agents.map((agent) => ({ id: agent.id, title: agent.name, meta: `${agent.workspace.status} · ${agent.workspace.branch ?? "direct"}`, detail: agent.workspace.path }))} /> : null}
             {commandView === "settings" ? <div className="settings-panels"><ProviderAdapterPanel onChanged={setRuntimeAdapters} onError={(message) => setError(message || null)} /><LocalModelPanel onError={(message) => setError(message || null)} /><MissionPanel projectPath={selectedProject} agents={agents} onError={(message) => setError(message || null)} /></div> : null}
