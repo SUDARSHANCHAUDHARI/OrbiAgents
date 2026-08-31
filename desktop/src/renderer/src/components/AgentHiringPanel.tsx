@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { AgentAppearance, AgentCapability, AgentProfile, AgentRole, CreateAgentRequest, RuntimeAdapterDescriptor, RuntimeId } from "../../../shared/contracts";
+import type { AgentAppearance, AgentCapability, AgentProfile, AgentRole, CreateAgentRequest, HireProfile, RuntimeAdapterDescriptor, RuntimeId } from "../../../shared/contracts";
 import { PixelButton } from "./ui/PixelButton";
 import { PixelPanel } from "./ui/PixelPanel";
 
@@ -30,6 +30,11 @@ export function AgentHiringPanel({ adapters, onClose, onLaunch }: AgentHiringPan
   const [appearance, setAppearance] = useState<AgentAppearance>("cyan");
   const [isolateWorkspace, setIsolateWorkspace] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [notice, setNotice] = useState("");
+
+  function currentProfile(): HireProfile { return { name, runtimeId, isolateWorkspace, profile: { role, goal, capabilities, budgetMinutes, appearance } }; }
+  async function copyHire() { setSubmitting(true); try { await window.orbi.hires.copy(currentProfile()); setNotice("Hire link copied. Workspace paths and credentials are never included."); } catch (error) { setNotice(error instanceof Error ? error.message : String(error)); } finally { setSubmitting(false); } }
+  async function importHire() { setSubmitting(true); try { const next = await window.orbi.hires.importFromClipboard(); setName(next.name); setRuntimeId(next.runtimeId); setIsolateWorkspace(next.isolateWorkspace); setRole(next.profile.role); setGoal(next.profile.goal); setCapabilities(next.profile.capabilities); setBudgetMinutes(next.profile.budgetMinutes); setAppearance(next.profile.appearance); setNotice("Profile imported. Review it and choose a workspace before launching."); } catch (error) { setNotice(error instanceof Error ? error.message : String(error)); } finally { setSubmitting(false); } }
 
   function toggleCapability(capability: AgentCapability): void {
     setCapabilities((current) => current.includes(capability) ? current.length === 1 ? current : current.filter((item) => item !== capability) : [...current, capability]);
@@ -45,7 +50,8 @@ export function AgentHiringPanel({ adapters, onClose, onLaunch }: AgentHiringPan
   return <div className="hiring-overlay" role="dialog" aria-modal="true" aria-labelledby="hiring-title">
     <PixelPanel title="Hire orbital agent" eyebrow="Fleet configuration" className="hiring-panel">
       <form onSubmit={(event) => void submit(event)}>
-        <div className="hiring-heading"><div><h2 id="hiring-title">Configure a specialist</h2><p>Profiles are validated and retained with the local agent session.</p></div><PixelButton type="button" variant="ghost" onClick={onClose}>Close</PixelButton></div>
+        <div className="hiring-heading"><div><h2 id="hiring-title">Configure a specialist</h2><p>Profiles are validated and retained with the local agent session.</p></div><div><PixelButton type="button" variant="ghost" disabled={submitting} onClick={() => void importHire()}>Import hire</PixelButton><PixelButton type="button" variant="secondary" disabled={submitting} onClick={() => void copyHire()}>Copy hire</PixelButton><PixelButton type="button" variant="ghost" onClick={onClose}>Close</PixelButton></div></div>
+        {notice ? <p aria-live="polite">{notice}</p> : null}
         <fieldset className="role-picker"><legend>Role</legend>{ROLES.map((option) => <label key={option.id} className={role === option.id ? "selected" : ""}><input aria-label={`${option.label} role`} type="radio" name="agent-role" value={option.id} checked={role === option.id} onChange={() => setRole(option.id)} /><strong>{option.label}</strong><small>{option.detail}</small></label>)}</fieldset>
         <div className="hiring-grid">
           <label>Call sign<input aria-label="Agent name" value={name} maxLength={80} onChange={(event) => setName(event.target.value)} required /></label>

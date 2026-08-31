@@ -1,0 +1,6 @@
+import assert from "node:assert/strict"; import test from "node:test";
+import { decodeHireProfile, encodeHireProfile } from "../src/main/agents/hireProfileCodec";
+import type { HireProfile } from "../src/shared/contracts";
+const hire: HireProfile = { name: "Reviewer", runtimeId: "codex", isolateWorkspace: true, profile: { role: "reviewer", goal: "Audit release", capabilities: ["review", "testing"], budgetMinutes: 60, appearance: "violet" } };
+test("hire links round-trip a bounded profile without workspace or launch authority", () => { const link = encodeHireProfile(hire); assert.match(link, /^orbiagents:\/\/hire\?profile=/); assert.deepEqual(decodeHireProfile(link), hire); assert.equal(link.includes("workspace"), false); });
+test("hire links reject unsupported versions, fields, and malformed payloads", () => { const link = (payload: unknown) => `orbiagents://hire?profile=${Buffer.from(JSON.stringify(payload)).toString("base64url")}`; assert.throws(() => decodeHireProfile(link({ version: 2 })), /version/); assert.throws(() => decodeHireProfile(link({ version: 1, ...hire, cwd: "/secret" })), /unsupported fields/); assert.throws(() => decodeHireProfile("https://example.com"), /invalid/); });

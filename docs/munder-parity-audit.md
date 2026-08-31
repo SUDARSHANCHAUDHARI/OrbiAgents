@@ -19,7 +19,8 @@ Compared on 2026-08-31 against `chaitanyagiri/munder-difflin` commit `49126393` 
 | Local LLM endpoints and BYOK | Built | Loopback-only endpoints and OS-encrypted write-only credentials |
 | First-run setup and recovery | Built | Read-only prerequisite checks and bounded interrupted-work report |
 | Application updater | Built, publication unproven | Explicit check/download/install, stable-only, downgrade rejection, workload blockers |
-| Shareable hire links / gallery | Not built | Requires a versioned import format and OS protocol threat model |
+| Shareable hire profiles | Built (clipboard) | Versioned bounded links exclude workspace paths and credentials; import only prefills the form and never launches |
+| OS hire-link registration / gallery | Not built | Requires an OS protocol threat model and hosted gallery scope |
 | Slack and inbound webhooks | Not built | Requires provider credentials, secret lifecycle, replay protection, and an operator-approved network boundary |
 | Voice control | Not built | Microphone permission is deliberately denied; provider, consent, retention, and transcription behavior are undecided |
 | Full English/Chinese/Arabic localization and RTL | Not built | Requires complete string extraction, bundled fonts, translation review, and RTL/IME acceptance |
