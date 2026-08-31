@@ -25,7 +25,8 @@ Compared on 2026-08-31 against `chaitanyagiri/munder-difflin` commit `49126393` 
 | Hosted agent gallery | Not built | Requires hosted catalog ownership, provenance, moderation, and update policy |
 | Inbound webhooks | Built (local foundation) | Operator-enabled loopback receiver with per-launch secret, constant-time Bearer verification, replay IDs, bounded payloads, and an in-memory event inbox; secrets never enter renderer state |
 | Slack integration | Not built | Requires provider credentials, OAuth/secret lifecycle, scopes, and an operator-approved external network boundary |
-| Voice control | Not built | Microphone permission is deliberately denied; provider, consent, retention, and transcription behavior are undecided |
+| Voice consent and retention foundation | Built | Explicit persisted consent and bounded retention choices fail closed; revocation clears retention and capture remains disabled |
+| Voice capture and transcription | Not built | Microphone permission remains deliberately denied until a transcription provider and deletion implementation are selected |
 | English/Chinese/Arabic localization and RTL | Built, translation review pending | Typed lazy-loaded catalogs, explicit locale selection, RTL direction, IME-safe commands, and localized canvas/DOM controls; native system fallback fonts are used pending licensed bundled-font selection |
 | Signed/notarized release-to-release update | Blocked externally | Requires Apple Developer ID/notary credentials and publication of a later signed release |
 | Windows/Linux distribution | Outside current macOS release scope | Current desktop release target is Apple Silicon macOS |
