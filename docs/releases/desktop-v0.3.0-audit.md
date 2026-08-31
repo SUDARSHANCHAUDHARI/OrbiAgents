@@ -4,6 +4,10 @@ Date: 2026-08-29
 
 Scope: M6 desktop security, accessibility, performance, documentation, and macOS packaging readiness. This report records code/build evidence; it does not certify signed distribution or manual assistive-technology behavior.
 
+## Dependency advisory update — 2026-08-30
+
+The zero-advisory statements below record the registry result on the original audit date and are no longer the current dependency status. `electron-vite` is now 3.1.0, removing vulnerable esbuild 0.21.5 and resolving GHSA-67mh-4wv8-2f99. One high advisory remains: Electron transitively installs `extract-zip` 2.0.1, affected by GHSA-jmr9-qjv8-65gv. The registry reports no patched `extract-zip` release, and current Electron 44.0.0 still declares the affected dependency range. This upstream blocker remains visible and unsuppressed.
+
 ## Security
 
 Resolved hardening findings:
