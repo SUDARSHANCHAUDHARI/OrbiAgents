@@ -23,6 +23,7 @@ import { RecoveryStore } from "./persistence/recoveryStore";
 import { CostLedger } from "./costs/costLedger";
 import { CommandHistoryStore } from "./commands/commandHistoryStore";
 import { SkillCatalog } from "./skills/skillCatalog";
+import { UpdateService } from "./updates/updateService";
 
 let manager: PtyManager | null = null;
 let activityServer: ActivityHookServer | null = null;
@@ -91,11 +92,25 @@ async function createWindow(): Promise<void> {
   rolloutWatcher.start();
   manager = windowManager;
   const hive = new HiveCoordinator(join(userData, "hive"), windowManager, new CostLedger(join(userData, "costs")));
+  const updates = new UpdateService(undefined, async () => {
+    const sessions = windowManager.list(); const reasons: string[] = [];
+    if (sessions.some((session) => ["starting", "running", "stopping"].includes(session.status))) reasons.push("an agent is active");
+    if (sessions.some((session) => session.workspace.status === "preserved")) reasons.push("a preserved workspace awaits review");
+    const paths = [...new Set(sessions.map((session) => session.workspace.sourcePath))];
+    try {
+      for (const projectPath of paths) {
+        const [snapshot, missions] = await Promise.all([hive.snapshot(projectPath), hive.listMissions(projectPath)]);
+        if (snapshot.approvals.some((approval) => approval.status === "pending")) reasons.push("an operator approval is pending");
+        if (missions.some((mission) => mission.pendingRunId)) reasons.push("a scheduled mission run is pending");
+      }
+    } catch { reasons.push("project safety state could not be verified"); }
+    return [...new Set(reasons)];
+  });
   const projectPaths = [...new Set(recovered.map((session) => session.workspace.sourcePath))];
   const recovery = new RecoveryStore(join(userData, "recovery.json"));
   await recovery.create(loadedMetadata.interrupted, await Promise.all(projectPaths.map((projectPath) => hive.recoveryState(projectPath))));
   hive.startHeartbeat();
-  registerIpc(window, windowManager, hive, runtimeAdapters, localModels, localModelClient, workspaceFiles, github, prerequisites, onboarding, recovery, commandHistory, skills);
+  registerIpc(window, windowManager, hive, runtimeAdapters, localModels, localModelClient, workspaceFiles, github, prerequisites, onboarding, recovery, commandHistory, skills, updates);
 
   window.once("ready-to-show", () => window.show());
   window.once("closed", () => {

@@ -189,9 +189,12 @@ export interface OrbiDesktopApi {
   recovery: { status(): Promise<RecoveryReport | null>; };
   costs: { snapshot(): Promise<CostLedgerSnapshot>; };
   skills: { list(request?: { query?: string }): Promise<SkillCatalogEntry[]>; };
+  updates: { status(): Promise<UpdateState>; check(): Promise<UpdateState>; download(): Promise<UpdateState>; install(): Promise<void>; };
 }
 
 export interface SkillCatalogEntry { id: string; name: string; description: string; source: string; relativePath: string; }
+export type UpdatePhase = "idle" | "checking" | "available" | "not-available" | "downloading" | "downloaded" | "error";
+export interface UpdateState { phase: UpdatePhase; currentVersion: string; availableVersion?: string; releaseName?: string; releaseNotes?: string; artifactSize?: number; message?: string; }
 
 export interface LocalModelEndpoint { id: string; name: string; baseUrl: string; defaultModel?: string; hasApiKey: boolean; createdAt: number; updatedAt: number; }
 export interface LocalModelEndpointCreateRequest { id: string; name: string; baseUrl: string; defaultModel?: string; }
@@ -282,4 +285,8 @@ export const IPC_CHANNELS = {
   commandHistoryList: "commands:history:list",
   commandHistoryUpsert: "commands:history:upsert",
   skillList: "skills:list",
+  updateStatus: "updates:status",
+  updateCheck: "updates:check",
+  updateDownload: "updates:download",
+  updateInstall: "updates:install",
 } as const;

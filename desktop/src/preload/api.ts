@@ -67,6 +67,12 @@ export function createDesktopApi(ipcRenderer: Pick<IpcRenderer, "invoke" | "on" 
   const recovery: OrbiDesktopApi["recovery"] = { status: () => ipcRenderer.invoke(IPC_CHANNELS.recoveryStatus) };
   const costs: OrbiDesktopApi["costs"] = { snapshot: () => ipcRenderer.invoke(IPC_CHANNELS.costSnapshot) };
   const skills: OrbiDesktopApi["skills"] = { list: (request) => ipcRenderer.invoke(IPC_CHANNELS.skillList, request) };
+  const updates: OrbiDesktopApi["updates"] = {
+    status: () => ipcRenderer.invoke(IPC_CHANNELS.updateStatus),
+    check: () => ipcRenderer.invoke(IPC_CHANNELS.updateCheck),
+    download: () => ipcRenderer.invoke(IPC_CHANNELS.updateDownload),
+    install: () => ipcRenderer.invoke(IPC_CHANNELS.updateInstall),
+  };
   return Object.freeze({
     agents: Object.freeze(agents),
     commands: Object.freeze(commands),
@@ -81,6 +87,7 @@ export function createDesktopApi(ipcRenderer: Pick<IpcRenderer, "invoke" | "on" 
     recovery: Object.freeze(recovery),
     costs: Object.freeze(costs),
     skills: Object.freeze(skills),
+    updates: Object.freeze(updates),
   });
 }
 

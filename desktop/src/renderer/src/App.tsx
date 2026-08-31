@@ -18,12 +18,13 @@ import { PixelButton } from "./components/ui/PixelButton";
 import { AgentHiringPanel } from "./components/AgentHiringPanel";
 import { CommandComposer } from "./components/CommandComposer";
 import { SkillsPanel } from "./components/SkillsPanel";
+import { UpdatesPanel } from "./components/UpdatesPanel";
 
 const PixelOffice = lazy(() => import("./components/PixelOffice").then((module) => ({ default: module.PixelOffice })));
 const TerminalPanel = lazy(() => import("./components/TerminalPanel").then((module) => ({ default: module.TerminalPanel })));
 const FileEditorPanel = lazy(() => import("./components/FileEditorPanel").then((module) => ({ default: module.FileEditorPanel })));
 
-type CommandView = "floor" | "terminals" | "files" | "github" | "tasks" | "messages" | "approvals" | "memory" | "skills" | "activity" | "usage" | "recovery" | "workspaces" | "settings" | "setup";
+type CommandView = "floor" | "terminals" | "files" | "github" | "tasks" | "messages" | "approvals" | "memory" | "skills" | "activity" | "usage" | "recovery" | "workspaces" | "settings" | "updates" | "setup";
 type CommandGroup = "Operate" | "Coordinate" | "Observe" | "System";
 interface CommandViewDefinition { id: CommandView; label: string; shortLabel: string; group: CommandGroup; description: string; }
 const COMMAND_VIEWS: CommandViewDefinition[] = [
@@ -41,6 +42,7 @@ const COMMAND_VIEWS: CommandViewDefinition[] = [
   { id: "recovery", label: "Recovery center", shortLabel: "Recovery", group: "Observe", description: "Inspect interrupted work without automatically restarting it." },
   { id: "workspaces", label: "Workspace registry", shortLabel: "Workspaces", group: "Observe", description: "Find direct, isolated, and preserved agent workspaces." },
   { id: "settings", label: "Fleet settings", shortLabel: "Settings", group: "System", description: "Configure runtimes, local models, and scheduled missions." },
+  { id: "updates", label: "Application updates", shortLabel: "Updates", group: "System", description: "Check, download, and explicitly install signed OrbiAgents releases." },
   { id: "setup", label: "System setup", shortLabel: "Setup", group: "System", description: "Re-run read-only prerequisite and platform checks." },
 ];
 const COMMAND_GROUPS: CommandGroup[] = ["Operate", "Coordinate", "Observe", "System"];
@@ -156,6 +158,7 @@ export default function App() {
             {commandView === "recovery" ? <RecoveryPanel onError={(message) => setError(message || null)} /> : null}
             {commandView === "workspaces" ? <CommandList title="Agent workspaces" empty="No agent workspaces recorded." items={agents.map((agent) => ({ id: agent.id, title: agent.name, meta: `${agent.workspace.status} · ${agent.workspace.branch ?? "direct"}`, detail: agent.workspace.path }))} /> : null}
             {commandView === "settings" ? <div className="settings-panels"><ProviderAdapterPanel onChanged={setRuntimeAdapters} onError={(message) => setError(message || null)} /><LocalModelPanel onError={(message) => setError(message || null)} /><MissionPanel projectPath={selectedProject} agents={agents} onError={(message) => setError(message || null)} /></div> : null}
+            {commandView === "updates" ? <UpdatesPanel onError={(message) => setError(message || null)} /> : null}
             {commandView === "setup" && onboarding ? <OnboardingPanel status={onboarding} onChanged={setOnboarding} onError={(message) => setError(message || null)} /> : null}
           </section>
         </div>

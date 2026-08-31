@@ -24,7 +24,8 @@ test("preload bridge exposes only fixed agent operations and removable event sub
   await api.recovery.status();
   await api.costs.snapshot();
   await api.skills.list({ query: "testing" });
-  assert.deepEqual(invocations, [[IPC_CHANNELS.list, undefined], [IPC_CHANNELS.commandHistoryList, { agentId: "alpha" }], [IPC_CHANNELS.hiveSnapshot, { projectPath: "/repo" }], [IPC_CHANNELS.memorySearch, { projectPath: "/repo", query: "retry" }], [IPC_CHANNELS.runtimeAdapterList, undefined], [IPC_CHANNELS.localModelList, undefined], [IPC_CHANNELS.fileList, { agentId: "alpha" }], [IPC_CHANNELS.githubAuthStatus, undefined], [IPC_CHANNELS.onboardingStatus, undefined], [IPC_CHANNELS.recoveryStatus, undefined], [IPC_CHANNELS.costSnapshot, undefined], [IPC_CHANNELS.skillList, { query: "testing" }]]);
+  await api.updates.status();
+  assert.deepEqual(invocations, [[IPC_CHANNELS.list, undefined], [IPC_CHANNELS.commandHistoryList, { agentId: "alpha" }], [IPC_CHANNELS.hiveSnapshot, { projectPath: "/repo" }], [IPC_CHANNELS.memorySearch, { projectPath: "/repo", query: "retry" }], [IPC_CHANNELS.runtimeAdapterList, undefined], [IPC_CHANNELS.localModelList, undefined], [IPC_CHANNELS.fileList, { agentId: "alpha" }], [IPC_CHANNELS.githubAuthStatus, undefined], [IPC_CHANNELS.onboardingStatus, undefined], [IPC_CHANNELS.recoveryStatus, undefined], [IPC_CHANNELS.costSnapshot, undefined], [IPC_CHANNELS.skillList, { query: "testing" }], [IPC_CHANNELS.updateStatus, undefined]]);
   assert.deepEqual(Object.keys(api.agents).sort(), ["applyWorkspace", "create", "discardWorkspace", "list", "onActivity", "onExit", "onOutput", "resize", "stop", "write"]);
   assert.deepEqual(Object.keys(api.commands).sort(), ["list", "upsert"]); assert.equal(Object.isFrozen(api.commands), true);
   assert.deepEqual(Object.keys(api.hive).sort(), ["assign", "decideApproval", "snapshot", "transitionTask"]);
@@ -46,6 +47,7 @@ test("preload bridge exposes only fixed agent operations and removable event sub
   assert.deepEqual(Object.keys(api.recovery), ["status"]); assert.equal(Object.isFrozen(api.recovery), true);
   assert.deepEqual(Object.keys(api.costs), ["snapshot"]); assert.equal(Object.isFrozen(api.costs), true);
   assert.deepEqual(Object.keys(api.skills), ["list"]); assert.equal(Object.isFrozen(api.skills), true);
+  assert.deepEqual(Object.keys(api.updates).sort(), ["check", "download", "install", "status"]); assert.equal(Object.isFrozen(api.updates), true);
   const remove = api.agents.onOutput(() => undefined);
   assert.equal(listeners.has(IPC_CHANNELS.output), true);
   remove();

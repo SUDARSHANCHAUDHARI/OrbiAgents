@@ -79,6 +79,13 @@ input, select { height: 36px; padding: 0 10px; color: var(--orbi-ink); backgroun
 .skills-grid strong { color: var(--orbi-ink); }
 .skills-grid small { color: var(--orbi-signal); overflow-wrap: anywhere; }
 .skills-grid span { color: var(--orbi-muted); font-size: 11px; line-height: 1.5; }
+.update-status { display: grid; gap: 7px; margin: 12px 0; padding: 14px; background: var(--orbi-surface-deep); border: 2px solid var(--orbi-edge); }
+.update-status[data-phase="available"], .update-status[data-phase="downloaded"] { border-color: var(--orbi-signal); }
+.update-status[data-phase="error"] { border-color: var(--orbi-alert); }
+.update-status small { color: var(--orbi-signal); }
+.update-status span { color: var(--orbi-muted); }
+.update-status pre { max-height: 280px; margin: 4px 0 0; padding: 10px; overflow: auto; color: var(--orbi-text-soft); background: var(--orbi-terminal); border: 1px solid var(--orbi-edge); white-space: pre-wrap; }
+.update-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .ide-layout { display: grid; grid-template-columns: minmax(170px, 24%) minmax(0, 1fr); gap: 10px; min-height: 0; }
 .file-tree { max-height: 64vh; overflow: auto; padding: 8px; background: #07101c; border: 1px solid #20344c; border-radius: 7px; }
 .file-tree ul { display: block; }
