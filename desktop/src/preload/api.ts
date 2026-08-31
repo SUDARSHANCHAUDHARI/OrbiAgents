@@ -68,7 +68,7 @@ export function createDesktopApi(ipcRenderer: Pick<IpcRenderer, "invoke" | "on" 
   };
   const recovery: OrbiDesktopApi["recovery"] = { status: () => ipcRenderer.invoke(IPC_CHANNELS.recoveryStatus) };
   const costs: OrbiDesktopApi["costs"] = { snapshot: () => ipcRenderer.invoke(IPC_CHANNELS.costSnapshot) };
-  const skills: OrbiDesktopApi["skills"] = { list: (request) => ipcRenderer.invoke(IPC_CHANNELS.skillList, request) };
+  const skills: OrbiDesktopApi["skills"] = { list: (request) => ipcRenderer.invoke(IPC_CHANNELS.skillList, request), remove: (request) => ipcRenderer.invoke(IPC_CHANNELS.skillRemove, request) };
   const updates: OrbiDesktopApi["updates"] = {
     status: () => ipcRenderer.invoke(IPC_CHANNELS.updateStatus),
     check: () => ipcRenderer.invoke(IPC_CHANNELS.updateCheck),

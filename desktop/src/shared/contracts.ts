@@ -191,7 +191,7 @@ export interface OrbiDesktopApi {
   };
   recovery: { status(): Promise<RecoveryReport | null>; };
   costs: { snapshot(): Promise<CostLedgerSnapshot>; };
-  skills: { list(request?: { query?: string }): Promise<SkillCatalogEntry[]>; };
+  skills: { list(request?: { query?: string }): Promise<SkillCatalogEntry[]>; remove(request: { id: string }): Promise<SkillCatalogEntry[]>; };
   updates: { status(): Promise<UpdateState>; check(): Promise<UpdateState>; download(): Promise<UpdateState>; install(): Promise<void>; };
 }
 
@@ -290,6 +290,7 @@ export const IPC_CHANNELS = {
   commandHistoryList: "commands:history:list",
   commandHistoryUpsert: "commands:history:upsert",
   skillList: "skills:list",
+  skillRemove: "skills:remove",
   hireCopy: "hires:copy",
   hireImport: "hires:import",
   updateStatus: "updates:status",

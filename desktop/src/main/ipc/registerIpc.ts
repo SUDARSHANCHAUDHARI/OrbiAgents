@@ -158,6 +158,7 @@ export function registerIpc(window: BrowserWindow, manager: PtyManager, hive: Hi
     if (query !== undefined && (typeof query !== "string" || query.length > 200)) throw new Error("Skill query is invalid");
     return skills.list(query as string | undefined);
   });
+  ipcMain.handle(IPC_CHANNELS.skillRemove, (event, value: unknown) => { assertTrustedSender(event.sender.id); return skills.remove(asRecord(value).id); });
   ipcMain.handle(IPC_CHANNELS.updateStatus, (event) => { assertTrustedSender(event.sender.id); return updates.status(); });
   ipcMain.handle(IPC_CHANNELS.updateCheck, (event) => { assertTrustedSender(event.sender.id); return updates.check(); });
   ipcMain.handle(IPC_CHANNELS.updateDownload, (event) => { assertTrustedSender(event.sender.id); return updates.download(); });

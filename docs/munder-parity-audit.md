@@ -14,7 +14,8 @@ Compared on 2026-08-31 against `chaitanyagiri/munder-difflin` commit `49126393` 
 | Knowledge relationships | Built (local deterministic) | UI maps records sharing verified text concepts; not an enterprise document-ingestion graph |
 | Monaco editor and Git history | Built | Safe file broker, save conflict checks, revisions, read-only repository summary |
 | GitHub issues and CI | Built | Operator-triggered, bounded, local `gh` access |
-| Skills catalog | Built (read-only) | Searches installed Codex/agent metadata; install/uninstall intentionally excluded |
+| Skills catalog and removal | Built | Searches installed metadata without execution; confirmed removal moves only a freshly verified skill directory to OS Trash |
+| Remote skill installation | Not built | Requires a trusted catalog, package verification, and provenance policy |
 | Runtime usage and cost controls | Built with provider limits | Sanitized session signals and elapsed time plus an integrity-checked estimate ledger; no fabricated token totals |
 | Local LLM endpoints and BYOK | Built | Loopback-only endpoints and OS-encrypted write-only credentials |
 | First-run setup and recovery | Built | Read-only prerequisite checks and bounded interrupted-work report |

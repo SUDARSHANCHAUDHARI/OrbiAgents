@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { app, BrowserWindow, safeStorage } from "electron";
+import { app, BrowserWindow, safeStorage, shell } from "electron";
 import { AgentRegistry } from "./agents/agentRegistry";
 import { AgentMetadataStore } from "./agents/agentMetadataStore";
 import { registerIpc } from "./ipc/registerIpc";
@@ -66,7 +66,7 @@ async function createWindow(): Promise<void> {
   const skills = new SkillCatalog([
     { label: "Codex", path: join(homedir(), ".codex", "skills") },
     { label: "Agent", path: join(homedir(), ".agents", "skills") },
-  ]);
+  ], { trash: (target) => shell.trashItem(target) });
   const workspaceManager = new WorkspaceManager(join(userData, "worktrees"));
   const loadedMetadata = await metadata.loadWithRecovery();
   const loaded = loadedMetadata.sessions;

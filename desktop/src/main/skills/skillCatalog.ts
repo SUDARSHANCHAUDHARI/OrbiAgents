@@ -7,9 +7,10 @@ const MAX_DEPTH = 4;
 const MAX_SKILL_BYTES = 64 * 1024;
 
 export interface SkillRoot { label: string; path: string; }
+export interface SkillTrash { trash(path: string): Promise<void>; }
 
 export class SkillCatalog {
-  constructor(private readonly roots: SkillRoot[]) {}
+  constructor(private readonly roots: SkillRoot[], private readonly trash?: SkillTrash) {}
 
   async list(query = ""): Promise<SkillCatalogEntry[]> {
     const normalizedQuery = query.trim().toLocaleLowerCase().slice(0, 200);
@@ -21,6 +22,16 @@ export class SkillCatalog {
     return entries
       .filter((entry) => !normalizedQuery || `${entry.name} ${entry.description} ${entry.source}`.toLocaleLowerCase().includes(normalizedQuery))
       .sort((a, b) => a.name.localeCompare(b.name) || a.source.localeCompare(b.source));
+  }
+
+  async remove(id: unknown): Promise<SkillCatalogEntry[]> {
+    if (typeof id !== "string" || id.length > 1_200 || !this.trash) throw new Error("Skill removal is unavailable");
+    const installed = await this.list(); const entry = installed.find((candidate) => candidate.id === id); if (!entry) throw new Error("Installed skill was not found");
+    const root = this.roots.find((candidate) => candidate.label === entry.source); if (!root) throw new Error("Skill root was not found");
+    const directory = path.dirname(path.join(root.path, entry.relativePath)); const relative = path.relative(root.path, directory);
+    if (!relative || relative.startsWith("..") || path.isAbsolute(relative)) throw new Error("Skill directory is unsafe");
+    const info = await lstat(directory); if (!info.isDirectory() || info.isSymbolicLink()) throw new Error("Skill directory is unsafe");
+    await this.trash.trash(directory); return this.list();
   }
 
   private async scan(root: SkillRoot, directory: string, depth: number, entries: SkillCatalogEntry[]): Promise<void> {

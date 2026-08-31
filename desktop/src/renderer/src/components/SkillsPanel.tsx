@@ -19,6 +19,7 @@ export function SkillsPanel({ onError }: { onError(message: string): void }) {
   }
 
   useEffect(() => { void load(""); }, []);
+  async function remove(skill: SkillCatalogEntry) { if (!window.confirm(`Move the installed skill “${skill.name}” to Trash?`)) return; setLoading(true); try { setSkills(await window.orbi.skills.remove({ id: skill.id })); onError(""); } catch (error) { onError(error instanceof Error ? error.message : String(error)); } finally { setLoading(false); } }
 
   return <PixelPanel title="Installed skills" eyebrow={`${skills.length} discovered`} ariaLabel="Installed agent skills">
     <form className="skills-search" onSubmit={(event) => { event.preventDefault(); void load(); }}>
@@ -27,7 +28,7 @@ export function SkillsPanel({ onError }: { onError(message: string): void }) {
       <PixelButton type="submit" variant="primary" disabled={loading}>{loading ? "Scanning…" : "Search"}</PixelButton>
       <PixelButton type="button" variant="ghost" disabled={loading || (!query && source === "all")} onClick={() => { setQuery(""); setSource("all"); void load(""); }}>Reset</PixelButton>
     </form>
-    <p className="skills-policy">Catalog access is read-only. OrbiAgents reads bounded frontmatter metadata and never executes skill instructions while browsing.</p>
-    {visible.length ? <ul className="skills-grid">{visible.map((skill) => <li key={skill.id}><strong>{skill.name}</strong><small>{skill.source} · {skill.relativePath}</small><span>{skill.description}</span></li>)}</ul> : <p className="empty">{loading ? "Scanning installed skills…" : "No installed skills match this search."}</p>}
+    <p className="skills-policy">Browsing reads bounded frontmatter and never executes skill instructions. Removal requires confirmation and moves only a freshly verified installed skill directory to the OS Trash.</p>
+    {visible.length ? <ul className="skills-grid">{visible.map((skill) => <li key={skill.id}><strong>{skill.name}</strong><small>{skill.source} · {skill.relativePath}</small><span>{skill.description}</span><PixelButton type="button" variant="danger" disabled={loading} onClick={() => void remove(skill)}>Move to Trash</PixelButton></li>)}</ul> : <p className="empty">{loading ? "Scanning installed skills…" : "No installed skills match this search."}</p>}
   </PixelPanel>;
 }
