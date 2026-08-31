@@ -19,7 +19,7 @@ required(app, "role=\"dialog\"", "first-run dialog role"); required(app, "aria-m
 const terminal = await readFile(path.join(rendererRoot, "components", "TerminalPanel.tsx"), "utf8");
 required(terminal, "screenReaderMode: true", "terminal screen-reader mode"); required(terminal, "prefers-reduced-motion: reduce", "terminal reduced motion");
 const editor = await readFile(path.join(rendererRoot, "components", "FileEditorPanel.tsx"), "utf8");
-required(editor, "originalAriaLabel", "diff editor labels"); required(editor, "ariaLabel: `Editor for", "editor label");
+required(editor, "originalAriaLabel", "diff editor labels"); required(editor, 'ariaLabel: `${t("editorFor")}', "translated editor label");
 const office = await readFile(path.join(rendererRoot, "components", "PixelOffice.tsx"), "utf8");
 required(office, "aria-hidden", "decorative canvas hiding"); required(office, "Accessible office agent controls", "canvas DOM alternative");
 const css = await readFile(path.join(rendererRoot, "styles", "global.css"), "utf8");
