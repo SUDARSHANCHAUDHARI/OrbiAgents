@@ -1,4 +1,8 @@
 appId: com.sudarshantechlabs.orbiagents
+protocols:
+  - name: OrbiAgents Hire Profile
+    schemes:
+      - orbiagents
 productName: OrbiAgents
 copyright: Copyright © 2026 SudarshanTechLabs
 directories:

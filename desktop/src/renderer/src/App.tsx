@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useMemo, useState } from "react";
-import type { ActivityEvent, AgentSession, CreateAgentRequest, HiveSnapshot, OnboardingStatus, RuntimeAdapterDescriptor } from "../../shared/contracts";
+import type { ActivityEvent, AgentSession, CreateAgentRequest, HireProfile, HiveSnapshot, OnboardingStatus, RuntimeAdapterDescriptor } from "../../shared/contracts";
 import { AgentRoster } from "./components/AgentRoster";
 import { ActivityPanel } from "./components/ActivityPanel";
 import { ActivityOperationsPanel } from "./components/ActivityOperationsPanel";
@@ -52,6 +52,7 @@ export default function App() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [runtimeAdapters, setRuntimeAdapters] = useState<RuntimeAdapterDescriptor[]>([]);
   const [hiringOpen, setHiringOpen] = useState(false);
+  const [importedHire, setImportedHire] = useState<HireProfile | null>(null);
   const [activity, setActivity] = useState<ActivityEvent[]>([]);
   const [hiveSnapshot, setHiveSnapshot] = useState<HiveSnapshot | null>(null);
   const [commandView, setCommandView] = useState<CommandView>("floor");
@@ -79,10 +80,12 @@ export default function App() {
     });
     const removeExit = window.orbi.agents.onExit(() => void refresh());
     const removeActivity = window.orbi.agents.onActivity((event) => setActivity((current) => [...current, event].slice(-100)));
+    const removeHire = window.orbi.hires.onImported((profile) => { setImportedHire(profile); setHiringOpen(true); });
     return () => {
       removeOutput();
       removeExit();
       removeActivity();
+      removeHire();
     };
   }, []);
 
@@ -128,7 +131,7 @@ export default function App() {
         <div className="fleet-actions"><span>{agents.filter((agent) => agent.status === "running").length} active</span><PixelButton type="button" variant="primary" onClick={() => setHiringOpen(true)}>Hire agent</PixelButton></div>
       </header>
       {error ? <div className="error-banner" role="alert">{error}</div> : null}
-      {hiringOpen ? <AgentHiringPanel adapters={runtimeAdapters} onClose={() => setHiringOpen(false)} onLaunch={launch} /> : null}
+      {hiringOpen ? <AgentHiringPanel adapters={runtimeAdapters} initialProfile={importedHire} onClose={() => { setHiringOpen(false); setImportedHire(null); }} onLaunch={launch} /> : null}
       {firstRun && onboarding ? <div className="onboarding-overlay" role="dialog" aria-modal="true" aria-labelledby="onboarding-title"><OnboardingPanel status={onboarding} firstRun onChanged={setOnboarding} onError={(message) => setError(message || null)} /></div> : null}
       <section className="workspace" inert={firstRun}>
         <div className="left-rail"><AgentRoster agents={agents} selectedId={selectedId} onSelect={setSelectedId} /><ActivityPanel events={activity} /></div>

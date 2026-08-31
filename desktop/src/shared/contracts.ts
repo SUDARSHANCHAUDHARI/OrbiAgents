@@ -137,7 +137,7 @@ export interface OrbiDesktopApi {
     onExit(listener: (event: TerminalExitEvent) => void): () => void;
     onActivity(listener: (event: ActivityEvent) => void): () => void;
   };
-  hires: { copy(profile: HireProfile): Promise<void>; importFromClipboard(): Promise<HireProfile>; };
+  hires: { copy(profile: HireProfile): Promise<void>; importFromClipboard(): Promise<HireProfile>; onImported(listener: (profile: HireProfile) => void): () => void; };
   commands: {
     list(request: { agentId: string }): Promise<CommandHistoryEntry[]>;
     upsert(request: CommandHistoryEntry): Promise<CommandHistoryEntry[]>;
@@ -293,6 +293,7 @@ export const IPC_CHANNELS = {
   skillRemove: "skills:remove",
   hireCopy: "hires:copy",
   hireImport: "hires:import",
+  hireImported: "hires:imported",
   updateStatus: "updates:status",
   updateCheck: "updates:check",
   updateDownload: "updates:download",

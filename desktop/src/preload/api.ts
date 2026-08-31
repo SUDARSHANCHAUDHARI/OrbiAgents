@@ -18,7 +18,7 @@ export function createDesktopApi(ipcRenderer: Pick<IpcRenderer, "invoke" | "on" 
     list: (request) => ipcRenderer.invoke(IPC_CHANNELS.commandHistoryList, request),
     upsert: (request) => ipcRenderer.invoke(IPC_CHANNELS.commandHistoryUpsert, request),
   };
-  const hires: OrbiDesktopApi["hires"] = { copy: (profile) => ipcRenderer.invoke(IPC_CHANNELS.hireCopy, profile), importFromClipboard: () => ipcRenderer.invoke(IPC_CHANNELS.hireImport) };
+  const hires: OrbiDesktopApi["hires"] = { copy: (profile) => ipcRenderer.invoke(IPC_CHANNELS.hireCopy, profile), importFromClipboard: () => ipcRenderer.invoke(IPC_CHANNELS.hireImport), onImported: (listener) => subscribe(ipcRenderer, IPC_CHANNELS.hireImported, listener) };
   const hive: OrbiDesktopApi["hive"] = {
     snapshot: (request) => ipcRenderer.invoke(IPC_CHANNELS.hiveSnapshot, request),
     assign: (request) => ipcRenderer.invoke(IPC_CHANNELS.hiveAssign, request),
