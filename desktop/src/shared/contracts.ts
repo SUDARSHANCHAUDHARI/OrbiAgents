@@ -29,6 +29,7 @@ export interface AgentProfile {
   budgetMinutes: number;
   appearance: AgentAppearance;
 }
+export interface HireProfile { name: string; runtimeId: RuntimeId; isolateWorkspace: boolean; profile: AgentProfile; }
 
 export interface CreateAgentRequest {
   id: string;
@@ -136,6 +137,7 @@ export interface OrbiDesktopApi {
     onExit(listener: (event: TerminalExitEvent) => void): () => void;
     onActivity(listener: (event: ActivityEvent) => void): () => void;
   };
+  hires: { copy(profile: HireProfile): Promise<void>; importFromClipboard(): Promise<HireProfile>; };
   commands: {
     list(request: { agentId: string }): Promise<CommandHistoryEntry[]>;
     upsert(request: CommandHistoryEntry): Promise<CommandHistoryEntry[]>;
@@ -288,6 +290,8 @@ export const IPC_CHANNELS = {
   commandHistoryList: "commands:history:list",
   commandHistoryUpsert: "commands:history:upsert",
   skillList: "skills:list",
+  hireCopy: "hires:copy",
+  hireImport: "hires:import",
   updateStatus: "updates:status",
   updateCheck: "updates:check",
   updateDownload: "updates:download",
