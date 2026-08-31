@@ -19,6 +19,8 @@ import { AgentHiringPanel } from "./components/AgentHiringPanel";
 import { CommandComposer } from "./components/CommandComposer";
 import { SkillsPanel } from "./components/SkillsPanel";
 import { UpdatesPanel } from "./components/UpdatesPanel";
+import { LocalePanel } from "./components/LocalePanel";
+import { useI18n } from "./i18n";
 
 const PixelOffice = lazy(() => import("./components/PixelOffice").then((module) => ({ default: module.PixelOffice })));
 const TerminalPanel = lazy(() => import("./components/TerminalPanel").then((module) => ({ default: module.TerminalPanel })));
@@ -48,6 +50,7 @@ const COMMAND_VIEWS: CommandViewDefinition[] = [
 const COMMAND_GROUPS: CommandGroup[] = ["Operate", "Coordinate", "Observe", "System"];
 
 export default function App() {
+  const { t } = useI18n();
   const [agents, setAgents] = useState<AgentSession[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [runtimeAdapters, setRuntimeAdapters] = useState<RuntimeAdapterDescriptor[]>([]);
@@ -126,9 +129,9 @@ export default function App() {
         <div>
           <span className="eyebrow">ORBITAL AGENT OPERATIONS</span>
           <h1><i aria-hidden="true">OA</i> OrbiAgents</h1>
-          <small className="topbar-subtitle">Local command deck · authenticated runtime telemetry</small>
+          <small className="topbar-subtitle">{t("subtitle")}</small>
         </div>
-        <div className="fleet-actions"><span>{agents.filter((agent) => agent.status === "running").length} active</span><PixelButton type="button" variant="primary" onClick={() => setHiringOpen(true)}>Hire agent</PixelButton></div>
+        <div className="fleet-actions"><span>{agents.filter((agent) => agent.status === "running").length} {t("active")}</span><PixelButton type="button" variant="primary" onClick={() => setHiringOpen(true)}>{t("hire")}</PixelButton></div>
       </header>
       {error ? <div className="error-banner" role="alert">{error}</div> : null}
       {hiringOpen ? <AgentHiringPanel adapters={runtimeAdapters} initialProfile={importedHire} onClose={() => { setHiringOpen(false); setImportedHire(null); }} onLaunch={launch} /> : null}
@@ -160,7 +163,7 @@ export default function App() {
             {commandView === "usage" ? <CostPanel events={activity} agents={agents} onError={(message) => setError(message || null)} /> : null}
             {commandView === "recovery" ? <RecoveryPanel onError={(message) => setError(message || null)} /> : null}
             {commandView === "workspaces" ? <CommandList title="Agent workspaces" empty="No agent workspaces recorded." items={agents.map((agent) => ({ id: agent.id, title: agent.name, meta: `${agent.workspace.status} · ${agent.workspace.branch ?? "direct"}`, detail: agent.workspace.path }))} /> : null}
-            {commandView === "settings" ? <div className="settings-panels"><ProviderAdapterPanel onChanged={setRuntimeAdapters} onError={(message) => setError(message || null)} /><LocalModelPanel onError={(message) => setError(message || null)} /><MissionPanel projectPath={selectedProject} agents={agents} onError={(message) => setError(message || null)} /></div> : null}
+            {commandView === "settings" ? <div className="settings-panels"><LocalePanel /><ProviderAdapterPanel onChanged={setRuntimeAdapters} onError={(message) => setError(message || null)} /><LocalModelPanel onError={(message) => setError(message || null)} /><MissionPanel projectPath={selectedProject} agents={agents} onError={(message) => setError(message || null)} /></div> : null}
             {commandView === "updates" ? <UpdatesPanel onError={(message) => setError(message || null)} /> : null}
             {commandView === "setup" && onboarding ? <OnboardingPanel status={onboarding} onChanged={setOnboarding} onError={(message) => setError(message || null)} /> : null}
           </section>

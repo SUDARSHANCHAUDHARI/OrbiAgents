@@ -1,0 +1,2 @@
+import { useI18n, type Locale } from "../i18n"; import { PixelPanel } from "./ui/PixelPanel";
+export function LocalePanel() { const { locale, setLocale, t } = useI18n(); return <PixelPanel title={t("locale")} eyebrow="General" ariaLabel={t("locale")}><label>{t("locale")}<select aria-label={t("locale")} value={locale} onChange={(event) => setLocale(event.target.value as Locale)}><option value="en">English</option><option value="zh-CN">简体中文</option><option value="ar">العربية</option></select></label><p className="mission-policy">{t("help")}</p></PixelPanel>; }

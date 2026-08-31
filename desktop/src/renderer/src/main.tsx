@@ -4,9 +4,10 @@ import "@xterm/xterm/css/xterm.css";
 import App from "./App";
 import "./styles/tokens.css";
 import "./styles/global.css";
+import { I18nProvider } from "./i18n";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <App />
+    <I18nProvider><App /></I18nProvider>
   </React.StrictMode>,
 );
