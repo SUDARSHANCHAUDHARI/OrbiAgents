@@ -2,21 +2,21 @@ import type { HiveSnapshot } from "../../../shared/contracts";
 
 export type HiveTask = HiveSnapshot["tasks"][number];
 export const TASK_COLUMNS = [
-  { id: "queued", label: "Queued", statuses: ["pending", "assigned"] },
-  { id: "active", label: "Active", statuses: ["in-progress"] },
-  { id: "blocked", label: "Blocked", statuses: ["blocked"] },
-  { id: "done", label: "Done", statuses: ["completed", "failed"] },
+  { id: "queued", statuses: ["pending", "assigned"] },
+  { id: "active", statuses: ["in-progress"] },
+  { id: "blocked", statuses: ["blocked"] },
+  { id: "done", statuses: ["completed", "failed"] },
 ] as const;
 
-export function groupTasks(tasks: HiveTask[]): Array<{ id: string; label: string; tasks: HiveTask[] }> {
+export type TaskColumnId = typeof TASK_COLUMNS[number]["id"];
+export function groupTasks(tasks: HiveTask[]): Array<{ id: TaskColumnId; tasks: HiveTask[] }> {
   return TASK_COLUMNS.map((column) => ({ ...column, tasks: tasks.filter((task) => column.statuses.includes(task.status as never)) }));
 }
 
-export function dependencySummary(task: HiveTask, tasks: HiveTask[]): string {
-  if (!task.dependencyIds.length) return "No dependencies";
+export interface DependencyStatus { total: number; unresolved: number; }
+export function dependencyStatus(task: HiveTask, tasks: HiveTask[]): DependencyStatus {
   const byId = new Map(tasks.map((candidate) => [candidate.id, candidate]));
-  const unresolved = task.dependencyIds.filter((id) => byId.get(id)?.status !== "completed");
-  return unresolved.length ? `${unresolved.length}/${task.dependencyIds.length} dependencies unresolved` : `${task.dependencyIds.length} dependencies complete`;
+  return { total: task.dependencyIds.length, unresolved: task.dependencyIds.filter((id) => byId.get(id)?.status !== "completed").length };
 }
 
 export interface TaskOperationsSummary {
@@ -43,13 +43,14 @@ export function taskOperationsSummary(tasks: HiveTask[]): TaskOperationsSummary 
   }, { total: 0, actionable: 0, blocked: 0, unresolvedDependencies: 0, retryPressure: 0, completed: 0, failed: 0 });
 }
 
-export function taskHealth(task: HiveTask, tasks: HiveTask[]): string {
-  if (task.status === "failed") return "Failed — review required";
-  if (task.status === "blocked") return "Blocked — operator action required";
+export type TaskHealthStatus = { kind: "failed" | "blocked" | "waiting" | "completed" | "running" | "ready" } | { kind: "retry"; attempt: number; maxAttempts: number };
+export function taskHealthStatus(task: HiveTask, tasks: HiveTask[]): TaskHealthStatus {
+  if (task.status === "failed") return { kind: "failed" };
+  if (task.status === "blocked") return { kind: "blocked" };
   const byId = new Map(tasks.map((candidate) => [candidate.id, candidate]));
-  if (task.dependencyIds.some((id) => byId.get(id)?.status !== "completed")) return "Waiting on dependencies";
-  if (task.attempt > 1) return `Retry ${task.attempt} of ${task.maxAttempts}`;
-  if (task.status === "completed") return "Completed";
-  if (task.status === "in-progress") return "Running";
-  return "Ready";
+  if (task.dependencyIds.some((id) => byId.get(id)?.status !== "completed")) return { kind: "waiting" };
+  if (task.attempt > 1) return { kind: "retry", attempt: task.attempt, maxAttempts: task.maxAttempts };
+  if (task.status === "completed") return { kind: "completed" };
+  if (task.status === "in-progress") return { kind: "running" };
+  return { kind: "ready" };
 }
