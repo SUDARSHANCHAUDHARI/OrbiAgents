@@ -13,3 +13,4 @@ desktop/.electron-vite/
 .vercel
 pnpm-debug.log*
 tsconfig.tsbuildinfo
+.claude/worktrees/
