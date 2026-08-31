@@ -5,11 +5,15 @@ import { activityBubbleForState, pointOnOfficeLink } from "../office/officeEffec
 import { loadOfficeLayout, saveOfficeLayout } from "../office/officeLayoutStore";
 import { buildOfficeAgents, buildOfficeLinks, locateOfficeAgent, type OfficeAgent, type OfficeLink } from "../office/officeModel";
 import { clampOrbitalCamera, createOrbitalWorld, findOrbitalPath, floorForState, ORBITAL_FLOORS, ORBITAL_TILE_SIZE, stationById, type OrbitalCamera, type OrbitalFloorId, type OrbitalPosition, type OrbitalTileKind, type OrbitalWorld } from "../office/orbitalWorld";
+import { useI18n, type MessageKey } from "../i18n";
+
+const FLOOR_KEYS: Record<OrbitalFloorId, MessageKey> = { operations: "operationsFloor", engineering: "engineeringFloor", support: "supportFloor" };
 
 interface AgentView { container: Container; actor: Container; route: OrbitalPosition[]; phase: number; targetX: number; targetY: number; }
 interface AgentSprite { container: Container; actor: Container; }
 interface TrafficView { container: Container; from: { x: number; y: number }; to: { x: number; y: number }; phase: number; speed: number; }
 export function PixelOffice({ agents, activity, hive, selectedId, onSelect }: { agents: AgentSession[]; activity: ActivityEvent[]; hive: HiveSnapshot | null; selectedId: string | null; onSelect(id: string): void }) {
+  const { t } = useI18n();
   const hostRef = useRef<HTMLDivElement>(null);
   const appRef = useRef<Application | null>(null);
   const zoneLayerRef = useRef<Container | null>(null);
@@ -117,11 +121,11 @@ export function PixelOffice({ agents, activity, hive, selectedId, onSelect }: { 
 
   function selectFloor(next: OrbitalFloorId): void { viewsRef.current.clear(); setLayout((current) => ({ ...current, floorId: next })); }
 
-  return <section className="pixel-office" aria-label="OrbiAgents pixel office">
-    <header><div><span className="eyebrow">LIVE ORBITAL DECK</span><h2>{ORBITAL_FLOORS.find((floor) => floor.id === floorId)!.label} Floor</h2></div><div className="office-zoom" aria-label="Office floor and camera controls"><select aria-label="Orbital office floor" value={floorId} onChange={(event) => selectFloor(event.target.value as OrbitalFloorId)}>{ORBITAL_FLOORS.map((floor) => <option key={floor.id} value={floor.id}>{floor.label} ({allOfficeAgents.filter((agent) => floorForState(agent.state) === floor.id).length})</option>)}</select>{selectedLocation && selectedLocation.floorId !== floorId ? <button aria-label={`Locate selected agent on ${selectedLocation.floorLabel} floor`} type="button" onClick={() => selectFloor(selectedLocation.floorId)}>⌖</button> : null}<button aria-label="Pan office left" type="button" onClick={() => moveCamera(96, 0)}>←</button><button aria-label="Pan office up" type="button" onClick={() => moveCamera(0, 96)}>↑</button><button aria-label="Pan office down" type="button" onClick={() => moveCamera(0, -96)}>↓</button><button aria-label="Pan office right" type="button" onClick={() => moveCamera(-96, 0)}>→</button><button aria-label={`Set office zoom to ${camera.zoom === 1 ? 2 : 1}x`} type="button" onClick={toggleZoom}>{camera.zoom}×</button></div></header>
+  return <section className="pixel-office" aria-label={t("pixelOffice")}>
+    <header><div><span className="eyebrow">{t("liveOrbitalDeck")}</span><h2>{t(FLOOR_KEYS[floorId])} {t("floorSuffix")}</h2></div><div className="office-zoom" aria-label={t("officeControls")}><select aria-label={t("orbitalFloor")} value={floorId} onChange={(event) => selectFloor(event.target.value as OrbitalFloorId)}>{ORBITAL_FLOORS.map((floor) => <option key={floor.id} value={floor.id}>{t(FLOOR_KEYS[floor.id])} ({allOfficeAgents.filter((agent) => floorForState(agent.state) === floor.id).length})</option>)}</select>{selectedLocation && selectedLocation.floorId !== floorId ? <button aria-label={`${t("locateAgentOn")} ${t(FLOOR_KEYS[selectedLocation.floorId])} ${t("floorSuffix")}`} type="button" onClick={() => selectFloor(selectedLocation.floorId)}>⌖</button> : null}<button aria-label={t("panLeft")} type="button" onClick={() => moveCamera(96, 0)}>←</button><button aria-label={t("panUp")} type="button" onClick={() => moveCamera(0, 96)}>↑</button><button aria-label={t("panDown")} type="button" onClick={() => moveCamera(0, -96)}>↓</button><button aria-label={t("panRight")} type="button" onClick={() => moveCamera(-96, 0)}>→</button><button aria-label={`${t("setZoom")} ${camera.zoom === 1 ? 2 : 1}x`} type="button" onClick={toggleZoom}>{camera.zoom}×</button></div></header>
     <div ref={hostRef} className="pixel-office-canvas" />
-    <div className="office-hive-status" aria-live="polite">{selectedLocation ? `${selectedLocation.agentName}: ${selectedLocation.floorLabel} floor · ` : ""}{hive ? `${hive.tasks.length} tasks · ${hive.primeInbox.length} messages · ${hive.approvals.filter((approval) => approval.status === "pending").length} pending approvals` : "No project Hive selected"}</div>
-    <div className="office-agent-controls" aria-label="Accessible office agent controls">{officeAgents.map((agent) => <button type="button" key={agent.id} className={agent.id === selectedId ? "selected" : ""} onClick={() => onSelect(agent.id)}><i style={{ background: `#${agent.color.toString(16).padStart(6, "0")}` }} /><span>{agent.name}<small>{agent.state} · {agent.zone}</small></span></button>)}</div>
+    <div className="office-hive-status" aria-live="polite">{selectedLocation ? `${selectedLocation.agentName}: ${t(FLOOR_KEYS[selectedLocation.floorId])} ${t("floorSuffix")} · ` : ""}{hive ? `${hive.tasks.length} ${t("tasksSuffix")} · ${hive.primeInbox.length} ${t("messages")} · ${hive.approvals.filter((approval) => approval.status === "pending").length} ${t("pendingApprovals")}` : t("noHiveSelected")}</div>
+    <div className="office-agent-controls" aria-label={t("accessibleAgentControls")}>{officeAgents.map((agent) => <button type="button" key={agent.id} className={agent.id === selectedId ? "selected" : ""} onClick={() => onSelect(agent.id)}><i style={{ background: `#${agent.color.toString(16).padStart(6, "0")}` }} /><span>{agent.name}<small>{agent.state} · {agent.zone}</small></span></button>)}</div>
   </section>;
 }
 

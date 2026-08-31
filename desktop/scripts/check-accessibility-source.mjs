@@ -21,7 +21,7 @@ required(terminal, "screenReaderMode: true", "terminal screen-reader mode"); req
 const editor = await readFile(path.join(rendererRoot, "components", "FileEditorPanel.tsx"), "utf8");
 required(editor, "originalAriaLabel", "diff editor labels"); required(editor, 'ariaLabel: `${t("editorFor")}', "translated editor label");
 const office = await readFile(path.join(rendererRoot, "components", "PixelOffice.tsx"), "utf8");
-required(office, "aria-hidden", "decorative canvas hiding"); required(office, "Accessible office agent controls", "canvas DOM alternative");
+required(office, "aria-hidden", "decorative canvas hiding"); required(office, 'aria-label={t("accessibleAgentControls")}', "translated canvas DOM alternative");
 const css = await readFile(path.join(rendererRoot, "styles", "global.css"), "utf8");
 required(css, ":focus-visible", "visible keyboard focus"); required(css, "@media (prefers-reduced-motion: reduce)", "reduced-motion CSS");
 const html = await readFile(path.resolve("src", "renderer", "index.html"), "utf8"); required(html, "<html lang=\"en\">", "document language");
