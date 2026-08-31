@@ -249,6 +249,8 @@ input, select { height: 36px; padding: 0 10px; color: var(--orbi-ink); backgroun
 .usage-summary { display: grid; grid-template-columns: repeat(3, auto 1fr); gap: 4px 8px; align-items: baseline; padding: 10px; background: var(--orbi-space); border: 1px solid var(--orbi-edge); }
 .usage-summary strong { color: var(--orbi-energy); font: 900 18px var(--orbi-font-display); }
 .usage-summary span { color: var(--orbi-muted); font-size: 10px; text-transform: uppercase; }
+.git-local { margin-bottom: 14px; padding-bottom: 14px; border-bottom: 1px solid var(--orbi-edge); }
+.git-local pre { max-height: 140px; padding: 8px; overflow: auto; color: var(--orbi-muted); background: var(--orbi-space); }
 
 @media (prefers-reduced-motion: reduce) {
   .pixel-button { transition: none; }

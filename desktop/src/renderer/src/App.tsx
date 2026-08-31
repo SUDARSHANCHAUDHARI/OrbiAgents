@@ -31,7 +31,7 @@ const COMMAND_VIEWS: CommandViewDefinition[] = [
   { id: "floor", label: "Orbital floor", shortLabel: "Floor", group: "Operate", description: "Watch the live fleet and move between operational floors." },
   { id: "terminals", label: "Agent terminals", shortLabel: "Terminals", group: "Operate", description: "Steer a selected agent through its real terminal session." },
   { id: "files", label: "Workspace IDE", shortLabel: "Files", group: "Operate", description: "Inspect and safely edit the selected agent workspace." },
-  { id: "github", label: "GitHub operations", shortLabel: "GitHub", group: "Operate", description: "Review repository issues and workflow runs through the local GitHub CLI." },
+  { id: "github", label: "Repository intelligence", shortLabel: "Repository", group: "Operate", description: "Inspect local Git changes, history, GitHub issues, and CI through bounded read-only access." },
   { id: "tasks", label: "Mission board", shortLabel: "Tasks", group: "Coordinate", description: "Assign dependency-aware durable work through Orbi-Prime." },
   { id: "messages", label: "Fleet messages", shortLabel: "Messages", group: "Coordinate", description: "Inspect durable agent-to-agent delivery and replies." },
   { id: "approvals", label: "Operator approvals", shortLabel: "Approvals", group: "Coordinate", description: "Review spend, destructive-operation, and scope-expansion gates." },

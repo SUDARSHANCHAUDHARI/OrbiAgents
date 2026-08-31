@@ -181,6 +181,7 @@ export interface OrbiDesktopApi {
     authStatus(): Promise<GitHubAuthStatus>;
     snapshot(request: WorkspaceFileAgentRequest): Promise<GitHubSnapshot>;
   };
+  git: { snapshot(request: WorkspaceFileAgentRequest): Promise<GitWorkspaceSnapshot>; };
   onboarding: {
     status(): Promise<OnboardingStatus>;
     refresh(): Promise<OnboardingStatus>;
@@ -210,6 +211,7 @@ export interface GitHubAuthStatus { installed: boolean; authenticated: boolean; 
 export interface GitHubIssue { number: number; title: string; state: string; updatedAt: string; url: string; labels: string[]; }
 export interface GitHubRun { id: number; name: string; workflowName: string; status: string; conclusion: string; headBranch: string; event: string; updatedAt: string; url: string; }
 export interface GitHubSnapshot { repository: { nameWithOwner: string; url: string }; issues: GitHubIssue[]; runs: GitHubRun[]; fetchedAt: number; }
+export interface GitWorkspaceSnapshot { branch: string; upstream?: string; ahead: number; behind: number; changes: Array<{ status: string; path: string }>; commits: Array<{ hash: string; timestamp: number; subject: string }>; diffStat: string; fetchedAt: number; truncated: boolean; }
 export interface PrerequisiteCheck { id: string; label: string; required: boolean; status: "pass" | "warn" | "fail"; detail: string; }
 export interface OnboardingStatus { version: number; completed: boolean; completedAt?: number; ready: boolean; checkedAt: number; checks: PrerequisiteCheck[]; }
 export type RecoveryItemKind = "interrupted-session" | "unfinished-task" | "pending-approval" | "pending-mission";
@@ -277,6 +279,7 @@ export const IPC_CHANNELS = {
   fileReadRevision: "files:revision:read",
   githubAuthStatus: "github:auth:status",
   githubSnapshot: "github:snapshot",
+  gitSnapshot: "git:snapshot",
   onboardingStatus: "onboarding:status",
   onboardingRefresh: "onboarding:refresh",
   onboardingComplete: "onboarding:complete",

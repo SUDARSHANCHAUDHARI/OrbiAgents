@@ -59,6 +59,7 @@ export function createDesktopApi(ipcRenderer: Pick<IpcRenderer, "invoke" | "on" 
     authStatus: () => ipcRenderer.invoke(IPC_CHANNELS.githubAuthStatus),
     snapshot: (request) => ipcRenderer.invoke(IPC_CHANNELS.githubSnapshot, request),
   };
+  const git: OrbiDesktopApi["git"] = { snapshot: (request) => ipcRenderer.invoke(IPC_CHANNELS.gitSnapshot, request) };
   const onboarding: OrbiDesktopApi["onboarding"] = {
     status: () => ipcRenderer.invoke(IPC_CHANNELS.onboardingStatus),
     refresh: () => ipcRenderer.invoke(IPC_CHANNELS.onboardingRefresh),
@@ -83,6 +84,7 @@ export function createDesktopApi(ipcRenderer: Pick<IpcRenderer, "invoke" | "on" 
     localModels: Object.freeze(localModels),
     files: Object.freeze(files),
     github: Object.freeze(github),
+    git: Object.freeze(git),
     onboarding: Object.freeze(onboarding),
     recovery: Object.freeze(recovery),
     costs: Object.freeze(costs),

@@ -16,6 +16,7 @@ import { LocalModelEndpointStore } from "./models/localModelEndpointStore";
 import { LocalModelClient } from "./models/localModelClient";
 import { WorkspaceFileService } from "./workspaces/workspaceFileService";
 import { GitHubIngestion } from "./github/githubIngestion";
+import { GitWorkspaceService } from "./git/gitWorkspaceService";
 import { PrerequisiteChecker } from "./onboarding/prerequisiteChecker";
 import { OnboardingStore } from "./onboarding/onboardingStore";
 import { AppDataMigrator } from "./persistence/appDataMigrator";
@@ -56,6 +57,7 @@ async function createWindow(): Promise<void> {
   const localModelClient = new LocalModelClient(localModels);
   const workspaceFiles = new WorkspaceFileService();
   const github = new GitHubIngestion();
+  const git = new GitWorkspaceService();
   const prerequisites = new PrerequisiteChecker({ encryptionAvailable: () => safeStorage.isEncryptionAvailable() });
   const onboarding = new OnboardingStore(join(userData, "onboarding.json"));
   await onboarding.load();
@@ -110,7 +112,7 @@ async function createWindow(): Promise<void> {
   const recovery = new RecoveryStore(join(userData, "recovery.json"));
   await recovery.create(loadedMetadata.interrupted, await Promise.all(projectPaths.map((projectPath) => hive.recoveryState(projectPath))));
   hive.startHeartbeat();
-  registerIpc(window, windowManager, hive, runtimeAdapters, localModels, localModelClient, workspaceFiles, github, prerequisites, onboarding, recovery, commandHistory, skills, updates);
+  registerIpc(window, windowManager, hive, runtimeAdapters, localModels, localModelClient, workspaceFiles, github, git, prerequisites, onboarding, recovery, commandHistory, skills, updates);
 
   window.once("ready-to-show", () => window.show());
   window.once("closed", () => {

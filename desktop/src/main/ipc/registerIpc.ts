@@ -7,6 +7,7 @@ import type { LocalModelEndpointStore } from "../models/localModelEndpointStore"
 import type { LocalModelClient } from "../models/localModelClient";
 import type { WorkspaceFileService } from "../workspaces/workspaceFileService";
 import type { GitHubIngestion } from "../github/githubIngestion";
+import type { GitWorkspaceService } from "../git/gitWorkspaceService";
 import type { PrerequisiteChecker } from "../onboarding/prerequisiteChecker";
 import { ONBOARDING_VERSION, type OnboardingStore } from "../onboarding/onboardingStore";
 import type { RecoveryStore } from "../persistence/recoveryStore";
@@ -23,7 +24,7 @@ import {
   validateWorkspace,
 } from "../security/validators";
 
-export function registerIpc(window: BrowserWindow, manager: PtyManager, hive: HiveCoordinator, runtimeAdapters: RuntimeAdapterStore, localModels: LocalModelEndpointStore, localModelClient: LocalModelClient, files: WorkspaceFileService, github: GitHubIngestion, prerequisites: PrerequisiteChecker, onboarding: OnboardingStore, recovery: RecoveryStore, commandHistory: CommandHistoryStore, skills: SkillCatalog, updates: UpdateService): () => void {
+export function registerIpc(window: BrowserWindow, manager: PtyManager, hive: HiveCoordinator, runtimeAdapters: RuntimeAdapterStore, localModels: LocalModelEndpointStore, localModelClient: LocalModelClient, files: WorkspaceFileService, github: GitHubIngestion, git: GitWorkspaceService, prerequisites: PrerequisiteChecker, onboarding: OnboardingStore, recovery: RecoveryStore, commandHistory: CommandHistoryStore, skills: SkillCatalog, updates: UpdateService): () => void {
   const assertTrustedSender = (senderId: number) => {
     if (senderId !== window.webContents.id) throw new Error("Untrusted IPC sender");
   };
@@ -128,6 +129,7 @@ export function registerIpc(window: BrowserWindow, manager: PtyManager, hive: Hi
   ipcMain.handle(IPC_CHANNELS.fileReadRevision, (event, value: unknown) => { assertTrustedSender(event.sender.id); const { request, root } = fileRequest(value); return files.readRevision(root, request.path, request.revision); });
   ipcMain.handle(IPC_CHANNELS.githubAuthStatus, (event) => { assertTrustedSender(event.sender.id); return github.authStatus(); });
   ipcMain.handle(IPC_CHANNELS.githubSnapshot, (event, value: unknown) => { assertTrustedSender(event.sender.id); const agentId = validateAgentId(asRecord(value).agentId); return github.snapshot(manager.workspaceRoot(agentId)); });
+  ipcMain.handle(IPC_CHANNELS.gitSnapshot, (event, value: unknown) => { assertTrustedSender(event.sender.id); const agentId = validateAgentId(asRecord(value).agentId); return git.snapshot(manager.workspaceRoot(agentId)); });
   const onboardingStatus = async () => { const report = await prerequisites.check(); const saved = onboarding.get(); return { version: ONBOARDING_VERSION, completed: saved?.version === ONBOARDING_VERSION, completedAt: saved?.completedAt, ...report }; };
   ipcMain.handle(IPC_CHANNELS.onboardingStatus, (event) => { assertTrustedSender(event.sender.id); return onboardingStatus(); });
   ipcMain.handle(IPC_CHANNELS.onboardingRefresh, (event) => { assertTrustedSender(event.sender.id); return onboardingStatus(); });
@@ -159,7 +161,7 @@ export function registerIpc(window: BrowserWindow, manager: PtyManager, hive: Hi
   ipcMain.handle(IPC_CHANNELS.updateInstall, (event) => { assertTrustedSender(event.sender.id); return updates.install(); });
 
   const dispose = () => {
-    for (const channel of [IPC_CHANNELS.create, IPC_CHANNELS.list, IPC_CHANNELS.write, IPC_CHANNELS.resize, IPC_CHANNELS.stop, IPC_CHANNELS.applyWorkspace, IPC_CHANNELS.discardWorkspace, IPC_CHANNELS.hiveSnapshot, IPC_CHANNELS.hiveAssign, IPC_CHANNELS.hiveTransitionTask, IPC_CHANNELS.hiveDecideApproval, IPC_CHANNELS.memoryList, IPC_CHANNELS.memorySearch, IPC_CHANNELS.memoryCapture, IPC_CHANNELS.missionList, IPC_CHANNELS.missionCreate, IPC_CHANNELS.missionEnable, IPC_CHANNELS.missionRun, IPC_CHANNELS.runtimeAdapterList, IPC_CHANNELS.runtimeAdapterCreate, IPC_CHANNELS.runtimeAdapterRemove, IPC_CHANNELS.localModelList, IPC_CHANNELS.localModelCreate, IPC_CHANNELS.localModelRemove, IPC_CHANNELS.localModelSaveCredential, IPC_CHANNELS.localModelClearCredential, IPC_CHANNELS.localModelProbe, IPC_CHANNELS.fileList, IPC_CHANNELS.fileRead, IPC_CHANNELS.fileWrite, IPC_CHANNELS.fileHistory, IPC_CHANNELS.fileReadRevision, IPC_CHANNELS.githubAuthStatus, IPC_CHANNELS.githubSnapshot, IPC_CHANNELS.onboardingStatus, IPC_CHANNELS.onboardingRefresh, IPC_CHANNELS.onboardingComplete, IPC_CHANNELS.recoveryStatus, IPC_CHANNELS.costSnapshot, IPC_CHANNELS.commandHistoryList, IPC_CHANNELS.commandHistoryUpsert, IPC_CHANNELS.skillList, IPC_CHANNELS.updateStatus, IPC_CHANNELS.updateCheck, IPC_CHANNELS.updateDownload, IPC_CHANNELS.updateInstall]) {
+    for (const channel of [IPC_CHANNELS.create, IPC_CHANNELS.list, IPC_CHANNELS.write, IPC_CHANNELS.resize, IPC_CHANNELS.stop, IPC_CHANNELS.applyWorkspace, IPC_CHANNELS.discardWorkspace, IPC_CHANNELS.hiveSnapshot, IPC_CHANNELS.hiveAssign, IPC_CHANNELS.hiveTransitionTask, IPC_CHANNELS.hiveDecideApproval, IPC_CHANNELS.memoryList, IPC_CHANNELS.memorySearch, IPC_CHANNELS.memoryCapture, IPC_CHANNELS.missionList, IPC_CHANNELS.missionCreate, IPC_CHANNELS.missionEnable, IPC_CHANNELS.missionRun, IPC_CHANNELS.runtimeAdapterList, IPC_CHANNELS.runtimeAdapterCreate, IPC_CHANNELS.runtimeAdapterRemove, IPC_CHANNELS.localModelList, IPC_CHANNELS.localModelCreate, IPC_CHANNELS.localModelRemove, IPC_CHANNELS.localModelSaveCredential, IPC_CHANNELS.localModelClearCredential, IPC_CHANNELS.localModelProbe, IPC_CHANNELS.fileList, IPC_CHANNELS.fileRead, IPC_CHANNELS.fileWrite, IPC_CHANNELS.fileHistory, IPC_CHANNELS.fileReadRevision, IPC_CHANNELS.githubAuthStatus, IPC_CHANNELS.githubSnapshot, IPC_CHANNELS.gitSnapshot, IPC_CHANNELS.onboardingStatus, IPC_CHANNELS.onboardingRefresh, IPC_CHANNELS.onboardingComplete, IPC_CHANNELS.recoveryStatus, IPC_CHANNELS.costSnapshot, IPC_CHANNELS.commandHistoryList, IPC_CHANNELS.commandHistoryUpsert, IPC_CHANNELS.skillList, IPC_CHANNELS.updateStatus, IPC_CHANNELS.updateCheck, IPC_CHANNELS.updateDownload, IPC_CHANNELS.updateInstall]) {
       ipcMain.removeHandler(channel);
     }
   };
