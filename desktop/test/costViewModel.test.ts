@@ -9,7 +9,7 @@ function entry(id: string, projectPath: string, amountUsd: number): CostLedgerEn
 
 test("cost overview distinguishes visible bounded entries from the ledger total", () => {
   const snapshot: CostLedgerSnapshot = { entries: [entry("a", "/one", 0.1), entry("b", "/two", 0.2)], totalAuthorizedEstimateUsd: 9, corrupted: false, truncated: true };
-  assert.equal(costOverview(snapshot), "2 verified entries · 2 projects · $0.3000 visible estimate · newest bounded set");
+  assert.deepEqual(costOverview(snapshot), { entries: 2, projects: 2, visibleEstimateUsd: 0.3, truncated: true });
 });
 
 test("cost filtering applies only to loaded verified entries", () => {
