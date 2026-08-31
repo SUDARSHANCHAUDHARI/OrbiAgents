@@ -13,11 +13,11 @@ async function fixture() {
   return { directory, executable, file: path.join(directory, "adapters.json") };
 }
 
-test("store includes Gemini and persists bounded custom descriptors", async () => {
+test("store includes the supported engine catalog and persists bounded custom descriptors", async () => {
   const { executable, file } = await fixture();
   const store = new RuntimeAdapterStore(file);
   await store.load();
-  assert.deepEqual(store.list().filter((item) => item.builtin).map((item) => item.id), ["codex", "claude", "gemini"]);
+  assert.deepEqual(store.list().filter((item) => item.builtin).map((item) => item.id), ["codex", "claude", "gemini", "antigravity", "grok", "kimi", "qwen", "opencode", "crush", "pi", "copilot", "cursor"]);
   const adapters = await store.create({ id: "my-agent", name: "My Agent", command: executable, args: ["--safe", "literal value"] });
   assert.equal(adapters.at(-1)?.id, "custom:my-agent");
   const reloaded = new RuntimeAdapterStore(file);
@@ -42,11 +42,11 @@ test("store ignores malformed persistence and protects built-in or active adapte
   await mkdir(path.dirname(file), { recursive: true });
   await writeFile(file, JSON.stringify([{ id: "custom:bad", name: "Bad", command: "relative", args: [] }, { nope: true }]), "utf8");
   const store = new RuntimeAdapterStore(file); await store.load();
-  assert.equal(store.list().length, 3);
+  assert.equal(store.list().length, 12);
   await assert.rejects(store.remove("gemini", () => false), /Built-in/);
   await store.create({ id: "active", name: "Active", command: executable, args: [] });
   await assert.rejects(store.remove("custom:active", () => true), /Stop all agents/);
-  assert.equal((await store.remove("custom:active", () => false)).length, 3);
+  assert.equal((await store.remove("custom:active", () => false)).length, 12);
   await writeFile(path.join(directory, "corrupt.json"), "{", "utf8");
-  assert.equal((await new RuntimeAdapterStore(path.join(directory, "corrupt.json")).load()).length, 3);
+  assert.equal((await new RuntimeAdapterStore(path.join(directory, "corrupt.json")).load()).length, 12);
 });

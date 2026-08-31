@@ -1,4 +1,4 @@
-export const RUNTIME_IDS = ["codex", "claude", "gemini"] as const;
+export const RUNTIME_IDS = ["codex", "claude", "gemini", "antigravity", "grok", "kimi", "qwen", "opencode", "crush", "pi", "copilot", "cursor"] as const;
 export type BuiltinRuntimeId = (typeof RUNTIME_IDS)[number];
 export type RuntimeId = BuiltinRuntimeId | `custom:${string}`;
 
