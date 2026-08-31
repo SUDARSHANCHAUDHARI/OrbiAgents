@@ -30,5 +30,5 @@
     ".next/dev/types/**/*.ts",
     "**/*.mts"
   ],
-  "exclude": ["node_modules", "server", "web", "extension", "shared"]
+  "exclude": ["node_modules", "desktop", "server", "web", "extension", "shared"]
 }

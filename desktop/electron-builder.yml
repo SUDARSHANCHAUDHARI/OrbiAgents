@@ -17,7 +17,11 @@ asarUnpack:
   - node_modules/node-pty/**/*
 npmRebuild: true
 forceCodeSigning: true
-publish: null
+publish:
+  provider: github
+  owner: SUDARSHANCHAUDHARI
+  repo: OrbiAgents
+  releaseType: release
 afterPack: scripts/after-pack.cjs
 mac:
   icon: icon.icns

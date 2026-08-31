@@ -5,6 +5,10 @@
   "description": "Local-first multi-agent command center and pixel office",
   "author": "SudarshanTechLabs",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SUDARSHANCHAUDHARI/OrbiAgents.git"
+  },
   "main": "out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
@@ -27,6 +31,7 @@
     "@monaco-editor/react": "^4.7.0",
     "@xterm/addon-fit": "^0.10.0",
     "@xterm/xterm": "^5.5.0",
+    "electron-updater": "^6.8.9",
     "monaco-editor": "^0.56.0",
     "node-pty": "^1.0.0",
     "pixi.js": "^8.20.1",
@@ -41,7 +46,7 @@
     "@vitejs/plugin-react": "^4.3.2",
     "electron": "^39.8.10",
     "electron-builder": "26.15.3",
-    "electron-vite": "^2.3.0",
+    "electron-vite": "^3.1.0",
     "tsx": "^4.23.12",
     "typescript": "^5.6.3",
     "vite": "^6.4.3"

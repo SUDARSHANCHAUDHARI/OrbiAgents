@@ -12,6 +12,15 @@ export const BUILTIN_RUNTIME_ADAPTERS: RuntimeAdapterDescriptor[] = [
   { id: "codex", name: "Codex", command: "codex", args: [], builtin: true },
   { id: "claude", name: "Claude", command: "claude", args: [], builtin: true },
   { id: "gemini", name: "Gemini", command: "gemini", args: [], builtin: true },
+  { id: "antigravity", name: "Antigravity", command: "agy", args: [], builtin: true },
+  { id: "grok", name: "Grok", command: "grok", args: [], builtin: true },
+  { id: "kimi", name: "Kimi Code", command: "kimi", args: [], builtin: true },
+  { id: "qwen", name: "Qwen", command: "qwen", args: [], builtin: true },
+  { id: "opencode", name: "OpenCode", command: "opencode", args: [], builtin: true },
+  { id: "crush", name: "Crush", command: "crush", args: [], builtin: true },
+  { id: "pi", name: "pi.dev", command: "pi", args: [], builtin: true },
+  { id: "copilot", name: "GitHub Copilot", command: "copilot", args: [], builtin: true },
+  { id: "cursor", name: "Cursor", command: "cursor-agent", args: [], builtin: true },
 ];
 
 export class RuntimeAdapterStore {

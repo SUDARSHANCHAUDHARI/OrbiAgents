@@ -59,6 +59,7 @@ export function createDesktopApi(ipcRenderer: Pick<IpcRenderer, "invoke" | "on" 
     authStatus: () => ipcRenderer.invoke(IPC_CHANNELS.githubAuthStatus),
     snapshot: (request) => ipcRenderer.invoke(IPC_CHANNELS.githubSnapshot, request),
   };
+  const git: OrbiDesktopApi["git"] = { snapshot: (request) => ipcRenderer.invoke(IPC_CHANNELS.gitSnapshot, request) };
   const onboarding: OrbiDesktopApi["onboarding"] = {
     status: () => ipcRenderer.invoke(IPC_CHANNELS.onboardingStatus),
     refresh: () => ipcRenderer.invoke(IPC_CHANNELS.onboardingRefresh),
@@ -66,6 +67,13 @@ export function createDesktopApi(ipcRenderer: Pick<IpcRenderer, "invoke" | "on" 
   };
   const recovery: OrbiDesktopApi["recovery"] = { status: () => ipcRenderer.invoke(IPC_CHANNELS.recoveryStatus) };
   const costs: OrbiDesktopApi["costs"] = { snapshot: () => ipcRenderer.invoke(IPC_CHANNELS.costSnapshot) };
+  const skills: OrbiDesktopApi["skills"] = { list: (request) => ipcRenderer.invoke(IPC_CHANNELS.skillList, request) };
+  const updates: OrbiDesktopApi["updates"] = {
+    status: () => ipcRenderer.invoke(IPC_CHANNELS.updateStatus),
+    check: () => ipcRenderer.invoke(IPC_CHANNELS.updateCheck),
+    download: () => ipcRenderer.invoke(IPC_CHANNELS.updateDownload),
+    install: () => ipcRenderer.invoke(IPC_CHANNELS.updateInstall),
+  };
   return Object.freeze({
     agents: Object.freeze(agents),
     commands: Object.freeze(commands),
@@ -76,9 +84,12 @@ export function createDesktopApi(ipcRenderer: Pick<IpcRenderer, "invoke" | "on" 
     localModels: Object.freeze(localModels),
     files: Object.freeze(files),
     github: Object.freeze(github),
+    git: Object.freeze(git),
     onboarding: Object.freeze(onboarding),
     recovery: Object.freeze(recovery),
     costs: Object.freeze(costs),
+    skills: Object.freeze(skills),
+    updates: Object.freeze(updates),
   });
 }
 

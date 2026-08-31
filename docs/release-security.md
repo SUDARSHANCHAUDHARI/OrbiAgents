@@ -11,12 +11,15 @@ The August 2026 hardening pass moved every affected package to a patched, compat
 | Surface | Security-relevant baseline |
 |---|---|
 | Root application | Next.js 16.2.11, PostCSS 8.5.26, Nano ID 3.3.18, Sharp 0.35.3 |
+| Desktop application | Electron 39.8.10, electron-vite 3.1.0, Vite 6.4.3, esbuild 0.25.12 |
 | API server | Anthropic SDK 0.91.1, Express 4.22.1, WebSocket 8.21.3, body-parser 1.20.6, qs 6.15.2 |
 | Web dashboard | Next.js 15.5.21, React 19.2.8, PostCSS 8.5.26, Nano ID 3.3.18, Sharp 0.35.3 |
 | VS Code extension | esbuild 0.28.2 |
 | Extension webview | Vite 6.4.3, esbuild 0.25.12, PostCSS 8.5.26, Nano ID 3.3.18, Babel 7.29.7 |
 
 Overrides are deliberately narrow and exist only where a framework's compatible dependency range otherwise resolves to a vulnerable transitive version. Major upgrades to Prisma, Express, TypeScript, Tailwind, or the extension runtime are not bundled into security maintenance without a separate compatibility requirement.
+
+Current audit limitation: Electron 39.8.10 transitively installs `extract-zip` 2.0.1, affected by GHSA-jmr9-qjv8-65gv. As of 2026-08-30, the registry advisory reports no patched `extract-zip` release and Electron 44.0.0 still declares `extract-zip ^2.0.1`. Do not suppress or override this advisory; re-audit when either upstream publishes a patched dependency path.
 
 ## Application protections
 
@@ -30,4 +33,4 @@ Overrides are deliberately narrow and exist only where a framework's compatible 
 
 ## Release verification
 
-Before release, run `pnpm audit --json` in all five package roots, then run the server and web tests, TypeScript checks, production builds, Prisma generation/migration status, and the VS Code extension build. A zero-advisory result describes the registry state at audit time; newly published advisories require a fresh audit.
+Before release, run `pnpm audit --json` at the workspace root and in every independently locked package root, then run the server and web tests, TypeScript checks, production builds, Prisma generation/migration status, and the VS Code extension build. A zero-advisory result describes the registry state at audit time; newly published advisories require a fresh audit.

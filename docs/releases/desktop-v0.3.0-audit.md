@@ -4,6 +4,10 @@ Date: 2026-08-29
 
 Scope: M6 desktop security, accessibility, performance, documentation, and macOS packaging readiness. This report records code/build evidence; it does not certify signed distribution or manual assistive-technology behavior.
 
+## Dependency advisory update — 2026-08-30
+
+The zero-advisory statements below record the registry result on the original audit date and are no longer the current dependency status. `electron-vite` is now 3.1.0, removing vulnerable esbuild 0.21.5 and resolving GHSA-67mh-4wv8-2f99. One high advisory remains: Electron transitively installs `extract-zip` 2.0.1, affected by GHSA-jmr9-qjv8-65gv. The registry reports no patched `extract-zip` release, and current Electron 44.0.0 still declares the affected dependency range. This upstream blocker remains visible and unsuppressed.
+
 ## Security
 
 Resolved hardening findings:
@@ -40,7 +44,9 @@ Production build measurements:
 |---|---:|---:|
 | Initial renderer entry, baseline | 1,877,594 B | 381,578 B |
 | Initial renderer entry, audited | 600,610 B | 108,648 B |
-| Renderer CSS | 19,481 B | 5,278 B |
+| Renderer CSS, original audit | 19,481 B | 5,278 B |
+
+The post-audit grouped Command Center and installed-skills catalog are constrained by a 34,000-byte raw / 10,000-byte gzip CSS ceiling. Current measurements are emitted by `check-renderer-budget.mjs`; the original audit measurement above remains historical evidence rather than a current bundle claim.
 
 The initial entry is 68.0% smaller raw and 71.5% smaller gzip. Monaco, xterm, and PixiJS were moved behind React lazy boundaries. The enforced entry budgets are 700,000 bytes raw and 130,000 bytes gzip; CSS budgets are 30,000 and 10,000 bytes. File editor, terminal, and office chunks must remain separately emitted.
 

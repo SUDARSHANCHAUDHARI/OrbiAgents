@@ -27,7 +27,7 @@ Status: branded icon and unsigned local package verified; public release blocked
 - The verified local artifacts are unsigned. They are not public release artifacts.
 - Original branded artwork is committed as a 1024×1024 source and ICNS container; final artwork acceptance remains part of manual release review.
 - Signed/notarized verification and clean-account installation have not yet been performed.
-- Update checks and installation are not implemented.
+- Operator-controlled update checks, download, and restart/install are implemented; a signed release-to-release update hop remains a manual publication gate.
 - Intel, universal, Windows, Linux, and Mac App Store packages are outside this release candidate.
 - Live CLI/provider acceptance requires locally authenticated tools and remains manual.
 - Manual keyboard and screen-reader acceptance remains required; the completed audit is source/build based and does not claim assistive-technology certification.

@@ -52,14 +52,14 @@ The production configuration has `forceCodeSigning: true`, Hardened Runtime, exp
 
 Do not claim a signed or notarized release until this credential-backed command completes successfully on the exact artifacts intended for release.
 
-## Updater design (not implemented)
+## Operator-controlled updater
 
-The repository origin is GitHub, but no update provider or runtime updater is configured yet. `electron-updater` is intentionally not installed and no background check, download, or install occurs.
+The desktop app uses the GitHub release provider through `electron-updater`. Automatic checking, downloading, and install-on-quit are disabled. The Updates surface requires a separate operator action for check, download, and restart/install.
 
-A future updater must satisfy these gates:
+The updater enforces these gates:
 
 1. Only consume signed update metadata and Developer ID signed/notarized ZIP artifacts from an explicitly configured release provider.
-2. Check on explicit operator action initially; do not poll silently.
+2. Check only on explicit operator action; do not poll silently.
 3. Show version, release notes, artifact size, and signature/integrity state before download.
 4. Never install while agents are running, approvals are pending, a scheduled run is claimed, or an isolated workspace awaits review.
 5. Require explicit operator confirmation before restart/install and preserve the startup recovery inventory.
@@ -67,7 +67,7 @@ A future updater must satisfy these gates:
 7. Start with a pre-release channel and staged rollout; stable users must not receive preview builds.
 8. Treat missing/invalid metadata, signature failure, downgrade attempts, or provider errors as non-destructive failures that leave the current version running.
 
-Provider selection, release-channel policy, operator UX, and rollback acceptance must be agreed before adding `electron-updater`.
+Stable releases do not opt into prerelease channels. Runtime failures retain the current app and return a bounded error. Signed update delivery remains unproven until a complete signed, notarized, stapled release publishes the ZIP, blockmap, and update metadata and a later prerelease successfully installs through this UI.
 
 ## Manual acceptance before publication
 

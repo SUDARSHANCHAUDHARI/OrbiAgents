@@ -1,4 +1,4 @@
-export const RUNTIME_IDS = ["codex", "claude", "gemini"] as const;
+export const RUNTIME_IDS = ["codex", "claude", "gemini", "antigravity", "grok", "kimi", "qwen", "opencode", "crush", "pi", "copilot", "cursor"] as const;
 export type BuiltinRuntimeId = (typeof RUNTIME_IDS)[number];
 export type RuntimeId = BuiltinRuntimeId | `custom:${string}`;
 
@@ -181,6 +181,7 @@ export interface OrbiDesktopApi {
     authStatus(): Promise<GitHubAuthStatus>;
     snapshot(request: WorkspaceFileAgentRequest): Promise<GitHubSnapshot>;
   };
+  git: { snapshot(request: WorkspaceFileAgentRequest): Promise<GitWorkspaceSnapshot>; };
   onboarding: {
     status(): Promise<OnboardingStatus>;
     refresh(): Promise<OnboardingStatus>;
@@ -188,7 +189,13 @@ export interface OrbiDesktopApi {
   };
   recovery: { status(): Promise<RecoveryReport | null>; };
   costs: { snapshot(): Promise<CostLedgerSnapshot>; };
+  skills: { list(request?: { query?: string }): Promise<SkillCatalogEntry[]>; };
+  updates: { status(): Promise<UpdateState>; check(): Promise<UpdateState>; download(): Promise<UpdateState>; install(): Promise<void>; };
 }
+
+export interface SkillCatalogEntry { id: string; name: string; description: string; source: string; relativePath: string; }
+export type UpdatePhase = "idle" | "checking" | "available" | "not-available" | "downloading" | "downloaded" | "error";
+export interface UpdateState { phase: UpdatePhase; currentVersion: string; availableVersion?: string; releaseName?: string; releaseNotes?: string; artifactSize?: number; message?: string; }
 
 export interface LocalModelEndpoint { id: string; name: string; baseUrl: string; defaultModel?: string; hasApiKey: boolean; createdAt: number; updatedAt: number; }
 export interface LocalModelEndpointCreateRequest { id: string; name: string; baseUrl: string; defaultModel?: string; }
@@ -204,6 +211,7 @@ export interface GitHubAuthStatus { installed: boolean; authenticated: boolean; 
 export interface GitHubIssue { number: number; title: string; state: string; updatedAt: string; url: string; labels: string[]; }
 export interface GitHubRun { id: number; name: string; workflowName: string; status: string; conclusion: string; headBranch: string; event: string; updatedAt: string; url: string; }
 export interface GitHubSnapshot { repository: { nameWithOwner: string; url: string }; issues: GitHubIssue[]; runs: GitHubRun[]; fetchedAt: number; }
+export interface GitWorkspaceSnapshot { branch: string; upstream?: string; ahead: number; behind: number; changes: Array<{ status: string; path: string }>; commits: Array<{ hash: string; timestamp: number; subject: string }>; diffStat: string; fetchedAt: number; truncated: boolean; }
 export interface PrerequisiteCheck { id: string; label: string; required: boolean; status: "pass" | "warn" | "fail"; detail: string; }
 export interface OnboardingStatus { version: number; completed: boolean; completedAt?: number; ready: boolean; checkedAt: number; checks: PrerequisiteCheck[]; }
 export type RecoveryItemKind = "interrupted-session" | "unfinished-task" | "pending-approval" | "pending-mission";
@@ -271,6 +279,7 @@ export const IPC_CHANNELS = {
   fileReadRevision: "files:revision:read",
   githubAuthStatus: "github:auth:status",
   githubSnapshot: "github:snapshot",
+  gitSnapshot: "git:snapshot",
   onboardingStatus: "onboarding:status",
   onboardingRefresh: "onboarding:refresh",
   onboardingComplete: "onboarding:complete",
@@ -278,4 +287,9 @@ export const IPC_CHANNELS = {
   costSnapshot: "costs:snapshot",
   commandHistoryList: "commands:history:list",
   commandHistoryUpsert: "commands:history:upsert",
+  skillList: "skills:list",
+  updateStatus: "updates:status",
+  updateCheck: "updates:check",
+  updateDownload: "updates:download",
+  updateInstall: "updates:install",
 } as const;
