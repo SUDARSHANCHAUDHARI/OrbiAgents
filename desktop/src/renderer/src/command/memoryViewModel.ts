@@ -1,12 +1,7 @@
 import type { MemoryRecord } from "../../../shared/contracts";
 
-export function memoryOverview(records: MemoryRecord[], activeQuery: string): string {
-  if (!records.length) return activeQuery ? `No results for “${activeQuery}”` : "No project memories captured yet";
-  const condensed = records.filter((record) => record.condensed).length;
-  const sources = new Set(records.map((record) => record.source)).size;
-  const scope = activeQuery ? `${records.length} results for “${activeQuery}”` : `${records.length} project memories`;
-  return `${scope} · ${sources} source${sources === 1 ? "" : "s"}${condensed ? ` · ${condensed} condensed` : ""}`;
-}
+export interface MemoryOverview { count: number; query: string; sources: number; condensed: number; }
+export function memoryOverview(records: MemoryRecord[], activeQuery: string): MemoryOverview { return { count: records.length, query: activeQuery, sources: new Set(records.map((record) => record.source)).size, condensed: records.filter((record) => record.condensed).length }; }
 
 export interface MemoryRelationship { sourceId: string; targetId: string; sharedTerms: string[]; }
 export function memoryRelationships(records: MemoryRecord[], limit = 20): MemoryRelationship[] {
