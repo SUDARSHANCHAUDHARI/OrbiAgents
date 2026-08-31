@@ -2,29 +2,29 @@ import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import type { ActivityEvent, AgentSession, CreateAgentRequest, HireProfile, HiveSnapshot, OnboardingStatus, RuntimeAdapterDescriptor } from "../../shared/contracts";
 import { AgentRoster } from "./components/AgentRoster";
 import { ActivityPanel } from "./components/ActivityPanel";
-import { ActivityOperationsPanel } from "./components/ActivityOperationsPanel";
 import { WorkspaceReview } from "./components/WorkspaceReview";
-import { HivePanel } from "./components/HivePanel";
-import { ApprovalPanel } from "./components/ApprovalPanel";
-import { MemoryPanel } from "./components/MemoryPanel";
-import { MissionPanel } from "./components/MissionPanel";
-import { ProviderAdapterPanel } from "./components/ProviderAdapterPanel";
-import { LocalModelPanel } from "./components/LocalModelPanel";
-import { GitHubPanel } from "./components/GitHubPanel";
 import { OnboardingPanel } from "./components/OnboardingPanel";
-import { RecoveryPanel } from "./components/RecoveryPanel";
-import { CostPanel } from "./components/CostPanel";
 import { PixelButton } from "./components/ui/PixelButton";
 import { AgentHiringPanel } from "./components/AgentHiringPanel";
 import { CommandComposer } from "./components/CommandComposer";
-import { SkillsPanel } from "./components/SkillsPanel";
-import { UpdatesPanel } from "./components/UpdatesPanel";
 import { LocalePanel } from "./components/LocalePanel";
 import { useI18n, type MessageKey } from "./i18n";
 
 const PixelOffice = lazy(() => import("./components/PixelOffice").then((module) => ({ default: module.PixelOffice })));
 const TerminalPanel = lazy(() => import("./components/TerminalPanel").then((module) => ({ default: module.TerminalPanel })));
 const FileEditorPanel = lazy(() => import("./components/FileEditorPanel").then((module) => ({ default: module.FileEditorPanel })));
+const ActivityOperationsPanel = lazy(() => import("./components/ActivityOperationsPanel").then((module) => ({ default: module.ActivityOperationsPanel })));
+const HivePanel = lazy(() => import("./components/HivePanel").then((module) => ({ default: module.HivePanel })));
+const ApprovalPanel = lazy(() => import("./components/ApprovalPanel").then((module) => ({ default: module.ApprovalPanel })));
+const MemoryPanel = lazy(() => import("./components/MemoryPanel").then((module) => ({ default: module.MemoryPanel })));
+const MissionPanel = lazy(() => import("./components/MissionPanel").then((module) => ({ default: module.MissionPanel })));
+const ProviderAdapterPanel = lazy(() => import("./components/ProviderAdapterPanel").then((module) => ({ default: module.ProviderAdapterPanel })));
+const LocalModelPanel = lazy(() => import("./components/LocalModelPanel").then((module) => ({ default: module.LocalModelPanel })));
+const GitHubPanel = lazy(() => import("./components/GitHubPanel").then((module) => ({ default: module.GitHubPanel })));
+const RecoveryPanel = lazy(() => import("./components/RecoveryPanel").then((module) => ({ default: module.RecoveryPanel })));
+const CostPanel = lazy(() => import("./components/CostPanel").then((module) => ({ default: module.CostPanel })));
+const SkillsPanel = lazy(() => import("./components/SkillsPanel").then((module) => ({ default: module.SkillsPanel })));
+const UpdatesPanel = lazy(() => import("./components/UpdatesPanel").then((module) => ({ default: module.UpdatesPanel })));
 
 type CommandView = "floor" | "terminals" | "files" | "github" | "tasks" | "messages" | "approvals" | "memory" | "skills" | "activity" | "usage" | "recovery" | "workspaces" | "settings" | "updates" | "setup";
 type CommandGroup = "Operate" | "Coordinate" | "Observe" | "System";
@@ -146,6 +146,7 @@ export default function App() {
           </nav>
           <header className="command-context"><div><span>{activeView.group}</span><h2>{activeView.label}</h2></div><p>{activeView.description}</p>{selected ? <small>{selected.name} · {selected.runtimeId} · {selected.status}</small> : <small>No agent selected</small>}</header>
           <section id={`command-${commandView}`} className="command-view" role="tabpanel" aria-labelledby={`command-tab-${commandView}`}>
+            <Suspense fallback={<CommandFallback label={`${t("loading")}…`} />}>
             {commandView === "floor" ? <Suspense fallback={<CommandFallback label="Loading pixel office…" />}><PixelOffice agents={agents} activity={activity} hive={hiveSnapshot} selectedId={selectedId} onSelect={setSelectedId} /></Suspense> : null}
             {commandView === "terminals" ? <>
               <div className="agent-detail" aria-label="Selected agent details">{selected ? <><strong>{selected.name}</strong><span>{selected.runtimeId} · {selected.status}</span><span>{selected.workspace.status} workspace · {selected.cwd}</span></> : <span>No agent selected</span>}</div>
@@ -168,6 +169,7 @@ export default function App() {
             {commandView === "settings" ? <div className="settings-panels"><LocalePanel /><ProviderAdapterPanel onChanged={setRuntimeAdapters} onError={(message) => setError(message || null)} /><LocalModelPanel onError={(message) => setError(message || null)} /><MissionPanel projectPath={selectedProject} agents={agents} onError={(message) => setError(message || null)} /></div> : null}
             {commandView === "updates" ? <UpdatesPanel onError={(message) => setError(message || null)} /> : null}
             {commandView === "setup" && onboarding ? <OnboardingPanel status={onboarding} onChanged={setOnboarding} onError={(message) => setError(message || null)} /> : null}
+            </Suspense>
           </section>
         </div>
       </section>
