@@ -22,6 +22,7 @@ import { AppDataMigrator } from "./persistence/appDataMigrator";
 import { RecoveryStore } from "./persistence/recoveryStore";
 import { CostLedger } from "./costs/costLedger";
 import { CommandHistoryStore } from "./commands/commandHistoryStore";
+import { SkillCatalog } from "./skills/skillCatalog";
 
 let manager: PtyManager | null = null;
 let activityServer: ActivityHookServer | null = null;
@@ -59,6 +60,10 @@ async function createWindow(): Promise<void> {
   await onboarding.load();
   const commandHistory = new CommandHistoryStore(join(userData, "command-history.json"), { isAvailable: () => safeStorage.isEncryptionAvailable(), encrypt: (value) => safeStorage.encryptString(value), decrypt: (value) => safeStorage.decryptString(value) });
   await commandHistory.load();
+  const skills = new SkillCatalog([
+    { label: "Codex", path: join(homedir(), ".codex", "skills") },
+    { label: "Agent", path: join(homedir(), ".agents", "skills") },
+  ]);
   const workspaceManager = new WorkspaceManager(join(userData, "worktrees"));
   const loadedMetadata = await metadata.loadWithRecovery();
   const loaded = loadedMetadata.sessions;
@@ -90,7 +95,7 @@ async function createWindow(): Promise<void> {
   const recovery = new RecoveryStore(join(userData, "recovery.json"));
   await recovery.create(loadedMetadata.interrupted, await Promise.all(projectPaths.map((projectPath) => hive.recoveryState(projectPath))));
   hive.startHeartbeat();
-  registerIpc(window, windowManager, hive, runtimeAdapters, localModels, localModelClient, workspaceFiles, github, prerequisites, onboarding, recovery, commandHistory);
+  registerIpc(window, windowManager, hive, runtimeAdapters, localModels, localModelClient, workspaceFiles, github, prerequisites, onboarding, recovery, commandHistory, skills);
 
   window.once("ready-to-show", () => window.show());
   window.once("closed", () => {

@@ -72,6 +72,13 @@ input, select { height: 36px; padding: 0 10px; color: var(--orbi-ink); backgroun
 .command-view .pixel-office { height: 100%; margin-bottom: 0; }
 .settings-panels { display: grid; gap: 12px; }
 .settings-panels .command-panel { min-height: auto; }
+.skills-search { display: grid; grid-template-columns: minmax(240px, 1fr) minmax(130px, .35fr) auto auto; gap: 8px; align-items: end; margin-bottom: 10px; }
+.skills-policy { margin: 0 0 12px; padding: 8px 10px; color: var(--orbi-muted); background: var(--orbi-space); border-left: 3px solid var(--orbi-signal); font-size: 10px; }
+.skills-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; margin: 0; padding: 0; list-style: none; }
+.skills-grid li { min-height: 112px; display: grid; align-content: start; gap: 6px; padding: 12px; background: var(--orbi-surface-deep); border: 1px solid var(--orbi-edge); box-shadow: 2px 2px 0 var(--orbi-shadow); }
+.skills-grid strong { color: var(--orbi-ink); }
+.skills-grid small { color: var(--orbi-signal); overflow-wrap: anywhere; }
+.skills-grid span { color: var(--orbi-muted); font-size: 11px; line-height: 1.5; }
 .ide-layout { display: grid; grid-template-columns: minmax(170px, 24%) minmax(0, 1fr); gap: 10px; min-height: 0; }
 .file-tree { max-height: 64vh; overflow: auto; padding: 8px; background: #07101c; border: 1px solid #20344c; border-radius: 7px; }
 .file-tree ul { display: block; }

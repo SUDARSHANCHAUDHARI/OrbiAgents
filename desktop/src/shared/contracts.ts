@@ -188,7 +188,10 @@ export interface OrbiDesktopApi {
   };
   recovery: { status(): Promise<RecoveryReport | null>; };
   costs: { snapshot(): Promise<CostLedgerSnapshot>; };
+  skills: { list(request?: { query?: string }): Promise<SkillCatalogEntry[]>; };
 }
+
+export interface SkillCatalogEntry { id: string; name: string; description: string; source: string; relativePath: string; }
 
 export interface LocalModelEndpoint { id: string; name: string; baseUrl: string; defaultModel?: string; hasApiKey: boolean; createdAt: number; updatedAt: number; }
 export interface LocalModelEndpointCreateRequest { id: string; name: string; baseUrl: string; defaultModel?: string; }
@@ -278,4 +281,5 @@ export const IPC_CHANNELS = {
   costSnapshot: "costs:snapshot",
   commandHistoryList: "commands:history:list",
   commandHistoryUpsert: "commands:history:upsert",
+  skillList: "skills:list",
 } as const;

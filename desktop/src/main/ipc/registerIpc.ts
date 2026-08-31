@@ -11,6 +11,7 @@ import type { PrerequisiteChecker } from "../onboarding/prerequisiteChecker";
 import { ONBOARDING_VERSION, type OnboardingStore } from "../onboarding/onboardingStore";
 import type { RecoveryStore } from "../persistence/recoveryStore";
 import type { CommandHistoryStore } from "../commands/commandHistoryStore";
+import type { SkillCatalog } from "../skills/skillCatalog";
 import {
   validateAgentId,
   validateCreateAgentRequest,
@@ -21,7 +22,7 @@ import {
   validateWorkspace,
 } from "../security/validators";
 
-export function registerIpc(window: BrowserWindow, manager: PtyManager, hive: HiveCoordinator, runtimeAdapters: RuntimeAdapterStore, localModels: LocalModelEndpointStore, localModelClient: LocalModelClient, files: WorkspaceFileService, github: GitHubIngestion, prerequisites: PrerequisiteChecker, onboarding: OnboardingStore, recovery: RecoveryStore, commandHistory: CommandHistoryStore): () => void {
+export function registerIpc(window: BrowserWindow, manager: PtyManager, hive: HiveCoordinator, runtimeAdapters: RuntimeAdapterStore, localModels: LocalModelEndpointStore, localModelClient: LocalModelClient, files: WorkspaceFileService, github: GitHubIngestion, prerequisites: PrerequisiteChecker, onboarding: OnboardingStore, recovery: RecoveryStore, commandHistory: CommandHistoryStore, skills: SkillCatalog): () => void {
   const assertTrustedSender = (senderId: number) => {
     if (senderId !== window.webContents.id) throw new Error("Untrusted IPC sender");
   };
@@ -144,9 +145,16 @@ export function registerIpc(window: BrowserWindow, manager: PtyManager, hive: Hi
     }
     return commandHistory.upsert({ ...request, agentId });
   });
+  ipcMain.handle(IPC_CHANNELS.skillList, (event, value: unknown) => {
+    assertTrustedSender(event.sender.id);
+    if (value === undefined) return skills.list();
+    const query = asRecord(value).query;
+    if (query !== undefined && (typeof query !== "string" || query.length > 200)) throw new Error("Skill query is invalid");
+    return skills.list(query as string | undefined);
+  });
 
   const dispose = () => {
-    for (const channel of [IPC_CHANNELS.create, IPC_CHANNELS.list, IPC_CHANNELS.write, IPC_CHANNELS.resize, IPC_CHANNELS.stop, IPC_CHANNELS.applyWorkspace, IPC_CHANNELS.discardWorkspace, IPC_CHANNELS.hiveSnapshot, IPC_CHANNELS.hiveAssign, IPC_CHANNELS.hiveTransitionTask, IPC_CHANNELS.hiveDecideApproval, IPC_CHANNELS.memoryList, IPC_CHANNELS.memorySearch, IPC_CHANNELS.memoryCapture, IPC_CHANNELS.missionList, IPC_CHANNELS.missionCreate, IPC_CHANNELS.missionEnable, IPC_CHANNELS.missionRun, IPC_CHANNELS.runtimeAdapterList, IPC_CHANNELS.runtimeAdapterCreate, IPC_CHANNELS.runtimeAdapterRemove, IPC_CHANNELS.localModelList, IPC_CHANNELS.localModelCreate, IPC_CHANNELS.localModelRemove, IPC_CHANNELS.localModelSaveCredential, IPC_CHANNELS.localModelClearCredential, IPC_CHANNELS.localModelProbe, IPC_CHANNELS.fileList, IPC_CHANNELS.fileRead, IPC_CHANNELS.fileWrite, IPC_CHANNELS.fileHistory, IPC_CHANNELS.fileReadRevision, IPC_CHANNELS.githubAuthStatus, IPC_CHANNELS.githubSnapshot, IPC_CHANNELS.onboardingStatus, IPC_CHANNELS.onboardingRefresh, IPC_CHANNELS.onboardingComplete, IPC_CHANNELS.recoveryStatus, IPC_CHANNELS.costSnapshot, IPC_CHANNELS.commandHistoryList, IPC_CHANNELS.commandHistoryUpsert]) {
+    for (const channel of [IPC_CHANNELS.create, IPC_CHANNELS.list, IPC_CHANNELS.write, IPC_CHANNELS.resize, IPC_CHANNELS.stop, IPC_CHANNELS.applyWorkspace, IPC_CHANNELS.discardWorkspace, IPC_CHANNELS.hiveSnapshot, IPC_CHANNELS.hiveAssign, IPC_CHANNELS.hiveTransitionTask, IPC_CHANNELS.hiveDecideApproval, IPC_CHANNELS.memoryList, IPC_CHANNELS.memorySearch, IPC_CHANNELS.memoryCapture, IPC_CHANNELS.missionList, IPC_CHANNELS.missionCreate, IPC_CHANNELS.missionEnable, IPC_CHANNELS.missionRun, IPC_CHANNELS.runtimeAdapterList, IPC_CHANNELS.runtimeAdapterCreate, IPC_CHANNELS.runtimeAdapterRemove, IPC_CHANNELS.localModelList, IPC_CHANNELS.localModelCreate, IPC_CHANNELS.localModelRemove, IPC_CHANNELS.localModelSaveCredential, IPC_CHANNELS.localModelClearCredential, IPC_CHANNELS.localModelProbe, IPC_CHANNELS.fileList, IPC_CHANNELS.fileRead, IPC_CHANNELS.fileWrite, IPC_CHANNELS.fileHistory, IPC_CHANNELS.fileReadRevision, IPC_CHANNELS.githubAuthStatus, IPC_CHANNELS.githubSnapshot, IPC_CHANNELS.onboardingStatus, IPC_CHANNELS.onboardingRefresh, IPC_CHANNELS.onboardingComplete, IPC_CHANNELS.recoveryStatus, IPC_CHANNELS.costSnapshot, IPC_CHANNELS.commandHistoryList, IPC_CHANNELS.commandHistoryUpsert, IPC_CHANNELS.skillList]) {
       ipcMain.removeHandler(channel);
     }
   };

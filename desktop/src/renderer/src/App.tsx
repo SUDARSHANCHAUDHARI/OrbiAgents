@@ -17,12 +17,13 @@ import { CostPanel } from "./components/CostPanel";
 import { PixelButton } from "./components/ui/PixelButton";
 import { AgentHiringPanel } from "./components/AgentHiringPanel";
 import { CommandComposer } from "./components/CommandComposer";
+import { SkillsPanel } from "./components/SkillsPanel";
 
 const PixelOffice = lazy(() => import("./components/PixelOffice").then((module) => ({ default: module.PixelOffice })));
 const TerminalPanel = lazy(() => import("./components/TerminalPanel").then((module) => ({ default: module.TerminalPanel })));
 const FileEditorPanel = lazy(() => import("./components/FileEditorPanel").then((module) => ({ default: module.FileEditorPanel })));
 
-type CommandView = "floor" | "terminals" | "files" | "github" | "tasks" | "messages" | "approvals" | "memory" | "activity" | "usage" | "recovery" | "workspaces" | "settings" | "setup";
+type CommandView = "floor" | "terminals" | "files" | "github" | "tasks" | "messages" | "approvals" | "memory" | "skills" | "activity" | "usage" | "recovery" | "workspaces" | "settings" | "setup";
 type CommandGroup = "Operate" | "Coordinate" | "Observe" | "System";
 interface CommandViewDefinition { id: CommandView; label: string; shortLabel: string; group: CommandGroup; description: string; }
 const COMMAND_VIEWS: CommandViewDefinition[] = [
@@ -34,6 +35,7 @@ const COMMAND_VIEWS: CommandViewDefinition[] = [
   { id: "messages", label: "Fleet messages", shortLabel: "Messages", group: "Coordinate", description: "Inspect durable agent-to-agent delivery and replies." },
   { id: "approvals", label: "Operator approvals", shortLabel: "Approvals", group: "Coordinate", description: "Review spend, destructive-operation, and scope-expansion gates." },
   { id: "memory", label: "Project memory", shortLabel: "Memory", group: "Coordinate", description: "Capture and retrieve bounded project knowledge." },
+  { id: "skills", label: "Skills catalog", shortLabel: "Skills", group: "Coordinate", description: "Search installed agent capabilities without executing their instructions." },
   { id: "activity", label: "Live activity", shortLabel: "Activity", group: "Observe", description: "Filter verified runtime signals across the active fleet." },
   { id: "usage", label: "Cost ledger", shortLabel: "Costs", group: "Observe", description: "Audit durable authorization estimates and integrity status." },
   { id: "recovery", label: "Recovery center", shortLabel: "Recovery", group: "Observe", description: "Inspect interrupted work without automatically restarting it." },
@@ -148,6 +150,7 @@ export default function App() {
             {commandView === "messages" ? <CommandList title="Prime inbox" empty="No durable messages for this project." items={hiveSnapshot?.primeInbox.map((message) => ({ id: message.id, title: `${message.senderAgentId} → ${message.recipientAgentId}`, meta: `${message.kind} · ${message.status}`, detail: message.body })) ?? []} /> : null}
             {commandView === "approvals" ? <ApprovalPanel projectPath={selectedProject} snapshot={hiveSnapshot} onSnapshot={setHiveSnapshot} onError={(message) => setError(message || null)} /> : null}
             {commandView === "memory" ? <MemoryPanel projectPath={selectedProject} onError={(message) => setError(message || null)} /> : null}
+            {commandView === "skills" ? <SkillsPanel onError={(message) => setError(message || null)} /> : null}
             {commandView === "activity" ? <ActivityOperationsPanel events={activity} agents={agents} /> : null}
             {commandView === "usage" ? <CostPanel onError={(message) => setError(message || null)} /> : null}
             {commandView === "recovery" ? <RecoveryPanel onError={(message) => setError(message || null)} /> : null}
