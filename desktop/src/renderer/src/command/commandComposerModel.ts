@@ -23,4 +23,5 @@ export function terminalPayload(entry: CommandQueueEntry): string {
   const files = entry.attachments?.length ? `\n\nAttached workspace files:\n${entry.attachments.map((file) => `- ${JSON.stringify(file)}`).join("\n")}` : "";
   return `${entry.body}${files}\r`;
 }
+export function isCommandQueueShortcut(event: { key: string; metaKey: boolean; ctrlKey: boolean; isComposing: boolean }): boolean { return event.key === "Enter" && (event.metaKey || event.ctrlKey) && !event.isComposing; }
 function safeAttachment(value: string): boolean { return Boolean(value && value.length <= 1_000 && !value.startsWith("/") && !value.includes("\\") && value.split("/").every((part) => part && part !== "." && part !== "..")); }

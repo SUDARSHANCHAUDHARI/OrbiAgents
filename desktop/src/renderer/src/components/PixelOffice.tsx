@@ -1,15 +1,23 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Application, Container, Graphics, Text } from "pixi.js";
 import type { ActivityEvent, AgentActivityState, AgentSession, HiveSnapshot } from "../../../shared/contracts";
-import { activityBubbleForState, pointOnOfficeLink } from "../office/officeEffects";
+import { pointOnOfficeLink } from "../office/officeEffects";
 import { loadOfficeLayout, saveOfficeLayout } from "../office/officeLayoutStore";
 import { buildOfficeAgents, buildOfficeLinks, locateOfficeAgent, type OfficeAgent, type OfficeLink } from "../office/officeModel";
 import { clampOrbitalCamera, createOrbitalWorld, findOrbitalPath, floorForState, ORBITAL_FLOORS, ORBITAL_TILE_SIZE, stationById, type OrbitalCamera, type OrbitalFloorId, type OrbitalPosition, type OrbitalTileKind, type OrbitalWorld } from "../office/orbitalWorld";
+import { useI18n, type MessageKey } from "../i18n";
+
+const FLOOR_KEYS: Record<OrbitalFloorId, MessageKey> = { operations: "operationsFloor", engineering: "engineeringFloor", support: "supportFloor" };
+const ROOM_KEYS: Record<string, MessageKey> = { bridge: "commandBridge", forge: "codeForge", comms: "signalBay", lab: "researchLab", review: "reviewDeck" };
+const STATE_KEYS: Record<AgentActivityState, MessageKey> = { idle: "stateIdle", thinking: "stateThinking", reading: "stateReading", coding: "stateCoding", "permission-waiting": "statePermissionWaiting", done: "stateDone", failed: "stateFailed" };
+const BUBBLE_KEYS: Record<AgentActivityState, MessageKey> = { idle: "bubbleStandby", thinking: "bubblePlan", reading: "bubbleRead", coding: "bubbleCode", "permission-waiting": "bubbleApprove", done: "bubbleDone", failed: "bubbleError" };
+const ZONE_KEYS: Record<OfficeAgent["zone"], MessageKey> = { planning: "zonePlanning", focus: "zoneFocus", collaboration: "zoneCollaboration", lounge: "zoneLounge" };
 
 interface AgentView { container: Container; actor: Container; route: OrbitalPosition[]; phase: number; targetX: number; targetY: number; }
 interface AgentSprite { container: Container; actor: Container; }
 interface TrafficView { container: Container; from: { x: number; y: number }; to: { x: number; y: number }; phase: number; speed: number; }
 export function PixelOffice({ agents, activity, hive, selectedId, onSelect }: { agents: AgentSession[]; activity: ActivityEvent[]; hive: HiveSnapshot | null; selectedId: string | null; onSelect(id: string): void }) {
+  const { t } = useI18n();
   const hostRef = useRef<HTMLDivElement>(null);
   const appRef = useRef<Application | null>(null);
   const zoneLayerRef = useRef<Container | null>(null);
@@ -86,12 +94,12 @@ export function PixelOffice({ agents, activity, hive, selectedId, onSelect }: { 
   useEffect(() => {
     const app = appRef.current; const zones = zoneLayerRef.current; const hiveLayer = hiveLayerRef.current; const layer = agentLayerRef.current;
     if (!app || !zones || !hiveLayer || !layer || !app.screen.width || !app.screen.height) return;
-    drawWorld(zones, world);
-    trafficRef.current = drawHive(hiveLayer, officeAgents, officeLinks, hive, world);
+    drawWorld(zones, world, t);
+    trafficRef.current = drawHive(hiveLayer, officeAgents, officeLinks, hive, world, t("orbiPrime"));
     const currentPositions = new Map([...viewsRef.current].map(([id, view]) => [id, { x: view.container.x, y: view.container.y }]));
     layer.removeChildren().forEach((child) => child.destroy({ children: true })); viewsRef.current.clear();
     for (const agent of officeAgents) {
-      const sprite = drawAgent(agent, agent.id === selectedId, () => onSelectRef.current(agent.id));
+      const sprite = drawAgent(agent, t(BUBBLE_KEYS[agent.state]), agent.id === selectedId, () => onSelectRef.current(agent.id));
       const destination = { column: agent.column, row: agent.row };
       const current = currentPositions.get(agent.id);
       const previous = current ? positionFromPixels(current.x, current.y, world) : destination;
@@ -103,7 +111,7 @@ export function PixelOffice({ agents, activity, hive, selectedId, onSelect }: { 
     }
     const bounded = clampOrbitalCamera({ ...camera, viewportWidth: app.screen.width, viewportHeight: app.screen.height }, world);
     app.stage.scale.set(bounded.zoom); app.stage.position.set(bounded.x, bounded.y);
-  }, [officeAgents, officeLinks, hive, selectedId, sizeVersion, camera, world]);
+  }, [officeAgents, officeLinks, hive, selectedId, sizeVersion, camera, world, t]);
 
   function moveCamera(dx: number, dy: number): void {
     const app = appRef.current; if (!app) return;
@@ -117,11 +125,11 @@ export function PixelOffice({ agents, activity, hive, selectedId, onSelect }: { 
 
   function selectFloor(next: OrbitalFloorId): void { viewsRef.current.clear(); setLayout((current) => ({ ...current, floorId: next })); }
 
-  return <section className="pixel-office" aria-label="OrbiAgents pixel office">
-    <header><div><span className="eyebrow">LIVE ORBITAL DECK</span><h2>{ORBITAL_FLOORS.find((floor) => floor.id === floorId)!.label} Floor</h2></div><div className="office-zoom" aria-label="Office floor and camera controls"><select aria-label="Orbital office floor" value={floorId} onChange={(event) => selectFloor(event.target.value as OrbitalFloorId)}>{ORBITAL_FLOORS.map((floor) => <option key={floor.id} value={floor.id}>{floor.label} ({allOfficeAgents.filter((agent) => floorForState(agent.state) === floor.id).length})</option>)}</select>{selectedLocation && selectedLocation.floorId !== floorId ? <button aria-label={`Locate selected agent on ${selectedLocation.floorLabel} floor`} type="button" onClick={() => selectFloor(selectedLocation.floorId)}>⌖</button> : null}<button aria-label="Pan office left" type="button" onClick={() => moveCamera(96, 0)}>←</button><button aria-label="Pan office up" type="button" onClick={() => moveCamera(0, 96)}>↑</button><button aria-label="Pan office down" type="button" onClick={() => moveCamera(0, -96)}>↓</button><button aria-label="Pan office right" type="button" onClick={() => moveCamera(-96, 0)}>→</button><button aria-label={`Set office zoom to ${camera.zoom === 1 ? 2 : 1}x`} type="button" onClick={toggleZoom}>{camera.zoom}×</button></div></header>
+  return <section className="pixel-office" aria-label={t("pixelOffice")}>
+    <header><div><span className="eyebrow">{t("liveOrbitalDeck")}</span><h2>{t(FLOOR_KEYS[floorId])} {t("floorSuffix")}</h2></div><div className="office-zoom" aria-label={t("officeControls")}><select aria-label={t("orbitalFloor")} value={floorId} onChange={(event) => selectFloor(event.target.value as OrbitalFloorId)}>{ORBITAL_FLOORS.map((floor) => <option key={floor.id} value={floor.id}>{t(FLOOR_KEYS[floor.id])} ({allOfficeAgents.filter((agent) => floorForState(agent.state) === floor.id).length})</option>)}</select>{selectedLocation && selectedLocation.floorId !== floorId ? <button aria-label={`${t("locateAgentOn")} ${t(FLOOR_KEYS[selectedLocation.floorId])} ${t("floorSuffix")}`} type="button" onClick={() => selectFloor(selectedLocation.floorId)}>⌖</button> : null}<button aria-label={t("panLeft")} type="button" onClick={() => moveCamera(96, 0)}>←</button><button aria-label={t("panUp")} type="button" onClick={() => moveCamera(0, 96)}>↑</button><button aria-label={t("panDown")} type="button" onClick={() => moveCamera(0, -96)}>↓</button><button aria-label={t("panRight")} type="button" onClick={() => moveCamera(-96, 0)}>→</button><button aria-label={`${t("setZoom")} ${camera.zoom === 1 ? 2 : 1}x`} type="button" onClick={toggleZoom}>{camera.zoom}×</button></div></header>
     <div ref={hostRef} className="pixel-office-canvas" />
-    <div className="office-hive-status" aria-live="polite">{selectedLocation ? `${selectedLocation.agentName}: ${selectedLocation.floorLabel} floor · ` : ""}{hive ? `${hive.tasks.length} tasks · ${hive.primeInbox.length} messages · ${hive.approvals.filter((approval) => approval.status === "pending").length} pending approvals` : "No project Hive selected"}</div>
-    <div className="office-agent-controls" aria-label="Accessible office agent controls">{officeAgents.map((agent) => <button type="button" key={agent.id} className={agent.id === selectedId ? "selected" : ""} onClick={() => onSelect(agent.id)}><i style={{ background: `#${agent.color.toString(16).padStart(6, "0")}` }} /><span>{agent.name}<small>{agent.state} · {agent.zone}</small></span></button>)}</div>
+    <div className="office-hive-status" aria-live="polite">{selectedLocation ? `${selectedLocation.agentName}: ${t(FLOOR_KEYS[selectedLocation.floorId])} ${t("floorSuffix")} · ` : ""}{hive ? `${hive.tasks.length} ${t("tasksSuffix")} · ${hive.primeInbox.length} ${t("messages")} · ${hive.approvals.filter((approval) => approval.status === "pending").length} ${t("pendingApprovals")}` : t("noHiveSelected")}</div>
+    <div className="office-agent-controls" aria-label={t("accessibleAgentControls")}>{officeAgents.map((agent) => <button type="button" key={agent.id} className={agent.id === selectedId ? "selected" : ""} onClick={() => onSelect(agent.id)}><i style={{ background: `#${agent.color.toString(16).padStart(6, "0")}` }} /><span>{agent.name}<small>{t(STATE_KEYS[agent.state])} · {t(ZONE_KEYS[agent.zone])}</small></span></button>)}</div>
   </section>;
 }
 
@@ -131,7 +139,7 @@ function latestStates(events: ActivityEvent[]): Record<string, AgentActivityStat
   return states;
 }
 
-function drawWorld(layer: Container, world: OrbitalWorld): void {
+function drawWorld(layer: Container, world: OrbitalWorld, t: (key: MessageKey) => string): void {
   layer.removeChildren().forEach((child) => child.destroy({ children: true }));
   const tiles = new Graphics();
   for (const tile of world.tiles) {
@@ -144,7 +152,7 @@ function drawWorld(layer: Container, world: OrbitalWorld): void {
   }
   layer.addChild(tiles);
   for (const room of world.rooms) {
-    const label = new Text({ text: room.label.toUpperCase(), style: { fill: room.accent, fontFamily: "monospace", fontSize: 10, fontWeight: "bold", letterSpacing: 1 } });
+    const label = new Text({ text: t(ROOM_KEYS[room.id] ?? "orbitalFloorTitle").toUpperCase(), style: { fill: room.accent, fontFamily: "monospace", fontSize: 10, fontWeight: "bold", letterSpacing: 1 } });
     label.position.set((room.column + 1) * world.tileSize, (room.row + 1) * world.tileSize); layer.addChild(label);
   }
   for (const station of world.stations) {
@@ -153,7 +161,7 @@ function drawWorld(layer: Container, world: OrbitalWorld): void {
   }
 }
 
-function drawHive(layer: Container, agents: OfficeAgent[], links: OfficeLink[], hive: HiveSnapshot | null, world: OrbitalWorld): TrafficView[] {
+function drawHive(layer: Container, agents: OfficeAgent[], links: OfficeLink[], hive: HiveSnapshot | null, world: OrbitalWorld, primeLabel: string): TrafficView[] {
   layer.removeChildren().forEach((child) => child.destroy({ children: true }));
   const traffic: TrafficView[] = [];
   const primeStation = stationById(world, "prime"); const prime = { x: (primeStation.column + .5) * world.tileSize, y: (primeStation.row + .5) * world.tileSize };
@@ -171,7 +179,7 @@ function drawHive(layer: Container, agents: OfficeAgent[], links: OfficeLink[], 
   }
   const pending = hive?.approvals.filter((approval) => approval.status === "pending").length ?? 0;
   layer.addChild(new Graphics().roundRect(prime.x - 28, prime.y - 18, 56, 36, 7).fill(0x172554).stroke({ color: pending ? 0xfbbf24 : 0x818cf8, width: 2 }));
-  const label = new Text({ text: "ORBI-PRIME", style: { fill: 0xe0e7ff, fontFamily: "monospace", fontSize: 9, fontWeight: "bold" } }); label.anchor.set(.5); label.position.set(prime.x, prime.y); layer.addChild(label);
+  const label = new Text({ text: primeLabel.toUpperCase(), style: { fill: 0xe0e7ff, fontFamily: "monospace", fontSize: 9, fontWeight: "bold" } }); label.anchor.set(.5); label.position.set(prime.x, prime.y); layer.addChild(label);
   return traffic;
 }
 
@@ -182,7 +190,7 @@ function tileColor(kind: OrbitalTileKind, variant: number): number {
   return variant % 2 ? 0x111b2d : 0x151f33;
 }
 
-function drawAgent(agent: OfficeAgent, selected: boolean, select: () => void): AgentSprite {
+function drawAgent(agent: OfficeAgent, bubbleText: string, selected: boolean, select: () => void): AgentSprite {
   const container = new Container(); container.eventMode = "static"; container.cursor = "pointer"; container.on("pointertap", select);
   if (selected) container.addChild(new Graphics().circle(0, 0, 25).stroke({ color: 0xffffff, alpha: .9, width: 2 }));
   const actor = new Container();
@@ -190,7 +198,6 @@ function drawAgent(agent: OfficeAgent, selected: boolean, select: () => void): A
   actor.addChild(new Graphics().circle(-5, -3, 2).fill(0x07111f).circle(5, -3, 2).fill(0x07111f).rect(-5, 6, 10, 2).fill(0x07111f));
   actor.addChild(new Graphics().circle(10, -10, 5).fill(stateColor(agent.state)).stroke({ color: 0x07111f, width: 2 }));
   container.addChild(actor);
-  const bubbleText = activityBubbleForState(agent.state);
   const bubble = new Container(); bubble.position.set(16, -32);
   bubble.addChild(new Graphics().roundRect(0, 0, bubbleText.length * 6 + 10, 17, 4).fill(0x07111f).stroke({ color: stateColor(agent.state), width: 1 }).moveTo(4, 17).lineTo(1, 21).lineTo(9, 17).fill(0x07111f));
   const bubbleLabel = new Text({ text: bubbleText, style: { fill: 0xe5edf8, fontFamily: "monospace", fontSize: 8, fontWeight: "bold" } }); bubbleLabel.position.set(5, 4); bubble.addChild(bubbleLabel); container.addChild(bubble);

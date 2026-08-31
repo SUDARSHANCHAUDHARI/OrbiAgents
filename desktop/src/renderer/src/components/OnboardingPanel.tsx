@@ -2,16 +2,18 @@ import { useState } from "react";
 import type { OnboardingStatus } from "../../../shared/contracts";
 import { PixelButton } from "./ui/PixelButton";
 import { PixelPanel } from "./ui/PixelPanel";
+import { useI18n } from "../i18n";
 
 export function OnboardingPanel({ status, firstRun = false, onChanged, onError }: { status: OnboardingStatus; firstRun?: boolean; onChanged(status: OnboardingStatus): void; onError(message: string): void }) {
+  const { t } = useI18n();
   const [busy, setBusy] = useState(false);
   async function refresh() { setBusy(true); try { onChanged(await window.orbi.onboarding.refresh()); onError(""); } catch (error) { onError(message(error)); } finally { setBusy(false); } }
   async function complete() { setBusy(true); try { onChanged(await window.orbi.onboarding.complete()); onError(""); } catch (error) { onError(message(error)); } finally { setBusy(false); } }
-  return <PixelPanel title={firstRun ? "Welcome to OrbiAgents" : "Setup and prerequisites"} titleId={firstRun ? "onboarding-title" : undefined} eyebrow="system readiness" ariaLabel="OrbiAgents setup" className={`onboarding-panel${firstRun ? " onboarding-first-run" : ""}`} action={<PixelButton type="button" variant="ghost" disabled={busy} onClick={() => void refresh()}>Run checks again</PixelButton>}>
-    <p className="mission-policy">These checks inspect executable access and platform capabilities only. OrbiAgents will not install software, change PATH, authenticate accounts, or block access to the Command Center.</p>
-    <p><strong>{status.ready ? "Core prerequisites are ready." : "Some core prerequisites are missing."}</strong></p>
-    <ul>{status.checks.map((check) => <li key={check.id}><strong>{check.status === "pass" ? "✓" : check.status === "fail" ? "✕" : "!"} {check.label}</strong><small>{check.required ? "required" : "optional"} · {check.status}</small><span>{check.detail}</span></li>)}</ul>
-    {firstRun ? <div className="onboarding-actions"><PixelButton autoFocus type="button" variant="primary" disabled={busy} onClick={() => void complete()}>{status.ready ? "Continue to OrbiAgents" : "Continue without missing tools"}</PixelButton></div> : <small>Last checked {new Date(status.checkedAt).toLocaleString()}{status.completedAt ? ` · onboarding acknowledged ${new Date(status.completedAt).toLocaleString()}` : ""}</small>}
+  return <PixelPanel title={firstRun ? t("welcome") : t("setupPrerequisites")} titleId={firstRun ? "onboarding-title" : undefined} eyebrow={t("systemReadiness")} ariaLabel={t("orbiSetup")} className={`onboarding-panel${firstRun ? " onboarding-first-run" : ""}`} action={<PixelButton type="button" variant="ghost" disabled={busy} onClick={() => void refresh()}>{t("rerunChecks")}</PixelButton>}>
+    <p className="mission-policy">{t("setupPolicy")}</p>
+    <p><strong>{status.ready ? t("prerequisitesReady") : t("prerequisitesMissing")}</strong></p>
+    <ul>{status.checks.map((check) => <li key={check.id}><strong>{check.status === "pass" ? "✓" : check.status === "fail" ? "✕" : "!"} {check.label}</strong><small>{check.required ? t("required") : t("optional")} · {check.status}</small><span>{check.detail}</span></li>)}</ul>
+    {firstRun ? <div className="onboarding-actions"><PixelButton autoFocus type="button" variant="primary" disabled={busy} onClick={() => void complete()}>{status.ready ? t("continueOrbi") : t("continueMissing")}</PixelButton></div> : <small>{t("lastChecked")} {new Date(status.checkedAt).toLocaleString()}{status.completedAt ? ` · ${t("onboardingAcknowledged")} ${new Date(status.completedAt).toLocaleString()}` : ""}</small>}
   </PixelPanel>;
 }
 function message(error: unknown): string { return error instanceof Error ? error.message : String(error); }

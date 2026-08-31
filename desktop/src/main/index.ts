@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { app, BrowserWindow, safeStorage } from "electron";
+import { app, BrowserWindow, safeStorage, shell } from "electron";
 import { AgentRegistry } from "./agents/agentRegistry";
 import { AgentMetadataStore } from "./agents/agentMetadataStore";
 import { registerIpc } from "./ipc/registerIpc";
@@ -25,13 +25,21 @@ import { CostLedger } from "./costs/costLedger";
 import { CommandHistoryStore } from "./commands/commandHistoryStore";
 import { SkillCatalog } from "./skills/skillCatalog";
 import { UpdateService } from "./updates/updateService";
+import { decodeHireProfile } from "./agents/hireProfileCodec";
+import type { HireProfile } from "../shared/contracts";
+import { WebhookReceiver } from "./webhooks/webhookReceiver";
+import { VoicePolicyStore } from "./voice/voicePolicyStore";
 
 let manager: PtyManager | null = null;
 let activityServer: ActivityHookServer | null = null;
+let primaryWindow: BrowserWindow | null = null;
+let pendingHire: HireProfile | null = null;
+
+function acceptHireLink(value: string): void { try { const profile = decodeHireProfile(value); if (primaryWindow && !primaryWindow.isDestroyed()) { primaryWindow.webContents.send(IPC_CHANNELS.hireImported, profile); primaryWindow.show(); primaryWindow.focus(); } else pendingHire = profile; } catch (error) { console.error("Rejected invalid hire link", error instanceof Error ? error.message : "invalid link"); } }
 
 async function createWindow(): Promise<void> {
   const userData = app.getPath("userData");
-  const migrator = new AppDataMigrator(userData, ["agents.json", "runtime-adapters.json", "local-model-endpoints.json", "onboarding.json", "recovery.json", "command-history.json", "costs", "hive"], [{ fromVersion: 0, toVersion: 1, async migrate() { /* Version 1 adopts existing unversioned state without rewriting it. */ } }]);
+  const migrator = new AppDataMigrator(userData, ["agents.json", "runtime-adapters.json", "local-model-endpoints.json", "onboarding.json", "recovery.json", "command-history.json", "voice-policy.json", "costs", "hive"], [{ fromVersion: 0, toVersion: 1, async migrate() { /* Version 1 adopts existing unversioned state without rewriting it. */ } }]);
   await migrator.run(1);
   const window = new BrowserWindow({
     width: 1280,
@@ -48,6 +56,7 @@ async function createWindow(): Promise<void> {
       webviewTag: false,
     },
   });
+  primaryWindow = window;
 
   const metadata = new AgentMetadataStore(join(userData, "agents.json"));
   const runtimeAdapters = new RuntimeAdapterStore(join(userData, "runtime-adapters.json"));
@@ -66,7 +75,7 @@ async function createWindow(): Promise<void> {
   const skills = new SkillCatalog([
     { label: "Codex", path: join(homedir(), ".codex", "skills") },
     { label: "Agent", path: join(homedir(), ".agents", "skills") },
-  ]);
+  ], { trash: (target) => shell.trashItem(target) });
   const workspaceManager = new WorkspaceManager(join(userData, "worktrees"));
   const loadedMetadata = await metadata.loadWithRecovery();
   const loaded = loadedMetadata.sessions;
@@ -108,20 +117,25 @@ async function createWindow(): Promise<void> {
     } catch { reasons.push("project safety state could not be verified"); }
     return [...new Set(reasons)];
   });
+  const webhooks = new WebhookReceiver();
+  const voice = new VoicePolicyStore(join(userData, "voice-policy.json"));
+  await voice.load();
   const projectPaths = [...new Set(recovered.map((session) => session.workspace.sourcePath))];
   const recovery = new RecoveryStore(join(userData, "recovery.json"));
   await recovery.create(loadedMetadata.interrupted, await Promise.all(projectPaths.map((projectPath) => hive.recoveryState(projectPath))));
   hive.startHeartbeat();
-  registerIpc(window, windowManager, hive, runtimeAdapters, localModels, localModelClient, workspaceFiles, github, git, prerequisites, onboarding, recovery, commandHistory, skills, updates);
+  registerIpc(window, windowManager, hive, runtimeAdapters, localModels, localModelClient, workspaceFiles, github, git, prerequisites, onboarding, recovery, commandHistory, skills, updates, webhooks, voice);
 
-  window.once("ready-to-show", () => window.show());
+  window.once("ready-to-show", () => { window.show(); if (pendingHire) { window.webContents.send(IPC_CHANNELS.hireImported, pendingHire); pendingHire = null; } });
   window.once("closed", () => {
     windowManager.stopAll();
     void windowActivityServer.stop();
     rolloutWatcher.stop();
     hive.stopHeartbeat();
+    void webhooks.stop();
     if (activityServer === windowActivityServer) activityServer = null;
     if (manager === windowManager) manager = null;
+    if (primaryWindow === window) primaryWindow = null;
   });
   window.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
   window.webContents.on("will-navigate", (event) => event.preventDefault());
@@ -134,7 +148,14 @@ async function createWindow(): Promise<void> {
   }
 }
 
-app.whenReady().then(() => {
+const hasLock = app.requestSingleInstanceLock();
+if (!hasLock) app.quit();
+else app.on("second-instance", (_event, argv) => { const link = argv.find((value) => value.startsWith("orbiagents://hire")); if (link) acceptHireLink(link); else { primaryWindow?.show(); primaryWindow?.focus(); } });
+app.on("open-url", (event, url) => { event.preventDefault(); acceptHireLink(url); });
+
+if (hasLock) app.whenReady().then(() => {
+  if (app.isPackaged) app.setAsDefaultProtocolClient("orbiagents");
+  const initialLink = process.argv.find((value) => value.startsWith("orbiagents://hire")); if (initialLink) acceptHireLink(initialLink);
   void createWindow().catch((error) => {
     console.error("Failed to create OrbiAgents window", error);
     app.quit();

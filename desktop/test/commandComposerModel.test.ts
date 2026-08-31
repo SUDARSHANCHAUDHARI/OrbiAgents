@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { commandsForAgent, createCommandEntry, terminalPayload, updateCommandEntry } from "../src/renderer/src/command/commandComposerModel";
+import { commandsForAgent, createCommandEntry, isCommandQueueShortcut, terminalPayload, updateCommandEntry } from "../src/renderer/src/command/commandComposerModel";
 
 test("command composer validates bounded terminal payloads", () => {
   const entry = createCommandEntry("alpha", "  Run the focused tests  ", 10, "one");
@@ -24,4 +24,10 @@ test("command composer adds only bounded workspace-relative attachments to paylo
   assert.match(terminalPayload(entry), /Attached workspace files:\n- "src\/app.ts"\n- "test\/app.test.ts"\r$/);
   assert.throws(() => createCommandEntry("alpha", "Unsafe", 1, "bad", ["../.env"]), /attachments/);
   assert.throws(() => createCommandEntry("alpha", "Too many", 1, "many", ["1", "2", "3", "4", "5", "6"]), /attachments/);
+});
+
+test("command shortcut ignores Enter while an input method is composing", () => {
+  assert.equal(isCommandQueueShortcut({ key: "Enter", metaKey: true, ctrlKey: false, isComposing: false }), true);
+  assert.equal(isCommandQueueShortcut({ key: "Enter", metaKey: true, ctrlKey: false, isComposing: true }), false);
+  assert.equal(isCommandQueueShortcut({ key: "Enter", metaKey: false, ctrlKey: false, isComposing: false }), false);
 });

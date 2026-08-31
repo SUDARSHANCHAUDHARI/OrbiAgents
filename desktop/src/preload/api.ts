@@ -18,7 +18,7 @@ export function createDesktopApi(ipcRenderer: Pick<IpcRenderer, "invoke" | "on" 
     list: (request) => ipcRenderer.invoke(IPC_CHANNELS.commandHistoryList, request),
     upsert: (request) => ipcRenderer.invoke(IPC_CHANNELS.commandHistoryUpsert, request),
   };
-  const hires: OrbiDesktopApi["hires"] = { copy: (profile) => ipcRenderer.invoke(IPC_CHANNELS.hireCopy, profile), importFromClipboard: () => ipcRenderer.invoke(IPC_CHANNELS.hireImport) };
+  const hires: OrbiDesktopApi["hires"] = { copy: (profile) => ipcRenderer.invoke(IPC_CHANNELS.hireCopy, profile), importFromClipboard: () => ipcRenderer.invoke(IPC_CHANNELS.hireImport), onImported: (listener) => subscribe(ipcRenderer, IPC_CHANNELS.hireImported, listener) };
   const hive: OrbiDesktopApi["hive"] = {
     snapshot: (request) => ipcRenderer.invoke(IPC_CHANNELS.hiveSnapshot, request),
     assign: (request) => ipcRenderer.invoke(IPC_CHANNELS.hiveAssign, request),
@@ -68,13 +68,15 @@ export function createDesktopApi(ipcRenderer: Pick<IpcRenderer, "invoke" | "on" 
   };
   const recovery: OrbiDesktopApi["recovery"] = { status: () => ipcRenderer.invoke(IPC_CHANNELS.recoveryStatus) };
   const costs: OrbiDesktopApi["costs"] = { snapshot: () => ipcRenderer.invoke(IPC_CHANNELS.costSnapshot) };
-  const skills: OrbiDesktopApi["skills"] = { list: (request) => ipcRenderer.invoke(IPC_CHANNELS.skillList, request) };
+  const skills: OrbiDesktopApi["skills"] = { list: (request) => ipcRenderer.invoke(IPC_CHANNELS.skillList, request), remove: (request) => ipcRenderer.invoke(IPC_CHANNELS.skillRemove, request) };
   const updates: OrbiDesktopApi["updates"] = {
     status: () => ipcRenderer.invoke(IPC_CHANNELS.updateStatus),
     check: () => ipcRenderer.invoke(IPC_CHANNELS.updateCheck),
     download: () => ipcRenderer.invoke(IPC_CHANNELS.updateDownload),
     install: () => ipcRenderer.invoke(IPC_CHANNELS.updateInstall),
   };
+  const webhooks: OrbiDesktopApi["webhooks"] = { status: () => ipcRenderer.invoke(IPC_CHANNELS.webhookStatus), start: () => ipcRenderer.invoke(IPC_CHANNELS.webhookStart), stop: () => ipcRenderer.invoke(IPC_CHANNELS.webhookStop), copySecret: () => ipcRenderer.invoke(IPC_CHANNELS.webhookCopySecret) };
+  const voice: OrbiDesktopApi["voice"] = { policy: () => ipcRenderer.invoke(IPC_CHANNELS.voicePolicy), updatePolicy: (request) => ipcRenderer.invoke(IPC_CHANNELS.voiceUpdatePolicy, request) };
   return Object.freeze({
     agents: Object.freeze(agents),
     hires: Object.freeze(hires),
@@ -92,6 +94,8 @@ export function createDesktopApi(ipcRenderer: Pick<IpcRenderer, "invoke" | "on" 
     costs: Object.freeze(costs),
     skills: Object.freeze(skills),
     updates: Object.freeze(updates),
+    webhooks: Object.freeze(webhooks),
+    voice: Object.freeze(voice),
   });
 }
 

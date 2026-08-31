@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import type { MemoryRecord } from "../../../shared/contracts";
 import { memoryOverview, memoryRelationships } from "../command/memoryViewModel";
+import { useI18n } from "../i18n";
 
 export function MemoryPanel({ projectPath, onError }: { projectPath: string; onError(message: string): void }) {
+  const { t } = useI18n();
   const [records, setRecords] = useState<MemoryRecord[]>([]);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -10,6 +12,7 @@ export function MemoryPanel({ projectPath, onError }: { projectPath: string; onE
   const [activeQuery, setActiveQuery] = useState("");
   const [busy, setBusy] = useState(false);
   const relationships = memoryRelationships(records); const titles = new Map(records.map((record) => [record.id, record.title]));
+  const overview = memoryOverview(records, activeQuery);
 
   useEffect(() => {
     let cancelled = false;
@@ -43,14 +46,14 @@ export function MemoryPanel({ projectPath, onError }: { projectPath: string; onE
     finally { setBusy(false); }
   }
 
-  if (!projectPath) return <section className="command-panel"><div className="section-title">Project memory</div><p className="empty">Select an agent to open its project memory.</p></section>;
-  return <section className="command-panel memory-panel" aria-label="Project markdown memory">
-    <div className="section-title"><span>Project markdown memory</span><button type="button" disabled={busy} onClick={() => void clearSearch()}>Refresh</button></div>
-    <form className="memory-capture" onSubmit={capture}><input aria-label="Memory title" value={title} onChange={(event) => setTitle(event.target.value)} placeholder="Memory title" maxLength={200} required /><textarea aria-label="Memory content" value={content} onChange={(event) => setContent(event.target.value)} placeholder="Verified decision, result, or reusable context" maxLength={20000} required /><button type="submit" disabled={busy}>Capture</button></form>
-    <form className="memory-search" role="search" onSubmit={search}><input aria-label="Search project memory" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search local memory" maxLength={500} /><button type="submit" disabled={busy}>Search</button>{activeQuery ? <button type="button" disabled={busy} onClick={() => void clearSearch()}>Clear</button> : null}</form>
-    <p className="empty" aria-live="polite">{memoryOverview(records, activeQuery)}</p>
-    <div className="section-title"><span>Knowledge map</span><small>{relationships.length} verified text relationships</small></div>
-    {relationships.length ? <ul>{relationships.map((edge) => <li key={`${edge.sourceId}-${edge.targetId}`}><strong>{titles.get(edge.sourceId)} → {titles.get(edge.targetId)}</strong><small>Shared concepts: {edge.sharedTerms.join(", ")}</small></li>)}</ul> : <p className="empty">Capture related project memories to reveal deterministic connections.</p>}
-    {records.length ? <ul>{records.map((record) => <li key={record.id}><strong>{record.title}</strong><small>{record.source} · {record.authorAgentId} · {new Date(record.createdAt).toLocaleString()}{record.condensed ? " · condensed" : ""}</small><span>{record.content}</span></li>)}</ul> : null}
+  if (!projectPath) return <section className="command-panel"><div className="section-title">{t("projectMemory")}</div><p className="empty">{t("selectProjectMemory")}</p></section>;
+  return <section className="command-panel memory-panel" aria-label={t("markdownMemory")}>
+    <div className="section-title"><span>{t("markdownMemory")}</span><button type="button" disabled={busy} onClick={() => void clearSearch()}>{t("refresh")}</button></div>
+    <form className="memory-capture" onSubmit={capture}><input aria-label={t("memoryTitle")} value={title} onChange={(event) => setTitle(event.target.value)} placeholder={t("memoryTitle")} maxLength={200} required /><textarea aria-label={t("memoryContent")} value={content} onChange={(event) => setContent(event.target.value)} placeholder={t("memoryContentPlaceholder")} maxLength={20000} required /><button type="submit" disabled={busy}>{t("capture")}</button></form>
+    <form className="memory-search" role="search" onSubmit={search}><input aria-label={t("searchProjectMemory")} value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t("searchLocalMemory")} maxLength={500} /><button type="submit" disabled={busy}>{t("search")}</button>{activeQuery ? <button type="button" disabled={busy} onClick={() => void clearSearch()}>{t("clear")}</button> : null}</form>
+    <p className="empty" aria-live="polite">{overview.count ? `${overview.count} ${overview.query ? `${t("resultsFor")} “${overview.query}”` : t("projectMemories")} · ${overview.sources} ${t("sourcesCount")}${overview.condensed ? ` · ${overview.condensed} ${t("condensed")}` : ""}` : overview.query ? `${t("noMemoryResults")} “${overview.query}”` : t("noProjectMemories")}</p>
+    <div className="section-title"><span>{t("knowledgeMap")}</span><small>{relationships.length} {t("verifiedRelationships")}</small></div>
+    {relationships.length ? <ul>{relationships.map((edge) => <li key={`${edge.sourceId}-${edge.targetId}`}><strong>{titles.get(edge.sourceId)} → {titles.get(edge.targetId)}</strong><small>{t("sharedConcepts")}: {edge.sharedTerms.join(", ")}</small></li>)}</ul> : <p className="empty">{t("noRelationships")}</p>}
+    {records.length ? <ul>{records.map((record) => <li key={record.id}><strong>{record.title}</strong><small>{record.source} · {record.authorAgentId} · {new Date(record.createdAt).toLocaleString()}{record.condensed ? ` · ${t("condensed")}` : ""}</small><span>{record.content}</span></li>)}</ul> : null}
   </section>;
 }

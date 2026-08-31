@@ -4,12 +4,5 @@ export function filterCostEntries(entries: CostLedgerEntry[], projectPath: strin
   return projectPath ? entries.filter((entry) => entry.projectPath === projectPath) : entries;
 }
 
-export function costOverview(snapshot: CostLedgerSnapshot): string {
-  if (!snapshot.entries.length) return "No verified cost authorizations";
-  const projects = new Set(snapshot.entries.map((entry) => entry.projectPath)).size;
-  const visibleTotal = snapshot.entries.reduce((total, entry) => total + entry.amountUsd, 0);
-  const visible = `${snapshot.entries.length} verified entries · ${projects} project${projects === 1 ? "" : "s"} · ${usd(visibleTotal)} visible estimate`;
-  return snapshot.truncated ? `${visible} · newest bounded set` : visible;
-}
-
-function usd(value: number): string { return `$${value.toFixed(4)}`; }
+export interface CostOverview { entries: number; projects: number; visibleEstimateUsd: number; truncated: boolean; }
+export function costOverview(snapshot: CostLedgerSnapshot): CostOverview { const total = snapshot.entries.reduce((sum, entry) => sum + entry.amountUsd, 0); return { entries: snapshot.entries.length, projects: new Set(snapshot.entries.map((entry) => entry.projectPath)).size, visibleEstimateUsd: Math.round(total * 10_000) / 10_000, truncated: snapshot.truncated }; }

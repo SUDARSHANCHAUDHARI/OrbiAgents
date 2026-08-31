@@ -9,11 +9,11 @@ function mission(id: string, enabled = true): ScheduledMission {
 
 test("mission overview totals enabled estimates and real pending runs", () => {
   const pending = { ...mission("pending"), pendingRunId: "run", pendingApprovalId: "approval" };
-  assert.equal(missionOverview([mission("active"), pending, mission("off", false)]), "3 missions · 2 enabled · 1 pending runs · $0.5000 enabled-run estimate");
+  assert.deepEqual(missionOverview([mission("active"), pending, mission("off", false)]), { missions: 3, enabled: 2, pendingRuns: 1, enabledEstimateUsd: 0.5 });
 });
 
 test("mission status does not mistake an approval record for approval", () => {
-  assert.equal(missionStatus(mission("off", false)), "Disabled — no heartbeat runs");
-  assert.equal(missionStatus({ ...mission("request"), pendingRunId: "run", pendingApprovalId: "approval" }), "Approval requested — execution remains gated");
-  assert.equal(missionStatus({ ...mission("task"), pendingRunId: "run", pendingApprovalId: "approval", pendingTaskId: "task" }), "Task dispatch pending");
+  assert.equal(missionStatus(mission("off", false)), "disabled");
+  assert.equal(missionStatus({ ...mission("request"), pendingRunId: "run", pendingApprovalId: "approval" }), "approval-requested");
+  assert.equal(missionStatus({ ...mission("task"), pendingRunId: "run", pendingApprovalId: "approval", pendingTaskId: "task" }), "task-pending");
 });

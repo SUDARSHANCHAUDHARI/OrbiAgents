@@ -137,7 +137,7 @@ export interface OrbiDesktopApi {
     onExit(listener: (event: TerminalExitEvent) => void): () => void;
     onActivity(listener: (event: ActivityEvent) => void): () => void;
   };
-  hires: { copy(profile: HireProfile): Promise<void>; importFromClipboard(): Promise<HireProfile>; };
+  hires: { copy(profile: HireProfile): Promise<void>; importFromClipboard(): Promise<HireProfile>; onImported(listener: (profile: HireProfile) => void): () => void; };
   commands: {
     list(request: { agentId: string }): Promise<CommandHistoryEntry[]>;
     upsert(request: CommandHistoryEntry): Promise<CommandHistoryEntry[]>;
@@ -191,9 +191,17 @@ export interface OrbiDesktopApi {
   };
   recovery: { status(): Promise<RecoveryReport | null>; };
   costs: { snapshot(): Promise<CostLedgerSnapshot>; };
-  skills: { list(request?: { query?: string }): Promise<SkillCatalogEntry[]>; };
+  skills: { list(request?: { query?: string }): Promise<SkillCatalogEntry[]>; remove(request: { id: string }): Promise<SkillCatalogEntry[]>; };
   updates: { status(): Promise<UpdateState>; check(): Promise<UpdateState>; download(): Promise<UpdateState>; install(): Promise<void>; };
+  webhooks: { status(): Promise<WebhookStatus>; start(): Promise<WebhookStatus>; stop(): Promise<WebhookStatus>; copySecret(): Promise<void>; };
+  voice: { policy(): Promise<VoicePolicy>; updatePolicy(request: VoicePolicyUpdate): Promise<VoicePolicy>; };
 }
+
+export interface WebhookEvent { id: string; title: string; detail: string; source: string; receivedAt: number; }
+export interface WebhookStatus { enabled: boolean; endpoint?: string; events: WebhookEvent[]; }
+export type VoiceRetention = "none" | "session" | "24-hours";
+export interface VoicePolicy { consent: boolean; retention: VoiceRetention; captureEnabled: false; updatedAt: number; }
+export interface VoicePolicyUpdate { consent: boolean; retention: VoiceRetention; }
 
 export interface SkillCatalogEntry { id: string; name: string; description: string; source: string; relativePath: string; }
 export type UpdatePhase = "idle" | "checking" | "available" | "not-available" | "downloading" | "downloaded" | "error";
@@ -290,10 +298,18 @@ export const IPC_CHANNELS = {
   commandHistoryList: "commands:history:list",
   commandHistoryUpsert: "commands:history:upsert",
   skillList: "skills:list",
+  skillRemove: "skills:remove",
   hireCopy: "hires:copy",
   hireImport: "hires:import",
+  hireImported: "hires:imported",
   updateStatus: "updates:status",
   updateCheck: "updates:check",
   updateDownload: "updates:download",
   updateInstall: "updates:install",
+  webhookStatus: "webhooks:status",
+  webhookStart: "webhooks:start",
+  webhookStop: "webhooks:stop",
+  webhookCopySecret: "webhooks:secret:copy",
+  voicePolicy: "voice:policy",
+  voiceUpdatePolicy: "voice:policy:update",
 } as const;

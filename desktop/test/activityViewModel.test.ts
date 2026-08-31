@@ -15,6 +15,6 @@ test("activity filters combine verified agent, source, and normalized state fiel
 
 test("activity overview reports session-scoped signal and attention counts", () => {
   const events = [signal("1", "a", "lifecycle", "idle"), signal("2", "a", "codex-jsonl", "permission-waiting"), signal("3", "b", "claude-hook", "failed")];
-  assert.equal(activityOverview(events), "3 signals · 2 agents · 2 provider events · 2 need attention");
-  assert.equal(activityOverview([]), "No runtime signals in this desktop session");
+  assert.deepEqual(activityOverview(events), { signals: 3, agents: 2, providerEvents: 2, attention: 2 });
+  assert.deepEqual(activityOverview([]), { signals: 0, agents: 0, providerEvents: 0, attention: 0 });
 });

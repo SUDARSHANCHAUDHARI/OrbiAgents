@@ -22,3 +22,8 @@ test("skill frontmatter parser rejects missing and unbounded metadata", () => {
   assert.equal(parseSkill("# no frontmatter"), null);
   assert.equal(parseSkill(`---\nname: ${"x".repeat(121)}\ndescription: useful\n---\n`), null);
 });
+
+test("skill removal accepts only a freshly discovered directory and delegates to Trash", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "orbi-skills-remove-")); await mkdir(path.join(root, "review")); await writeFile(path.join(root, "review", "SKILL.md"), "---\nname: review\ndescription: Review work.\n---\n"); const trashed: string[] = [];
+  const catalog = new SkillCatalog([{ label: "personal", path: root }], { async trash(target) { trashed.push(target); } }); const [entry] = await catalog.list(); await catalog.remove(entry!.id); assert.deepEqual(trashed, [path.join(root, "review")]); await assert.rejects(catalog.remove("personal:missing/SKILL.md"), /not found/);
+});
