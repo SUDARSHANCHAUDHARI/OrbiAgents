@@ -1,17 +1,7 @@
 import type { ScheduledMission } from "../../../shared/contracts";
 
-export function missionOverview(missions: ScheduledMission[]): string {
-  if (!missions.length) return "No scheduled missions";
-  const enabled = missions.filter((mission) => mission.enabled).length;
-  const pending = missions.filter((mission) => mission.pendingRunId).length;
-  const authorizedEstimate = missions.filter((mission) => mission.enabled).reduce((total, mission) => total + mission.estimatedCostUsd, 0);
-  return `${missions.length} missions · ${enabled} enabled · ${pending} pending runs · $${authorizedEstimate.toFixed(4)} enabled-run estimate`;
-}
+export interface MissionOverview { missions: number; enabled: number; pendingRuns: number; enabledEstimateUsd: number; }
+export function missionOverview(missions: ScheduledMission[]): MissionOverview { const estimate = missions.filter((mission) => mission.enabled).reduce((total, mission) => total + mission.estimatedCostUsd, 0); return { missions: missions.length, enabled: missions.filter((mission) => mission.enabled).length, pendingRuns: missions.filter((mission) => mission.pendingRunId).length, enabledEstimateUsd: Math.round(estimate * 10_000) / 10_000 }; }
 
-export function missionStatus(mission: ScheduledMission): string {
-  if (!mission.enabled) return "Disabled — no heartbeat runs";
-  if (mission.pendingTaskId) return "Task dispatch pending";
-  if (mission.pendingApprovalId) return "Approval requested — execution remains gated";
-  if (mission.pendingRunId) return "Preparing approval request";
-  return "Enabled — waiting for next heartbeat";
-}
+export type MissionStatus = "disabled" | "task-pending" | "approval-requested" | "preparing-approval" | "waiting";
+export function missionStatus(mission: ScheduledMission): MissionStatus { if (!mission.enabled) return "disabled"; if (mission.pendingTaskId) return "task-pending"; if (mission.pendingApprovalId) return "approval-requested"; if (mission.pendingRunId) return "preparing-approval"; return "waiting"; }
