@@ -28,24 +28,24 @@ const UpdatesPanel = lazy(() => import("./components/UpdatesPanel").then((module
 
 type CommandView = "floor" | "terminals" | "files" | "github" | "tasks" | "messages" | "approvals" | "memory" | "skills" | "activity" | "usage" | "recovery" | "workspaces" | "settings" | "updates" | "setup";
 type CommandGroup = "Operate" | "Coordinate" | "Observe" | "System";
-interface CommandViewDefinition { id: CommandView; label: string; shortLabel: string; group: CommandGroup; description: string; }
+interface CommandViewDefinition { id: CommandView; labelKey: MessageKey; group: CommandGroup; descriptionKey: MessageKey; }
 const COMMAND_VIEWS: CommandViewDefinition[] = [
-  { id: "floor", label: "Orbital floor", shortLabel: "Floor", group: "Operate", description: "Watch the live fleet and move between operational floors." },
-  { id: "terminals", label: "Agent terminals", shortLabel: "Terminals", group: "Operate", description: "Steer a selected agent through its real terminal session." },
-  { id: "files", label: "Workspace IDE", shortLabel: "Files", group: "Operate", description: "Inspect and safely edit the selected agent workspace." },
-  { id: "github", label: "Repository intelligence", shortLabel: "Repository", group: "Operate", description: "Inspect local Git changes, history, GitHub issues, and CI through bounded read-only access." },
-  { id: "tasks", label: "Mission board", shortLabel: "Tasks", group: "Coordinate", description: "Assign dependency-aware durable work through Orbi-Prime." },
-  { id: "messages", label: "Fleet messages", shortLabel: "Messages", group: "Coordinate", description: "Inspect durable agent-to-agent delivery and replies." },
-  { id: "approvals", label: "Operator approvals", shortLabel: "Approvals", group: "Coordinate", description: "Review spend, destructive-operation, and scope-expansion gates." },
-  { id: "memory", label: "Project memory", shortLabel: "Memory", group: "Coordinate", description: "Capture and retrieve bounded project knowledge." },
-  { id: "skills", label: "Skills catalog", shortLabel: "Skills", group: "Coordinate", description: "Search installed agent capabilities without executing their instructions." },
-  { id: "activity", label: "Live activity", shortLabel: "Activity", group: "Observe", description: "Filter verified runtime signals across the active fleet." },
-  { id: "usage", label: "Cost ledger", shortLabel: "Costs", group: "Observe", description: "Audit durable authorization estimates and integrity status." },
-  { id: "recovery", label: "Recovery center", shortLabel: "Recovery", group: "Observe", description: "Inspect interrupted work without automatically restarting it." },
-  { id: "workspaces", label: "Workspace registry", shortLabel: "Workspaces", group: "Observe", description: "Find direct, isolated, and preserved agent workspaces." },
-  { id: "settings", label: "Fleet settings", shortLabel: "Settings", group: "System", description: "Configure runtimes, local models, and scheduled missions." },
-  { id: "updates", label: "Application updates", shortLabel: "Updates", group: "System", description: "Check, download, and explicitly install signed OrbiAgents releases." },
-  { id: "setup", label: "System setup", shortLabel: "Setup", group: "System", description: "Re-run read-only prerequisite and platform checks." },
+  { id: "floor", labelKey: "orbitalFloorTitle", group: "Operate", descriptionKey: "orbitalFloorDescription" },
+  { id: "terminals", labelKey: "agentTerminals", group: "Operate", descriptionKey: "agentTerminalsDescription" },
+  { id: "files", labelKey: "workspaceIde", group: "Operate", descriptionKey: "workspaceIdeDescription" },
+  { id: "github", labelKey: "repositoryIntelligence", group: "Operate", descriptionKey: "repositoryDescription" },
+  { id: "tasks", labelKey: "missionBoard", group: "Coordinate", descriptionKey: "missionBoardDescription" },
+  { id: "messages", labelKey: "fleetMessages", group: "Coordinate", descriptionKey: "fleetMessagesDescription" },
+  { id: "approvals", labelKey: "operatorApprovals", group: "Coordinate", descriptionKey: "operatorApprovalsDescription" },
+  { id: "memory", labelKey: "projectMemory", group: "Coordinate", descriptionKey: "projectMemoryDescription" },
+  { id: "skills", labelKey: "skillsCatalog", group: "Coordinate", descriptionKey: "skillsCatalogDescription" },
+  { id: "activity", labelKey: "liveActivity", group: "Observe", descriptionKey: "liveActivityDescription" },
+  { id: "usage", labelKey: "costLedger", group: "Observe", descriptionKey: "costLedgerDescription" },
+  { id: "recovery", labelKey: "recoveryCenter", group: "Observe", descriptionKey: "recoveryCenterDescription" },
+  { id: "workspaces", labelKey: "workspaceRegistry", group: "Observe", descriptionKey: "workspaceRegistryDescription" },
+  { id: "settings", labelKey: "fleetSettings", group: "System", descriptionKey: "fleetSettingsDescription" },
+  { id: "updates", labelKey: "applicationUpdates", group: "System", descriptionKey: "applicationUpdatesDescription" },
+  { id: "setup", labelKey: "systemSetup", group: "System", descriptionKey: "systemSetupDescription" },
 ];
 const COMMAND_GROUPS: CommandGroup[] = ["Operate", "Coordinate", "Observe", "System"];
 const COMMAND_VIEW_MESSAGE_KEYS: Record<CommandView, MessageKey> = { floor: "floor", terminals: "terminals", files: "files", github: "repository", tasks: "tasks", messages: "messages", approvals: "approvals", memory: "memory", skills: "skills", activity: "activity", usage: "costs", recovery: "recovery", workspaces: "workspaces", settings: "settings", updates: "updates", setup: "setup" };
@@ -129,7 +129,7 @@ export default function App() {
     <main className="app-shell">
       <header className="topbar" inert={firstRun}>
         <div>
-          <span className="eyebrow">ORBITAL AGENT OPERATIONS</span>
+          <span className="eyebrow">{t("orbitalAgentOperations")}</span>
           <h1><i aria-hidden="true">OA</i> OrbiAgents</h1>
           <small className="topbar-subtitle">{t("subtitle")}</small>
         </div>
@@ -144,28 +144,28 @@ export default function App() {
           <nav className="command-tabs" aria-label={t("commandCenter")} role="tablist">
             {COMMAND_GROUPS.map((group) => <div className="command-tab-group" key={group}><span>{t(COMMAND_GROUP_MESSAGE_KEYS[group])}</span><div>{COMMAND_VIEWS.filter((view) => view.group === group).map((view) => <CommandTab key={view.id} {...view} translatedLabel={t(COMMAND_VIEW_MESSAGE_KEYS[view.id])} active={commandView} select={setCommandView} />)}</div></div>)}
           </nav>
-          <header className="command-context"><div><span>{activeView.group}</span><h2>{activeView.label}</h2></div><p>{activeView.description}</p>{selected ? <small>{selected.name} · {selected.runtimeId} · {selected.status}</small> : <small>No agent selected</small>}</header>
+          <header className="command-context"><div><span>{t(COMMAND_GROUP_MESSAGE_KEYS[activeView.group])}</span><h2>{t(activeView.labelKey)}</h2></div><p>{t(activeView.descriptionKey)}</p>{selected ? <small>{selected.name} · {selected.runtimeId} · {selected.status}</small> : <small>{t("noAgentSelected")}</small>}</header>
           <section id={`command-${commandView}`} className="command-view" role="tabpanel" aria-labelledby={`command-tab-${commandView}`}>
             <Suspense fallback={<CommandFallback label={`${t("loading")}…`} />}>
-            {commandView === "floor" ? <Suspense fallback={<CommandFallback label="Loading pixel office…" />}><PixelOffice agents={agents} activity={activity} hive={hiveSnapshot} selectedId={selectedId} onSelect={setSelectedId} /></Suspense> : null}
+            {commandView === "floor" ? <Suspense fallback={<CommandFallback label={`${t("loadingPixelOffice")}…`} />}><PixelOffice agents={agents} activity={activity} hive={hiveSnapshot} selectedId={selectedId} onSelect={setSelectedId} /></Suspense> : null}
             {commandView === "terminals" ? <>
-              <div className="agent-detail" aria-label="Selected agent details">{selected ? <><strong>{selected.name}</strong><span>{selected.runtimeId} · {selected.status}</span><span>{selected.workspace.status} workspace · {selected.cwd}</span></> : <span>No agent selected</span>}</div>
-              <div className="terminal-toolbar"><span>{selected ? `${selected.name} · ${selected.cwd}` : "Terminal"}</span><button type="button" onClick={() => void stop()} disabled={!selected || selected.status !== "running"}>Stop</button></div>
+              <div className="agent-detail" aria-label={t("selectedAgentDetails")}>{selected ? <><strong>{selected.name}</strong><span>{selected.runtimeId} · {selected.status}</span><span>{selected.workspace.status} {t("workspaceSuffix")} · {selected.cwd}</span></> : <span>{t("noAgentSelected")}</span>}</div>
+              <div className="terminal-toolbar"><span>{selected ? `${selected.name} · ${selected.cwd}` : t("terminal")}</span><button type="button" onClick={() => void stop()} disabled={!selected || selected.status !== "running"}>{t("stop")}</button></div>
               <CommandComposer agent={selected} onError={(message) => setError(message || null)} />
-              <Suspense fallback={<CommandFallback label="Loading terminal…" />}><TerminalPanel agent={selected} /></Suspense>
+              <Suspense fallback={<CommandFallback label={`${t("loadingTerminal")}…`} />}><TerminalPanel agent={selected} /></Suspense>
               {selected?.workspace.status === "preserved" ? <WorkspaceReview key={`${selected.id}-${selected.exitedAt ?? 0}`} agent={selected} onChanged={refresh} onError={(message) => setError(message || null)} /> : null}
             </> : null}
-            {commandView === "files" ? <Suspense fallback={<CommandFallback label="Loading workspace editor…" />}><FileEditorPanel agentId={selectedId} onError={(message) => setError(message || null)} /></Suspense> : null}
+            {commandView === "files" ? <Suspense fallback={<CommandFallback label={`${t("loadingWorkspaceEditor")}…`} />}><FileEditorPanel agentId={selectedId} onError={(message) => setError(message || null)} /></Suspense> : null}
             {commandView === "github" ? <GitHubPanel agentId={selectedId} onError={(message) => setError(message || null)} /> : null}
             {commandView === "tasks" ? <HivePanel projectPath={selectedProject} agents={agents} onSnapshot={setHiveSnapshot} onError={(message) => setError(message || null)} /> : null}
-            {commandView === "messages" ? <CommandList title="Prime inbox" empty="No durable messages for this project." items={hiveSnapshot?.primeInbox.map((message) => ({ id: message.id, title: `${message.senderAgentId} → ${message.recipientAgentId}`, meta: `${message.kind} · ${message.status}`, detail: message.body })) ?? []} /> : null}
+            {commandView === "messages" ? <CommandList title={t("primeInbox")} empty={t("noDurableMessages")} items={hiveSnapshot?.primeInbox.map((message) => ({ id: message.id, title: `${message.senderAgentId} → ${message.recipientAgentId}`, meta: `${message.kind} · ${message.status}`, detail: message.body })) ?? []} /> : null}
             {commandView === "approvals" ? <ApprovalPanel projectPath={selectedProject} snapshot={hiveSnapshot} onSnapshot={setHiveSnapshot} onError={(message) => setError(message || null)} /> : null}
             {commandView === "memory" ? <MemoryPanel projectPath={selectedProject} onError={(message) => setError(message || null)} /> : null}
             {commandView === "skills" ? <SkillsPanel onError={(message) => setError(message || null)} /> : null}
             {commandView === "activity" ? <ActivityOperationsPanel events={activity} agents={agents} /> : null}
             {commandView === "usage" ? <CostPanel events={activity} agents={agents} onError={(message) => setError(message || null)} /> : null}
             {commandView === "recovery" ? <RecoveryPanel onError={(message) => setError(message || null)} /> : null}
-            {commandView === "workspaces" ? <CommandList title="Agent workspaces" empty="No agent workspaces recorded." items={agents.map((agent) => ({ id: agent.id, title: agent.name, meta: `${agent.workspace.status} · ${agent.workspace.branch ?? "direct"}`, detail: agent.workspace.path }))} /> : null}
+            {commandView === "workspaces" ? <CommandList title={t("agentWorkspaces")} empty={t("noAgentWorkspaces")} items={agents.map((agent) => ({ id: agent.id, title: agent.name, meta: `${agent.workspace.status} · ${agent.workspace.branch ?? t("direct")}`, detail: agent.workspace.path }))} /> : null}
             {commandView === "settings" ? <div className="settings-panels"><LocalePanel /><ProviderAdapterPanel onChanged={setRuntimeAdapters} onError={(message) => setError(message || null)} /><LocalModelPanel onError={(message) => setError(message || null)} /><MissionPanel projectPath={selectedProject} agents={agents} onError={(message) => setError(message || null)} /></div> : null}
             {commandView === "updates" ? <UpdatesPanel onError={(message) => setError(message || null)} /> : null}
             {commandView === "setup" && onboarding ? <OnboardingPanel status={onboarding} onChanged={setOnboarding} onError={(message) => setError(message || null)} /> : null}
