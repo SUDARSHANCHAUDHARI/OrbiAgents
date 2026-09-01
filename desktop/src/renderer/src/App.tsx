@@ -27,6 +27,7 @@ const SkillsPanel = lazy(() => import("./components/SkillsPanel").then((module) 
 const UpdatesPanel = lazy(() => import("./components/UpdatesPanel").then((module) => ({ default: module.UpdatesPanel })));
 const WebhookPanel = lazy(() => import("./components/WebhookPanel").then((module) => ({ default: module.WebhookPanel })));
 const VoicePolicyPanel = lazy(() => import("./components/VoicePolicyPanel").then((module) => ({ default: module.VoicePolicyPanel })));
+const RemoteCatalogPanel = lazy(() => import("./components/RemoteCatalogPanel").then((module) => ({ default: module.RemoteCatalogPanel })));
 
 type CommandView = "floor" | "terminals" | "files" | "github" | "tasks" | "messages" | "approvals" | "memory" | "skills" | "activity" | "usage" | "recovery" | "workspaces" | "settings" | "updates" | "setup";
 type CommandGroup = "Operate" | "Coordinate" | "Observe" | "System";
@@ -168,7 +169,7 @@ export default function App() {
             {commandView === "usage" ? <CostPanel events={activity} agents={agents} onError={(message) => setError(message || null)} /> : null}
             {commandView === "recovery" ? <RecoveryPanel onError={(message) => setError(message || null)} /> : null}
             {commandView === "workspaces" ? <CommandList title={t("agentWorkspaces")} empty={t("noAgentWorkspaces")} items={agents.map((agent) => ({ id: agent.id, title: agent.name, meta: `${agent.workspace.status} · ${agent.workspace.branch ?? t("direct")}`, detail: agent.workspace.path }))} /> : null}
-            {commandView === "settings" ? <div className="settings-panels"><LocalePanel /><WebhookPanel onError={(message) => setError(message || null)} /><VoicePolicyPanel onError={(message) => setError(message || null)} /><ProviderAdapterPanel onChanged={setRuntimeAdapters} onError={(message) => setError(message || null)} /><LocalModelPanel onError={(message) => setError(message || null)} /><MissionPanel projectPath={selectedProject} agents={agents} onError={(message) => setError(message || null)} /></div> : null}
+            {commandView === "settings" ? <div className="settings-panels"><LocalePanel /><RemoteCatalogPanel onError={(message) => setError(message || null)} /><WebhookPanel onError={(message) => setError(message || null)} /><VoicePolicyPanel onError={(message) => setError(message || null)} /><ProviderAdapterPanel onChanged={setRuntimeAdapters} onError={(message) => setError(message || null)} /><LocalModelPanel onError={(message) => setError(message || null)} /><MissionPanel projectPath={selectedProject} agents={agents} onError={(message) => setError(message || null)} /></div> : null}
             {commandView === "updates" ? <UpdatesPanel onError={(message) => setError(message || null)} /> : null}
             {commandView === "setup" && onboarding ? <OnboardingPanel status={onboarding} onChanged={setOnboarding} onError={(message) => setError(message || null)} /> : null}
             </Suspense>

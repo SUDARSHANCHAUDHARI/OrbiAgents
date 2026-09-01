@@ -195,6 +195,7 @@ export interface OrbiDesktopApi {
   updates: { status(): Promise<UpdateState>; check(): Promise<UpdateState>; download(): Promise<UpdateState>; install(): Promise<void>; };
   webhooks: { status(): Promise<WebhookStatus>; start(): Promise<WebhookStatus>; stop(): Promise<WebhookStatus>; copySecret(): Promise<void>; };
   voice: { policy(): Promise<VoicePolicy>; updatePolicy(request: VoicePolicyUpdate): Promise<VoicePolicy>; };
+  catalogs: { review(request: RemoteCatalogReviewRequest): Promise<RemoteCatalogReview>; };
 }
 
 export interface WebhookEvent { id: string; title: string; detail: string; source: string; receivedAt: number; }
@@ -202,6 +203,10 @@ export interface WebhookStatus { enabled: boolean; endpoint?: string; events: We
 export type VoiceRetention = "none" | "session" | "24-hours";
 export interface VoicePolicy { consent: boolean; retention: VoiceRetention; captureEnabled: false; updatedAt: number; }
 export interface VoicePolicyUpdate { consent: boolean; retention: VoiceRetention; }
+export type RemoteCatalogEntryKind = "skill" | "hire-profile";
+export interface RemoteCatalogEntry { id: string; kind: RemoteCatalogEntryKind; name: string; description: string; version: string; artifactUrl: string; sha256: string; size: number; }
+export interface RemoteCatalogReviewRequest { url: string; publisherId: string; keyId: string; publicKey: string; }
+export interface RemoteCatalogReview { publisherId: string; keyId: string; issuedAt: string; expiresAt: string; entries: RemoteCatalogEntry[]; fetchedAt: number; fromCache: boolean; }
 
 export interface SkillCatalogEntry { id: string; name: string; description: string; source: string; relativePath: string; }
 export type UpdatePhase = "idle" | "checking" | "available" | "not-available" | "downloading" | "downloaded" | "error";
@@ -312,4 +317,5 @@ export const IPC_CHANNELS = {
   webhookCopySecret: "webhooks:secret:copy",
   voicePolicy: "voice:policy",
   voiceUpdatePolicy: "voice:policy:update",
+  catalogReview: "catalogs:review",
 } as const;

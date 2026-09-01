@@ -29,6 +29,7 @@ import { decodeHireProfile } from "./agents/hireProfileCodec";
 import type { HireProfile } from "../shared/contracts";
 import { WebhookReceiver } from "./webhooks/webhookReceiver";
 import { VoicePolicyStore } from "./voice/voicePolicyStore";
+import { RemoteCatalogClient } from "./catalog/remoteCatalogClient";
 
 let manager: PtyManager | null = null;
 let activityServer: ActivityHookServer | null = null;
@@ -120,11 +121,12 @@ async function createWindow(): Promise<void> {
   const webhooks = new WebhookReceiver();
   const voice = new VoicePolicyStore(join(userData, "voice-policy.json"));
   await voice.load();
+  const catalogs = new RemoteCatalogClient();
   const projectPaths = [...new Set(recovered.map((session) => session.workspace.sourcePath))];
   const recovery = new RecoveryStore(join(userData, "recovery.json"));
   await recovery.create(loadedMetadata.interrupted, await Promise.all(projectPaths.map((projectPath) => hive.recoveryState(projectPath))));
   hive.startHeartbeat();
-  registerIpc(window, windowManager, hive, runtimeAdapters, localModels, localModelClient, workspaceFiles, github, git, prerequisites, onboarding, recovery, commandHistory, skills, updates, webhooks, voice);
+  registerIpc(window, windowManager, hive, runtimeAdapters, localModels, localModelClient, workspaceFiles, github, git, prerequisites, onboarding, recovery, commandHistory, skills, updates, webhooks, voice, catalogs);
 
   window.once("ready-to-show", () => { window.show(); if (pendingHire) { window.webContents.send(IPC_CHANNELS.hireImported, pendingHire); pendingHire = null; } });
   window.once("closed", () => {
