@@ -1,0 +1,14 @@
+import { useEffect, useState } from "react";
+import type { SlackStatus } from "../../../shared/contracts";
+import { useI18n } from "../i18n";
+import { PixelButton } from "./ui/PixelButton";
+import { PixelPanel } from "./ui/PixelPanel";
+
+export function SlackPanel({ onError }: { onError(message: string): void }) {
+  const { t } = useI18n(); const [status, setStatus] = useState<SlackStatus | null>(null); const [channel, setChannel] = useState(""); const [message, setMessage] = useState(""); const [busy, setBusy] = useState(false); const [notice, setNotice] = useState("");
+  useEffect(() => { void window.orbi.slack.status().then(setStatus).catch((error) => onError(text(error))); }, []);
+  async function action(run: () => Promise<SlackStatus>, notice: string) { setBusy(true); onError(""); try { setStatus(await run()); setNotice(notice); } catch (error) { onError(text(error)); } finally { setBusy(false); } }
+  async function send(event: React.FormEvent) { event.preventDefault(); if (!window.confirm(t("slackSendConfirm"))) return; setBusy(true); onError(""); try { await window.orbi.slack.send({ channel, text: message }); setMessage(""); setNotice(t("slackSent")); } catch (error) { onError(text(error)); } finally { setBusy(false); } }
+  return <PixelPanel title={t("slackIntegration")} eyebrow={t("leastPrivilege")} ariaLabel={t("slackIntegration")}><p className="skills-policy">{t("slackPolicy")}</p><p className="mission-policy">{status?.configured ? `${status.team ?? t("slackConfigured")} · ${status.botUser ?? t("encryptedKey")}` : t("slackNotConfigured")}</p><div className="update-actions"><PixelButton type="button" variant="primary" disabled={busy} onClick={() => void action(() => window.orbi.slack.saveTokenFromClipboard(), t("slackTokenSaved"))}>{t("saveSlackToken")}</PixelButton><PixelButton type="button" variant="secondary" disabled={busy || !status?.configured} onClick={() => void action(() => window.orbi.slack.test(), t("slackConnected"))}>{t("testSlack")}</PixelButton><PixelButton type="button" variant="danger" disabled={busy || !status?.configured} onClick={() => void action(() => window.orbi.slack.clear(), t("slackCleared"))}>{t("clearSlack")}</PixelButton></div><form className="mission-create" onSubmit={send}><input aria-label={t("slackChannelId")} value={channel} onChange={(event) => setChannel(event.target.value.toUpperCase())} placeholder="C0123456789" pattern="[A-Z][A-Z0-9]{1,31}" maxLength={32} required /><textarea aria-label={t("slackMessage")} value={message} onChange={(event) => setMessage(event.target.value)} maxLength={4000} required /><PixelButton type="submit" variant="primary" disabled={busy || !status?.configured}>{t("sendSlack")}</PixelButton></form>{notice ? <p role="status" className="mission-policy">{notice}</p> : null}</PixelPanel>;
+}
+function text(error: unknown): string { return error instanceof Error ? error.message : String(error); }

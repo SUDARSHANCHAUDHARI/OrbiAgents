@@ -32,6 +32,8 @@ import { VoicePolicyStore } from "./voice/voicePolicyStore";
 import { RemoteCatalogClient } from "./catalog/remoteCatalogClient";
 import { RemoteSkillInstaller } from "./skills/remoteSkillInstaller";
 import { RemoteHireGallery } from "./agents/remoteHireGallery";
+import { SlackStore } from "./slack/slackStore";
+import { SlackClient } from "./slack/slackClient";
 
 let manager: PtyManager | null = null;
 let activityServer: ActivityHookServer | null = null;
@@ -42,7 +44,7 @@ function acceptHireLink(value: string): void { try { const profile = decodeHireP
 
 async function createWindow(): Promise<void> {
   const userData = app.getPath("userData");
-  const migrator = new AppDataMigrator(userData, ["agents.json", "runtime-adapters.json", "local-model-endpoints.json", "onboarding.json", "recovery.json", "command-history.json", "voice-policy.json", "costs", "hive", "skills"], [{ fromVersion: 0, toVersion: 1, async migrate() { /* Version 1 adopts existing unversioned state without rewriting it. */ } }]);
+  const migrator = new AppDataMigrator(userData, ["agents.json", "runtime-adapters.json", "local-model-endpoints.json", "onboarding.json", "recovery.json", "command-history.json", "voice-policy.json", "slack.json", "costs", "hive", "skills"], [{ fromVersion: 0, toVersion: 1, async migrate() { /* Version 1 adopts existing unversioned state without rewriting it. */ } }]);
   await migrator.run(1);
   const window = new BrowserWindow({
     width: 1280,
@@ -83,6 +85,8 @@ async function createWindow(): Promise<void> {
   const catalogs = new RemoteCatalogClient();
   const remoteSkills = new RemoteSkillInstaller(catalogs, join(userData, "skills"));
   const remoteHires = new RemoteHireGallery(catalogs);
+  const slackStore = new SlackStore(join(userData, "slack.json"), { isAvailable: () => safeStorage.isEncryptionAvailable(), encrypt: (value) => safeStorage.encryptString(value), decrypt: (value) => safeStorage.decryptString(value) });
+  await slackStore.load(); const slack = new SlackClient(slackStore);
   const workspaceManager = new WorkspaceManager(join(userData, "worktrees"));
   const loadedMetadata = await metadata.loadWithRecovery();
   const loaded = loadedMetadata.sessions;
@@ -131,7 +135,7 @@ async function createWindow(): Promise<void> {
   const recovery = new RecoveryStore(join(userData, "recovery.json"));
   await recovery.create(loadedMetadata.interrupted, await Promise.all(projectPaths.map((projectPath) => hive.recoveryState(projectPath))));
   hive.startHeartbeat();
-  registerIpc(window, windowManager, hive, runtimeAdapters, localModels, localModelClient, workspaceFiles, github, git, prerequisites, onboarding, recovery, commandHistory, skills, updates, webhooks, voice, catalogs, remoteSkills, remoteHires);
+  registerIpc(window, windowManager, hive, runtimeAdapters, localModels, localModelClient, workspaceFiles, github, git, prerequisites, onboarding, recovery, commandHistory, skills, updates, webhooks, voice, catalogs, remoteSkills, remoteHires, slackStore, slack);
 
   window.once("ready-to-show", () => { window.show(); if (pendingHire) { window.webContents.send(IPC_CHANNELS.hireImported, pendingHire); pendingHire = null; } });
   window.once("closed", () => {

@@ -1,7 +1,7 @@
 :root { color-scheme: dark; font-family: var(--orbi-font-ui); background: var(--orbi-void); color: var(--orbi-ink); }
 * { box-sizing: border-box; }
 body { margin: 0; min-width: 900px; min-height: 100vh; background-color: var(--orbi-void); background-image: linear-gradient(rgba(94, 234, 212, .025) 1px, transparent 1px), linear-gradient(90deg, rgba(94, 234, 212, .025) 1px, transparent 1px); background-size: 16px 16px; }
-button, input, select { font: inherit; }
+button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
 :where(button, input, select, textarea, [tabindex]):focus-visible { outline: 2px solid var(--orbi-energy); outline-offset: 3px; }
 .app-shell { height: 100vh; display: grid; grid-template-rows: auto auto 1fr; }
