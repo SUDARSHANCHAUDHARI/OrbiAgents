@@ -3,7 +3,7 @@ import { validateAgentName, validateAgentProfile, validateRuntimeId } from "../s
 
 const PREFIX = "orbiagents://hire"; const MAX_LINK = 8_192;
 export function encodeHireProfile(value: HireProfile): string {
-  const profile = validate(value); const payload = Buffer.from(JSON.stringify({ version: 1, ...profile }), "utf8").toString("base64url");
+  const profile = validateHireProfile(value); const payload = Buffer.from(JSON.stringify({ version: 1, ...profile }), "utf8").toString("base64url");
   return `${PREFIX}?profile=${payload}`;
 }
 export function decodeHireProfile(value: unknown): HireProfile {
@@ -13,9 +13,9 @@ export function decodeHireProfile(value: unknown): HireProfile {
   const encoded = url.searchParams.get("profile"); if (!encoded || !/^[A-Za-z0-9_-]+$/.test(encoded)) throw new Error("Hire link is invalid");
   let parsed: unknown; try { parsed = JSON.parse(Buffer.from(encoded, "base64url").toString("utf8")); } catch { throw new Error("Hire link payload is invalid"); }
   if (!parsed || typeof parsed !== "object" || (parsed as Record<string, unknown>).version !== 1) throw new Error("Unsupported hire link version");
-  return validate(parsed);
+  return validateHireProfile(parsed);
 }
-function validate(value: unknown): HireProfile {
+export function validateHireProfile(value: unknown): HireProfile {
   if (!value || typeof value !== "object") throw new Error("Hire profile is invalid"); const row = value as Record<string, unknown>;
   const allowed = new Set(["version", "name", "runtimeId", "isolateWorkspace", "profile"]); if (Object.keys(row).some((key) => !allowed.has(key))) throw new Error("Hire profile contains unsupported fields");
   if (typeof row.isolateWorkspace !== "boolean") throw new Error("Hire workspace mode is invalid");

@@ -31,6 +31,7 @@ import { WebhookReceiver } from "./webhooks/webhookReceiver";
 import { VoicePolicyStore } from "./voice/voicePolicyStore";
 import { RemoteCatalogClient } from "./catalog/remoteCatalogClient";
 import { RemoteSkillInstaller } from "./skills/remoteSkillInstaller";
+import { RemoteHireGallery } from "./agents/remoteHireGallery";
 
 let manager: PtyManager | null = null;
 let activityServer: ActivityHookServer | null = null;
@@ -81,6 +82,7 @@ async function createWindow(): Promise<void> {
   ], { trash: (target) => shell.trashItem(target) });
   const catalogs = new RemoteCatalogClient();
   const remoteSkills = new RemoteSkillInstaller(catalogs, join(userData, "skills"));
+  const remoteHires = new RemoteHireGallery(catalogs);
   const workspaceManager = new WorkspaceManager(join(userData, "worktrees"));
   const loadedMetadata = await metadata.loadWithRecovery();
   const loaded = loadedMetadata.sessions;
@@ -129,7 +131,7 @@ async function createWindow(): Promise<void> {
   const recovery = new RecoveryStore(join(userData, "recovery.json"));
   await recovery.create(loadedMetadata.interrupted, await Promise.all(projectPaths.map((projectPath) => hive.recoveryState(projectPath))));
   hive.startHeartbeat();
-  registerIpc(window, windowManager, hive, runtimeAdapters, localModels, localModelClient, workspaceFiles, github, git, prerequisites, onboarding, recovery, commandHistory, skills, updates, webhooks, voice, catalogs, remoteSkills);
+  registerIpc(window, windowManager, hive, runtimeAdapters, localModels, localModelClient, workspaceFiles, github, git, prerequisites, onboarding, recovery, commandHistory, skills, updates, webhooks, voice, catalogs, remoteSkills, remoteHires);
 
   window.once("ready-to-show", () => { window.show(); if (pendingHire) { window.webContents.send(IPC_CHANNELS.hireImported, pendingHire); pendingHire = null; } });
   window.once("closed", () => {
