@@ -30,6 +30,8 @@ afterPack: scripts/after-pack.cjs
 mac:
   icon: icon.icns
   category: public.app-category.developer-tools
+  extendInfo:
+    NSMicrophoneUsageDescription: OrbiAgents records audio only after explicit consent for private, local transcription.
   target:
     - dmg
     - zip

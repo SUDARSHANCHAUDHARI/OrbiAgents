@@ -1,4 +1,4 @@
-import { clipboard, ipcMain, type BrowserWindow } from "electron";
+import { clipboard, dialog, ipcMain, type BrowserWindow } from "electron";
 import { IPC_CHANNELS } from "../../shared/contracts";
 import type { PtyManager } from "../pty/ptyManager";
 import type { HiveCoordinator } from "../hive/hiveCoordinator";
@@ -16,6 +16,7 @@ import type { SkillCatalog } from "../skills/skillCatalog";
 import type { UpdateService } from "../updates/updateService";
 import type { WebhookReceiver } from "../webhooks/webhookReceiver";
 import type { VoicePolicyStore } from "../voice/voicePolicyStore";
+import type { LocalTranscriptionService } from "../voice/localTranscriptionService";
 import type { RemoteCatalogClient } from "../catalog/remoteCatalogClient";
 import type { RemoteSkillInstaller } from "../skills/remoteSkillInstaller";
 import type { RemoteHireGallery } from "../agents/remoteHireGallery";
@@ -32,7 +33,7 @@ import {
   validateWorkspace,
 } from "../security/validators";
 
-export function registerIpc(window: BrowserWindow, manager: PtyManager, hive: HiveCoordinator, runtimeAdapters: RuntimeAdapterStore, localModels: LocalModelEndpointStore, localModelClient: LocalModelClient, files: WorkspaceFileService, github: GitHubIngestion, git: GitWorkspaceService, prerequisites: PrerequisiteChecker, onboarding: OnboardingStore, recovery: RecoveryStore, commandHistory: CommandHistoryStore, skills: SkillCatalog, updates: UpdateService, webhooks: WebhookReceiver, voice: VoicePolicyStore, catalogs: RemoteCatalogClient, remoteSkills: RemoteSkillInstaller, remoteHires: RemoteHireGallery, slackStore: SlackStore, slack: SlackClient): () => void {
+export function registerIpc(window: BrowserWindow, manager: PtyManager, hive: HiveCoordinator, runtimeAdapters: RuntimeAdapterStore, localModels: LocalModelEndpointStore, localModelClient: LocalModelClient, files: WorkspaceFileService, github: GitHubIngestion, git: GitWorkspaceService, prerequisites: PrerequisiteChecker, onboarding: OnboardingStore, recovery: RecoveryStore, commandHistory: CommandHistoryStore, skills: SkillCatalog, updates: UpdateService, webhooks: WebhookReceiver, voice: VoicePolicyStore, transcription: LocalTranscriptionService, catalogs: RemoteCatalogClient, remoteSkills: RemoteSkillInstaller, remoteHires: RemoteHireGallery, slackStore: SlackStore, slack: SlackClient): () => void {
   const assertTrustedSender = (senderId: number) => {
     if (senderId !== window.webContents.id) throw new Error("Untrusted IPC sender");
   };
@@ -175,7 +176,10 @@ export function registerIpc(window: BrowserWindow, manager: PtyManager, hive: Hi
   ipcMain.handle(IPC_CHANNELS.webhookStop, (event) => { assertTrustedSender(event.sender.id); return webhooks.stop(); });
   ipcMain.handle(IPC_CHANNELS.webhookCopySecret, (event) => { assertTrustedSender(event.sender.id); clipboard.writeText(webhooks.copySecret()); });
   ipcMain.handle(IPC_CHANNELS.voicePolicy, (event) => { assertTrustedSender(event.sender.id); return voice.get(); });
-  ipcMain.handle(IPC_CHANNELS.voiceUpdatePolicy, (event, value: unknown) => { assertTrustedSender(event.sender.id); return voice.update(value); });
+  ipcMain.handle(IPC_CHANNELS.voiceUpdatePolicy, async (event, value: unknown) => { assertTrustedSender(event.sender.id); const policy = await voice.update(value); if (!policy.consent || policy.retention === "none") await transcription.clearRetained(); return policy; });
+  ipcMain.handle(IPC_CHANNELS.voiceStatus, (event) => { assertTrustedSender(event.sender.id); return transcription.status(); });
+  ipcMain.handle(IPC_CHANNELS.voiceChooseModel, async (event) => { assertTrustedSender(event.sender.id); const result = await dialog.showOpenDialog(window, { title: "Choose whisper.cpp GGML model", properties: ["openFile"], filters: [{ name: "GGML model", extensions: ["bin"] }] }); return result.canceled || !result.filePaths[0] ? transcription.status() : transcription.setModel(result.filePaths[0]); });
+  ipcMain.handle(IPC_CHANNELS.voiceTranscribe, (event, value: unknown) => { assertTrustedSender(event.sender.id); return transcription.transcribe(value); });
   ipcMain.handle(IPC_CHANNELS.catalogReview, (event, value: unknown) => { assertTrustedSender(event.sender.id); return catalogs.review(value); });
   ipcMain.handle(IPC_CHANNELS.catalogInstallSkill, (event, value: unknown) => { assertTrustedSender(event.sender.id); return remoteSkills.install(value); });
   ipcMain.handle(IPC_CHANNELS.catalogImportHire, (event, value: unknown) => { assertTrustedSender(event.sender.id); return remoteHires.importProfile(value); });

@@ -5,10 +5,11 @@ import type { VoicePolicy, VoiceRetention } from "../../shared/contracts";
 
 const DEFAULT_POLICY: VoicePolicy = { consent: false, retention: "none", captureEnabled: false, updatedAt: 0 };
 export class VoicePolicyStore {
-  private policy = DEFAULT_POLICY; private queue = Promise.resolve();
+  private policy = DEFAULT_POLICY; private queue = Promise.resolve(); private runtimeAvailable = false;
   constructor(private readonly filePath: string, private readonly now: () => number = Date.now) {}
   async load(): Promise<VoicePolicy> { try { this.policy = parse(JSON.parse(await readFile(this.filePath, "utf8"))); } catch { this.policy = DEFAULT_POLICY; } return this.get(); }
-  get(): VoicePolicy { return { ...this.policy }; }
+  get(): VoicePolicy { return { ...this.policy, captureEnabled: this.policy.consent && this.runtimeAvailable }; }
+  setRuntimeAvailable(available: boolean): VoicePolicy { this.runtimeAvailable = available; return this.get(); }
   async update(value: unknown): Promise<VoicePolicy> {
     const request = value as Partial<VoicePolicy>; if (!value || typeof value !== "object" || typeof request.consent !== "boolean" || !isRetention(request.retention)) throw new Error("Voice policy is invalid");
     const next: VoicePolicy = { consent: request.consent, retention: request.consent ? request.retention : "none", captureEnabled: false, updatedAt: this.now() };
