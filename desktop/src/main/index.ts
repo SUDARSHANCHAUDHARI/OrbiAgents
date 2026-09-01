@@ -29,6 +29,7 @@ import { decodeHireProfile } from "./agents/hireProfileCodec";
 import type { HireProfile } from "../shared/contracts";
 import { WebhookReceiver } from "./webhooks/webhookReceiver";
 import { VoicePolicyStore } from "./voice/voicePolicyStore";
+import { LocalTranscriptionService } from "./voice/localTranscriptionService";
 import { RemoteCatalogClient } from "./catalog/remoteCatalogClient";
 import { RemoteSkillInstaller } from "./skills/remoteSkillInstaller";
 import { RemoteHireGallery } from "./agents/remoteHireGallery";
@@ -44,7 +45,7 @@ function acceptHireLink(value: string): void { try { const profile = decodeHireP
 
 async function createWindow(): Promise<void> {
   const userData = app.getPath("userData");
-  const migrator = new AppDataMigrator(userData, ["agents.json", "runtime-adapters.json", "local-model-endpoints.json", "onboarding.json", "recovery.json", "command-history.json", "voice-policy.json", "slack.json", "costs", "hive", "skills"], [{ fromVersion: 0, toVersion: 1, async migrate() { /* Version 1 adopts existing unversioned state without rewriting it. */ } }]);
+  const migrator = new AppDataMigrator(userData, ["agents.json", "runtime-adapters.json", "local-model-endpoints.json", "onboarding.json", "recovery.json", "command-history.json", "voice-policy.json", "voice-model.json", "voice-transcripts", "slack.json", "costs", "hive", "skills"], [{ fromVersion: 0, toVersion: 1, async migrate() { /* Version 1 adopts existing unversioned state without rewriting it. */ } }]);
   await migrator.run(1);
   const window = new BrowserWindow({
     width: 1280,
@@ -131,11 +132,13 @@ async function createWindow(): Promise<void> {
   const webhooks = new WebhookReceiver();
   const voice = new VoicePolicyStore(join(userData, "voice-policy.json"));
   await voice.load();
+  const transcription = new LocalTranscriptionService(join(userData, "voice-model.json"), join(userData, "voice-transcripts"), voice);
+  await transcription.load();
   const projectPaths = [...new Set(recovered.map((session) => session.workspace.sourcePath))];
   const recovery = new RecoveryStore(join(userData, "recovery.json"));
   await recovery.create(loadedMetadata.interrupted, await Promise.all(projectPaths.map((projectPath) => hive.recoveryState(projectPath))));
   hive.startHeartbeat();
-  registerIpc(window, windowManager, hive, runtimeAdapters, localModels, localModelClient, workspaceFiles, github, git, prerequisites, onboarding, recovery, commandHistory, skills, updates, webhooks, voice, catalogs, remoteSkills, remoteHires, slackStore, slack);
+  registerIpc(window, windowManager, hive, runtimeAdapters, localModels, localModelClient, workspaceFiles, github, git, prerequisites, onboarding, recovery, commandHistory, skills, updates, webhooks, voice, transcription, catalogs, remoteSkills, remoteHires, slackStore, slack);
 
   window.once("ready-to-show", () => { window.show(); if (pendingHire) { window.webContents.send(IPC_CHANNELS.hireImported, pendingHire); pendingHire = null; } });
   window.once("closed", () => {
@@ -150,7 +153,7 @@ async function createWindow(): Promise<void> {
   });
   window.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
   window.webContents.on("will-navigate", (event) => event.preventDefault());
-  window.webContents.session.setPermissionRequestHandler((_webContents, _permission, callback) => callback(false));
+  window.webContents.session.setPermissionRequestHandler((webContents, permission, callback, details) => callback(webContents.id === window.webContents.id && permission === "media" && "mediaTypes" in details && details.mediaTypes?.every((type) => type === "audio") === true && voice.get().captureEnabled));
 
   if (process.env.ELECTRON_RENDERER_URL) {
     void window.loadURL(process.env.ELECTRON_RENDERER_URL);

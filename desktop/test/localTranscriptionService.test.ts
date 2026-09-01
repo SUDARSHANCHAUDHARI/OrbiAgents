@@ -1,0 +1,32 @@
+import assert from "node:assert/strict";
+import { chmod, mkdtemp, readFile, readdir, writeFile } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import test from "node:test";
+import { LocalTranscriptionService } from "../src/main/voice/localTranscriptionService";
+import { VoicePolicyStore } from "../src/main/voice/voicePolicyStore";
+
+test("local voice requires consent and retains only the configured transcript lifetime", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "orbi-local-voice-"));
+  const whisper = path.join(root, "whisper-cli"); const ffmpeg = path.join(root, "ffmpeg"); const model = path.join(root, "ggml-base.bin");
+  await writeFile(ffmpeg, "#!/bin/sh\ncp \"$5\" \"${11}\"\n");
+  await writeFile(whisper, "#!/bin/sh\nprintf 'private local transcript\\n' > \"${7}.txt\"\n");
+  await Promise.all([chmod(ffmpeg, 0o700), chmod(whisper, 0o700), writeFile(model, Buffer.alloc(1_000_000))]);
+  const policy = new VoicePolicyStore(path.join(root, "policy.json"), () => 1_000); await policy.load();
+  const service = new LocalTranscriptionService(path.join(root, "model.json"), path.join(root, "transcripts"), policy, { PATH: root }, () => 1_000);
+  assert.equal((await service.load()).available, false);
+  assert.equal((await service.setModel(model)).available, true);
+  await assert.rejects(service.transcribe({ audio: new Uint8Array(200), mimeType: "audio/webm" }), /consent/);
+  await policy.update({ consent: true, retention: "24-hours" });
+  assert.deepEqual(await service.transcribe({ audio: new Uint8Array(200), mimeType: "audio/webm" }), { text: "private local transcript", createdAt: 1_000, retainedUntil: 86_401_000 });
+  const retained = await readdir(path.join(root, "transcripts")); assert.equal(retained.length, 1); assert.equal((await readFile(path.join(root, "transcripts", retained[0]), "utf8")).trim(), "private local transcript");
+  await service.clearRetained(); await assert.rejects(readdir(path.join(root, "transcripts")));
+});
+
+test("local voice rejects unbounded recordings and invalid model files", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "orbi-local-voice-")); const policy = new VoicePolicyStore(path.join(root, "policy.json")); await policy.load();
+  const service = new LocalTranscriptionService(path.join(root, "model.json"), path.join(root, "transcripts"), policy, { PATH: root }); await service.load();
+  await assert.rejects(service.setModel(path.join(root, "missing.bin")), /invalid/);
+  await policy.update({ consent: true, retention: "none" });
+  await assert.rejects(service.transcribe({ audio: new Uint8Array(99), mimeType: "audio/webm" }), /invalid/);
+});

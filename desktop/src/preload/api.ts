@@ -76,7 +76,7 @@ export function createDesktopApi(ipcRenderer: Pick<IpcRenderer, "invoke" | "on" 
     install: () => ipcRenderer.invoke(IPC_CHANNELS.updateInstall),
   };
   const webhooks: OrbiDesktopApi["webhooks"] = { status: () => ipcRenderer.invoke(IPC_CHANNELS.webhookStatus), start: () => ipcRenderer.invoke(IPC_CHANNELS.webhookStart), stop: () => ipcRenderer.invoke(IPC_CHANNELS.webhookStop), copySecret: () => ipcRenderer.invoke(IPC_CHANNELS.webhookCopySecret) };
-  const voice: OrbiDesktopApi["voice"] = { policy: () => ipcRenderer.invoke(IPC_CHANNELS.voicePolicy), updatePolicy: (request) => ipcRenderer.invoke(IPC_CHANNELS.voiceUpdatePolicy, request) };
+  const voice: OrbiDesktopApi["voice"] = { policy: () => ipcRenderer.invoke(IPC_CHANNELS.voicePolicy), updatePolicy: (request) => ipcRenderer.invoke(IPC_CHANNELS.voiceUpdatePolicy, request), status: () => ipcRenderer.invoke(IPC_CHANNELS.voiceStatus), chooseModel: () => ipcRenderer.invoke(IPC_CHANNELS.voiceChooseModel), transcribe: (request) => ipcRenderer.invoke(IPC_CHANNELS.voiceTranscribe, request) };
   const catalogs: OrbiDesktopApi["catalogs"] = { review: (request) => ipcRenderer.invoke(IPC_CHANNELS.catalogReview, request), installSkill: (request) => ipcRenderer.invoke(IPC_CHANNELS.catalogInstallSkill, request), importHire: (request) => ipcRenderer.invoke(IPC_CHANNELS.catalogImportHire, request) };
   const slack: OrbiDesktopApi["slack"] = { status: () => ipcRenderer.invoke(IPC_CHANNELS.slackStatus), saveTokenFromClipboard: () => ipcRenderer.invoke(IPC_CHANNELS.slackSaveToken), clear: () => ipcRenderer.invoke(IPC_CHANNELS.slackClear), test: () => ipcRenderer.invoke(IPC_CHANNELS.slackTest), send: (request) => ipcRenderer.invoke(IPC_CHANNELS.slackSend, request) };
   return Object.freeze({
