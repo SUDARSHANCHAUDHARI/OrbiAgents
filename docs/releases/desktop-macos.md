@@ -77,6 +77,9 @@ Stable releases do not opt into prerelease channels. Runtime failures retain the
 - Launch through Finder and confirm Gatekeeper shows the verified developer without an override.
 - Run onboarding, launch a real local CLI agent in a disposable repository, verify terminal input/output and `node-pty`, preserve/review an isolated worktree, and restart to inspect recovery.
 - Confirm Costs, approvals, scheduled missions, local model credentials, and GitHub ingestion behave as documented.
+- With a least-privilege test Slack app, verify token save/test/send/clear using only `chat:write` and confirm no message is sent without operator confirmation.
+- With `ffmpeg`, `whisper-cli`, and a local GGML model, verify microphone consent, start/stop transcription, immediate audio deletion, each retention option, and revocation cleanup.
+- Have native speakers review English, Simplified Chinese, and Arabic UI copy and confirm Arabic keyboard navigation and RTL layout.
 - Confirm no secrets or user data exist in the mounted DMG, ZIP, app resources, or ASAR.
 - Obtain explicit approval before tagging, pushing, publishing a GitHub release, or enabling update distribution.
 
