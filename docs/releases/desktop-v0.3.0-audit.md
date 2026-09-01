@@ -46,7 +46,7 @@ Production build measurements:
 | Initial renderer entry, audited | 600,610 B | 108,648 B |
 | Renderer CSS, original audit | 19,481 B | 5,278 B |
 
-The post-audit grouped Command Center and installed-skills catalog are constrained by a 34,000-byte raw / 10,000-byte gzip CSS ceiling. Current measurements are emitted by `check-renderer-budget.mjs`; the original audit measurement above remains historical evidence rather than a current bundle claim.
+The post-audit grouped Command Center, installed-skills catalog, and three locale-specific bundled font declarations are constrained by a 35,000-byte raw / 10,000-byte gzip CSS ceiling. Current measurements are emitted by `check-renderer-budget.mjs`; the original audit measurement above remains historical evidence rather than a current bundle claim.
 
 The initial entry is 68.0% smaller raw and 71.5% smaller gzip. Monaco, xterm, and PixiJS were moved behind React lazy boundaries. The enforced entry budgets are 700,000 bytes raw and 130,000 bytes gzip; CSS budgets are 30,000 and 10,000 bytes. File editor, terminal, and office chunks must remain separately emitted.
 

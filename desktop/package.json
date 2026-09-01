@@ -19,6 +19,7 @@
     "package:mac:release": "node scripts/check-macos-release-readiness.mjs && pnpm build && electron-builder --mac dmg zip --arm64 --publish never && node scripts/verify-macos-package.mjs --require-release-signature",
     "check:macos-icon": "node scripts/check-macos-release-readiness.mjs --icon-only",
     "check:accessibility": "node scripts/check-accessibility-source.mjs",
+    "check:localization": "node scripts/check-localization-source.mjs",
     "check:design-system": "node scripts/check-design-system-source.mjs",
     "check:performance": "node scripts/check-renderer-budget.mjs",
     "check:security": "node scripts/check-security-boundaries.mjs",
