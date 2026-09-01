@@ -196,6 +196,7 @@ export interface OrbiDesktopApi {
   webhooks: { status(): Promise<WebhookStatus>; start(): Promise<WebhookStatus>; stop(): Promise<WebhookStatus>; copySecret(): Promise<void>; };
   voice: { policy(): Promise<VoicePolicy>; updatePolicy(request: VoicePolicyUpdate): Promise<VoicePolicy>; };
   catalogs: { review(request: RemoteCatalogReviewRequest): Promise<RemoteCatalogReview>; installSkill(request: RemoteSkillInstallRequest): Promise<RemoteSkillInstallResult>; importHire(request: RemoteHireImportRequest): Promise<HireProfile>; };
+  slack: { status(): Promise<SlackStatus>; saveTokenFromClipboard(): Promise<SlackStatus>; clear(): Promise<SlackStatus>; test(): Promise<SlackStatus>; send(request: SlackSendRequest): Promise<SlackSendResult>; };
 }
 
 export interface WebhookEvent { id: string; title: string; detail: string; source: string; receivedAt: number; }
@@ -211,6 +212,9 @@ export interface RemoteSkillInstallRequest { catalog: RemoteCatalogReviewRequest
 export interface RemoteSkillProvenance { schemaVersion: 1; publisherId: string; keyId: string; catalogUrl: string; entryId: string; version: string; sha256: string; installedAt: number; }
 export interface RemoteSkillInstallResult { skill: SkillCatalogEntry; provenance: RemoteSkillProvenance; }
 export interface RemoteHireImportRequest { catalog: RemoteCatalogReviewRequest; entryId: string; }
+export interface SlackStatus { configured: boolean; team?: string; botUser?: string; updatedAt: number; }
+export interface SlackSendRequest { channel: string; text: string; }
+export interface SlackSendResult { channel: string; timestamp: string; }
 
 export interface SkillCatalogEntry { id: string; name: string; description: string; source: string; relativePath: string; }
 export type UpdatePhase = "idle" | "checking" | "available" | "not-available" | "downloading" | "downloaded" | "error";
@@ -324,4 +328,9 @@ export const IPC_CHANNELS = {
   catalogReview: "catalogs:review",
   catalogInstallSkill: "catalogs:skill:install",
   catalogImportHire: "catalogs:hire:import",
+  slackStatus: "slack:status",
+  slackSaveToken: "slack:token:save",
+  slackClear: "slack:clear",
+  slackTest: "slack:test",
+  slackSend: "slack:send",
 } as const;
