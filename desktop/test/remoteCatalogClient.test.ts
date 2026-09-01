@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { generateKeyPairSync, sign } from "node:crypto";
+import { createHash, generateKeyPairSync, sign } from "node:crypto";
 import test from "node:test";
 import { RemoteCatalogClient } from "../src/main/catalog/remoteCatalogClient";
 
@@ -39,6 +39,15 @@ test("catalog review rejects redirects, expiry, unknown fields, and oversized re
   await assert.rejects(new RemoteCatalogClient((async () => Response.json(signedCatalog())) as typeof fetch, () => now, publicResolver).review({ ...request, extra: true }), /request contains unsupported fields/);
   await assert.rejects(new RemoteCatalogClient((async () => Response.json(signedCatalog({ publisher: { id: request.publisherId, keyId: request.keyId, extra: true } }))) as typeof fetch, () => now, publicResolver).review(request), /publisher contains unsupported fields/);
   await assert.rejects(new RemoteCatalogClient((async () => new Response("{}", { headers: { "content-length": String(1024 * 1024 + 1) } })) as typeof fetch, () => now, publicResolver).review(request), /exceeded 1 MB/);
+});
+
+test("artifact download requires a fresh review and enforces verified bytes", async () => {
+  const bytes = new TextEncoder().encode('{"schemaVersion":1}'); const entry = { ...signedCatalog().entries[0], size: bytes.byteLength, sha256: createHash("sha256").update(bytes).digest("hex") };
+  const client = new RemoteCatalogClient((async (url) => url.toString().endsWith("catalog.json") ? Response.json(signedCatalog({ entries: [entry] })) : new Response(bytes)) as typeof fetch, () => now, publicResolver);
+  await assert.rejects(client.downloadReviewedArtifact(request, entry.id), /freshly verified/);
+  await client.review(request); const artifact = await client.downloadReviewedArtifact(request, entry.id); assert.deepEqual(artifact.bytes, bytes); assert.equal(artifact.entry.sha256, entry.sha256);
+  const tampered = new RemoteCatalogClient((async (url) => url.toString().endsWith("catalog.json") ? Response.json(signedCatalog({ entries: [entry] })) : new Response("x".repeat(bytes.byteLength))) as typeof fetch, () => now, publicResolver);
+  await tampered.review(request); await assert.rejects(tampered.downloadReviewedArtifact(request, entry.id), /checksum/);
 });
 
 function canonical(value: unknown): string { if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`; if (value && typeof value === "object") return `{${Object.keys(value as Record<string, unknown>).sort().map((key) => `${JSON.stringify(key)}:${canonical((value as Record<string, unknown>)[key])}`).join(",")}}`; return JSON.stringify(value); }
