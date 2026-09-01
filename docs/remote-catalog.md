@@ -44,3 +44,9 @@ Skill artifacts are bounded, text-only JSON packages. Binary files, archive link
 The package metadata and root `SKILL.md` metadata must exactly match the signed catalog entry. Paths must be relative, contain no hidden or traversal segments, and stay within four levels. Packages allow at most 32 files, 256 KiB per file, and 4 MiB of decoded text. The signed entry also caps the complete artifact at 5 MiB.
 
 After a fresh catalog review and operator confirmation, OrbiAgents downloads without redirects, verifies exact byte length and SHA-256, writes into a private temporary directory, records `.orbi-provenance.json`, and atomically renames the directory into managed app data. Installation never loads or executes package content.
+
+## Hire profile package
+
+Entries with `kind: "hire-profile"` use a strict JSON envelope containing `schemaVersion`, `id`, `name`, `description`, `version`, and `profile`. The first five fields must match the signed catalog entry exactly. `profile` uses the same bounded fields as local hire links: agent name, runtime id, workspace-isolation choice, role, goal, capabilities, time budget, and appearance. Workspace paths, commands, credentials, launch flags, and unknown fields are rejected.
+
+After a fresh review, opening a hosted profile verifies the artifact size and SHA-256 and then prefills the normal hiring form. The operator must still choose a workspace and submit the form; catalog import never launches an agent.

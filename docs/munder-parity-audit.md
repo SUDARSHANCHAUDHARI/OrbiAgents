@@ -23,7 +23,7 @@ Compared on 2026-08-31 against `chaitanyagiri/munder-difflin` commit `49126393` 
 | Application updater | Built, publication unproven | Explicit check/download/install, stable-only, downgrade rejection, workload blockers |
 | Shareable hire profiles | Built (clipboard) | Versioned bounded links exclude workspace paths and credentials; import only prefills the form and never launches |
 | OS hire-link registration / local gallery | Built | Packaged single-instance protocol handling reuses strict validation and only opens a prefilled form; three local presets ship in-app |
-| Hosted agent gallery | Not built | Requires hosted catalog ownership, provenance, moderation, and update policy |
+| Hosted agent gallery | Built client; publication external | Signed `hire-profile` catalog artifacts are size/checksum verified and strictly validated before prefilling the normal hiring form; they cannot carry workspace paths, credentials, commands, or launch authority. Publishing and moderating a production catalog remains an operator-owned external service |
 | Inbound webhooks | Built (local foundation) | Operator-enabled loopback receiver with per-launch secret, constant-time Bearer verification, replay IDs, bounded payloads, and an in-memory event inbox; secrets never enter renderer state |
 | Slack integration | Not built | Requires provider credentials, OAuth/secret lifecycle, scopes, and an operator-approved external network boundary |
 | Voice consent and retention foundation | Built | Explicit persisted consent and bounded retention choices fail closed; revocation clears retention and capture remains disabled |

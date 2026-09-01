@@ -1,0 +1,13 @@
+import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
+import test from "node:test";
+import type { RemoteCatalogClient, VerifiedCatalogArtifact } from "../src/main/catalog/remoteCatalogClient";
+import { RemoteHireGallery } from "../src/main/agents/remoteHireGallery";
+
+const profile = { name: "Reviewer", runtimeId: "codex" as const, isolateWorkspace: true, profile: { role: "reviewer" as const, goal: "Audit release", capabilities: ["review" as const, "testing" as const], budgetMinutes: 60, appearance: "violet" as const } };
+function artifact(value: unknown): VerifiedCatalogArtifact { const bytes = new TextEncoder().encode(JSON.stringify(value)); return { bytes, publisherId: "publisher", keyId: "key-1", catalogUrl: "https://catalog.example/catalog.json", entry: { id: "release-reviewer", kind: "hire-profile", name: "Release Reviewer", description: "Audits release readiness", version: "1.0.0", artifactUrl: "https://catalog.example/reviewer.json", sha256: createHash("sha256").update(bytes).digest("hex"), size: bytes.byteLength } }; }
+function gallery(value: VerifiedCatalogArtifact): RemoteHireGallery { return new RemoteHireGallery({ downloadReviewedArtifact: async () => value } as unknown as RemoteCatalogClient); }
+const request = { catalog: { url: "https://catalog.example/catalog.json", publisherId: "publisher", keyId: "key-1", publicKey: "a".repeat(44) }, entryId: "release-reviewer" };
+
+test("hosted gallery imports a verified profile only as validated form data", async () => { const result = await gallery(artifact({ schemaVersion: 1, id: "release-reviewer", name: "Release Reviewer", description: "Audits release readiness", version: "1.0.0", profile })).importProfile(request); assert.deepEqual(result, profile); assert.equal("workspace" in result, false); });
+test("hosted gallery rejects wrong kinds, metadata mismatch, and launch authority", async () => { const valid = artifact({ schemaVersion: 1, id: "release-reviewer", name: "Release Reviewer", description: "Audits release readiness", version: "1.0.0", profile }); await assert.rejects(gallery({ ...valid, entry: { ...valid.entry, kind: "skill" } }).importProfile(request), /hire profiles/); await assert.rejects(gallery(artifact({ schemaVersion: 1, id: "other", name: "Release Reviewer", description: "Audits release readiness", version: "1.0.0", profile })).importProfile(request), /metadata does not match/); await assert.rejects(gallery(artifact({ schemaVersion: 1, id: "release-reviewer", name: "Release Reviewer", description: "Audits release readiness", version: "1.0.0", profile: { ...profile, launch: true } })).importProfile(request), /unsupported fields/); });

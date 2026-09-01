@@ -18,6 +18,7 @@ import type { WebhookReceiver } from "../webhooks/webhookReceiver";
 import type { VoicePolicyStore } from "../voice/voicePolicyStore";
 import type { RemoteCatalogClient } from "../catalog/remoteCatalogClient";
 import type { RemoteSkillInstaller } from "../skills/remoteSkillInstaller";
+import type { RemoteHireGallery } from "../agents/remoteHireGallery";
 import { decodeHireProfile, encodeHireProfile } from "../agents/hireProfileCodec";
 import {
   validateAgentId,
@@ -29,7 +30,7 @@ import {
   validateWorkspace,
 } from "../security/validators";
 
-export function registerIpc(window: BrowserWindow, manager: PtyManager, hive: HiveCoordinator, runtimeAdapters: RuntimeAdapterStore, localModels: LocalModelEndpointStore, localModelClient: LocalModelClient, files: WorkspaceFileService, github: GitHubIngestion, git: GitWorkspaceService, prerequisites: PrerequisiteChecker, onboarding: OnboardingStore, recovery: RecoveryStore, commandHistory: CommandHistoryStore, skills: SkillCatalog, updates: UpdateService, webhooks: WebhookReceiver, voice: VoicePolicyStore, catalogs: RemoteCatalogClient, remoteSkills: RemoteSkillInstaller): () => void {
+export function registerIpc(window: BrowserWindow, manager: PtyManager, hive: HiveCoordinator, runtimeAdapters: RuntimeAdapterStore, localModels: LocalModelEndpointStore, localModelClient: LocalModelClient, files: WorkspaceFileService, github: GitHubIngestion, git: GitWorkspaceService, prerequisites: PrerequisiteChecker, onboarding: OnboardingStore, recovery: RecoveryStore, commandHistory: CommandHistoryStore, skills: SkillCatalog, updates: UpdateService, webhooks: WebhookReceiver, voice: VoicePolicyStore, catalogs: RemoteCatalogClient, remoteSkills: RemoteSkillInstaller, remoteHires: RemoteHireGallery): () => void {
   const assertTrustedSender = (senderId: number) => {
     if (senderId !== window.webContents.id) throw new Error("Untrusted IPC sender");
   };
@@ -175,6 +176,7 @@ export function registerIpc(window: BrowserWindow, manager: PtyManager, hive: Hi
   ipcMain.handle(IPC_CHANNELS.voiceUpdatePolicy, (event, value: unknown) => { assertTrustedSender(event.sender.id); return voice.update(value); });
   ipcMain.handle(IPC_CHANNELS.catalogReview, (event, value: unknown) => { assertTrustedSender(event.sender.id); return catalogs.review(value); });
   ipcMain.handle(IPC_CHANNELS.catalogInstallSkill, (event, value: unknown) => { assertTrustedSender(event.sender.id); return remoteSkills.install(value); });
+  ipcMain.handle(IPC_CHANNELS.catalogImportHire, (event, value: unknown) => { assertTrustedSender(event.sender.id); return remoteHires.importProfile(value); });
 
   const dispose = () => {
     for (const channel of Object.values(IPC_CHANNELS)) {
