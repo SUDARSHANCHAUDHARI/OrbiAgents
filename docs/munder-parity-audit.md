@@ -15,8 +15,8 @@ Compared on 2026-08-31 against `chaitanyagiri/munder-difflin` commit `49126393` 
 | Monaco editor and Git history | Built | Safe file broker, save conflict checks, revisions, read-only repository summary |
 | GitHub issues and CI | Built | Operator-triggered, bounded, local `gh` access |
 | Skills catalog and removal | Built | Searches installed metadata without execution; confirmed removal moves only a freshly verified skill directory to OS Trash |
-| Trusted remote catalog review | Built | Operator-triggered HTTPS review pins publisher and Ed25519 key identity, verifies signed strict manifests, rejects redirects/private destinations, bounds caching and response size, and exposes SHA-256 artifact metadata without downloading or executing artifacts |
-| Remote skill installation | Not built | The catalog trust foundation is built; verified artifact download, checksum enforcement, provenance persistence, safe extraction, and confirmed installation remain separate work |
+| Trusted remote catalog review | Built | Operator-triggered HTTPS review pins publisher and Ed25519 key identity, verifies signed strict manifests, rejects redirects/private destinations, and bounds caching and response size |
+| Remote skill installation | Built (constrained package) | Requires a fresh trusted review and explicit confirmation; exact size and SHA-256 are enforced before atomic installation of a bounded text-only JSON skill package under managed app data, with publisher/key/catalog provenance persisted and no execution during installation |
 | Runtime usage and cost controls | Built with provider limits | Sanitized session signals and elapsed time plus an integrity-checked estimate ledger; no fabricated token totals |
 | Local LLM endpoints and BYOK | Built | Loopback-only endpoints and OS-encrypted write-only credentials |
 | First-run setup and recovery | Built | Read-only prerequisite checks and bounded interrupted-work report |

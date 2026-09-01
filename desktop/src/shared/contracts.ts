@@ -195,7 +195,7 @@ export interface OrbiDesktopApi {
   updates: { status(): Promise<UpdateState>; check(): Promise<UpdateState>; download(): Promise<UpdateState>; install(): Promise<void>; };
   webhooks: { status(): Promise<WebhookStatus>; start(): Promise<WebhookStatus>; stop(): Promise<WebhookStatus>; copySecret(): Promise<void>; };
   voice: { policy(): Promise<VoicePolicy>; updatePolicy(request: VoicePolicyUpdate): Promise<VoicePolicy>; };
-  catalogs: { review(request: RemoteCatalogReviewRequest): Promise<RemoteCatalogReview>; };
+  catalogs: { review(request: RemoteCatalogReviewRequest): Promise<RemoteCatalogReview>; installSkill(request: RemoteSkillInstallRequest): Promise<RemoteSkillInstallResult>; };
 }
 
 export interface WebhookEvent { id: string; title: string; detail: string; source: string; receivedAt: number; }
@@ -207,6 +207,9 @@ export type RemoteCatalogEntryKind = "skill" | "hire-profile";
 export interface RemoteCatalogEntry { id: string; kind: RemoteCatalogEntryKind; name: string; description: string; version: string; artifactUrl: string; sha256: string; size: number; }
 export interface RemoteCatalogReviewRequest { url: string; publisherId: string; keyId: string; publicKey: string; }
 export interface RemoteCatalogReview { publisherId: string; keyId: string; issuedAt: string; expiresAt: string; entries: RemoteCatalogEntry[]; fetchedAt: number; fromCache: boolean; }
+export interface RemoteSkillInstallRequest { catalog: RemoteCatalogReviewRequest; entryId: string; confirmed: true; }
+export interface RemoteSkillProvenance { schemaVersion: 1; publisherId: string; keyId: string; catalogUrl: string; entryId: string; version: string; sha256: string; installedAt: number; }
+export interface RemoteSkillInstallResult { skill: SkillCatalogEntry; provenance: RemoteSkillProvenance; }
 
 export interface SkillCatalogEntry { id: string; name: string; description: string; source: string; relativePath: string; }
 export type UpdatePhase = "idle" | "checking" | "available" | "not-available" | "downloading" | "downloaded" | "error";
@@ -318,4 +321,5 @@ export const IPC_CHANNELS = {
   voicePolicy: "voice:policy",
   voiceUpdatePolicy: "voice:policy:update",
   catalogReview: "catalogs:review",
+  catalogInstallSkill: "catalogs:skill:install",
 } as const;

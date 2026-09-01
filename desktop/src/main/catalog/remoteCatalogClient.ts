@@ -1,4 +1,4 @@
-import { createPublicKey, verify } from "node:crypto";
+import { createHash, createPublicKey, verify } from "node:crypto";
 import { isIP } from "node:net";
 import { lookup } from "node:dns/promises";
 import type { RemoteCatalogEntry, RemoteCatalogReview, RemoteCatalogReviewRequest } from "../../shared/contracts";
@@ -12,13 +12,14 @@ const REQUEST_TIMEOUT_MS = 10_000;
 
 interface SignedCatalog { schemaVersion: 1; publisher: { id: string; keyId: string }; issuedAt: string; expiresAt: string; entries: RemoteCatalogEntry[]; signature: string; }
 interface CacheEntry { review: RemoteCatalogReview; expiresAt: number; }
+export interface VerifiedCatalogArtifact { entry: RemoteCatalogEntry; bytes: Uint8Array; publisherId: string; keyId: string; catalogUrl: string; }
 
 export class RemoteCatalogClient {
   private readonly cache = new Map<string, CacheEntry>();
   constructor(private readonly fetcher: typeof fetch = fetch, private readonly now: () => number = Date.now, private readonly resolver: (host: string) => Promise<Array<{ address: string }>> = async (host) => lookup(host, { all: true })) {}
 
   async review(input: unknown): Promise<RemoteCatalogReview> {
-    const request = parseRequest(input); await assertPublicDestination(new URL(request.url).hostname, this.resolver); const cacheKey = `${request.url}\n${request.publisherId}\n${request.keyId}\n${request.publicKey}`; const cached = this.cache.get(cacheKey);
+    const request = parseRequest(input); await assertPublicDestination(new URL(request.url).hostname, this.resolver); const key = cacheKey(request); const cached = this.cache.get(key);
     if (cached && cached.expiresAt > this.now()) return { ...cached.review, entries: cached.review.entries.map((entry) => ({ ...entry })), fromCache: true };
     const response = await this.fetcher(request.url, { redirect: "manual", headers: { accept: "application/json" }, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) }).catch(() => { throw new Error("Catalog request failed"); });
     if (response.status >= 300 && response.status < 400) throw new Error("Catalog redirects are not allowed");
@@ -26,11 +27,26 @@ export class RemoteCatalogClient {
     const value = await readBoundedJson(response); const catalog = parseCatalog(value, request, this.now());
     verifySignature(catalog, request.publicKey);
     const review: RemoteCatalogReview = { publisherId: catalog.publisher.id, keyId: catalog.publisher.keyId, issuedAt: catalog.issuedAt, expiresAt: catalog.expiresAt, entries: catalog.entries, fetchedAt: this.now(), fromCache: false };
-    this.cache.set(cacheKey, { review, expiresAt: Math.min(Date.parse(catalog.expiresAt), this.now() + CACHE_MS) });
+    this.cache.set(key, { review, expiresAt: Math.min(Date.parse(catalog.expiresAt), this.now() + CACHE_MS) });
     while (this.cache.size > MAX_CACHE_ENTRIES) this.cache.delete(this.cache.keys().next().value!);
     return { ...review, entries: review.entries.map((entry) => ({ ...entry })) };
   }
+
+  async downloadReviewedArtifact(input: unknown, entryId: unknown): Promise<VerifiedCatalogArtifact> {
+    const request = parseRequest(input); const id = boundedId(entryId, "Catalog entry id"); const cached = this.cache.get(cacheKey(request));
+    if (!cached || cached.expiresAt <= this.now()) throw new Error("Catalog must be freshly verified before installation");
+    const entry = cached.review.entries.find((candidate) => candidate.id === id); if (!entry) throw new Error("Verified catalog entry was not found");
+    await assertPublicDestination(new URL(entry.artifactUrl).hostname, this.resolver);
+    const response = await this.fetcher(entry.artifactUrl, { redirect: "manual", headers: { accept: "application/json" }, signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS) }).catch(() => { throw new Error("Catalog artifact request failed"); });
+    if (response.status >= 300 && response.status < 400) throw new Error("Catalog artifact redirects are not allowed");
+    if (!response.ok) throw new Error(`Catalog artifact request failed with HTTP ${response.status}`);
+    const bytes = await readBoundedBytes(response, entry.size); if (bytes.byteLength !== entry.size) throw new Error("Catalog artifact size does not match verified metadata");
+    if (createHash("sha256").update(bytes).digest("hex") !== entry.sha256) throw new Error("Catalog artifact checksum does not match verified metadata");
+    return { entry: { ...entry }, bytes, publisherId: cached.review.publisherId, keyId: cached.review.keyId, catalogUrl: request.url };
+  }
 }
+
+function cacheKey(request: RemoteCatalogReviewRequest): string { return `${request.url}\n${request.publisherId}\n${request.keyId}\n${request.publicKey}`; }
 
 function parseRequest(value: unknown): RemoteCatalogReviewRequest {
   if (!value || typeof value !== "object") throw new Error("Catalog review request is required"); const row = value as Record<string, unknown>;
@@ -74,4 +90,5 @@ async function assertPublicDestination(host: string, resolver: (host: string) =>
 function boundedId(value: unknown, label: string): string { if (typeof value !== "string" || !/^[a-z0-9][a-z0-9._-]{1,127}$/i.test(value)) throw new Error(`${label} is invalid`); return value; }
 function boundedText(value: unknown, label: string, max: number): string { if (typeof value !== "string" || !value.trim() || value.length > max || /[\0\r]/.test(value)) throw new Error(`${label} is invalid`); return value.trim(); }
 function timestamp(value: unknown, label: string): string { if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{3})?Z$/.test(value) || !Number.isFinite(Date.parse(value))) throw new Error(`Catalog ${label} timestamp is invalid`); return value; }
-async function readBoundedJson(response: Response): Promise<unknown> { const declared = Number(response.headers.get("content-length")); if (Number.isFinite(declared) && declared > MAX_RESPONSE_BYTES) throw new Error("Catalog response exceeded 1 MB"); if (!response.body) throw new Error("Catalog response is empty"); const reader = response.body.getReader(); const chunks: Uint8Array[] = []; let total = 0; try { while (true) { const { done, value } = await reader.read(); if (done) break; total += value.byteLength; if (total > MAX_RESPONSE_BYTES) { await reader.cancel(); throw new Error("Catalog response exceeded 1 MB"); } chunks.push(value); } } finally { reader.releaseLock(); } const bytes = new Uint8Array(total); let offset = 0; for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; } try { return JSON.parse(new TextDecoder().decode(bytes)); } catch { throw new Error("Catalog response is invalid JSON"); } }
+async function readBoundedJson(response: Response): Promise<unknown> { const bytes = await readBoundedBytes(response, MAX_RESPONSE_BYTES, "Catalog response exceeded 1 MB"); try { return JSON.parse(new TextDecoder().decode(bytes)); } catch { throw new Error("Catalog response is invalid JSON"); } }
+async function readBoundedBytes(response: Response, maxBytes: number, sizeError = "Catalog artifact exceeded verified size"): Promise<Uint8Array> { const declaredHeader = response.headers.get("content-length"); const declared = declaredHeader === null ? NaN : Number(declaredHeader); if (Number.isFinite(declared) && declared > maxBytes) throw new Error(sizeError); if (!response.body) throw new Error("Catalog response is empty"); const reader = response.body.getReader(); const chunks: Uint8Array[] = []; let total = 0; try { while (true) { const { done, value } = await reader.read(); if (done) break; total += value.byteLength; if (total > maxBytes) { await reader.cancel(); throw new Error(sizeError); } chunks.push(value); } } finally { reader.releaseLock(); } const bytes = new Uint8Array(total); let offset = 0; for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; } return bytes; }
