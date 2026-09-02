@@ -15,7 +15,6 @@ files:
   - "!**/.env*"
   - "!**/*.{pem,p12,p8,key,jks,keystore}"
   - "!node_modules/node-pty/prebuilds/darwin-x64/**"
-  - "!node_modules/node-pty/prebuilds/win32-*/**"
 asar: true
 asarUnpack:
   - node_modules/node-pty/**/*
@@ -43,3 +42,13 @@ mac:
 dmg:
   artifactName: ${productName}-${version}-${arch}.${ext}
   sign: false
+win:
+  target:
+    - nsis
+    - portable
+  artifactName: ${productName}-${version}-${arch}-${target}.${ext}
+linux:
+  category: Development
+  target:
+    - AppImage
+  artifactName: ${productName}-${version}-${arch}.${ext}

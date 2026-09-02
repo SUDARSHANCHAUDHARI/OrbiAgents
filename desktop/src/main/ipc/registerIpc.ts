@@ -206,6 +206,7 @@ export function registerIpc(window: BrowserWindow, manager: PtyManager, hive: Hi
   ipcMain.handle(IPC_CHANNELS.catalogImportHire, (event, value: unknown) => { assertTrustedSender(event.sender.id); return remoteHires.importProfile(value); });
   ipcMain.handle(IPC_CHANNELS.slackStatus, (event) => { assertTrustedSender(event.sender.id); return slackStore.status(); });
   ipcMain.handle(IPC_CHANNELS.slackSaveToken, (event) => { assertTrustedSender(event.sender.id); return slackStore.setToken(clipboard.readText()); });
+  ipcMain.handle(IPC_CHANNELS.slackSaveSigningSecret, (event) => { assertTrustedSender(event.sender.id); return slackStore.setSigningSecret(clipboard.readText()); });
   ipcMain.handle(IPC_CHANNELS.slackClear, (event) => { assertTrustedSender(event.sender.id); return slackStore.clear(); });
   ipcMain.handle(IPC_CHANNELS.slackTest, (event) => { assertTrustedSender(event.sender.id); return slack.test(); });
   ipcMain.handle(IPC_CHANNELS.slackSend, (event, value: unknown) => { assertTrustedSender(event.sender.id); return slack.send(value); });

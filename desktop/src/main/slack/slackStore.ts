@@ -3,7 +3,7 @@ import path from "node:path";
 import type { SlackStatus } from "../../shared/contracts";
 import type { CredentialCipher } from "../models/localModelEndpointStore";
 
-interface StoredSlack { encryptedBotToken?: string; team?: string; botUser?: string; updatedAt: number; }
+interface StoredSlack { encryptedBotToken?: string; encryptedSigningSecret?: string; team?: string; botUser?: string; updatedAt: number; }
 
 export class SlackStore {
   private value: StoredSlack = { updatedAt: 0 }; private saveQueue = Promise.resolve();
@@ -12,21 +12,24 @@ export class SlackStore {
   status(): SlackStatus {
     return {
       configured: Boolean(this.value.encryptedBotToken),
+      signingConfigured: Boolean(this.value.encryptedSigningSecret),
       ...(this.value.team ? { team: this.value.team } : {}),
       ...(this.value.botUser ? { botUser: this.value.botUser } : {}),
       updatedAt: this.value.updatedAt,
     };
   }
-  async setToken(token: unknown): Promise<SlackStatus> { if (typeof token !== "string" || !/^xoxb-[A-Za-z0-9-]{10,500}$/.test(token)) throw new Error("Clipboard does not contain a Slack bot token"); if (!this.cipher.isAvailable()) throw new Error("Secure credential storage is unavailable; the Slack token was not saved"); await this.save({ encryptedBotToken: this.cipher.encrypt(token).toString("base64"), updatedAt: this.now() }); return this.status(); }
+  async setToken(token: unknown): Promise<SlackStatus> { if (typeof token !== "string" || !/^xoxb-[A-Za-z0-9-]{10,500}$/.test(token)) throw new Error("Clipboard does not contain a Slack bot token"); if (!this.cipher.isAvailable()) throw new Error("Secure credential storage is unavailable; the Slack token was not saved"); await this.save({ ...this.value, encryptedBotToken: this.cipher.encrypt(token).toString("base64"), updatedAt: this.now() }); return this.status(); }
+  async setSigningSecret(secret: unknown): Promise<SlackStatus> { if (typeof secret !== "string" || !/^[A-Fa-f0-9]{32}$/.test(secret)) throw new Error("Clipboard does not contain a Slack signing secret"); if (!this.cipher.isAvailable()) throw new Error("Secure credential storage is unavailable; the Slack signing secret was not saved"); await this.save({ ...this.value, encryptedSigningSecret: this.cipher.encrypt(secret).toString("base64"), updatedAt: this.now() }); return this.status(); }
   async clear(): Promise<SlackStatus> { await this.save({ updatedAt: this.now() }); return this.status(); }
   async identify(team: string, botUser: string): Promise<SlackStatus> { await this.save({ ...this.value, team: bounded(team, 120), botUser: bounded(botUser, 120), updatedAt: this.now() }); return this.status(); }
   token(): string { if (!this.value.encryptedBotToken) throw new Error("Slack is not configured"); if (!this.cipher.isAvailable()) throw new Error("Secure credential storage is unavailable"); try { return this.cipher.decrypt(Buffer.from(this.value.encryptedBotToken, "base64")); } catch { throw new Error("The stored Slack credential cannot be decrypted"); } }
+  signingSecret(): string { if (!this.value.encryptedSigningSecret) throw new Error("Slack signing is not configured"); if (!this.cipher.isAvailable()) throw new Error("Secure credential storage is unavailable"); try { return this.cipher.decrypt(Buffer.from(this.value.encryptedSigningSecret, "base64")); } catch { throw new Error("The stored Slack signing secret cannot be decrypted"); } }
   private async save(value: StoredSlack): Promise<void> { const snapshot = { ...value }; this.saveQueue = this.saveQueue.catch(() => undefined).then(async () => { await mkdir(path.dirname(this.filePath), { recursive: true }); const temporary = `${this.filePath}.tmp`; await writeFile(temporary, `${JSON.stringify(snapshot, null, 2)}\n`, { encoding: "utf8", mode: 0o600 }); await rename(temporary, this.filePath); }); await this.saveQueue; this.value = snapshot; }
 }
 function parseStored(value: unknown): StoredSlack {
   if (!value || typeof value !== "object") return { updatedAt: 0 };
   const row = value as Record<string, unknown>;
-  const allowedKeys = new Set(["encryptedBotToken", "team", "botUser", "updatedAt"]);
+  const allowedKeys = new Set(["encryptedBotToken", "encryptedSigningSecret", "team", "botUser", "updatedAt"]);
   if (
     Object.keys(row).some((key) => !allowedKeys.has(key)) ||
     typeof row.updatedAt !== "number" ||
@@ -35,6 +38,7 @@ function parseStored(value: unknown): StoredSlack {
       (typeof row.encryptedBotToken !== "string" ||
         row.encryptedBotToken.length > 2_000 ||
         !/^[A-Za-z0-9+/]+={0,2}$/.test(row.encryptedBotToken))) ||
+    (row.encryptedSigningSecret !== undefined && (typeof row.encryptedSigningSecret !== "string" || row.encryptedSigningSecret.length > 2_000 || !/^[A-Za-z0-9+/]+={0,2}$/.test(row.encryptedSigningSecret))) ||
     (row.team !== undefined && typeof row.team !== "string") ||
     (row.botUser !== undefined && typeof row.botUser !== "string")
   ) {
@@ -42,6 +46,7 @@ function parseStored(value: unknown): StoredSlack {
   }
   return {
     encryptedBotToken: row.encryptedBotToken as string | undefined,
+    encryptedSigningSecret: row.encryptedSigningSecret as string | undefined,
     team: row.team ? bounded(row.team, 120) : undefined,
     botUser: row.botUser ? bounded(row.botUser, 120) : undefined,
     updatedAt: row.updatedAt,

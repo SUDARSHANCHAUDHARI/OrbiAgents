@@ -129,7 +129,7 @@ async function createWindow(): Promise<void> {
     } catch { reasons.push("project safety state could not be verified"); }
     return [...new Set(reasons)];
   });
-  const webhooks = new WebhookReceiver();
+  const webhooks = new WebhookReceiver(() => slackStore.signingSecret());
   const voice = new VoicePolicyStore(join(userData, "voice-policy.json"));
   await voice.load();
   const transcription = new LocalTranscriptionService(join(userData, "voice-model.json"), join(userData, "voice-transcripts"), voice);
