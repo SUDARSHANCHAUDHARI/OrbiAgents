@@ -1,6 +1,6 @@
 :root { color-scheme: dark; font-family: var(--orbi-font-ui); background: var(--orbi-void); color: var(--orbi-ink); }
 * { box-sizing: border-box; }
-body { margin: 0; min-width: 900px; min-height: 100vh; background-color: var(--orbi-void); background-image: linear-gradient(rgba(94, 234, 212, .025) 1px, transparent 1px), linear-gradient(90deg, rgba(94, 234, 212, .025) 1px, transparent 1px); background-size: 16px 16px; }
+body { margin: 0; min-width: 760px; min-height: 100vh; background-color: var(--orbi-void); background-image: linear-gradient(rgba(94, 234, 212, .025) 1px, transparent 1px), linear-gradient(90deg, rgba(94, 234, 212, .025) 1px, transparent 1px); background-size: 16px 16px; }
 button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
 :where(button, input, select, textarea, [tabindex]):focus-visible { outline: 2px solid var(--orbi-energy); outline-offset: 3px; }
@@ -53,11 +53,11 @@ input, select { height: 36px; padding: 0 10px; color: var(--orbi-ink); backgroun
 .agent-card strong, .agent-card small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .agent-card small { color: var(--orbi-text-subtle); }
 .terminal-column { min-width: 0; min-height: 0; display: grid; grid-template-rows: auto auto minmax(0, 1fr); padding: 14px; overflow: hidden; }
-.command-tabs { display: flex; gap: 8px; padding: 0 0 8px; overflow-x: auto; }
-.command-tab-group { flex: none; display: grid; gap: 3px; padding-right: 8px; border-right: 1px solid var(--orbi-edge); }
+.command-tabs { display: flex; flex-wrap: wrap; gap: 8px 12px; padding: 8px; overflow: visible; background: var(--orbi-space); border: 2px solid var(--orbi-edge); border-bottom: 0; }
+.command-tab-group { flex: 1 1 auto; display: grid; gap: 4px; min-width: max-content; padding-right: 10px; border-right: 1px solid var(--orbi-edge); }
 .command-tab-group:last-child { padding-right: 0; border-right: 0; }
 .command-tab-group > span { color: var(--orbi-dim); font-size: 8px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
-.command-tab-group > div { display: flex; gap: 4px; }
+.command-tab-group > div { display: flex; flex-wrap: wrap; gap: 4px; }
 .command-tabs button { flex: none; min-height: 30px; padding-inline: 9px; }
 .command-tabs button[aria-selected="true"] { color: var(--orbi-void); }
 .command-tabs button:focus-visible { outline: 2px solid var(--orbi-warning); outline-offset: 2px; }
@@ -87,12 +87,12 @@ input, select { height: 36px; padding: 0 10px; color: var(--orbi-ink); backgroun
 .update-status pre { max-height: 280px; margin: 4px 0 0; padding: 10px; overflow: auto; color: var(--orbi-text-soft); background: var(--orbi-terminal); border: 1px solid var(--orbi-edge); white-space: pre-wrap; }
 .update-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .ide-layout { display: grid; grid-template-columns: minmax(170px, 24%) minmax(0, 1fr); gap: 10px; min-height: 0; }
-.file-tree { max-height: 64vh; overflow: auto; padding: 8px; background: #07101c; border: 1px solid #20344c; border-radius: 7px; }
+.file-tree { max-height: 64vh; overflow: auto; padding: 8px; background: var(--orbi-surface-deep); border: 1px solid var(--orbi-edge); }
 .file-tree ul { display: block; }
 .file-tree li { padding-top: 2px; padding-bottom: 2px; border: 0; background: transparent; }
 .file-tree button, .file-tree span { display: block; width: 100%; padding: 4px 6px; overflow: hidden; color: #b8c7da; background: transparent; border: 0; text-align: left; text-overflow: ellipsis; white-space: nowrap; }
-.file-tree button[aria-current="page"] { color: #07111f; background: #67e8f9; border-radius: 4px; }
-.editor-area { min-width: 0; border: 1px solid #20344c; border-radius: 7px; overflow: hidden; }
+.file-tree button[aria-current="page"] { color: var(--orbi-void); background: var(--orbi-energy); }
+.editor-area { min-width: 0; border: 1px solid var(--orbi-edge); overflow: hidden; }
 .editor-toolbar { display: flex; align-items: center; gap: 8px; min-height: 42px; padding: 6px 8px; background: #08111e; }
 .editor-toolbar strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .editor-toolbar select { margin-left: auto; max-width: 45%; }
@@ -105,6 +105,10 @@ input, select { height: 36px; padding: 0 10px; color: var(--orbi-ink); backgroun
 .onboarding-first-run { width: min(760px, 100%); min-height: auto; max-height: calc(100vh - 48px); overflow: auto; box-shadow: 0 20px 80px #000; }
 .onboarding-actions { display: flex; justify-content: flex-end; margin-top: 14px; }
 .onboarding-panel .section-title h2 { margin: 0; font: inherit; }
+.onboarding-summary { display: flex; justify-content: space-between; margin: 12px 0; padding: 10px; border: 2px solid var(--orbi-warning); }
+.onboarding-summary[data-ready="true"] { border-color: var(--orbi-success); }
+.onboarding-summary span { color: var(--orbi-muted); font-size: 11px; }
+.onboarding-panel li i { color: var(--orbi-signal); font-style: normal; }
 .agent-detail { display: flex; gap: 12px; align-items: center; min-height: 48px; padding: 8px 11px; color: var(--orbi-text-subtle); background: var(--orbi-surface-inset); border: 2px solid var(--orbi-edge); font-size: 12px; }
 .agent-detail strong { color: var(--orbi-text-soft); }
 .command-panel { min-height: 100%; padding: 16px; background: var(--orbi-surface-inset); border: 2px solid var(--orbi-edge); }
