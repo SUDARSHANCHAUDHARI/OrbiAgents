@@ -29,6 +29,7 @@ export function createDesktopApi(ipcRenderer: Pick<IpcRenderer, "invoke" | "on" 
     list: (request) => ipcRenderer.invoke(IPC_CHANNELS.memoryList, request),
     search: (request) => ipcRenderer.invoke(IPC_CHANNELS.memorySearch, request),
     capture: (request) => ipcRenderer.invoke(IPC_CHANNELS.memoryCapture, request),
+    documentGraph: (request) => ipcRenderer.invoke(IPC_CHANNELS.memoryDocumentGraph, request),
   };
   const missions: OrbiDesktopApi["missions"] = {
     list: (request) => ipcRenderer.invoke(IPC_CHANNELS.missionList, request),

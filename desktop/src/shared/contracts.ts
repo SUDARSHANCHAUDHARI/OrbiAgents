@@ -160,6 +160,7 @@ export interface OrbiDesktopApi {
     list(request: MemoryProjectRequest): Promise<MemoryRecord[]>;
     search(request: MemorySearchRequest): Promise<MemoryRecord[]>;
     capture(request: MemoryCaptureRequest): Promise<MemoryRecord[]>;
+    documentGraph(request: WorkspaceFileAgentRequest): Promise<DocumentKnowledgeGraph>;
   };
   missions: {
     list(request: MissionProjectRequest): Promise<ScheduledMission[]>;
@@ -255,6 +256,11 @@ export interface CostLedgerEntry { id: string; eventKey: string; kind: "authoriz
 export interface CostLedgerSnapshot { entries: CostLedgerEntry[]; totalAuthorizedEstimateUsd: number; corrupted: boolean; truncated: boolean; }
 
 export interface MemoryRecord { id: string; title: string; content: string; source: string; authorAgentId: string; createdAt: number; condensed?: boolean; }
+export interface DocumentKnowledgeGraph {
+  nodes: Array<{ id: string; path: string; title: string; terms: string[] }>;
+  edges: Array<{ sourceId: string; targetId: string; sharedTerms: string[] }>;
+  truncated: boolean;
+}
 export interface MemoryProjectRequest { projectPath: string; }
 export interface MemorySearchRequest extends MemoryProjectRequest { query: string; limit?: number; }
 export interface MemoryCaptureRequest extends MemoryProjectRequest { title: string; content: string; source: string; authorAgentId: string; }
@@ -293,6 +299,7 @@ export const IPC_CHANNELS = {
   memoryList: "memory:list",
   memorySearch: "memory:search",
   memoryCapture: "memory:capture",
+  memoryDocumentGraph: "memory:document-graph",
   missionList: "missions:list",
   missionCreate: "missions:create",
   missionEnable: "missions:enable",

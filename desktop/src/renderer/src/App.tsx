@@ -164,7 +164,7 @@ export default function App() {
             {commandView === "tasks" ? <HivePanel projectPath={selectedProject} agents={agents} onSnapshot={setHiveSnapshot} onError={(message) => setError(message || null)} /> : null}
             {commandView === "messages" ? <CommandList title={t("primeInbox")} empty={t("noDurableMessages")} items={hiveSnapshot?.primeInbox.map((message) => ({ id: message.id, title: `${message.senderAgentId} → ${message.recipientAgentId}`, meta: `${message.kind} · ${message.status}`, detail: message.body })) ?? []} /> : null}
             {commandView === "approvals" ? <ApprovalPanel projectPath={selectedProject} snapshot={hiveSnapshot} onSnapshot={setHiveSnapshot} onError={(message) => setError(message || null)} /> : null}
-            {commandView === "memory" ? <MemoryPanel projectPath={selectedProject} onError={(message) => setError(message || null)} /> : null}
+            {commandView === "memory" ? <MemoryPanel projectPath={selectedProject} agentId={selectedId} onError={(message) => setError(message || null)} /> : null}
             {commandView === "skills" ? <SkillsPanel onError={(message) => setError(message || null)} /> : null}
             {commandView === "activity" ? <ActivityOperationsPanel events={activity} agents={agents} /> : null}
             {commandView === "usage" ? <CostPanel events={activity} agents={agents} onError={(message) => setError(message || null)} /> : null}
