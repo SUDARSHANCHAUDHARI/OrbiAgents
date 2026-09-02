@@ -32,7 +32,7 @@ test("preload bridge exposes only fixed agent operations and removable event sub
   assert.deepEqual(Object.keys(api.commands).sort(), ["list", "upsert"]); assert.equal(Object.isFrozen(api.commands), true);
   assert.deepEqual(Object.keys(api.hive).sort(), ["assign", "decideApproval", "snapshot", "transitionTask"]);
   assert.equal(Object.isFrozen(api.hive), true);
-  assert.deepEqual(Object.keys(api.memory).sort(), ["capture", "documentGraph", "list", "search"]);
+  assert.deepEqual(Object.keys(api.memory).sort(), ["capture", "documentGraph", "list", "queryDocuments", "search"]);
   assert.equal(Object.isFrozen(api.memory), true);
   assert.deepEqual(Object.keys(api.missions).sort(), ["create", "list", "run", "setEnabled"]);
   assert.equal(Object.isFrozen(api.missions), true);
@@ -44,8 +44,8 @@ test("preload bridge exposes only fixed agent operations and removable event sub
   assert.equal(Object.isFrozen(api.files), true);
   assert.deepEqual(Object.keys(api.github).sort(), ["authStatus", "snapshot"]);
   assert.equal(Object.isFrozen(api.github), true);
-  assert.deepEqual(Object.keys(api.git), ["snapshot"]); assert.equal(Object.isFrozen(api.git), true);
-  assert.deepEqual(Object.keys(api.onboarding).sort(), ["complete", "refresh", "status"]);
+  assert.deepEqual(Object.keys(api.git).sort(), ["branches", "checkout", "compare", "snapshot"]); assert.equal(Object.isFrozen(api.git), true);
+  assert.deepEqual(Object.keys(api.onboarding).sort(), ["complete", "copyInstallCommand", "refresh", "status"]);
   assert.equal(Object.isFrozen(api.onboarding), true);
   assert.deepEqual(Object.keys(api.recovery), ["status"]); assert.equal(Object.isFrozen(api.recovery), true);
   assert.deepEqual(Object.keys(api.costs), ["snapshot"]); assert.equal(Object.isFrozen(api.costs), true);
@@ -54,7 +54,7 @@ test("preload bridge exposes only fixed agent operations and removable event sub
   assert.deepEqual(Object.keys(api.catalogs).sort(), ["importHire", "installSkill", "review"]); assert.equal(Object.isFrozen(api.catalogs), true);
   assert.deepEqual(Object.keys(api.voice).sort(), ["chooseModel", "policy", "status", "transcribe", "updatePolicy"]); assert.equal(Object.isFrozen(api.voice), true);
   assert.deepEqual(Object.keys(api.slack).sort(), ["clear", "saveTokenFromClipboard", "send", "status", "test"]); assert.equal(Object.isFrozen(api.slack), true);
-  assert.deepEqual(Object.keys(api.webhooks).sort(), ["copySecret", "launchWorker", "start", "status", "stop"]); assert.equal(Object.isFrozen(api.webhooks), true);
+  assert.deepEqual(Object.keys(api.webhooks).sort(), ["completeWorker", "copySecret", "launchWorker", "start", "status", "stop"]); assert.equal(Object.isFrozen(api.webhooks), true);
   const remove = api.agents.onOutput(() => undefined);
   assert.equal(listeners.has(IPC_CHANNELS.output), true);
   remove();

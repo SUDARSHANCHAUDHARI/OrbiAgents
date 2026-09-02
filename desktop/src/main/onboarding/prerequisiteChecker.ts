@@ -24,10 +24,10 @@ export class PrerequisiteChecker {
     let encryptionAvailable = false; try { encryptionAvailable = this.options.encryptionAvailable(); } catch { encryptionAvailable = false; }
     const checks: PrerequisiteCheck[] = [
       { id: "platform", label: "macOS", required: true, status: platform === "darwin" ? "pass" : "fail", detail: platform === "darwin" ? "Supported macOS desktop platform detected." : `Current platform ${platform} is not yet supported.` },
-      { id: "git", label: "Git", required: true, status: found.git ? "pass" : "fail", detail: found.git ? "Git executable is available." : "Install Git to use isolated worktrees and history." },
-      { id: "agent-runtime", label: "Agent CLI", required: true, status: runtimeNames.length ? "pass" : "fail", detail: runtimeNames.length ? `Available: ${runtimeNames.join(", ")}.` : "Install at least one supported agent CLI." },
+      { id: "git", label: "Git", required: true, status: found.git ? "pass" : "fail", detail: found.git ? "Git executable is available." : "Install Git to use isolated worktrees and history.", ...(!found.git && platform === "darwin" ? { installCommand: "xcode-select --install" } : {}) },
+      { id: "agent-runtime", label: "Agent CLI", required: true, status: runtimeNames.length ? "pass" : "fail", detail: runtimeNames.length ? `Available: ${runtimeNames.join(", ")}.` : "Install at least one supported agent CLI.", ...(!runtimeNames.length ? { installCommand: "npm install -g @openai/codex" } : {}) },
       ...AGENT_RUNTIMES.map(([command, label]): PrerequisiteCheck => ({ id: command, label: `${label} CLI`, required: false, status: found[command] ? "pass" : "warn", detail: found[command] ? `${command} is available.` : `${command} is optional and was not found.` })),
-      { id: "github", label: "GitHub CLI", required: false, status: found.gh ? "pass" : "warn", detail: found.gh ? "gh is available; authentication is checked only on request." : "Install gh to enable GitHub issue and CI ingestion." },
+      { id: "github", label: "GitHub CLI", required: false, status: found.gh ? "pass" : "warn", detail: found.gh ? "gh is available; authentication is checked only on request." : "Install gh to enable GitHub issue and CI ingestion.", ...(!found.gh && platform === "darwin" ? { installCommand: "brew install gh" } : {}) },
       { id: "secure-storage", label: "Secure credential storage", required: false, status: encryptionAvailable ? "pass" : "warn", detail: encryptionAvailable ? "Operating-system encryption is available." : "Encrypted local model credentials are unavailable on this system." },
     ];
     return { ready: checks.filter((check) => check.required).every((check) => check.status === "pass"), checkedAt: (this.options.now ?? Date.now)(), checks };

@@ -14,10 +14,11 @@ export function FileEditorPanel({ agentId, onError }: { agentId: string | null; 
   const [busy, setBusy] = useState(false);
   const [git, setGit] = useState<GitWorkspaceSnapshot | null>(null);
   const [rail, setRail] = useState<"files" | "changes" | "history">("files");
+  const [branches, setBranches] = useState<string[]>([]); const [targetBranch, setTargetBranch] = useState(""); const [branchDiff, setBranchDiff] = useState("");
 
   async function refresh() {
     if (!agentId) return setEntries([]);
-    try { const [nextEntries, nextGit] = await Promise.all([window.orbi.files.list({ agentId }), window.orbi.git.snapshot({ agentId }).catch(() => null)]); setEntries(nextEntries); setGit(nextGit); }
+    try { const [nextEntries, nextGit, nextBranches] = await Promise.all([window.orbi.files.list({ agentId }), window.orbi.git.snapshot({ agentId }).catch(() => null), window.orbi.git.branches({ agentId }).catch(() => [])]); setEntries(nextEntries); setGit(nextGit); setBranches(nextBranches); }
     catch (error) { onError(message(error)); }
   }
 
@@ -55,10 +56,14 @@ export function FileEditorPanel({ agentId, onError }: { agentId: string | null; 
   }
 
   function openChanged(path: string) { const entry = entries.find((candidate) => candidate.type === "file" && candidate.path === path); if (entry) void openFile(entry); else onError(t("changedFileUnavailable")); }
+  async function compareBranch() { if (!agentId || !targetBranch) return; setBusy(true); try { setBranchDiff(await window.orbi.git.compare({ agentId, branch: targetBranch })); onError(""); } catch (error) { onError(message(error)); } finally { setBusy(false); } }
+  async function checkoutBranch() { if (!agentId || !targetBranch || !window.confirm(`${t("checkoutBranchConfirm")} ${targetBranch}?`)) return; setBusy(true); try { setGit(await window.orbi.git.checkout({ agentId, branch: targetBranch })); setBranchDiff(""); await refresh(); onError(""); } catch (error) { onError(message(error)); } finally { setBusy(false); } }
 
   if (!agentId) return <section className="command-panel"><div className="section-title">{t("workspaceFiles")}</div><p className="empty">{t("selectWorkspace")}</p></section>;
   return <section className="command-panel file-editor-panel" aria-label={t("workspaceEditor")}>
     <div className="section-title"><span>{t("workspaceIde")}</span><span className="mission-actions"><button type="button" aria-pressed={rail === "files"} onClick={() => setRail("files")}>{t("files")}</button><button type="button" aria-pressed={rail === "changes"} onClick={() => setRail("changes")}>{t("changes")} {git ? `(${git.changes.length})` : ""}</button><button type="button" aria-pressed={rail === "history"} disabled={!document} onClick={() => setRail("history")}>{t("history")} {history.length ? `(${history.length})` : ""}</button><button type="button" onClick={() => void refresh()}>{t("refresh")}</button></span></div>
+    <div className="editor-toolbar"><strong>{git?.branch ?? t("branch")}</strong><select aria-label={t("compareBranch")} value={targetBranch} onChange={(event) => { setTargetBranch(event.target.value); setBranchDiff(""); }}><option value="">{t("chooseBranch")}</option>{branches.filter((branch) => branch !== git?.branch).map((branch) => <option key={branch}>{branch}</option>)}</select><button type="button" disabled={busy || !targetBranch} onClick={() => void compareBranch()}>{t("compareBranch")}</button><button type="button" disabled={busy || !targetBranch} onClick={() => void checkoutBranch()}>{t("checkoutBranch")}</button></div>
+    {branchDiff ? <pre className="git-diff">{branchDiff}</pre> : null}
     <div className="ide-layout">
       <nav className="file-tree" aria-label={`${rail} ${t("railSuffix")}`}><ul>{rail === "files" ? entries.map((entry) => <li key={entry.path} style={{ paddingLeft: `${entry.depth * 12}px` }}>{entry.type === "file" ? <button type="button" disabled={!entry.editable || busy} aria-current={document?.path === entry.path ? "page" : undefined} onClick={() => void openFile(entry)}>{entry.name}{!entry.editable ? ` (${t("largeFile")})` : ""}</button> : <span>▸ {entry.name}</span>}</li>) : rail === "changes" ? git?.changes.map((change) => <li key={`${change.status}-${change.path}`}><button type="button" disabled={busy} onClick={() => openChanged(change.path)}><strong>{change.status}</strong> {change.path}</button></li>) : history.map((item) => <li key={item.revision}><button type="button" aria-current={selectedRevision === item.revision ? "page" : undefined} onClick={() => void compare(item.revision)}>{item.subject}<small>{new Date(item.timestamp).toLocaleDateString()}</small></button></li>)}</ul>{rail === "changes" && !git?.changes.length ? <p className="empty">{t("cleanTree")}</p> : null}{rail === "history" && !history.length ? <p className="empty">{t("noFileHistory")}</p> : null}</nav>
       <div className="editor-area">{document ? <>

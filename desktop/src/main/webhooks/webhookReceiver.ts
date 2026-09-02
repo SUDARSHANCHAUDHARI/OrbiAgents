@@ -17,6 +17,7 @@ export class WebhookReceiver {
   copySecret(): string { if (!this.server || !this.secret) throw new Error("Webhook receiver is not enabled"); return this.secret; }
   event(id: string): WebhookEvent { const event = this.events.find((candidate) => candidate.id === id); if (!event) throw new Error("Webhook event was not found"); if (event.workerAgentId) throw new Error("Webhook event already has a worker"); return { ...event }; }
   attachWorker(id: string, workerAgentId: string): WebhookStatus { const event = this.events.find((candidate) => candidate.id === id); if (!event || event.workerAgentId) throw new Error("Webhook event cannot accept a worker"); event.workerAgentId = workerAgentId; return this.status(); }
+  completeWorker(id: string): { status: WebhookStatus; workerAgentId: string } { const event = this.events.find((candidate) => candidate.id === id); if (!event?.workerAgentId || event.completedAt) throw new Error("Webhook worker cannot be completed"); event.completedAt = Date.now(); return { status: this.status(), workerAgentId: event.workerAgentId }; }
 
   async start(): Promise<WebhookStatus> {
     if (this.server) return this.status();

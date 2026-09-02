@@ -23,3 +23,16 @@ test("document graph ignores non-document and oversized files", async () => {
   }).build("/repo");
   assert.deepEqual(graph, { nodes: [], edges: [], truncated: false });
 });
+
+test("document query returns bounded ranked snippets with source paths", async () => {
+  const documents = new Map([
+    ["docs/runtime.md", "# Runtime Safety\nCircuit breaker runtime safety and operator control. Runtime budgets stop runaway work."],
+    ["docs/recovery.md", "# Recovery\nOperator review restores interrupted sessions."],
+  ]);
+  const builder = new DocumentKnowledgeGraphBuilder({
+    async list() { return [...documents].map(([path, content]) => ({ path, name: path.split("/").at(-1)!, type: "file" as const, depth: 1, size: content.length })); },
+    async read(_root, path) { const content = documents.get(String(path))!; return { path: String(path), content, hash: "hash", language: "markdown" }; },
+  });
+  assert.deepEqual(await builder.query("/repo", "runtime operator", 1), [{ path: "docs/runtime.md", title: "Runtime Safety", snippet: "# Runtime Safety Circuit breaker runtime safety and operator control. Runtime budgets stop runaway work.", matchedTerms: ["operator", "runtime"] }]);
+  await assert.rejects(() => builder.query("/repo", "runtime", 11), /limit is invalid/);
+});

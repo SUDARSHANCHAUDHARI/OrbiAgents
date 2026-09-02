@@ -161,6 +161,7 @@ export interface OrbiDesktopApi {
     search(request: MemorySearchRequest): Promise<MemoryRecord[]>;
     capture(request: MemoryCaptureRequest): Promise<MemoryRecord[]>;
     documentGraph(request: WorkspaceFileAgentRequest): Promise<DocumentKnowledgeGraph>;
+    queryDocuments(request: DocumentKnowledgeQueryRequest): Promise<DocumentKnowledgeResult[]>;
   };
   missions: {
     list(request: MissionProjectRequest): Promise<ScheduledMission[]>;
@@ -192,25 +193,27 @@ export interface OrbiDesktopApi {
     authStatus(): Promise<GitHubAuthStatus>;
     snapshot(request: WorkspaceFileAgentRequest): Promise<GitHubSnapshot>;
   };
-  git: { snapshot(request: WorkspaceFileAgentRequest): Promise<GitWorkspaceSnapshot>; };
+  git: { snapshot(request: WorkspaceFileAgentRequest): Promise<GitWorkspaceSnapshot>; branches(request: WorkspaceFileAgentRequest): Promise<string[]>; compare(request: WorkspaceGitBranchRequest): Promise<string>; checkout(request: WorkspaceGitBranchRequest): Promise<GitWorkspaceSnapshot>; };
   onboarding: {
     status(): Promise<OnboardingStatus>;
     refresh(): Promise<OnboardingStatus>;
     complete(): Promise<OnboardingStatus>;
+    copyInstallCommand(request: { id: string }): Promise<void>;
   };
   recovery: { status(): Promise<RecoveryReport | null>; };
   costs: { snapshot(): Promise<CostLedgerSnapshot>; };
   skills: { list(request?: { query?: string }): Promise<SkillCatalogEntry[]>; remove(request: { id: string }): Promise<SkillCatalogEntry[]>; };
   updates: { status(): Promise<UpdateState>; check(): Promise<UpdateState>; download(): Promise<UpdateState>; install(): Promise<void>; };
-  webhooks: { status(): Promise<WebhookStatus>; start(): Promise<WebhookStatus>; stop(): Promise<WebhookStatus>; copySecret(): Promise<void>; launchWorker(request: WebhookLaunchWorkerRequest): Promise<WebhookStatus>; };
+  webhooks: { status(): Promise<WebhookStatus>; start(): Promise<WebhookStatus>; stop(): Promise<WebhookStatus>; copySecret(): Promise<void>; launchWorker(request: WebhookLaunchWorkerRequest): Promise<WebhookStatus>; completeWorker(request: WebhookCompleteWorkerRequest): Promise<WebhookStatus>; };
   voice: { policy(): Promise<VoicePolicy>; updatePolicy(request: VoicePolicyUpdate): Promise<VoicePolicy>; status(): Promise<VoiceTranscriptionStatus>; chooseModel(): Promise<VoiceTranscriptionStatus>; transcribe(request: VoiceTranscriptionRequest): Promise<VoiceTranscript>; };
   catalogs: { review(request: RemoteCatalogReviewRequest): Promise<RemoteCatalogReview>; installSkill(request: RemoteSkillInstallRequest): Promise<RemoteSkillInstallResult>; importHire(request: RemoteHireImportRequest): Promise<HireProfile>; };
   slack: { status(): Promise<SlackStatus>; saveTokenFromClipboard(): Promise<SlackStatus>; clear(): Promise<SlackStatus>; test(): Promise<SlackStatus>; send(request: SlackSendRequest): Promise<SlackSendResult>; };
 }
 
-export interface WebhookEvent { id: string; title: string; detail: string; source: string; receivedAt: number; workerAgentId?: string; }
+export interface WebhookEvent { id: string; title: string; detail: string; source: string; receivedAt: number; workerAgentId?: string; completedAt?: number; }
 export interface WebhookStatus { enabled: boolean; endpoint?: string; events: WebhookEvent[]; }
 export interface WebhookLaunchWorkerRequest { eventId: string; templateAgentId: string; }
+export interface WebhookCompleteWorkerRequest { eventId: string; }
 export type VoiceRetention = "none" | "session" | "24-hours";
 export interface VoicePolicy { consent: boolean; retention: VoiceRetention; captureEnabled: boolean; updatedAt: number; }
 export interface VoicePolicyUpdate { consent: boolean; retention: VoiceRetention; }
@@ -226,7 +229,7 @@ export interface RemoteSkillProvenance { schemaVersion: 1; publisherId: string; 
 export interface RemoteSkillInstallResult { skill: SkillCatalogEntry; provenance: RemoteSkillProvenance; }
 export interface RemoteHireImportRequest { catalog: RemoteCatalogReviewRequest; entryId: string; }
 export interface SlackStatus { configured: boolean; team?: string; botUser?: string; updatedAt: number; }
-export interface SlackSendRequest { channel: string; text: string; }
+export interface SlackSendRequest { channel: string; text: string; threadTimestamp?: string; }
 export interface SlackSendResult { channel: string; timestamp: string; }
 
 export interface SkillCatalogEntry { id: string; name: string; description: string; source: string; relativePath: string; }
@@ -248,7 +251,8 @@ export interface GitHubIssue { number: number; title: string; state: string; upd
 export interface GitHubRun { id: number; name: string; workflowName: string; status: string; conclusion: string; headBranch: string; event: string; updatedAt: string; url: string; }
 export interface GitHubSnapshot { repository: { nameWithOwner: string; url: string }; issues: GitHubIssue[]; runs: GitHubRun[]; fetchedAt: number; }
 export interface GitWorkspaceSnapshot { branch: string; upstream?: string; ahead: number; behind: number; changes: Array<{ status: string; path: string }>; commits: Array<{ hash: string; parentHashes: string[]; timestamp: number; subject: string }>; diffStat: string; diff: string; fetchedAt: number; truncated: boolean; }
-export interface PrerequisiteCheck { id: string; label: string; required: boolean; status: "pass" | "warn" | "fail"; detail: string; }
+export interface WorkspaceGitBranchRequest extends WorkspaceFileAgentRequest { branch: string; }
+export interface PrerequisiteCheck { id: string; label: string; required: boolean; status: "pass" | "warn" | "fail"; detail: string; installCommand?: string; }
 export interface OnboardingStatus { version: number; completed: boolean; completedAt?: number; ready: boolean; checkedAt: number; checks: PrerequisiteCheck[]; }
 export type RecoveryItemKind = "interrupted-session" | "unfinished-task" | "pending-approval" | "pending-mission";
 export interface RecoveryItem { id: string; kind: RecoveryItemKind; projectPath?: string; relatedId: string; title: string; detail: string; detectedAt: number; }
@@ -262,6 +266,8 @@ export interface DocumentKnowledgeGraph {
   edges: Array<{ sourceId: string; targetId: string; sharedTerms: string[] }>;
   truncated: boolean;
 }
+export interface DocumentKnowledgeQueryRequest extends WorkspaceFileAgentRequest { query: string; limit?: number; }
+export interface DocumentKnowledgeResult { path: string; title: string; snippet: string; matchedTerms: string[]; }
 export interface MemoryProjectRequest { projectPath: string; }
 export interface MemorySearchRequest extends MemoryProjectRequest { query: string; limit?: number; }
 export interface MemoryCaptureRequest extends MemoryProjectRequest { title: string; content: string; source: string; authorAgentId: string; }
@@ -301,6 +307,7 @@ export const IPC_CHANNELS = {
   memorySearch: "memory:search",
   memoryCapture: "memory:capture",
   memoryDocumentGraph: "memory:document-graph",
+  memoryDocumentQuery: "memory:document-query",
   missionList: "missions:list",
   missionCreate: "missions:create",
   missionEnable: "missions:enable",
@@ -322,9 +329,13 @@ export const IPC_CHANNELS = {
   githubAuthStatus: "github:auth:status",
   githubSnapshot: "github:snapshot",
   gitSnapshot: "git:snapshot",
+  gitBranches: "git:branches",
+  gitCompare: "git:compare",
+  gitCheckout: "git:checkout",
   onboardingStatus: "onboarding:status",
   onboardingRefresh: "onboarding:refresh",
   onboardingComplete: "onboarding:complete",
+  onboardingCopyInstall: "onboarding:install:copy",
   recoveryStatus: "recovery:status",
   costSnapshot: "costs:snapshot",
   commandHistoryList: "commands:history:list",
@@ -343,6 +354,7 @@ export const IPC_CHANNELS = {
   webhookStop: "webhooks:stop",
   webhookCopySecret: "webhooks:secret:copy",
   webhookLaunchWorker: "webhooks:worker:launch",
+  webhookCompleteWorker: "webhooks:worker:complete",
   voicePolicy: "voice:policy",
   voiceUpdatePolicy: "voice:policy:update",
   voiceStatus: "voice:status",
