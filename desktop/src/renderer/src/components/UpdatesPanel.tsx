@@ -3,6 +3,7 @@ import type { UpdateState } from "../../../shared/contracts";
 import { PixelButton } from "./ui/PixelButton";
 import { PixelPanel } from "./ui/PixelPanel";
 import { useI18n, type MessageKey } from "../i18n";
+import { releaseNoteBlocks } from "../command/releaseNotesViewModel";
 
 export function UpdatesPanel({ onError }: { onError(message: string): void }) {
   const { t } = useI18n();
@@ -25,7 +26,7 @@ export function UpdatesPanel({ onError }: { onError(message: string): void }) {
       <strong>{label(state, t)}</strong>
       {state?.availableVersion ? <small>{t("version")} {state.availableVersion}{state.artifactSize ? ` · ${formatBytes(state.artifactSize)}` : ""}</small> : null}
       {state?.message ? <span>{state.message}</span> : null}
-      {state?.releaseNotes ? <pre>{state.releaseNotes}</pre> : null}
+      {state?.releaseNotes ? <article className="release-notes" aria-label={t("releaseNotes")}>{state.releaseName ? <h3>{state.releaseName}</h3> : null}{releaseNoteBlocks(state.releaseNotes).map((block, index) => block.kind === "heading" ? <h4 key={index}>{block.text}</h4> : block.kind === "item" ? <div className="release-note-item" key={index}>• {block.text}</div> : <p key={index}>{block.text}</p>)}</article> : null}
     </div>
     <div className="update-actions">
       <PixelButton type="button" variant="primary" disabled={busy || state?.phase === "checking" || state?.phase === "downloading"} onClick={() => void run("check")}>{state?.phase === "checking" ? t("checking") : t("checkUpdates")}</PixelButton>

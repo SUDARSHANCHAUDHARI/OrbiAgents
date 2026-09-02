@@ -3,7 +3,7 @@ import type { ActivityEvent, AgentSession } from "../../../shared/contracts";
 import { activityOverview, eventOffset, filterActivity, runtimeBudget } from "../command/activityViewModel";
 import { useI18n } from "../i18n";
 
-export function ActivityOperationsPanel({ events, agents }: { events: ActivityEvent[]; agents: AgentSession[] }) {
+export function ActivityOperationsPanel({ events, agents, onError }: { events: ActivityEvent[]; agents: AgentSession[]; onError(message: string): void }) {
   const { t } = useI18n();
   const [agentId, setAgentId] = useState("");
   const [source, setSource] = useState("");
@@ -15,9 +15,10 @@ export function ActivityOperationsPanel({ events, agents }: { events: ActivityEv
   const filtered = Boolean(agentId || source || state);
   const overview = activityOverview(events);
   function clear() { setAgentId(""); setSource(""); setState(""); }
+  async function copyTrace() { try { await window.orbi.agents.copyActivityTrace({ events }); onError(""); } catch (error) { onError(error instanceof Error ? error.message : String(error)); } }
 
   return <section className="command-panel activity-operations" aria-label={t("normalizedActivity")}>
-    <div className="section-title"><span>{t("normalizedActivity")}</span>{filtered ? <button type="button" onClick={clear}>{t("clearFilters")}</button> : null}</div>
+    <div className="section-title"><span>{t("normalizedActivity")}</span><span className="mission-actions">{filtered ? <button type="button" onClick={clear}>{t("clearFilters")}</button> : null}<button type="button" disabled={!events.length} onClick={() => void copyTrace()}>{t("copyOtelTrace")}</button></span></div>
     <p className="empty" aria-live="polite">{overview.signals ? `${overview.signals} ${t("signals")} · ${overview.agents} ${t("agentsCount")} · ${overview.providerEvents} ${t("providerEvents")}${overview.attention ? ` · ${overview.attention} ${t("needAttention")}` : ""}` : t("noSessionSignals")} · {t("showing")} {visible.length}</p>
     <ul>{agents.filter((agent) => agent.profile).map((agent) => { const budget = runtimeBudget(agent.startedAt, agent.profile!.budgetMinutes); return <li key={`budget-${agent.id}`}><strong>{agent.name} · {t("runtimeBudget")}</strong><small>{budget.elapsedMinutes.toFixed(1)} / {agent.profile!.budgetMinutes} {t("minutesLabel")} · {budget.percent}%</small><progress max={100} value={budget.percent} aria-label={`${agent.name} ${t("runtimeBudget")}`} /></li>; })}</ul>
     <div className="activity-filters">

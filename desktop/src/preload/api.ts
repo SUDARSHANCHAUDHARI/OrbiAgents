@@ -13,6 +13,7 @@ export function createDesktopApi(ipcRenderer: Pick<IpcRenderer, "invoke" | "on" 
     onOutput: (listener) => subscribe<TerminalOutputEvent>(ipcRenderer, IPC_CHANNELS.output, listener),
     onExit: (listener) => subscribe<TerminalExitEvent>(ipcRenderer, IPC_CHANNELS.exit, listener),
     onActivity: (listener) => subscribe<ActivityEvent>(ipcRenderer, IPC_CHANNELS.activity, listener),
+    copyActivityTrace: (request) => ipcRenderer.invoke(IPC_CHANNELS.activityTraceCopy, request),
   };
   const commands: OrbiDesktopApi["commands"] = {
     list: (request) => ipcRenderer.invoke(IPC_CHANNELS.commandHistoryList, request),

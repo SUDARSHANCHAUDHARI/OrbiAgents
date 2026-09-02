@@ -166,7 +166,7 @@ export default function App() {
             {commandView === "approvals" ? <ApprovalPanel projectPath={selectedProject} snapshot={hiveSnapshot} onSnapshot={setHiveSnapshot} onError={(message) => setError(message || null)} /> : null}
             {commandView === "memory" ? <MemoryPanel projectPath={selectedProject} agentId={selectedId} onError={(message) => setError(message || null)} /> : null}
             {commandView === "skills" ? <SkillsPanel onError={(message) => setError(message || null)} /> : null}
-            {commandView === "activity" ? <ActivityOperationsPanel events={activity} agents={agents} /> : null}
+            {commandView === "activity" ? <ActivityOperationsPanel events={activity} agents={agents} onError={(message) => setError(message || null)} /> : null}
             {commandView === "usage" ? <CostPanel events={activity} agents={agents} onError={(message) => setError(message || null)} /> : null}
             {commandView === "recovery" ? <RecoveryPanel onError={(message) => setError(message || null)} /> : null}
             {commandView === "workspaces" ? <CommandList title={t("agentWorkspaces")} empty={t("noAgentWorkspaces")} items={agents.map((agent) => ({ id: agent.id, title: agent.name, meta: `${agent.workspace.status} · ${agent.workspace.branch ?? t("direct")}`, detail: agent.workspace.path }))} /> : null}
