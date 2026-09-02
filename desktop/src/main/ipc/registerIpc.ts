@@ -22,6 +22,7 @@ import type { RemoteSkillInstaller } from "../skills/remoteSkillInstaller";
 import type { RemoteHireGallery } from "../agents/remoteHireGallery";
 import type { SlackStore } from "../slack/slackStore";
 import type { SlackClient } from "../slack/slackClient";
+import { DocumentKnowledgeGraphBuilder } from "../memory/documentKnowledgeGraph";
 import { decodeHireProfile, encodeHireProfile } from "../agents/hireProfileCodec";
 import {
   validateAgentId,
@@ -34,6 +35,7 @@ import {
 } from "../security/validators";
 
 export function registerIpc(window: BrowserWindow, manager: PtyManager, hive: HiveCoordinator, runtimeAdapters: RuntimeAdapterStore, localModels: LocalModelEndpointStore, localModelClient: LocalModelClient, files: WorkspaceFileService, github: GitHubIngestion, git: GitWorkspaceService, prerequisites: PrerequisiteChecker, onboarding: OnboardingStore, recovery: RecoveryStore, commandHistory: CommandHistoryStore, skills: SkillCatalog, updates: UpdateService, webhooks: WebhookReceiver, voice: VoicePolicyStore, transcription: LocalTranscriptionService, catalogs: RemoteCatalogClient, remoteSkills: RemoteSkillInstaller, remoteHires: RemoteHireGallery, slackStore: SlackStore, slack: SlackClient): () => void {
+  const documentGraph = new DocumentKnowledgeGraphBuilder(files);
   const assertTrustedSender = (senderId: number) => {
     if (senderId !== window.webContents.id) throw new Error("Untrusted IPC sender");
   };
@@ -110,6 +112,7 @@ export function registerIpc(window: BrowserWindow, manager: PtyManager, hive: Hi
     const request = asRecord(value);
     return hive.captureMemory(await validateWorkspace(request.projectPath), { title: validateBoundedText(request.title, "Memory title", 200), content: validateBoundedText(request.content, "Memory content", 20_000), source: validateBoundedText(request.source, "Memory source", 128), authorAgentId: validateAgentId(request.authorAgentId) });
   });
+  ipcMain.handle(IPC_CHANNELS.memoryDocumentGraph, (event, value: unknown) => { assertTrustedSender(event.sender.id); return documentGraph.build(manager.workspaceRoot(validateAgentId(asRecord(value).agentId))); });
   ipcMain.handle(IPC_CHANNELS.missionList, async (event, value: unknown) => { assertTrustedSender(event.sender.id); return hive.listMissions(await validateWorkspace(asRecord(value).projectPath)); });
   ipcMain.handle(IPC_CHANNELS.missionCreate, async (event, value: unknown) => {
     assertTrustedSender(event.sender.id); const request = asRecord(value);
