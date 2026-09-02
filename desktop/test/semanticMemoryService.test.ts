@@ -19,6 +19,23 @@ test("semantic memory reports and returns deterministic fallback when MemPalace 
   assert.equal(result.status.provider, "keyword"); assert.equal(result.output, "# Verified memory\nFallback result");
 });
 
+test("semantic memory visibly falls back when an installed MemPalace search fails", async () => {
+  const service = new SemanticMemoryService("/palace", { findBin: async () => "/mempalace", run: async () => { throw new Error("untrusted process detail"); } });
+  const result = await service.search("/repo", "query", 5, async () => "deterministic result");
+  assert.deepEqual(result.status, { available: true, active: false, provider: "keyword", model: "minilm", detail: "MemPalace search failed; deterministic local text ranking was used." });
+  assert.equal(result.output, "deterministic result");
+  assert.equal(result.status.detail.includes("untrusted process detail"), false);
+});
+
+test("semantic memory search does not block the event loop while the provider is loading", async () => {
+  let searchFinished = false;
+  const service = new SemanticMemoryService("/palace", { findBin: async () => "/mempalace", run: async () => { await new Promise((resolve) => setTimeout(resolve, 25)); searchFinished = true; return { stdout: "semantic result", stderr: "" }; } });
+  const search = service.search("/repo", "query", 5, async () => "fallback");
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(searchFinished, false);
+  assert.equal((await search).output, "semantic result");
+});
+
 test("semantic memory serializes index writers", async () => {
   let active = 0; let peak = 0;
   const service = new SemanticMemoryService("/palace", { findBin: async () => "/mempalace", run: async () => { active += 1; peak = Math.max(peak, active); await new Promise((resolve) => setTimeout(resolve, 5)); active -= 1; return { stdout: "", stderr: "" }; } });
