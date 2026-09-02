@@ -54,6 +54,7 @@ test("preload bridge exposes only fixed agent operations and removable event sub
   assert.deepEqual(Object.keys(api.catalogs).sort(), ["importHire", "installSkill", "review"]); assert.equal(Object.isFrozen(api.catalogs), true);
   assert.deepEqual(Object.keys(api.voice).sort(), ["chooseModel", "policy", "status", "transcribe", "updatePolicy"]); assert.equal(Object.isFrozen(api.voice), true);
   assert.deepEqual(Object.keys(api.slack).sort(), ["clear", "saveTokenFromClipboard", "send", "status", "test"]); assert.equal(Object.isFrozen(api.slack), true);
+  assert.deepEqual(Object.keys(api.webhooks).sort(), ["copySecret", "launchWorker", "start", "status", "stop"]); assert.equal(Object.isFrozen(api.webhooks), true);
   const remove = api.agents.onOutput(() => undefined);
   assert.equal(listeners.has(IPC_CHANNELS.output), true);
   remove();

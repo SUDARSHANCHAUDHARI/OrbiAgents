@@ -1,4 +1,5 @@
 import { clipboard, dialog, ipcMain, type BrowserWindow } from "electron";
+import { randomUUID } from "node:crypto";
 import { IPC_CHANNELS } from "../../shared/contracts";
 import type { PtyManager } from "../pty/ptyManager";
 import type { HiveCoordinator } from "../hive/hiveCoordinator";
@@ -178,6 +179,15 @@ export function registerIpc(window: BrowserWindow, manager: PtyManager, hive: Hi
   ipcMain.handle(IPC_CHANNELS.webhookStart, (event) => { assertTrustedSender(event.sender.id); return webhooks.start(); });
   ipcMain.handle(IPC_CHANNELS.webhookStop, (event) => { assertTrustedSender(event.sender.id); return webhooks.stop(); });
   ipcMain.handle(IPC_CHANNELS.webhookCopySecret, (event) => { assertTrustedSender(event.sender.id); clipboard.writeText(webhooks.copySecret()); });
+  ipcMain.handle(IPC_CHANNELS.webhookLaunchWorker, async (event, value: unknown) => {
+    assertTrustedSender(event.sender.id); const request = asRecord(value); const templateId = validateAgentId(request.templateAgentId); const source = webhooks.event(validateWebhookEventId(request.eventId));
+    const template = manager.list().find((agent) => agent.id === templateId); if (!template) throw new Error("Worker template agent was not found");
+    const workerId = `webhook-${randomUUID().slice(0, 12)}`;
+    await manager.create({ id: workerId, name: `Webhook: ${source.title}`.slice(0, 80), runtimeId: template.runtimeId, cwd: template.workspace.sourcePath, cols: 100, rows: 30, isolateWorkspace: true, profile: { role: "generalist", goal: source.title, capabilities: ["planning", "coding", "testing"], budgetMinutes: 30, appearance: template.profile?.appearance ?? "cyan" } });
+    try { manager.write(workerId, `Handle this authenticated webhook event as a one-shot task. Do not contact external systems unless the operator explicitly authorizes it.\n\nSource: ${source.source}\nTitle: ${source.title}\nDetail:\n${source.detail}\n`); }
+    catch (error) { manager.stop(workerId); throw error; }
+    return webhooks.attachWorker(source.id, workerId);
+  });
   ipcMain.handle(IPC_CHANNELS.voicePolicy, (event) => { assertTrustedSender(event.sender.id); return voice.get(); });
   ipcMain.handle(IPC_CHANNELS.voiceUpdatePolicy, async (event, value: unknown) => { assertTrustedSender(event.sender.id); const policy = await voice.update(value); if (!policy.consent || policy.retention === "none") await transcription.clearRetained(); return policy; });
   ipcMain.handle(IPC_CHANNELS.voiceStatus, (event) => { assertTrustedSender(event.sender.id); return transcription.status(); });
@@ -220,6 +230,7 @@ function validateUuid(value: unknown): string {
   if (typeof value !== "string" || !/^[0-9a-f]{8}-[0-9a-f-]{27}$/i.test(value)) throw new Error("Invalid approval id");
   return value;
 }
+function validateWebhookEventId(value: unknown): string { if (typeof value !== "string" || !/^[A-Za-z0-9._:-]{8,128}$/.test(value)) throw new Error("Webhook event id is invalid"); return value; }
 
 function asRecord(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== "object") throw new Error("Request payload is required");

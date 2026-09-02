@@ -16,6 +16,9 @@ test("webhook receiver is explicit, loopback-only, authenticated, and replay-saf
   const replay = await fetch(started.endpoint!, { method: "POST", headers, body: JSON.stringify({ title: "Changed", detail: "Must not replace" }) });
   assert.equal(replay.status, 409);
   assert.deepEqual(receiver.status().events.map(({ title, detail, source }) => ({ title, detail, source })), [{ title: "Build", detail: "Run tests", source: "CI" }]);
+  assert.equal(receiver.event("event-0001").title, "Build");
+  assert.equal(receiver.attachWorker("event-0001", "webhook-worker").events[0].workerAgentId, "webhook-worker");
+  assert.throws(() => receiver.event("event-0001"), /already has a worker/);
   assert.deepEqual(await receiver.stop(), { enabled: false, events: receiver.status().events });
   assert.throws(() => receiver.copySecret(), /not enabled/);
 });
