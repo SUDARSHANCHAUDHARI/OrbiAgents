@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { chmod, mkdir, mkdtemp, symlink, writeFile } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { findExecutable, PrerequisiteChecker } from "../src/main/onboarding/prerequisiteChecker";
@@ -17,4 +19,11 @@ test("prerequisite checker fails readiness without platform, Git, or an agent ru
 test("executable lookup ignores relative and duplicate PATH entries", async () => {
   const seen: string[] = []; const result = await findExecutable("git", ["relative", "/one", "/one", "/two"].join(path.delimiter), async (file) => { seen.push(file); return file === "/two/git"; });
   assert.equal(result, "/two/git"); assert.deepEqual(seen, ["/one/git", "/two/git"]); assert.equal(await findExecutable("../bad", "/bin", async () => true), undefined);
+});
+
+test("executable lookup accepts a Homebrew-style link to a real executable file", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "orbi-executable-")); const cellar = path.join(root, "Cellar"); const bin = path.join(root, "bin");
+  await Promise.all([mkdir(cellar), mkdir(bin)]);
+  const target = path.join(cellar, "whisper-cli"); await writeFile(target, "#!/bin/sh\n"); await chmod(target, 0o700); await symlink(target, path.join(bin, "whisper-cli"));
+  assert.equal(await findExecutable("whisper-cli", bin), path.join(bin, "whisper-cli"));
 });
