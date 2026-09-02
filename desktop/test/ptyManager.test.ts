@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { AgentRegistry } from "../src/main/agents/agentRegistry";
 import { PtyManager } from "../src/main/pty/ptyManager";
+import { DesktopCircuitBreaker } from "../src/main/pty/desktopCircuitBreaker";
 import type { PtyAdapter, PtyExitEvent, PtyProcess, PtySpawnOptions } from "../src/main/pty/ptyTypes";
 import type { ActivityEvent } from "../src/shared/contracts";
 
@@ -135,4 +136,36 @@ test("manager routes authenticated provider facts only to their live matching ag
   assert.equal(providerEvents.length, 1);
   assert.equal(providerEvents[0].state, "reading");
   assert.equal(providerEvents[0].summary, "Claude PreToolUse");
+});
+
+test("manager surfaces and enforces desktop output circuit decisions", async () => {
+  const process = new FakeProcess();
+  const activity: ActivityEvent[] = [];
+  const circuitFactory = () => new DesktopCircuitBreaker({
+    maxRuntimeMs: 60_000,
+    outputWindowMs: 1_000,
+    steerOutputBytes: 2,
+    constrainOutputBytes: 4,
+    stopOutputBytes: 6,
+  }, Date.now());
+  const manager = new PtyManager(
+    { spawn() { return process; } },
+    new AgentRegistry(),
+    { output() {}, exit() {}, activity: (event) => activity.push(event) },
+    {},
+    undefined,
+    undefined,
+    undefined,
+    circuitFactory,
+  );
+
+  await manager.create({ id: "guarded", name: "Guarded", runtimeId: "codex", cwd: "/workspace", cols: 80, rows: 24, isolateWorkspace: false });
+  process.emitData("ab");
+  process.emitData("cd");
+  process.emitData("ef");
+
+  assert.deepEqual(activity.filter((event) => event.type.startsWith("circuit-")).map((event) => event.type), ["circuit-steered", "circuit-constrained", "circuit-opened"]);
+  assert.deepEqual(process.writes, ["\x03"]);
+  assert.deepEqual(process.kills, [undefined]);
+  assert.equal(manager.list()[0].status, "stopping");
 });

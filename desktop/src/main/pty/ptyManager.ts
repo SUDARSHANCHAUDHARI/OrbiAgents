@@ -4,6 +4,7 @@ import { AgentRegistry } from "../agents/agentRegistry";
 import type { ValidatedCreateAgentRequest } from "../security/validators";
 import type { WorkspaceLease, WorkspaceProvider } from "../workspaces/workspaceManager";
 import type { PtyAdapter, PtyProcess } from "./ptyTypes";
+import { DesktopCircuitBreaker, type DesktopCircuitDecision } from "./desktopCircuitBreaker";
 
 const MAX_OUTPUT_TAIL = 256 * 1024;
 const FORCE_STOP_AFTER_MS = 5_000;
@@ -26,6 +27,8 @@ export interface PtyManagerEvents {
 export class PtyManager {
   private readonly processes = new Map<string, PtyProcess>();
   private readonly forceStopTimers = new Map<string, NodeJS.Timeout>();
+  private readonly circuitBreakers = new Map<string, DesktopCircuitBreaker>();
+  private readonly circuitTimers = new Map<string, NodeJS.Timeout[]>();
   private readonly leases = new Map<string, WorkspaceLease>();
   private readonly lastOutputActivity = new Map<string, number>();
   private readonly startingAgentIds = new Set<string>();
@@ -40,6 +43,7 @@ export class PtyManager {
     private readonly workspaces: WorkspaceProvider = directWorkspaceProvider,
     private readonly hookConfig?: RuntimeHookConfig,
     private readonly runtimeAdapters: RuntimeAdapterProvider = builtinRuntimeProvider,
+    private readonly circuitFactory: (budgetMinutes: number) => DesktopCircuitBreaker = DesktopCircuitBreaker.forBudgetMinutes,
   ) {}
 
   async create(request: ValidatedCreateAgentRequest): Promise<AgentSession> {
@@ -79,6 +83,10 @@ export class PtyManager {
       child.onData((data) => this.handleOutput(request.id, data));
       child.onExit((event) => this.handleExit(request.id, event.exitCode, event.signal));
       const running = this.registry.update(request.id, { status: "running", pid: child.pid });
+      const budgetMinutes = request.profile?.budgetMinutes ?? 60;
+      const circuit = this.circuitFactory(budgetMinutes);
+      this.circuitBreakers.set(request.id, circuit);
+      this.scheduleRuntimeCircuitChecks(request.id, circuit, budgetMinutes);
       this.emitActivity(request.id, "session-started", `${request.name} started in ${lease.workspace.status === "active" ? "an isolated worktree" : "the selected workspace"}`);
       this.finishStarting(request.id, request.runtimeId);
       return running;
@@ -111,9 +119,13 @@ export class PtyManager {
   }
 
   stop(id: string): void {
+    this.requestStop(id, "Stop requested by operator");
+  }
+
+  private requestStop(id: string, summary: string): void {
     const process = this.requireRunning(id);
     this.registry.update(id, { status: "stopping" });
-    this.emitActivity(id, "session-stopping", "Stop requested by operator");
+    this.emitActivity(id, "session-stopping", summary);
     process.kill();
     const timer = setTimeout(() => {
       if (this.processes.get(id) === process) process.kill("SIGKILL");
@@ -199,12 +211,16 @@ export class PtyManager {
       this.emitActivity(id, "terminal-output", "Terminal activity received");
     }
     this.events.output({ id, data });
+    this.handleCircuitDecision(id, this.circuitBreakers.get(id)?.recordOutput(Buffer.byteLength(data, "utf8")));
   }
 
   private handleExit(id: string, exitCode: number, signal?: number): void {
     const timer = this.forceStopTimers.get(id);
     if (timer) clearTimeout(timer);
     this.forceStopTimers.delete(id);
+    for (const circuitTimer of this.circuitTimers.get(id) ?? []) clearTimeout(circuitTimer);
+    this.circuitTimers.delete(id);
+    this.circuitBreakers.delete(id);
     this.processes.delete(id);
     this.lastOutputActivity.delete(id);
     void this.finalizeExit(id, exitCode, signal);
@@ -232,6 +248,32 @@ export class PtyManager {
 
   private emitProviderActivity(agentId: string, event: NormalizedProviderActivity): void {
     this.events.activity({ id: `${Date.now()}-${++this.activitySequence}`, agentId, type: "provider-activity", source: event.source, state: event.state, summary: event.summary, timestamp: Date.now() });
+    this.handleCircuitDecision(agentId, this.circuitBreakers.get(agentId)?.recordProviderState(event.state));
+  }
+
+  private scheduleRuntimeCircuitChecks(id: string, circuit: DesktopCircuitBreaker, budgetMinutes: number): void {
+    const maxRuntimeMs = budgetMinutes * 60_000;
+    const timers = [0.8, 0.9, 1].map((ratio) => {
+      const timer = setTimeout(() => this.handleCircuitDecision(id, circuit.checkRuntime()), maxRuntimeMs * ratio);
+      timer.unref();
+      return timer;
+    });
+    this.circuitTimers.set(id, timers);
+  }
+
+  private handleCircuitDecision(id: string, decision: DesktopCircuitDecision | undefined): void {
+    if (!decision || this.registry.get(id)?.status !== "running") return;
+    if (decision.action === "steer") {
+      this.emitActivity(id, "circuit-steered", decision.summary);
+      return;
+    }
+    if (decision.action === "constrain") {
+      this.emitActivity(id, "circuit-constrained", decision.summary);
+      this.processes.get(id)?.write("\x03");
+      return;
+    }
+    this.emitActivity(id, "circuit-opened", decision.summary);
+    this.requestStop(id, decision.summary);
   }
 
   private runtimeArgs(runtime: RuntimeAdapterDescriptor): string[] {
@@ -265,6 +307,8 @@ function activityMetadata(type: ActivityEvent["type"]): { source: ActivitySource
   if (type === "session-started") return { source: "lifecycle", state: "idle" };
   if (type === "session-failed") return { source: "lifecycle", state: "failed" };
   if (type === "session-exited") return { source: "lifecycle", state: "done" };
+  if (type === "circuit-steered" || type === "circuit-constrained") return { source: "lifecycle", state: "permission-waiting" };
+  if (type === "circuit-opened") return { source: "lifecycle", state: "failed" };
   return { source: "lifecycle" };
 }
 
