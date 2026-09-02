@@ -15,6 +15,8 @@ export class WebhookReceiver {
 
   status(): WebhookStatus { return { enabled: Boolean(this.server), ...(this.port ? { endpoint: `http://127.0.0.1:${this.port}/v1/events` } : {}), events: this.events.map((event) => ({ ...event })) }; }
   copySecret(): string { if (!this.server || !this.secret) throw new Error("Webhook receiver is not enabled"); return this.secret; }
+  event(id: string): WebhookEvent { const event = this.events.find((candidate) => candidate.id === id); if (!event) throw new Error("Webhook event was not found"); if (event.workerAgentId) throw new Error("Webhook event already has a worker"); return { ...event }; }
+  attachWorker(id: string, workerAgentId: string): WebhookStatus { const event = this.events.find((candidate) => candidate.id === id); if (!event || event.workerAgentId) throw new Error("Webhook event cannot accept a worker"); event.workerAgentId = workerAgentId; return this.status(); }
 
   async start(): Promise<WebhookStatus> {
     if (this.server) return this.status();

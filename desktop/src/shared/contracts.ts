@@ -202,14 +202,15 @@ export interface OrbiDesktopApi {
   costs: { snapshot(): Promise<CostLedgerSnapshot>; };
   skills: { list(request?: { query?: string }): Promise<SkillCatalogEntry[]>; remove(request: { id: string }): Promise<SkillCatalogEntry[]>; };
   updates: { status(): Promise<UpdateState>; check(): Promise<UpdateState>; download(): Promise<UpdateState>; install(): Promise<void>; };
-  webhooks: { status(): Promise<WebhookStatus>; start(): Promise<WebhookStatus>; stop(): Promise<WebhookStatus>; copySecret(): Promise<void>; };
+  webhooks: { status(): Promise<WebhookStatus>; start(): Promise<WebhookStatus>; stop(): Promise<WebhookStatus>; copySecret(): Promise<void>; launchWorker(request: WebhookLaunchWorkerRequest): Promise<WebhookStatus>; };
   voice: { policy(): Promise<VoicePolicy>; updatePolicy(request: VoicePolicyUpdate): Promise<VoicePolicy>; status(): Promise<VoiceTranscriptionStatus>; chooseModel(): Promise<VoiceTranscriptionStatus>; transcribe(request: VoiceTranscriptionRequest): Promise<VoiceTranscript>; };
   catalogs: { review(request: RemoteCatalogReviewRequest): Promise<RemoteCatalogReview>; installSkill(request: RemoteSkillInstallRequest): Promise<RemoteSkillInstallResult>; importHire(request: RemoteHireImportRequest): Promise<HireProfile>; };
   slack: { status(): Promise<SlackStatus>; saveTokenFromClipboard(): Promise<SlackStatus>; clear(): Promise<SlackStatus>; test(): Promise<SlackStatus>; send(request: SlackSendRequest): Promise<SlackSendResult>; };
 }
 
-export interface WebhookEvent { id: string; title: string; detail: string; source: string; receivedAt: number; }
+export interface WebhookEvent { id: string; title: string; detail: string; source: string; receivedAt: number; workerAgentId?: string; }
 export interface WebhookStatus { enabled: boolean; endpoint?: string; events: WebhookEvent[]; }
+export interface WebhookLaunchWorkerRequest { eventId: string; templateAgentId: string; }
 export type VoiceRetention = "none" | "session" | "24-hours";
 export interface VoicePolicy { consent: boolean; retention: VoiceRetention; captureEnabled: boolean; updatedAt: number; }
 export interface VoicePolicyUpdate { consent: boolean; retention: VoiceRetention; }
@@ -341,6 +342,7 @@ export const IPC_CHANNELS = {
   webhookStart: "webhooks:start",
   webhookStop: "webhooks:stop",
   webhookCopySecret: "webhooks:secret:copy",
+  webhookLaunchWorker: "webhooks:worker:launch",
   voicePolicy: "voice:policy",
   voiceUpdatePolicy: "voice:policy:update",
   voiceStatus: "voice:status",
