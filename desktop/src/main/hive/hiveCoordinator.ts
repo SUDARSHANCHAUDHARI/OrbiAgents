@@ -8,6 +8,7 @@ import { OrbiPrime } from "./orbiPrime";
 import { HiveState } from "./hiveState";
 import type { HiveTask } from "./hiveState";
 import { MarkdownMemoryStore } from "../memory/markdownMemoryStore";
+import { SemanticMemoryService } from "../memory/semanticMemoryService";
 import type { MemoryRecord } from "../../shared/contracts";
 import { MissionStore } from "../schedules/missionStore";
 import { MissionScheduler } from "../schedules/missionScheduler";
@@ -15,12 +16,13 @@ import type { RecoveryProjectState } from "../persistence/recoveryStore";
 import { CostLedger } from "../costs/costLedger";
 import type { CostLedgerSnapshot } from "../../shared/contracts";
 
-interface ProjectHive { state: HiveState; mailbox: HiveMailbox; approvals: ApprovalQueue; prime: OrbiPrime; memory: MarkdownMemoryStore; missions: MissionStore; }
+interface ProjectHive { state: HiveState; mailbox: HiveMailbox; approvals: ApprovalQueue; prime: OrbiPrime; memory: MarkdownMemoryStore; memoryRoot: string; missions: MissionStore; }
 
 export class HiveCoordinator {
   private readonly projects = new Map<string, ProjectHive>();
   private readonly scheduler = new MissionScheduler();
-  constructor(private readonly root: string, private readonly agents: PtyManager, private readonly costs = new CostLedger(join(root, "costs"))) {}
+  private readonly semantic: SemanticMemoryService;
+  constructor(private readonly root: string, private readonly agents: PtyManager, private readonly costs = new CostLedger(join(root, "costs")), semantic?: SemanticMemoryService) { this.semantic = semantic ?? new SemanticMemoryService(join(root, "semantic-palace")); }
 
   async snapshot(projectPath: string): Promise<HiveSnapshot> {
     const hive = this.project(projectPath);
@@ -57,7 +59,10 @@ export class HiveCoordinator {
 
   async listMemory(projectPath: string): Promise<MemoryRecord[]> { return this.project(projectPath).memory.list(); }
   async searchMemory(projectPath: string, query: string, limit?: number): Promise<MemoryRecord[]> { return this.project(projectPath).memory.search(query, limit); }
-  async captureMemory(projectPath: string, input: { title: string; content: string; source: string; authorAgentId: string }): Promise<MemoryRecord[]> { const memory = this.project(projectPath).memory; await memory.capture(input); return memory.list(); }
+  async captureMemory(projectPath: string, input: { title: string; content: string; source: string; authorAgentId: string }): Promise<MemoryRecord[]> { const hive = this.project(projectPath); await hive.memory.capture(input); void this.semantic.index(projectPath, hive.memoryRoot).catch(() => undefined); return hive.memory.list(); }
+  async semanticMemoryStatus() { return this.semantic.status(); }
+  async indexSemanticMemory(projectPath: string) { const hive = this.project(projectPath); return this.semantic.index(projectPath, hive.memoryRoot); }
+  async searchSemanticMemory(projectPath: string, query: string, limit = 5) { const hive = this.project(projectPath); return this.semantic.search(projectPath, query, limit, async () => (await hive.memory.search(query, limit)).map((record) => `# ${record.title}\n${record.content}`).join("\n\n")); }
 
   startHeartbeat(): void { this.scheduler.start(); }
   stopHeartbeat(): void { this.scheduler.stop(); }
@@ -92,7 +97,8 @@ export class HiveCoordinator {
     const approvals = new ApprovalQueue(projectRoot);
     const mailbox = new HiveMailbox(projectRoot, (agentId) => agentId === "orbi-prime" || this.agentBelongsToProject(projectPath, agentId));
     const missions = new MissionStore(join(projectRoot, "schedules"));
-    const hive = { state, approvals, mailbox, prime: new OrbiPrime(state, mailbox, approvals), memory: new MarkdownMemoryStore(join(projectRoot, "memory")), missions };
+    const memoryRoot = join(projectRoot, "memory");
+    const hive = { state, approvals, mailbox, prime: new OrbiPrime(state, mailbox, approvals), memory: new MarkdownMemoryStore(memoryRoot), memoryRoot, missions };
     this.scheduler.register(projectPath, missions, approvals);
     this.projects.set(projectPath, hive);
     return hive;

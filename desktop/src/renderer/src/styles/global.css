@@ -85,6 +85,7 @@ input, select { height: 36px; padding: 0 10px; color: var(--orbi-ink); backgroun
 .update-status small { color: var(--orbi-signal); }
 .update-status span { color: var(--orbi-muted); }
 .update-status pre { max-height: 280px; margin: 4px 0 0; padding: 10px; overflow: auto; color: var(--orbi-text-soft); background: var(--orbi-terminal); border: 1px solid var(--orbi-edge); white-space: pre-wrap; }
+.memory-semantic-output { max-height: 240px; padding: 10px; overflow: auto; color: var(--orbi-text-soft); background: var(--orbi-terminal); border: 1px solid var(--orbi-edge); white-space: pre-wrap; }
 .update-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .ide-layout { display: grid; grid-template-columns: minmax(170px, 24%) minmax(0, 1fr); gap: 10px; min-height: 0; }
 .file-tree { max-height: 64vh; overflow: auto; padding: 8px; background: var(--orbi-surface-deep); border: 1px solid var(--orbi-edge); }

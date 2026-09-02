@@ -18,7 +18,7 @@ export class PrerequisiteChecker {
   async check(): Promise<PrerequisiteReport> {
     const platform = this.options.platform ?? process.platform; const environment = this.options.environment ?? process.env;
     const searchPath = [environment.PATH, "/opt/homebrew/bin", "/usr/local/bin", environment.HOME ? path.join(environment.HOME, ".local", "bin") : undefined].filter(Boolean).join(path.delimiter);
-    const executables = await Promise.all(["git", "gh", ...AGENT_RUNTIMES.map(([command]) => command)].map(async (command) => [command, await findExecutable(command, searchPath, this.options.canExecute)] as const));
+    const executables = await Promise.all(["git", "gh", "mempalace", ...AGENT_RUNTIMES.map(([command]) => command)].map(async (command) => [command, await findExecutable(command, searchPath, this.options.canExecute)] as const));
     const found = Object.fromEntries(executables) as Record<string, string | undefined>;
     const runtimeNames = AGENT_RUNTIMES.filter(([command]) => found[command]).map(([, label]) => label);
     let encryptionAvailable = false; try { encryptionAvailable = this.options.encryptionAvailable(); } catch { encryptionAvailable = false; }
@@ -28,6 +28,7 @@ export class PrerequisiteChecker {
       { id: "agent-runtime", label: "Agent CLI", required: true, status: runtimeNames.length ? "pass" : "fail", detail: runtimeNames.length ? `Available: ${runtimeNames.join(", ")}.` : "Install at least one supported agent CLI.", ...(!runtimeNames.length ? { installCommand: "npm install -g @openai/codex" } : {}) },
       ...AGENT_RUNTIMES.map(([command, label]): PrerequisiteCheck => ({ id: command, label: `${label} CLI`, required: false, status: found[command] ? "pass" : "warn", detail: found[command] ? `${command} is available.` : `${command} is optional and was not found.` })),
       { id: "github", label: "GitHub CLI", required: false, status: found.gh ? "pass" : "warn", detail: found.gh ? "gh is available; authentication is checked only on request." : "Install gh to enable GitHub issue and CI ingestion.", ...(!found.gh && platform === "darwin" ? { installCommand: "brew install gh" } : {}) },
+      { id: "mempalace", label: "MemPalace semantic memory", required: false, status: found.mempalace ? "pass" : "warn", detail: found.mempalace ? "mempalace is available for local semantic recall." : "Semantic recall is optional; deterministic local text search remains available. Installation requires uv.", ...(!found.mempalace ? { installCommand: "uv tool install mempalace" } : {}) },
       { id: "secure-storage", label: "Secure credential storage", required: false, status: encryptionAvailable ? "pass" : "warn", detail: encryptionAvailable ? "Operating-system encryption is available." : "Encrypted local model credentials are unavailable on this system." },
     ];
     return { ready: checks.filter((check) => check.required).every((check) => check.status === "pass"), checkedAt: (this.options.now ?? Date.now)(), checks };

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { DocumentKnowledgeGraph, DocumentKnowledgeResult, MemoryRecord } from "../../../shared/contracts";
+import type { DocumentKnowledgeGraph, DocumentKnowledgeResult, MemoryRecord, SemanticMemoryStatus } from "../../../shared/contracts";
 import { memoryOverview, memoryRelationships } from "../command/memoryViewModel";
 import { useI18n } from "../i18n";
 
@@ -14,6 +14,8 @@ export function MemoryPanel({ projectPath, agentId, onError }: { projectPath: st
   const [documentGraph, setDocumentGraph] = useState<DocumentKnowledgeGraph | null>(null);
   const [documentQuery, setDocumentQuery] = useState("");
   const [documentResults, setDocumentResults] = useState<DocumentKnowledgeResult[]>([]);
+  const [semanticStatus, setSemanticStatus] = useState<SemanticMemoryStatus | null>(null);
+  const [semanticOutput, setSemanticOutput] = useState("");
   const relationships = memoryRelationships(records); const titles = new Map(records.map((record) => [record.id, record.title]));
   const overview = memoryOverview(records, activeQuery);
 
@@ -21,6 +23,7 @@ export function MemoryPanel({ projectPath, agentId, onError }: { projectPath: st
     let cancelled = false;
     setRecords([]); setQuery(""); setActiveQuery("");
     if (projectPath) void window.orbi.memory.list({ projectPath }).then((next) => { if (!cancelled) setRecords(next); }).catch((error) => { if (!cancelled) onError(error instanceof Error ? error.message : String(error)); });
+    void window.orbi.memory.semanticStatus().then((next) => { if (!cancelled) setSemanticStatus(next); }).catch(() => undefined);
     return () => { cancelled = true; };
   }, [projectPath]);
 
@@ -47,6 +50,17 @@ export function MemoryPanel({ projectPath, agentId, onError }: { projectPath: st
     try { setRecords(await window.orbi.memory.list({ projectPath })); setQuery(""); setActiveQuery(""); onError(""); }
     catch (error) { onError(error instanceof Error ? error.message : String(error)); }
     finally { setBusy(false); }
+  }
+
+  async function indexSemanticMemory() {
+    setBusy(true); try { setSemanticStatus(await window.orbi.memory.semanticIndex({ projectPath })); onError(""); }
+    catch (error) { onError(error instanceof Error ? error.message : String(error)); } finally { setBusy(false); }
+  }
+
+  async function searchSemanticMemory() {
+    const nextQuery = query.trim(); if (!nextQuery) return;
+    setBusy(true); try { const result = await window.orbi.memory.semanticSearch({ projectPath, query: nextQuery, limit: 5 }); setSemanticStatus(result.status); setSemanticOutput(result.output); onError(""); }
+    catch (error) { onError(error instanceof Error ? error.message : String(error)); } finally { setBusy(false); }
   }
 
   async function buildDocumentGraph() {
@@ -79,6 +93,8 @@ export function MemoryPanel({ projectPath, agentId, onError }: { projectPath: st
     <div className="section-title"><span>{t("markdownMemory")}</span><button type="button" disabled={busy} onClick={() => void clearSearch()}>{t("refresh")}</button></div>
     <form className="memory-capture" onSubmit={capture}><input aria-label={t("memoryTitle")} value={title} onChange={(event) => setTitle(event.target.value)} placeholder={t("memoryTitle")} maxLength={200} required /><textarea aria-label={t("memoryContent")} value={content} onChange={(event) => setContent(event.target.value)} placeholder={t("memoryContentPlaceholder")} maxLength={20000} required /><button type="submit" disabled={busy}>{t("capture")}</button></form>
     <form className="memory-search" role="search" onSubmit={search}><input aria-label={t("searchProjectMemory")} value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t("searchLocalMemory")} maxLength={500} /><button type="submit" disabled={busy}>{t("search")}</button>{activeQuery ? <button type="button" disabled={busy} onClick={() => void clearSearch()}>{t("clear")}</button> : null}</form>
+    <div className="section-title"><span>{t("semanticMemory")}</span><small>{semanticStatus?.provider ?? "keyword"} · {semanticStatus?.model ?? "minilm"}</small></div>
+    <p className="empty">{semanticStatus?.detail ?? t("semanticChecking")}</p><div className="button-row"><button type="button" disabled={busy || !semanticStatus?.available} onClick={() => void indexSemanticMemory()}>{t("indexSemanticMemory")}</button><button type="button" disabled={busy || !query.trim()} onClick={() => void searchSemanticMemory()}>{t("semanticSearch")}</button></div>{semanticOutput ? <pre className="memory-semantic-output" aria-live="polite">{semanticOutput}</pre> : null}
     <p className="empty" aria-live="polite">{overview.count ? `${overview.count} ${overview.query ? `${t("resultsFor")} “${overview.query}”` : t("projectMemories")} · ${overview.sources} ${t("sourcesCount")}${overview.condensed ? ` · ${overview.condensed} ${t("condensed")}` : ""}` : overview.query ? `${t("noMemoryResults")} “${overview.query}”` : t("noProjectMemories")}</p>
     <div className="section-title"><span>{t("knowledgeMap")}</span><small>{relationships.length} {t("verifiedRelationships")}</small></div>
     {relationships.length ? <ul>{relationships.map((edge) => <li key={`${edge.sourceId}-${edge.targetId}`}><strong>{titles.get(edge.sourceId)} → {titles.get(edge.targetId)}</strong><small>{t("sharedConcepts")}: {edge.sharedTerms.join(", ")}</small></li>)}</ul> : <p className="empty">{t("noRelationships")}</p>}

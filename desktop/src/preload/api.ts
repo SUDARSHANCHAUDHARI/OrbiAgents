@@ -30,6 +30,9 @@ export function createDesktopApi(ipcRenderer: Pick<IpcRenderer, "invoke" | "on" 
     list: (request) => ipcRenderer.invoke(IPC_CHANNELS.memoryList, request),
     search: (request) => ipcRenderer.invoke(IPC_CHANNELS.memorySearch, request),
     capture: (request) => ipcRenderer.invoke(IPC_CHANNELS.memoryCapture, request),
+    semanticStatus: () => ipcRenderer.invoke(IPC_CHANNELS.memorySemanticStatus),
+    semanticIndex: (request) => ipcRenderer.invoke(IPC_CHANNELS.memorySemanticIndex, request),
+    semanticSearch: (request) => ipcRenderer.invoke(IPC_CHANNELS.memorySemanticSearch, request),
     documentGraph: (request) => ipcRenderer.invoke(IPC_CHANNELS.memoryDocumentGraph, request),
     queryDocuments: (request) => ipcRenderer.invoke(IPC_CHANNELS.memoryDocumentQuery, request),
   };

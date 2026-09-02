@@ -10,7 +10,7 @@ Compared on 2026-09-02 against `chaitanyagiri/munder-difflin` commit `cc741fe` (
 | Visual office and live agent state | Built | Multi-floor orbital office, locator, activity paths, retained layout |
 | Supervisor, tasks, mailbox, blackboard, approvals | Built | Durable local Orbi Hive and Orbi-Prime coordination |
 | Scheduled missions and heartbeat | Built | Explicit approval and run controls; disabled by default |
-| Markdown memory, search, condensation | Built | Project-partitioned bounded memory store |
+| Markdown memory, search, condensation | Built | Project-partitioned bounded memory store with optional project-isolated MemPalace semantic indexing and deterministic text fallback |
 | Knowledge relationships | Built (local deterministic) | UI maps durable memories and up to 100 safe local workspace documents, ranks bounded snippets using exact phrases, titles, and capped term frequency, and sends selected sourced context to an agent only on explicit operator action; no content leaves the device |
 | Monaco editor and Git history | Built | Safe file broker, save conflict checks, revisions, side-by-side compare, 30-node parent topology, bounded credential-filtered patches, local branch compare, and confirmed checkout that fails closed on a dirty tree |
 | GitHub issues and CI | Built | Operator-triggered, bounded, local `gh` access |
@@ -35,4 +35,4 @@ Compared on 2026-09-02 against `chaitanyagiri/munder-difflin` commit `cc741fe` (
 
 ## Completion boundary
 
-The local Apple Silicon macOS coding scope covers the terminal-agent office, twelve built-in runtimes plus custom adapters, coordination, queryable memory and document relationships, IDE and guarded Git/GitHub operations, skills, provider telemetry and timebox waterfalls, circuit enforcement, actionable setup, recovery, one-shot webhook worker teardown, Slack thread replies, voice, and controlled updates. Remaining release/acceptance boundaries require external credentials, services, human language review, or platform expansion and must not be presented as completed until those inputs and acceptance tests exist.
+The local Apple Silicon macOS coding scope covers the terminal-agent office, twelve built-in runtimes plus custom adapters, coordination, markdown and optional MemPalace semantic memory, queryable document relationships, IDE and guarded Git/GitHub operations, skills, provider telemetry and timebox waterfalls, circuit enforcement, actionable setup, recovery, one-shot webhook worker teardown, Slack thread replies, voice, and controlled updates. Remaining release/acceptance boundaries require external credentials, services, human language review, or platform expansion and must not be presented as completed until those inputs and acceptance tests exist.

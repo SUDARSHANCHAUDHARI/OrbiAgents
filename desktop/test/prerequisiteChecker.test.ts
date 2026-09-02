@@ -9,6 +9,7 @@ test("prerequisite checker reports only directly verified capabilities", async (
   const executable = new Set(["/bin/git", "/tools/codex", "/tools/gh"]);
   const report = await new PrerequisiteChecker({ platform: "darwin", environment: { PATH: ["relative", "/bin", "/tools", "/tools"].join(path.delimiter) }, encryptionAvailable: () => true, now: () => 123, canExecute: async (file) => executable.has(file) }).check();
   assert.equal(report.ready, true); assert.equal(report.checkedAt, 123); assert.equal(report.checks.find((check) => check.id === "agent-runtime")?.detail, "Available: Codex."); assert.equal(report.checks.find((check) => check.id === "claude")?.status, "warn"); assert.equal(report.checks.find((check) => check.id === "cursor-agent")?.status, "warn"); assert.equal(report.checks.find((check) => check.id === "github")?.status, "pass");
+  assert.equal(report.checks.find((check) => check.id === "mempalace")?.installCommand, "uv tool install mempalace");
 });
 
 test("prerequisite checker fails readiness without platform, Git, or an agent runtime", async () => {
