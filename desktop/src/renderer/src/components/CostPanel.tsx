@@ -18,7 +18,8 @@ export function CostPanel({ events, agents, onError }: { events: ActivityEvent[]
   const overview = snapshot ? costOverview(snapshot) : null;
   return <PixelPanel title={t("usageCosts")} eyebrow={t("measuredTelemetry")} ariaLabel={t("usageCosts")} className="cost-panel" action={<PixelButton type="button" variant="ghost" disabled={busy} onClick={() => void refresh()}>{t("refreshLedger")}</PixelButton>}>
     <div className="usage-summary"><strong>{usage.providerSignals}</strong><span>{t("providerSignals")}</span><strong>{usage.activeMinutes}</strong><span>{t("agentMinutes")}</span><strong>{usage.totalSignals}</strong><span>{t("allSignals")}</span></div>
-    <p className="mission-policy">{t("telemetryPolicy")}</p>
+    <div className="usage-summary"><strong>{number(usage.reportedInputTokens)}</strong><span>{t("reportedInputTokens")}</span><strong>{number(usage.reportedOutputTokens)}</strong><span>{t("reportedOutputTokens")}</span><strong>{usd(usage.reportedCostUsd)}</strong><span>{t("reportedCost")}</span></div>
+    <p className="mission-policy">{t("reportedTelemetryPolicy")}</p>
     {usage.byState.length ? <p className="empty">{t("observedWork")}: {usage.byState.map((entry) => `${entry.state} ${entry.count}`).join(" · ")}</p> : <p className="empty">{t("noProviderActivity")}</p>}
     <p className="mission-policy">{t("estimatePolicy")}</p>
     {snapshot?.corrupted ? <div className="error-banner" role="alert">{t("ledgerCorrupt")}</div> : null}
@@ -26,4 +27,5 @@ export function CostPanel({ events, agents, onError }: { events: ActivityEvent[]
   </PixelPanel>;
 }
 function usd(value: number): string { return new Intl.NumberFormat(undefined, { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 4 }).format(value); }
+function number(value: number): string { return new Intl.NumberFormat().format(value); }
 function message(error: unknown): string { return error instanceof Error ? error.message : String(error); }
