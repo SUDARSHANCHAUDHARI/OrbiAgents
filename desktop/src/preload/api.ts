@@ -30,6 +30,7 @@ export function createDesktopApi(ipcRenderer: Pick<IpcRenderer, "invoke" | "on" 
     search: (request) => ipcRenderer.invoke(IPC_CHANNELS.memorySearch, request),
     capture: (request) => ipcRenderer.invoke(IPC_CHANNELS.memoryCapture, request),
     documentGraph: (request) => ipcRenderer.invoke(IPC_CHANNELS.memoryDocumentGraph, request),
+    queryDocuments: (request) => ipcRenderer.invoke(IPC_CHANNELS.memoryDocumentQuery, request),
   };
   const missions: OrbiDesktopApi["missions"] = {
     list: (request) => ipcRenderer.invoke(IPC_CHANNELS.missionList, request),
@@ -61,11 +62,12 @@ export function createDesktopApi(ipcRenderer: Pick<IpcRenderer, "invoke" | "on" 
     authStatus: () => ipcRenderer.invoke(IPC_CHANNELS.githubAuthStatus),
     snapshot: (request) => ipcRenderer.invoke(IPC_CHANNELS.githubSnapshot, request),
   };
-  const git: OrbiDesktopApi["git"] = { snapshot: (request) => ipcRenderer.invoke(IPC_CHANNELS.gitSnapshot, request) };
+  const git: OrbiDesktopApi["git"] = { snapshot: (request) => ipcRenderer.invoke(IPC_CHANNELS.gitSnapshot, request), branches: (request) => ipcRenderer.invoke(IPC_CHANNELS.gitBranches, request), compare: (request) => ipcRenderer.invoke(IPC_CHANNELS.gitCompare, request), checkout: (request) => ipcRenderer.invoke(IPC_CHANNELS.gitCheckout, request) };
   const onboarding: OrbiDesktopApi["onboarding"] = {
     status: () => ipcRenderer.invoke(IPC_CHANNELS.onboardingStatus),
     refresh: () => ipcRenderer.invoke(IPC_CHANNELS.onboardingRefresh),
     complete: () => ipcRenderer.invoke(IPC_CHANNELS.onboardingComplete),
+    copyInstallCommand: (request) => ipcRenderer.invoke(IPC_CHANNELS.onboardingCopyInstall, request),
   };
   const recovery: OrbiDesktopApi["recovery"] = { status: () => ipcRenderer.invoke(IPC_CHANNELS.recoveryStatus) };
   const costs: OrbiDesktopApi["costs"] = { snapshot: () => ipcRenderer.invoke(IPC_CHANNELS.costSnapshot) };
@@ -76,7 +78,7 @@ export function createDesktopApi(ipcRenderer: Pick<IpcRenderer, "invoke" | "on" 
     download: () => ipcRenderer.invoke(IPC_CHANNELS.updateDownload),
     install: () => ipcRenderer.invoke(IPC_CHANNELS.updateInstall),
   };
-  const webhooks: OrbiDesktopApi["webhooks"] = { status: () => ipcRenderer.invoke(IPC_CHANNELS.webhookStatus), start: () => ipcRenderer.invoke(IPC_CHANNELS.webhookStart), stop: () => ipcRenderer.invoke(IPC_CHANNELS.webhookStop), copySecret: () => ipcRenderer.invoke(IPC_CHANNELS.webhookCopySecret), launchWorker: (request) => ipcRenderer.invoke(IPC_CHANNELS.webhookLaunchWorker, request) };
+  const webhooks: OrbiDesktopApi["webhooks"] = { status: () => ipcRenderer.invoke(IPC_CHANNELS.webhookStatus), start: () => ipcRenderer.invoke(IPC_CHANNELS.webhookStart), stop: () => ipcRenderer.invoke(IPC_CHANNELS.webhookStop), copySecret: () => ipcRenderer.invoke(IPC_CHANNELS.webhookCopySecret), launchWorker: (request) => ipcRenderer.invoke(IPC_CHANNELS.webhookLaunchWorker, request), completeWorker: (request) => ipcRenderer.invoke(IPC_CHANNELS.webhookCompleteWorker, request) };
   const voice: OrbiDesktopApi["voice"] = { policy: () => ipcRenderer.invoke(IPC_CHANNELS.voicePolicy), updatePolicy: (request) => ipcRenderer.invoke(IPC_CHANNELS.voiceUpdatePolicy, request), status: () => ipcRenderer.invoke(IPC_CHANNELS.voiceStatus), chooseModel: () => ipcRenderer.invoke(IPC_CHANNELS.voiceChooseModel), transcribe: (request) => ipcRenderer.invoke(IPC_CHANNELS.voiceTranscribe, request) };
   const catalogs: OrbiDesktopApi["catalogs"] = { review: (request) => ipcRenderer.invoke(IPC_CHANNELS.catalogReview, request), installSkill: (request) => ipcRenderer.invoke(IPC_CHANNELS.catalogInstallSkill, request), importHire: (request) => ipcRenderer.invoke(IPC_CHANNELS.catalogImportHire, request) };
   const slack: OrbiDesktopApi["slack"] = { status: () => ipcRenderer.invoke(IPC_CHANNELS.slackStatus), saveTokenFromClipboard: () => ipcRenderer.invoke(IPC_CHANNELS.slackSaveToken), clear: () => ipcRenderer.invoke(IPC_CHANNELS.slackClear), test: () => ipcRenderer.invoke(IPC_CHANNELS.slackTest), send: (request) => ipcRenderer.invoke(IPC_CHANNELS.slackSend, request) };

@@ -20,6 +20,10 @@ export class GitWorkspaceService {
     const branch = parseBranch(header); const changes = lines.slice(0, 200).map(parseChange);
     return { ...branch, changes, commits: log.code === 0 ? parseCommits(log.stdout) : [], diffStat: diffStat.code === 0 ? diffStat.stdout.slice(0, 20_000).trim() : "", diff: diff.code === 0 ? diff.stdout.slice(0, 100_000).trim() : "", fetchedAt: this.now(), truncated: lines.length > 200 || diff.stdout.length > 100_000 };
   }
+  async branches(workspace: string): Promise<string[]> { const result = await this.runner.run(["for-each-ref", "--format=%(refname:short)", "refs/heads"], workspace); if (result.code !== 0) throw new Error("Git branches are unavailable"); return result.stdout.split(/\r?\n/).filter(Boolean).slice(0, 200).map((branch) => clean(branch, 200)); }
+  async compare(workspace: string, input: unknown): Promise<string> { const branch = await this.validBranch(workspace, input); const result = await this.runner.run(["diff", "--no-ext-diff", "--unified=3", `HEAD...${branch}`, ...SAFE_DIFF_PATHS], workspace); if (result.code !== 0) throw new Error("Git branch comparison failed"); return result.stdout.slice(0, 100_000).trim(); }
+  async checkout(workspace: string, input: unknown): Promise<GitWorkspaceSnapshot> { const branch = await this.validBranch(workspace, input); const status = await this.runner.run(["status", "--porcelain", "--untracked-files=normal"], workspace); if (status.code !== 0 || status.stdout.trim()) throw new Error("Checkout requires a clean working tree"); const switched = await this.runner.run(["switch", "--", branch], workspace); if (switched.code !== 0) throw new Error("Git checkout failed"); return this.snapshot(workspace); }
+  private async validBranch(workspace: string, input: unknown): Promise<string> { if (typeof input !== "string" || !input || input.length > 200 || /[\0\r\n]/.test(input)) throw new Error("Git branch is invalid"); if (!(await this.branches(workspace)).includes(input)) throw new Error("Git branch is not a local branch"); return input; }
 }
 
 class NativeGitRunner implements GitRunner {

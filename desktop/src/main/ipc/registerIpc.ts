@@ -114,6 +114,7 @@ export function registerIpc(window: BrowserWindow, manager: PtyManager, hive: Hi
     return hive.captureMemory(await validateWorkspace(request.projectPath), { title: validateBoundedText(request.title, "Memory title", 200), content: validateBoundedText(request.content, "Memory content", 20_000), source: validateBoundedText(request.source, "Memory source", 128), authorAgentId: validateAgentId(request.authorAgentId) });
   });
   ipcMain.handle(IPC_CHANNELS.memoryDocumentGraph, (event, value: unknown) => { assertTrustedSender(event.sender.id); return documentGraph.build(manager.workspaceRoot(validateAgentId(asRecord(value).agentId))); });
+  ipcMain.handle(IPC_CHANNELS.memoryDocumentQuery, (event, value: unknown) => { assertTrustedSender(event.sender.id); const request = asRecord(value); return documentGraph.query(manager.workspaceRoot(validateAgentId(request.agentId)), request.query, request.limit); });
   ipcMain.handle(IPC_CHANNELS.missionList, async (event, value: unknown) => { assertTrustedSender(event.sender.id); return hive.listMissions(await validateWorkspace(asRecord(value).projectPath)); });
   ipcMain.handle(IPC_CHANNELS.missionCreate, async (event, value: unknown) => {
     assertTrustedSender(event.sender.id); const request = asRecord(value);
@@ -145,10 +146,14 @@ export function registerIpc(window: BrowserWindow, manager: PtyManager, hive: Hi
   ipcMain.handle(IPC_CHANNELS.githubAuthStatus, (event) => { assertTrustedSender(event.sender.id); return github.authStatus(); });
   ipcMain.handle(IPC_CHANNELS.githubSnapshot, (event, value: unknown) => { assertTrustedSender(event.sender.id); const agentId = validateAgentId(asRecord(value).agentId); return github.snapshot(manager.workspaceRoot(agentId)); });
   ipcMain.handle(IPC_CHANNELS.gitSnapshot, (event, value: unknown) => { assertTrustedSender(event.sender.id); const agentId = validateAgentId(asRecord(value).agentId); return git.snapshot(manager.workspaceRoot(agentId)); });
+  ipcMain.handle(IPC_CHANNELS.gitBranches, (event, value: unknown) => { assertTrustedSender(event.sender.id); return git.branches(manager.workspaceRoot(validateAgentId(asRecord(value).agentId))); });
+  ipcMain.handle(IPC_CHANNELS.gitCompare, (event, value: unknown) => { assertTrustedSender(event.sender.id); const request = asRecord(value); return git.compare(manager.workspaceRoot(validateAgentId(request.agentId)), request.branch); });
+  ipcMain.handle(IPC_CHANNELS.gitCheckout, (event, value: unknown) => { assertTrustedSender(event.sender.id); const request = asRecord(value); return git.checkout(manager.workspaceRoot(validateAgentId(request.agentId)), request.branch); });
   const onboardingStatus = async () => { const report = await prerequisites.check(); const saved = onboarding.get(); return { version: ONBOARDING_VERSION, completed: saved?.version === ONBOARDING_VERSION, completedAt: saved?.completedAt, ...report }; };
   ipcMain.handle(IPC_CHANNELS.onboardingStatus, (event) => { assertTrustedSender(event.sender.id); return onboardingStatus(); });
   ipcMain.handle(IPC_CHANNELS.onboardingRefresh, (event) => { assertTrustedSender(event.sender.id); return onboardingStatus(); });
   ipcMain.handle(IPC_CHANNELS.onboardingComplete, async (event) => { assertTrustedSender(event.sender.id); await onboarding.complete(); return onboardingStatus(); });
+  ipcMain.handle(IPC_CHANNELS.onboardingCopyInstall, async (event, value: unknown) => { assertTrustedSender(event.sender.id); const id = asRecord(value).id; if (typeof id !== "string") throw new Error("Prerequisite is invalid"); const check = (await prerequisites.check()).checks.find((candidate) => candidate.id === id); if (!check?.installCommand) throw new Error("No installation command is available"); clipboard.writeText(check.installCommand); });
   ipcMain.handle(IPC_CHANNELS.recoveryStatus, (event) => { assertTrustedSender(event.sender.id); return recovery.load(); });
   ipcMain.handle(IPC_CHANNELS.costSnapshot, (event) => { assertTrustedSender(event.sender.id); return hive.costSnapshot(); });
   ipcMain.handle(IPC_CHANNELS.commandHistoryList, (event, value: unknown) => { assertTrustedSender(event.sender.id); return commandHistory.list(validateAgentId(asRecord(value).agentId)); });
@@ -188,6 +193,7 @@ export function registerIpc(window: BrowserWindow, manager: PtyManager, hive: Hi
     catch (error) { manager.stop(workerId); throw error; }
     return webhooks.attachWorker(source.id, workerId);
   });
+  ipcMain.handle(IPC_CHANNELS.webhookCompleteWorker, (event, value: unknown) => { assertTrustedSender(event.sender.id); const completed = webhooks.completeWorker(validateWebhookEventId(asRecord(value).eventId)); manager.stop(completed.workerAgentId); return completed.status; });
   ipcMain.handle(IPC_CHANNELS.voicePolicy, (event) => { assertTrustedSender(event.sender.id); return voice.get(); });
   ipcMain.handle(IPC_CHANNELS.voiceUpdatePolicy, async (event, value: unknown) => { assertTrustedSender(event.sender.id); const policy = await voice.update(value); if (!policy.consent || policy.retention === "none") await transcription.clearRetained(); return policy; });
   ipcMain.handle(IPC_CHANNELS.voiceStatus, (event) => { assertTrustedSender(event.sender.id); return transcription.status(); });

@@ -14,3 +14,15 @@ test("Git workspace snapshot rejects non-repositories and malformed output", asy
   const failed: GitRunner = { async run() { return { code: 1, stdout: "" }; } }; await assert.rejects(new GitWorkspaceService(failed).snapshot("/repo"), /not a readable Git repository/);
   let index = 0; const malformed: GitRunner = { async run() { index += 1; return index === 1 ? { code: 0, stdout: "## main\nM\n" } : { code: 0, stdout: "" }; } }; await assert.rejects(new GitWorkspaceService(malformed).snapshot("/repo"), /status output is invalid/);
 });
+
+test("Git branch operations use only verified local refs and refuse dirty checkout", async () => {
+  const calls: string[][] = [];
+  const runner: GitRunner = { async run(args) { calls.push(args); if (args[0] === "for-each-ref") return { code: 0, stdout: "main\nfeature/safe\n" }; if (args[0] === "status") return { code: 0, stdout: " M src/app.ts\n" }; return { code: 0, stdout: "bounded branch diff" }; } };
+  const service = new GitWorkspaceService(runner);
+  assert.deepEqual(await service.branches("/repo"), ["main", "feature/safe"]);
+  assert.equal(await service.compare("/repo", "feature/safe"), "bounded branch diff");
+  await assert.rejects(service.checkout("/repo", "feature/safe"), /clean working tree/);
+  await assert.rejects(service.compare("/repo", "missing"), /not a local branch/);
+  assert.deepEqual(calls.find((args) => args[0] === "diff")?.slice(0, 4), ["diff", "--no-ext-diff", "--unified=3", "HEAD...feature/safe"]);
+  assert.equal(calls.some((args) => args[0] === "switch"), false);
+});
