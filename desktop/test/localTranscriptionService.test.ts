@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { chmod, mkdtemp, readFile, readdir, writeFile } from "node:fs/promises";
+import { chmod, mkdir, mkdtemp, readFile, readdir, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -29,4 +29,15 @@ test("local voice rejects unbounded recordings and invalid model files", async (
   await assert.rejects(service.setModel(path.join(root, "missing.bin")), /invalid/);
   await policy.update({ consent: true, retention: "none" });
   await assert.rejects(service.transcribe({ audio: new Uint8Array(99), mimeType: "audio/webm" }), /invalid/);
+});
+
+test("local voice discovers the standard private multilingual model", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "orbi-local-voice-")); const bin = path.join(root, "bin"); const models = path.join(root, "models");
+  await Promise.all([mkdir(bin), mkdir(models)]);
+  const whisper = path.join(bin, "whisper-cli"); const ffmpeg = path.join(bin, "ffmpeg");
+  await Promise.all([writeFile(whisper, "#!/bin/sh\n"), writeFile(ffmpeg, "#!/bin/sh\n"), writeFile(path.join(models, "ggml-base.bin"), Buffer.alloc(1_000_000))]);
+  await Promise.all([chmod(whisper, 0o700), chmod(ffmpeg, 0o700)]);
+  const policy = new VoicePolicyStore(path.join(root, "policy.json")); await policy.load();
+  const service = new LocalTranscriptionService(path.join(root, "voice-model.json"), path.join(root, "transcripts"), policy, { PATH: bin });
+  assert.deepEqual(await service.load(), { available: true, modelConfigured: true, modelName: "ggml-base.bin", detail: "Local transcription is ready." });
 });

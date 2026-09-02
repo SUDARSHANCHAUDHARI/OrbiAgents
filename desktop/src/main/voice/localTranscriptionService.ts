@@ -27,6 +27,9 @@ export class LocalTranscriptionService {
       const row = JSON.parse(await readFile(this.configPath, "utf8")) as Record<string, unknown>;
       if (Object.keys(row).length === 1 && typeof row.modelPath === "string") await this.validateModel(row.modelPath);
     } catch { this.modelPath = undefined; }
+    if (!this.modelPath) {
+      try { await this.validateModel(path.join(path.dirname(this.configPath), "models", "ggml-base.bin")); } catch { this.modelPath = undefined; }
+    }
     await this.pruneExpired();
     return this.status();
   }
