@@ -2,21 +2,23 @@ import { spawn } from "node:child_process";
 import type { GitWorkspaceSnapshot } from "../../shared/contracts";
 
 const MAX_OUTPUT = 512 * 1024;
+const SAFE_DIFF_PATHS = ["--", ".", ":(exclude,glob)**/.env", ":(exclude,glob)**/.env.*", ":(exclude,glob)**/local.properties", ":(exclude,glob)**/secure.properties", ":(exclude,glob)**/keystore.properties", ":(exclude,glob)**/.npmrc", ":(exclude,glob)**/*.pem", ":(exclude,glob)**/*.key", ":(exclude,glob)**/*.p12", ":(exclude,glob)**/*.jks", ":(exclude,glob)**/*.keystore"];
 export interface GitResult { code: number; stdout: string; }
 export interface GitRunner { run(args: string[], cwd: string): Promise<GitResult>; }
 
 export class GitWorkspaceService {
   constructor(private readonly runner: GitRunner = new NativeGitRunner(), private readonly now: () => number = Date.now) {}
   async snapshot(workspace: string): Promise<GitWorkspaceSnapshot> {
-    const [status, log, diff] = await Promise.all([
+    const [status, log, diffStat, diff] = await Promise.all([
       this.runner.run(["status", "--short", "--branch", "--untracked-files=normal"], workspace),
-      this.runner.run(["log", "-20", "--format=%h%x09%ct%x09%s"], workspace),
-      this.runner.run(["diff", "--stat", "--no-ext-diff", "HEAD"], workspace),
+      this.runner.run(["log", "-30", "--format=%h%x09%p%x09%ct%x09%s"], workspace),
+      this.runner.run(["diff", "--stat", "--no-ext-diff", "HEAD", ...SAFE_DIFF_PATHS], workspace),
+      this.runner.run(["diff", "--no-ext-diff", "--unified=3", "HEAD", ...SAFE_DIFF_PATHS], workspace),
     ]);
     if (status.code !== 0) throw new Error("Selected workspace is not a readable Git repository");
     const lines = status.stdout.split(/\r?\n/).filter(Boolean); const header = lines.shift() ?? "";
     const branch = parseBranch(header); const changes = lines.slice(0, 200).map(parseChange);
-    return { ...branch, changes, commits: log.code === 0 ? parseCommits(log.stdout) : [], diffStat: diff.code === 0 ? diff.stdout.slice(0, 20_000).trim() : "", fetchedAt: this.now(), truncated: lines.length > 200 };
+    return { ...branch, changes, commits: log.code === 0 ? parseCommits(log.stdout) : [], diffStat: diffStat.code === 0 ? diffStat.stdout.slice(0, 20_000).trim() : "", diff: diff.code === 0 ? diff.stdout.slice(0, 100_000).trim() : "", fetchedAt: this.now(), truncated: lines.length > 200 || diff.stdout.length > 100_000 };
   }
 }
 
@@ -37,6 +39,6 @@ function parseBranch(header: string): Pick<GitWorkspaceSnapshot, "branch" | "ups
   const tracking = match[3] ?? ""; return { branch: clean(match[1], 200), upstream: clean(match[2], 300), ahead: count(tracking, "ahead"), behind: count(tracking, "behind") };
 }
 function parseChange(line: string): GitWorkspaceSnapshot["changes"][number] { if (line.length < 4) throw new Error("Git status output is invalid"); return { status: clean(line.slice(0, 2), 2), path: clean(line.slice(3), 1_000) }; }
-function parseCommits(raw: string): GitWorkspaceSnapshot["commits"] { return raw.split(/\r?\n/).filter(Boolean).slice(0, 20).map((line) => { const [hash, timestamp, ...subject] = line.split("\t"); if (!/^[0-9a-f]{4,40}$/.test(hash ?? "") || !/^\d+$/.test(timestamp ?? "")) throw new Error("Git log output is invalid"); return { hash: hash!, timestamp: Number(timestamp) * 1_000, subject: clean(subject.join(" "), 500) }; }); }
+function parseCommits(raw: string): GitWorkspaceSnapshot["commits"] { return raw.split(/\r?\n/).filter(Boolean).slice(0, 30).map((line) => { const [hash, parents, timestamp, ...subject] = line.split("\t"); if (!/^[0-9a-f]{4,40}$/.test(hash ?? "") || !/^\d+$/.test(timestamp ?? "") || (parents && !/^[0-9a-f ]+$/.test(parents))) throw new Error("Git log output is invalid"); return { hash: hash!, parentHashes: parents ? parents.split(" ") : [], timestamp: Number(timestamp) * 1_000, subject: clean(subject.join(" "), 500) }; }); }
 function count(value: string, label: string): number { const match = new RegExp(`${label} (\\d+)`).exec(value); return match ? Math.min(Number(match[1]), 1_000_000) : 0; }
 function clean(value: string, max: number): string { if (!value || value.length > max || /[\0\r\n]/.test(value)) throw new Error("Git output is invalid"); return value; }
