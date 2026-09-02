@@ -17,6 +17,14 @@ test("prerequisite checker fails readiness without platform, Git, or an agent ru
   assert.equal(report.ready, false); assert.deepEqual(report.checks.filter((check) => check.required).map((check) => check.status), ["fail", "fail", "fail"]); assert.equal(report.checks.find((check) => check.id === "secure-storage")?.status, "warn");
 });
 
+test("prerequisite checker reports the verified MemPalace executable path", async () => {
+  const executable = new Set(["/bin/git", "/tools/codex", "/tools/mempalace"]);
+  const report = await new PrerequisiteChecker({ platform: "darwin", environment: { PATH: ["/bin", "/tools"].join(path.delimiter) }, encryptionAvailable: () => true, canExecute: async (file) => executable.has(file) }).check();
+  const mempalace = report.checks.find((check) => check.id === "mempalace");
+  assert.equal(mempalace?.status, "pass");
+  assert.equal(mempalace?.detail, "mempalace is available at /tools/mempalace for local semantic recall.");
+});
+
 test("executable lookup ignores relative and duplicate PATH entries", async () => {
   const seen: string[] = []; const result = await findExecutable("git", ["relative", "/one", "/one", "/two"].join(path.delimiter), async (file) => { seen.push(file); return file === "/two/git"; });
   assert.equal(result, "/two/git"); assert.deepEqual(seen, ["/one/git", "/two/git"]); assert.equal(await findExecutable("../bad", "/bin", async () => true), undefined);
