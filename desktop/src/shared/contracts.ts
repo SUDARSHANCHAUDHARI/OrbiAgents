@@ -144,6 +144,7 @@ export interface OrbiDesktopApi {
     onOutput(listener: (event: TerminalOutputEvent) => void): () => void;
     onExit(listener: (event: TerminalExitEvent) => void): () => void;
     onActivity(listener: (event: ActivityEvent) => void): () => void;
+    copyActivityTrace(request: { events: ActivityEvent[] }): Promise<void>;
   };
   hires: { copy(profile: HireProfile): Promise<void>; importFromClipboard(): Promise<HireProfile>; onImported(listener: (profile: HireProfile) => void): () => void; };
   commands: {
@@ -297,6 +298,7 @@ export const IPC_CHANNELS = {
   output: "agents:output",
   exit: "agents:exit",
   activity: "agents:activity",
+  activityTraceCopy: "agents:activity-trace:copy",
   applyWorkspace: "agents:workspace:apply",
   discardWorkspace: "agents:workspace:discard",
   hiveSnapshot: "hive:snapshot",

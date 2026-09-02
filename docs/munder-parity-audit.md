@@ -1,6 +1,6 @@
 # Desktop parity audit
 
-Compared on 2026-09-02 against `chaitanyagiri/munder-difflin` commit `e19bc203` (v0.4.6). “Built” means verified in this repository; it does not claim identical implementation or artwork.
+Compared on 2026-09-02 against `chaitanyagiri/munder-difflin` commit `cc741fe` (latest published release: v0.4.6). “Built” means verified in this repository; it does not claim identical implementation or artwork.
 
 | Capability | OrbiAgents status | Evidence / boundary |
 | --- | --- | --- |
@@ -17,11 +17,11 @@ Compared on 2026-09-02 against `chaitanyagiri/munder-difflin` commit `e19bc203` 
 | Skills catalog and removal | Built | Searches installed metadata without execution; confirmed removal moves only a freshly verified skill directory to OS Trash |
 | Trusted remote catalog review | Built | Operator-triggered HTTPS review pins publisher and Ed25519 key identity, verifies signed strict manifests, rejects redirects/private destinations, and bounds caching and response size |
 | Remote skill installation | Built (constrained package) | Requires a fresh trusted review and explicit confirmation; exact size and SHA-256 are enforced before atomic installation of a bounded text-only JSON skill package under managed app data, with publisher/key/catalog provenance persisted and no execution during installation |
-| Runtime usage and cost controls | Built with provider limits | Sanitized timestamped activity waterfall, per-agent timebox consumption, bounded provider-reported token/cost facts, and a separate integrity-checked authorization-estimate ledger; missing values are never fabricated |
+| Runtime usage and cost controls | Built with provider limits | Sanitized timestamped activity waterfall, per-agent timebox consumption, bounded provider-reported token/cost facts, privacy-reduced OTLP-compatible trace export, and a separate integrity-checked authorization-estimate ledger; missing values are never fabricated |
 | Desktop circuit breaker | Built | Runtime budget, terminal-output storm, and consecutive-provider-failure signals escalate once through operator-visible steer, constrain, and stop actions |
 | Local LLM endpoints and BYOK | Built | Loopback-only endpoints and OS-encrypted write-only credentials |
 | First-run setup and recovery | Built | Read-only prerequisite checks, copyable fixed install guidance for supported missing tools, and a bounded interrupted-work report; installation never runs silently |
-| Application updater | Built, publication unproven | Explicit check/download/install, stable-only, downgrade rejection, workload blockers |
+| Application updater | Built, publication unproven | Explicit check/download/install, stable-only, downgrade rejection, workload blockers, and bounded structured in-app release notes |
 | Shareable hire profiles | Built (clipboard) | Versioned bounded links exclude workspace paths and credentials; import only prefills the form and never launches |
 | OS hire-link registration / local gallery | Built | Packaged single-instance protocol handling reuses strict validation and only opens a prefilled form; three local presets ship in-app |
 | Hosted agent gallery | Built client; publication external | Signed `hire-profile` catalog artifacts are size/checksum verified and strictly validated before prefilling the normal hiring form; they cannot carry workspace paths, credentials, commands, or launch authority. Publishing and moderating a production catalog remains an operator-owned external service |

@@ -24,6 +24,7 @@ import type { RemoteHireGallery } from "../agents/remoteHireGallery";
 import type { SlackStore } from "../slack/slackStore";
 import type { SlackClient } from "../slack/slackClient";
 import { DocumentKnowledgeGraphBuilder } from "../memory/documentKnowledgeGraph";
+import { activityTraceJson } from "../activity/activityTrace";
 import { decodeHireProfile, encodeHireProfile } from "../agents/hireProfileCodec";
 import {
   validateAgentId,
@@ -50,6 +51,7 @@ export function registerIpc(window: BrowserWindow, manager: PtyManager, hive: Hi
     assertTrustedSender(event.sender.id);
     return manager.list();
   });
+  ipcMain.handle(IPC_CHANNELS.activityTraceCopy, (event, value: unknown) => { assertTrustedSender(event.sender.id); clipboard.writeText(activityTraceJson(asRecord(value).events)); });
   ipcMain.handle(IPC_CHANNELS.write, (event, value: unknown) => {
     assertTrustedSender(event.sender.id);
     const request = asRecord(value);
