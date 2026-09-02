@@ -115,6 +115,9 @@ export function registerIpc(window: BrowserWindow, manager: PtyManager, hive: Hi
     const request = asRecord(value);
     return hive.captureMemory(await validateWorkspace(request.projectPath), { title: validateBoundedText(request.title, "Memory title", 200), content: validateBoundedText(request.content, "Memory content", 20_000), source: validateBoundedText(request.source, "Memory source", 128), authorAgentId: validateAgentId(request.authorAgentId) });
   });
+  ipcMain.handle(IPC_CHANNELS.memorySemanticStatus, (event) => { assertTrustedSender(event.sender.id); return hive.semanticMemoryStatus(); });
+  ipcMain.handle(IPC_CHANNELS.memorySemanticIndex, async (event, value: unknown) => { assertTrustedSender(event.sender.id); return hive.indexSemanticMemory(await validateWorkspace(asRecord(value).projectPath)); });
+  ipcMain.handle(IPC_CHANNELS.memorySemanticSearch, async (event, value: unknown) => { assertTrustedSender(event.sender.id); const request = asRecord(value); return hive.searchSemanticMemory(await validateWorkspace(request.projectPath), validateBoundedText(request.query, "Semantic memory query", 500), validateLimit(request.limit)); });
   ipcMain.handle(IPC_CHANNELS.memoryDocumentGraph, (event, value: unknown) => { assertTrustedSender(event.sender.id); return documentGraph.build(manager.workspaceRoot(validateAgentId(asRecord(value).agentId))); });
   ipcMain.handle(IPC_CHANNELS.memoryDocumentQuery, (event, value: unknown) => { assertTrustedSender(event.sender.id); const request = asRecord(value); return documentGraph.query(manager.workspaceRoot(validateAgentId(request.agentId)), request.query, request.limit); });
   ipcMain.handle(IPC_CHANNELS.missionList, async (event, value: unknown) => { assertTrustedSender(event.sender.id); return hive.listMissions(await validateWorkspace(asRecord(value).projectPath)); });

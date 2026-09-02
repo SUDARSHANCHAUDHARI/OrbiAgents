@@ -161,6 +161,9 @@ export interface OrbiDesktopApi {
     list(request: MemoryProjectRequest): Promise<MemoryRecord[]>;
     search(request: MemorySearchRequest): Promise<MemoryRecord[]>;
     capture(request: MemoryCaptureRequest): Promise<MemoryRecord[]>;
+    semanticStatus(): Promise<SemanticMemoryStatus>;
+    semanticIndex(request: MemoryProjectRequest): Promise<SemanticMemoryStatus>;
+    semanticSearch(request: MemorySearchRequest): Promise<SemanticMemoryResult>;
     documentGraph(request: WorkspaceFileAgentRequest): Promise<DocumentKnowledgeGraph>;
     queryDocuments(request: DocumentKnowledgeQueryRequest): Promise<DocumentKnowledgeResult[]>;
   };
@@ -232,6 +235,8 @@ export interface RemoteHireImportRequest { catalog: RemoteCatalogReviewRequest; 
 export interface SlackStatus { configured: boolean; signingConfigured: boolean; team?: string; botUser?: string; updatedAt: number; }
 export interface SlackSendRequest { channel: string; text: string; threadTimestamp?: string; }
 export interface SlackSendResult { channel: string; timestamp: string; }
+export interface SemanticMemoryStatus { available: boolean; active: boolean; provider: "mempalace" | "keyword"; model: "minilm"; detail: string; }
+export interface SemanticMemoryResult { status: SemanticMemoryStatus; output: string; }
 
 export interface SkillCatalogEntry { id: string; name: string; description: string; source: string; relativePath: string; }
 export type UpdatePhase = "idle" | "checking" | "available" | "not-available" | "downloading" | "downloaded" | "error";
@@ -308,6 +313,9 @@ export const IPC_CHANNELS = {
   memoryList: "memory:list",
   memorySearch: "memory:search",
   memoryCapture: "memory:capture",
+  memorySemanticStatus: "memory:semantic:status",
+  memorySemanticIndex: "memory:semantic:index",
+  memorySemanticSearch: "memory:semantic:search",
   memoryDocumentGraph: "memory:document-graph",
   memoryDocumentQuery: "memory:document-query",
   missionList: "missions:list",
