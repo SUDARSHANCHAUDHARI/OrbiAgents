@@ -1,4 +1,4 @@
-import { access, lstat } from "node:fs/promises";
+import { access, stat } from "node:fs/promises";
 import { constants } from "node:fs";
 import path from "node:path";
 import type { PrerequisiteCheck } from "../../shared/contracts";
@@ -41,4 +41,4 @@ export async function findExecutable(command: string, pathValue: string | undefi
   }
   return undefined;
 }
-async function defaultCanExecute(file: string): Promise<boolean> { try { return (await lstat(file)).isFile() && await access(file, constants.X_OK).then(() => true, () => false); } catch { return false; } }
+async function defaultCanExecute(file: string): Promise<boolean> { try { return (await stat(file)).isFile() && await access(file, constants.X_OK).then(() => true, () => false); } catch { return false; } }
