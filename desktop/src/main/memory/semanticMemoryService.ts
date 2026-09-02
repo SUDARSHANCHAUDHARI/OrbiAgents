@@ -35,8 +35,15 @@ export class SemanticMemoryService {
   async search(projectPath: string, query: string, limit: number, fallback: () => Promise<string>): Promise<SemanticMemoryResult> {
     const bin = await this.bin();
     if (!bin) return { status: await this.status(), output: await fallback() };
-    const result = await this.execute(bin, ["search", query, "--results", String(limit), "--wing", wing(projectPath)]);
-    return { status: await this.status(), output: result.stdout.trim().slice(0, 100_000) };
+    try {
+      const result = await this.execute(bin, ["search", query, "--results", String(limit), "--wing", wing(projectPath)]);
+      return { status: await this.status(), output: result.stdout.trim().slice(0, 100_000) };
+    } catch {
+      return {
+        status: { available: true, active: false, provider: "keyword", model: "minilm", detail: "MemPalace search failed; deterministic local text ranking was used." },
+        output: await fallback(),
+      };
+    }
   }
 
   private async bin(): Promise<string | undefined> {
