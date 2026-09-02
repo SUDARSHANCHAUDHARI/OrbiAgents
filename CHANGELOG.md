@@ -6,6 +6,8 @@ All notable OrbiAgents changes are recorded here. The project follows Semantic V
 
 ### Added
 
+- Desktop parity completion: steer/constrain/stop circuit breakers, provider-reported token and cost facts, bounded local document graphs, operator-gated webhook workers, commit topology and safe working-tree patches, and clearer onboarding/navigation.
+
 - Persistent per-agent and shared memory with retention controls, optional embedding retrieval, and a bounded local cache.
 - Typed agent-to-agent mailboxes with conversations, replies, read state, and hop limits.
 - API and opt-in Codex/Claude Code CLI runtime adapters.
