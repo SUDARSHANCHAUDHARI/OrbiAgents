@@ -247,7 +247,7 @@ export class PtyManager {
   }
 
   private emitProviderActivity(agentId: string, event: NormalizedProviderActivity): void {
-    this.events.activity({ id: `${Date.now()}-${++this.activitySequence}`, agentId, type: "provider-activity", source: event.source, state: event.state, summary: event.summary, timestamp: Date.now() });
+    this.events.activity({ id: `${Date.now()}-${++this.activitySequence}`, agentId, type: "provider-activity", source: event.source, state: event.state, summary: event.summary, timestamp: Date.now(), ...(event.usage ? { usage: event.usage } : {}) });
     this.handleCircuitDecision(agentId, this.circuitBreakers.get(agentId)?.recordProviderState(event.state));
   }
 

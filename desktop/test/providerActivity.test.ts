@@ -23,6 +23,7 @@ describe("provider activity normalization", () => {
       source: "codex-jsonl", state: "coding", summary: "Codex command execution", sessionId: undefined,
     });
     assert.equal(normalizeCodexJsonLine('{"type":"turn.completed","usage":{"input_tokens":1}}')?.state, "done");
+    assert.deepEqual(normalizeCodexJsonLine('{"type":"turn.completed","usage":{"input_tokens":12,"output_tokens":3,"cached_input_tokens":4}}')?.usage, { scope: "event", inputTokens: 12, outputTokens: 3, cachedInputTokens: 4 });
     assert.equal(normalizeCodexJsonLine('{"type":"error","message":"secret"}')?.state, "failed");
     assert.equal(normalizeCodexJsonLine("broken"), null);
   });
@@ -34,5 +35,11 @@ describe("provider activity normalization", () => {
     });
     assert.equal(normalizeCodexRolloutLine(JSON.stringify({ type: "response_item", payload: { type: "function_call", arguments: "private" } }))?.state, "coding");
     assert.equal(normalizeCodexRolloutLine(JSON.stringify({ type: "event_msg", payload: { type: "task_complete", last_agent_message: "private" } }))?.state, "done");
+    assert.deepEqual(normalizeCodexRolloutLine(JSON.stringify({ type: "event_msg", payload: { type: "token_count", info: { total_token_usage: { input_tokens: 20, output_tokens: 5, cached_input_tokens: 2 } } } }))?.usage, { scope: "session-total", inputTokens: 20, outputTokens: 5, cachedInputTokens: 2 });
+  });
+
+  it("retains only bounded Claude usage and provider-reported cost facts", () => {
+    assert.deepEqual(normalizeClaudeTranscriptLine(JSON.stringify({ type: "result", total_cost_usd: 0.125, usage: { input_tokens: 100, output_tokens: 20 }, result: "private" }))?.usage, { scope: "event", inputTokens: 100, outputTokens: 20, costUsd: 0.125 });
+    assert.equal(normalizeClaudeTranscriptLine(JSON.stringify({ type: "result", total_cost_usd: -1, usage: { input_tokens: 100, output_tokens: "20" } }))?.usage, undefined);
   });
 });

@@ -62,6 +62,13 @@ export interface AgentWorkspace {
 export type ActivityType = "session-starting" | "session-started" | "terminal-output" | "provider-activity" | "session-stopping" | "session-exited" | "session-failed" | "workspace-preserved" | "workspace-applied" | "workspace-cleaned" | "circuit-steered" | "circuit-constrained" | "circuit-opened";
 export type AgentActivityState = "idle" | "thinking" | "reading" | "coding" | "permission-waiting" | "done" | "failed";
 export type ActivitySource = "lifecycle" | "terminal" | "claude-hook" | "claude-transcript" | "codex-jsonl";
+export interface ProviderUsage {
+  scope: "event" | "session-total";
+  inputTokens: number;
+  outputTokens: number;
+  cachedInputTokens?: number;
+  costUsd?: number;
+}
 
 export interface ActivityEvent {
   id: string;
@@ -71,6 +78,7 @@ export interface ActivityEvent {
   state?: AgentActivityState;
   summary: string;
   timestamp: number;
+  usage?: ProviderUsage;
 }
 
 export interface AgentSession {
