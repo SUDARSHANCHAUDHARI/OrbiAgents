@@ -59,7 +59,7 @@ export interface AgentWorkspace {
   changes?: WorkspaceChanges;
 }
 
-export type ActivityType = "session-starting" | "session-started" | "terminal-output" | "provider-activity" | "session-stopping" | "session-exited" | "session-failed" | "workspace-preserved" | "workspace-applied" | "workspace-cleaned";
+export type ActivityType = "session-starting" | "session-started" | "terminal-output" | "provider-activity" | "session-stopping" | "session-exited" | "session-failed" | "workspace-preserved" | "workspace-applied" | "workspace-cleaned" | "circuit-steered" | "circuit-constrained" | "circuit-opened";
 export type AgentActivityState = "idle" | "thinking" | "reading" | "coding" | "permission-waiting" | "done" | "failed";
 export type ActivitySource = "lifecycle" | "terminal" | "claude-hook" | "claude-transcript" | "codex-jsonl";
 
