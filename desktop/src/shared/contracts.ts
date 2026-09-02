@@ -208,11 +208,11 @@ export interface OrbiDesktopApi {
   webhooks: { status(): Promise<WebhookStatus>; start(): Promise<WebhookStatus>; stop(): Promise<WebhookStatus>; copySecret(): Promise<void>; launchWorker(request: WebhookLaunchWorkerRequest): Promise<WebhookStatus>; completeWorker(request: WebhookCompleteWorkerRequest): Promise<WebhookStatus>; };
   voice: { policy(): Promise<VoicePolicy>; updatePolicy(request: VoicePolicyUpdate): Promise<VoicePolicy>; status(): Promise<VoiceTranscriptionStatus>; chooseModel(): Promise<VoiceTranscriptionStatus>; transcribe(request: VoiceTranscriptionRequest): Promise<VoiceTranscript>; };
   catalogs: { review(request: RemoteCatalogReviewRequest): Promise<RemoteCatalogReview>; installSkill(request: RemoteSkillInstallRequest): Promise<RemoteSkillInstallResult>; importHire(request: RemoteHireImportRequest): Promise<HireProfile>; };
-  slack: { status(): Promise<SlackStatus>; saveTokenFromClipboard(): Promise<SlackStatus>; clear(): Promise<SlackStatus>; test(): Promise<SlackStatus>; send(request: SlackSendRequest): Promise<SlackSendResult>; };
+  slack: { status(): Promise<SlackStatus>; saveTokenFromClipboard(): Promise<SlackStatus>; saveSigningSecretFromClipboard(): Promise<SlackStatus>; clear(): Promise<SlackStatus>; test(): Promise<SlackStatus>; send(request: SlackSendRequest): Promise<SlackSendResult>; };
 }
 
-export interface WebhookEvent { id: string; title: string; detail: string; source: string; receivedAt: number; workerAgentId?: string; completedAt?: number; }
-export interface WebhookStatus { enabled: boolean; endpoint?: string; events: WebhookEvent[]; }
+export interface WebhookEvent { id: string; title: string; detail: string; source: string; receivedAt: number; replyChannel?: string; replyThreadTimestamp?: string; workerAgentId?: string; completedAt?: number; }
+export interface WebhookStatus { enabled: boolean; endpoint?: string; slackEndpoint?: string; events: WebhookEvent[]; }
 export interface WebhookLaunchWorkerRequest { eventId: string; templateAgentId: string; }
 export interface WebhookCompleteWorkerRequest { eventId: string; }
 export type VoiceRetention = "none" | "session" | "24-hours";
@@ -229,7 +229,7 @@ export interface RemoteSkillInstallRequest { catalog: RemoteCatalogReviewRequest
 export interface RemoteSkillProvenance { schemaVersion: 1; publisherId: string; keyId: string; catalogUrl: string; entryId: string; version: string; sha256: string; installedAt: number; }
 export interface RemoteSkillInstallResult { skill: SkillCatalogEntry; provenance: RemoteSkillProvenance; }
 export interface RemoteHireImportRequest { catalog: RemoteCatalogReviewRequest; entryId: string; }
-export interface SlackStatus { configured: boolean; team?: string; botUser?: string; updatedAt: number; }
+export interface SlackStatus { configured: boolean; signingConfigured: boolean; team?: string; botUser?: string; updatedAt: number; }
 export interface SlackSendRequest { channel: string; text: string; threadTimestamp?: string; }
 export interface SlackSendResult { channel: string; timestamp: string; }
 
@@ -367,6 +367,7 @@ export const IPC_CHANNELS = {
   catalogImportHire: "catalogs:hire:import",
   slackStatus: "slack:status",
   slackSaveToken: "slack:token:save",
+  slackSaveSigningSecret: "slack:signing-secret:save",
   slackClear: "slack:clear",
   slackTest: "slack:test",
   slackSend: "slack:send",

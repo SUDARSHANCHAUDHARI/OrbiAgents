@@ -40,10 +40,11 @@ export class DocumentKnowledgeGraphBuilder {
     for (const entry of candidates) {
       const document = await this.source.read(rootPath, entry.path).catch(() => null);
       if (!document) continue;
-      const lower = document.content.toLocaleLowerCase();
+      const lower = document.content.toLocaleLowerCase(); const documentTitle = title(document.content, entry.name); const lowerTitle = documentTitle.toLocaleLowerCase(); const phrase = input.trim().toLocaleLowerCase().replace(/\s+/g, " ");
       const matchedTerms = queryTerms.filter((term) => lower.includes(term));
       if (!matchedTerms.length) continue;
-      results.push({ path: entry.path, title: title(document.content, entry.name), snippet: snippet(document.content, matchedTerms), matchedTerms, score: matchedTerms.reduce((sum, term) => sum + occurrences(lower, term), 0) });
+      const score = matchedTerms.reduce((sum, term) => sum + Math.min(5, occurrences(lower, term)) + (lowerTitle.includes(term) ? 8 : 0), 0) + (lower.replace(/\s+/g, " ").includes(phrase) ? 20 : 0);
+      results.push({ path: entry.path, title: documentTitle, snippet: snippet(document.content, matchedTerms), matchedTerms, score });
     }
     return results.sort((left, right) => right.score - left.score || left.path.localeCompare(right.path)).slice(0, limit as number).map(({ score: _score, ...result }) => result);
   }

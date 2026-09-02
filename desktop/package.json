@@ -17,6 +17,8 @@
     "package:mac:dir": "pnpm build && electron-builder --dir --mac --arm64 --publish never -c.forceCodeSigning=false -c.mac.identity=null -c.mac.hardenedRuntime=false -c.mac.notarize=false && node scripts/verify-macos-package.mjs --allow-unsigned --app-only",
     "package:mac:unsigned": "pnpm build && electron-builder --mac dmg zip --arm64 --publish never -c.forceCodeSigning=false -c.mac.identity=null -c.mac.hardenedRuntime=false -c.mac.notarize=false && node scripts/verify-macos-package.mjs --allow-unsigned",
     "package:mac:release": "node scripts/check-macos-release-readiness.mjs && pnpm build && electron-builder --mac dmg zip --arm64 --publish never && node scripts/verify-macos-package.mjs --require-release-signature",
+    "package:win:release": "pnpm build && electron-builder --win nsis portable --x64 --publish never",
+    "package:linux:release": "pnpm build && electron-builder --linux AppImage --x64 --publish never",
     "check:macos-icon": "node scripts/check-macos-release-readiness.mjs --icon-only",
     "check:accessibility": "node scripts/check-accessibility-source.mjs",
     "check:localization": "node scripts/check-localization-source.mjs",

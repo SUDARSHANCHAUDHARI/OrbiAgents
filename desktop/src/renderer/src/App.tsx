@@ -172,7 +172,7 @@ export default function App() {
             {commandView === "workspaces" ? <CommandList title={t("agentWorkspaces")} empty={t("noAgentWorkspaces")} items={agents.map((agent) => ({ id: agent.id, title: agent.name, meta: `${agent.workspace.status} · ${agent.workspace.branch ?? t("direct")}`, detail: agent.workspace.path }))} /> : null}
             {commandView === "settings" ? <div className="settings-panels"><LocalePanel /><RemoteCatalogPanel onError={(message) => setError(message || null)} onHireProfile={(profile) => { setImportedHire(profile); setHiringOpen(true); }} /><SlackPanel onError={(message) => setError(message || null)} /><WebhookPanel templateAgentId={selectedId} onError={(message) => setError(message || null)} /><VoicePolicyPanel onError={(message) => setError(message || null)} /><ProviderAdapterPanel onChanged={setRuntimeAdapters} onError={(message) => setError(message || null)} /><LocalModelPanel onError={(message) => setError(message || null)} /><MissionPanel projectPath={selectedProject} agents={agents} onError={(message) => setError(message || null)} /></div> : null}
             {commandView === "updates" ? <UpdatesPanel onError={(message) => setError(message || null)} /> : null}
-            {commandView === "setup" && onboarding ? <OnboardingPanel status={onboarding} onChanged={setOnboarding} onError={(message) => setError(message || null)} /> : null}
+            {commandView === "setup" && onboarding ? <OnboardingPanel status={onboarding} agent={selected} onChanged={setOnboarding} onError={(message) => setError(message || null)} /> : null}
             </Suspense>
           </section>
         </div>

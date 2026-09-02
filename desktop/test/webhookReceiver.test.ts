@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { createHmac } from "node:crypto";
 import { WebhookReceiver } from "../src/main/webhooks/webhookReceiver";
 
 test("webhook receiver is explicit, loopback-only, authenticated, and replay-safe", async () => {
@@ -30,5 +31,17 @@ test("webhook receiver rejects malformed identifiers and payloads", async () => 
   try {
     const missingId = await fetch(status.endpoint!, { method: "POST", headers: { authorization }, body: "{}" }); assert.equal(missingId.status, 400);
     const invalid = await fetch(status.endpoint!, { method: "POST", headers: { authorization, "x-orbi-event-id": "event-0002" }, body: JSON.stringify({ title: "", detail: "x" }) }); assert.equal(invalid.status, 422);
+  } finally { await receiver.stop(); }
+});
+
+test("webhook receiver verifies Slack signatures, challenges, replay ids, and bounded message events", async () => {
+  const secret = "0123456789abcdef0123456789abcdef"; const now = 2_000_000_000_000; const receiver = new WebhookReceiver(() => secret, () => now); const status = await receiver.start(); const endpoint = status.slackEndpoint!;
+  const send = (body: object, timestamp = String(now / 1_000)) => { const raw = JSON.stringify(body); const signature = `v0=${createHmac("sha256", secret).update(`v0:${timestamp}:${raw}`).digest("hex")}`; return fetch(endpoint, { method: "POST", headers: { "content-type": "application/json", "x-slack-request-timestamp": timestamp, "x-slack-signature": signature }, body: raw }); };
+  try {
+    const challenge = await send({ type: "url_verification", challenge: "safe_challenge" }); assert.deepEqual(await challenge.json(), { challenge: "safe_challenge" });
+    const payload = { type: "event_callback", event_id: "Ev12345678", event: { type: "message", channel: "C123456789", text: "Please inspect CI", ts: "123.456" } };
+    assert.equal((await send(payload)).status, 202); assert.equal((await send(payload)).status, 200);
+    assert.deepEqual(receiver.status().events[0], { id: "Ev12345678", title: "Slack message in C123456789", detail: "Please inspect CI", source: "slack", receivedAt: now, replyChannel: "C123456789", replyThreadTimestamp: "123.456" });
+    assert.equal((await send({ ...payload, event_id: "Ev87654321" }, String(now / 1_000 - 301))).status, 401);
   } finally { await receiver.stop(); }
 });

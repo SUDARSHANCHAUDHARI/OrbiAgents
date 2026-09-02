@@ -36,3 +36,9 @@ test("document query returns bounded ranked snippets with source paths", async (
   assert.deepEqual(await builder.query("/repo", "runtime operator", 1), [{ path: "docs/runtime.md", title: "Runtime Safety", snippet: "# Runtime Safety Circuit breaker runtime safety and operator control. Runtime budgets stop runaway work.", matchedTerms: ["operator", "runtime"] }]);
   await assert.rejects(() => builder.query("/repo", "runtime", 11), /limit is invalid/);
 });
+
+test("document query prioritizes exact phrases and title matches", async () => {
+  const documents = new Map([["a.md", "# Notes\nrelease words appear release many times"], ["b.md", "# Release Process\nThe release process is controlled."]]);
+  const builder = new DocumentKnowledgeGraphBuilder({ async list() { return [...documents].map(([path, content]) => ({ path, name: path, type: "file" as const, depth: 0, size: content.length })); }, async read(_root, path) { return { path: String(path), content: documents.get(String(path))!, hash: "x", language: "markdown" }; } });
+  assert.equal((await builder.query("/repo", "release process", 2))[0]?.path, "b.md");
+});
