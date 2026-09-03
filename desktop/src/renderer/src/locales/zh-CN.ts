@@ -1,6 +1,7 @@
 import type { MessageCatalog } from "../i18n";
 const messages = {
   testInference: "测试推理", inferencePrompt: "本地推理提示", inferenceResult: "本地推理结果", cancelInference: "取消推理", runInference: "运行推理",
+  voiceDestination: "语音文本目标", dispatchTranscript: "确认并发送文本", dispatchVoiceConfirm: "将编辑后的文本发送给所选运行中的智能体吗？该智能体可能使用云服务并独立保留文本，不受语音保留策略约束。",
   supervisor: "主管规划器", supervisorPolicy: "本地模型提出 1–6 个顺序任务。批准前审阅完整计划和执行智能体。智能体通过单任务本地回调报告结果；完成状态来自智能体报告，并非独立认证。受阻任务暂停审阅，最多尝试两次。每次报告有效期为 30 分钟。计划仅存在于当前会话，已分派任务在重启后仍保留在 Hive 中。", missionBrief: "任务简报", planningEndpoint: "规划端点", generatePlan: "生成审阅计划", generatingPlan: "正在生成计划…", approvePlan: "批准并分派", cancelPlan: "取消未来分派", noSupervisorPlan: "本会话没有主管计划。", supervisorSummary: "主管摘要",
   locale: "界面语言", help: "OrbiAgents 仅使用此处选择的语言，不读取操作系统语言。", subtitle: "本地智能体指挥台 · 已验证的运行遥测", active: "运行中", hire: "聘用智能体",
   commandCenter: "指挥中心", operate: "操作", coordinate: "协作", observe: "监控", system: "系统", floor: "总览", terminals: "终端", files: "文件", repository: "代码仓库", tasks: "任务", messages: "消息", approvals: "审批", memory: "记忆", skills: "技能", activity: "活动", costs: "成本", recovery: "恢复", workspaces: "工作区", settings: "设置", updates: "更新", setup: "配置",
