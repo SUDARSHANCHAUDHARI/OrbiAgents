@@ -216,7 +216,7 @@ export interface OrbiDesktopApi {
   skills: { list(request?: { query?: string }): Promise<SkillCatalogEntry[]>; remove(request: { id: string }): Promise<SkillCatalogEntry[]>; };
   updates: { status(): Promise<UpdateState>; check(): Promise<UpdateState>; download(): Promise<UpdateState>; install(): Promise<void>; };
   webhooks: { status(): Promise<WebhookStatus>; start(): Promise<WebhookStatus>; stop(): Promise<WebhookStatus>; copySecret(): Promise<void>; launchWorker(request: WebhookLaunchWorkerRequest): Promise<WebhookStatus>; completeWorker(request: WebhookCompleteWorkerRequest): Promise<WebhookStatus>; };
-  voice: { policy(): Promise<VoicePolicy>; updatePolicy(request: VoicePolicyUpdate): Promise<VoicePolicy>; status(): Promise<VoiceTranscriptionStatus>; chooseModel(): Promise<VoiceTranscriptionStatus>; transcribe(request: VoiceTranscriptionRequest): Promise<VoiceTranscript>; };
+  voice: { policy(): Promise<VoicePolicy>; updatePolicy(request: VoicePolicyUpdate): Promise<VoicePolicy>; status(): Promise<VoiceTranscriptionStatus>; chooseModel(): Promise<VoiceTranscriptionStatus>; transcribe(request: VoiceTranscriptionRequest): Promise<VoiceTranscript>; dispatch(request: { projectPath: string; agentId: string; text: string; confirmed: true }): Promise<void>; };
   catalogs: { review(request: RemoteCatalogReviewRequest): Promise<RemoteCatalogReview>; installSkill(request: RemoteSkillInstallRequest): Promise<RemoteSkillInstallResult>; importHire(request: RemoteHireImportRequest): Promise<HireProfile>; };
   slack: { status(): Promise<SlackStatus>; saveTokenFromClipboard(): Promise<SlackStatus>; saveSigningSecretFromClipboard(): Promise<SlackStatus>; clear(): Promise<SlackStatus>; test(): Promise<SlackStatus>; send(request: SlackSendRequest): Promise<SlackSendResult>; };
 }
@@ -388,6 +388,7 @@ export const IPC_CHANNELS = {
   voiceStatus: "voice:status",
   voiceChooseModel: "voice:model:choose",
   voiceTranscribe: "voice:transcribe",
+  voiceDispatch: "voice:dispatch",
   catalogReview: "catalogs:review",
   catalogInstallSkill: "catalogs:skill:install",
   catalogImportHire: "catalogs:hire:import",

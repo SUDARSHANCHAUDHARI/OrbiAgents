@@ -18,6 +18,7 @@ import type { SkillCatalog } from "../skills/skillCatalog";
 import type { UpdateService } from "../updates/updateService";
 import type { WebhookReceiver } from "../webhooks/webhookReceiver";
 import type { VoicePolicyStore } from "../voice/voicePolicyStore";
+import { dispatchVoice } from "../voice/voiceDispatcher";
 import type { LocalTranscriptionService } from "../voice/localTranscriptionService";
 import type { RemoteCatalogClient } from "../catalog/remoteCatalogClient";
 import type { RemoteSkillInstaller } from "../skills/remoteSkillInstaller";
@@ -217,6 +218,7 @@ export function registerIpc(window: BrowserWindow, manager: PtyManager, hive: Hi
   ipcMain.handle(IPC_CHANNELS.voiceStatus, (event) => { assertTrustedSender(event.sender.id); return transcription.status(); });
   ipcMain.handle(IPC_CHANNELS.voiceChooseModel, async (event) => { assertTrustedSender(event.sender.id); const result = await dialog.showOpenDialog(window, { title: "Choose whisper.cpp GGML model", properties: ["openFile"], filters: [{ name: "GGML model", extensions: ["bin"] }] }); return result.canceled || !result.filePaths[0] ? transcription.status() : transcription.setModel(result.filePaths[0]); });
   ipcMain.handle(IPC_CHANNELS.voiceTranscribe, (event, value: unknown) => { assertTrustedSender(event.sender.id); return transcription.transcribe(value); });
+  ipcMain.handle(IPC_CHANNELS.voiceDispatch, (event, value: unknown) => { assertTrustedSender(event.sender.id); dispatchVoice(value, voice.get().consent, manager.list(), (id, data) => manager.write(id, data)); });
   ipcMain.handle(IPC_CHANNELS.catalogReview, (event, value: unknown) => { assertTrustedSender(event.sender.id); return catalogs.review(value); });
   ipcMain.handle(IPC_CHANNELS.catalogInstallSkill, (event, value: unknown) => { assertTrustedSender(event.sender.id); return remoteSkills.install(value); });
   ipcMain.handle(IPC_CHANNELS.catalogImportHire, (event, value: unknown) => { assertTrustedSender(event.sender.id); return remoteHires.importProfile(value); });
