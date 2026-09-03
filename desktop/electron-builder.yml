@@ -49,6 +49,7 @@ win:
   artifactName: ${productName}-${version}-${arch}-${target}.${ext}
 linux:
   category: Development
+  syncDesktopName: true
   target:
     - AppImage
   artifactName: ${productName}-${version}-${arch}.${ext}

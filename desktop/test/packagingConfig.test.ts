@@ -9,5 +9,7 @@ test("desktop packaging declares macOS, Windows, and Linux release targets", asy
   assert.match(config, /- nsis/); assert.match(config, /- portable/); assert.match(config, /- AppImage/);
   assert.match(pkg.scripts["package:win:release"], /--win nsis portable --x64/);
   assert.match(pkg.scripts["package:linux:release"], /--linux AppImage --x64/);
+  assert.match(pkg.scripts["package:linux:release"], /verify-linux-package\.mjs/);
+  assert.equal(pkg.desktopName, "OrbiAgents"); assert.match(config, /syncDesktopName: true/);
   assert.equal(config.includes("!node_modules/node-pty/prebuilds/win32-"), false);
 });
