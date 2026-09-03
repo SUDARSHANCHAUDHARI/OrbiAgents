@@ -17,6 +17,7 @@ export class LocalTranscriptionService {
   private modelPath?: string;
   private whisperPath?: string;
   private ffmpegPath?: string;
+  private retentionGeneration = 0;
 
   constructor(private readonly configPath: string, private readonly transcriptRoot: string, private readonly policy: VoicePolicyStore, private readonly environment: NodeJS.ProcessEnv = process.env, private readonly now: () => number = Date.now) {}
 
@@ -49,11 +50,13 @@ export class LocalTranscriptionService {
     return this.status();
   }
 
-  async clearRetained(): Promise<void> { await rm(this.transcriptRoot, { recursive: true, force: true }); }
+  async clearRetained(): Promise<void> { this.retentionGeneration += 1; await rm(this.transcriptRoot, { recursive: true, force: true }); }
 
   async transcribe(value: unknown): Promise<VoiceTranscript> {
     const request = parseRequest(value);
     const policy = this.policy.get();
+    const generation = this.retentionGeneration;
+    const policyStillValid = () => { const current = this.policy.get(); return generation === this.retentionGeneration && current.consent && current.retention === policy.retention; };
     if (!policy.consent) throw new Error("Voice consent is required");
     if (!this.status().available || !this.whisperPath || !this.ffmpegPath || !this.modelPath) throw new Error("Local transcription is not configured");
     const work = path.join(os.tmpdir(), `orbi-voice-${randomUUID()}`); await mkdir(work, { mode: 0o700 });
@@ -65,8 +68,15 @@ export class LocalTranscriptionService {
       await run(this.whisperPath, ["-m", this.modelPath, "-f", wav, "-otxt", "-of", output], { timeout: 120_000, maxBuffer: 256 * 1024 });
       const text = (await readFile(`${output}.txt`, "utf8")).trim();
       if (!text || Buffer.byteLength(text) > MAX_TRANSCRIPT_BYTES) throw new Error("Local transcription returned invalid text");
+      if (!policyStillValid()) throw new Error("Voice policy changed during transcription");
       const createdAt = this.now(); const retainedUntil = policy.retention === "24-hours" ? createdAt + 86_400_000 : undefined;
-      if (policy.retention !== "none") { await mkdir(this.transcriptRoot, { recursive: true, mode: 0o700 }); const prefix = policy.retention === "session" ? "session" : String(createdAt); await writeFile(path.join(this.transcriptRoot, `${prefix}-${randomUUID()}.txt`), `${text}\n`, { mode: 0o600 }); }
+      if (policy.retention !== "none") {
+        await mkdir(this.transcriptRoot, { recursive: true, mode: 0o700 });
+        const prefix = policy.retention === "session" ? "session" : String(createdAt);
+        const retainedFile = path.join(this.transcriptRoot, `${prefix}-${randomUUID()}.txt`);
+        await writeFile(retainedFile, `${text}\n`, { mode: 0o600 });
+        if (!policyStillValid()) { await rm(retainedFile, { force: true }); throw new Error("Voice policy changed during transcription"); }
+      }
       return { text, createdAt, ...(retainedUntil ? { retainedUntil } : {}) };
     } catch (error) { throw new Error(error instanceof Error && error.message === "Local transcription returned invalid text" ? error.message : "Local transcription failed"); }
     finally { await rm(work, { recursive: true, force: true }); }
