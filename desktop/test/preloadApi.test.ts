@@ -38,7 +38,7 @@ test("preload bridge exposes only fixed agent operations and removable event sub
   assert.equal(Object.isFrozen(api.missions), true);
   assert.deepEqual(Object.keys(api.runtimeAdapters).sort(), ["create", "list", "remove"]);
   assert.equal(Object.isFrozen(api.runtimeAdapters), true);
-  assert.deepEqual(Object.keys(api.localModels).sort(), ["clearCredential", "create", "list", "probe", "remove", "saveCredentialFromClipboard"]);
+  assert.deepEqual(Object.keys(api.localModels).sort(), ["cancel", "clearCredential", "complete", "create", "list", "probe", "remove", "saveCredentialFromClipboard"]);
   assert.equal(Object.isFrozen(api.localModels), true);
   assert.deepEqual(Object.keys(api.files).sort(), ["history", "list", "read", "readRevision", "write"]);
   assert.equal(Object.isFrozen(api.files), true);

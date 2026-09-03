@@ -54,6 +54,8 @@ export function createDesktopApi(ipcRenderer: Pick<IpcRenderer, "invoke" | "on" 
     saveCredentialFromClipboard: (request) => ipcRenderer.invoke(IPC_CHANNELS.localModelSaveCredential, request),
     clearCredential: (request) => ipcRenderer.invoke(IPC_CHANNELS.localModelClearCredential, request),
     probe: (request) => ipcRenderer.invoke(IPC_CHANNELS.localModelProbe, request),
+    complete: (request) => ipcRenderer.invoke(IPC_CHANNELS.localModelComplete, request),
+    cancel: (request) => ipcRenderer.invoke(IPC_CHANNELS.localModelCancel, request),
   };
   const files: OrbiDesktopApi["files"] = {
     list: (request) => ipcRenderer.invoke(IPC_CHANNELS.fileList, request),

@@ -175,6 +175,12 @@ input, select { height: 36px; padding: 0 10px; color: var(--orbi-ink); backgroun
 .hive-panel .section-title { display: flex; justify-content: space-between; align-items: center; }
 .hive-assign { display: grid; grid-template-columns: minmax(160px, 1fr) minmax(200px, 2fr) minmax(140px, 1fr) auto; gap: 8px; margin: 12px 0; }
 .hive-assign textarea { min-height: 38px; resize: vertical; }
+.model-execution-form { display: grid; gap: 12px; margin-block: 12px; max-inline-size: 900px; }
+.model-execution-form label { display: grid; gap: 6px; min-inline-size: 0; }
+.model-execution-form textarea, .model-execution-form input, .model-execution-form select { inline-size: 100%; min-inline-size: 0; box-sizing: border-box; }
+.model-execution-form textarea { min-block-size: 100px; resize: vertical; }
+.inference-panel { padding-block: 10px; }
+.inference-panel summary { cursor: pointer; }
 .hive-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .hive-grid > div { min-height: 105px; padding: 10px; border: 1px solid #263850; border-radius: 8px; }
 .hive-grid h3 { margin: 0 0 8px; color: #8fa9c5; font-size: 11px; text-transform: uppercase; }

@@ -352,6 +352,10 @@ Scheduled missions are also project-partitioned and disabled by default. A singl
 
 Local OpenAI-compatible model endpoints can be configured in desktop Settings. Only loopback HTTP(S) URLs ending in `/v1` are accepted. Optional API keys are read directly by the main process from the system clipboard and encrypted with Electron `safeStorage`; plaintext credentials never enter renderer state or the endpoint metadata returned over IPC. A bounded `/models` probe verifies endpoint compatibility without exposing response bodies or credential-bearing network errors.
 
+Each configured endpoint now has a **Test inference** control. Supply a model and prompt to call `/chat/completions`; requests are capped at 60 seconds, 4,096 output tokens and 1 MB response bodies, with at most two concurrent requests. Cancellation also covers requests still waiting for IPC validation. Redirects are rejected, and responses never execute tools or shell commands.
+
+
+
 The desktop Files tab embeds Monaco for recorded agent workspaces. Its file tree is bounded and excludes dependency/build directories, symlinks, common credential files, binaries, and files over 1 MB. Existing text files can be saved only after operator confirmation and an exact SHA-256 version match, using atomic replacement. Bounded Git history supplies validated commit hashes for a read-only Monaco comparison view; the editor never stages, commits, pushes, deletes, renames, or creates files.
 
 The desktop GitHub tab provides explicit, read-only issue and Actions ingestion through the locally authenticated `gh` CLI. Authentication checks and repository refreshes run only when the operator clicks them. Repository identity comes from the selected recorded agent workspace; fixed no-shell commands fetch at most 50 open issues and 30 recent runs. GitHub token environment overrides, command stderr, auth details, workflow mutations, login automation, and background polling are excluded.

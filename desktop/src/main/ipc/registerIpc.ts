@@ -41,6 +41,11 @@ export function registerIpc(window: BrowserWindow, manager: PtyManager, hive: Hi
   const assertTrustedSender = (senderId: number) => {
     if (senderId !== window.webContents.id) throw new Error("Untrusted IPC sender");
   };
+  ipcMain.handle(IPC_CHANNELS.localModelComplete, (event, value: unknown) => {
+    assertTrustedSender(event.sender.id); const request = asRecord(value);
+    return localModelClient.complete({ id: request.id as string, requestId: request.requestId as string, model: request.model as string | undefined, prompt: request.prompt as string });
+  });
+  ipcMain.handle(IPC_CHANNELS.localModelCancel, (event, value: unknown) => { assertTrustedSender(event.sender.id); localModelClient.cancel(asRecord(value).requestId as string); });
   ipcMain.handle(IPC_CHANNELS.create, async (event, value: unknown) => {
     assertTrustedSender(event.sender.id);
     return manager.create(await validateCreateAgentRequest(value));
@@ -215,6 +220,7 @@ export function registerIpc(window: BrowserWindow, manager: PtyManager, hive: Hi
   ipcMain.handle(IPC_CHANNELS.slackSend, (event, value: unknown) => { assertTrustedSender(event.sender.id); return slack.send(value); });
 
   const dispose = () => {
+    localModelClient.dispose();
     for (const channel of Object.values(IPC_CHANNELS)) {
       ipcMain.removeHandler(channel);
     }
