@@ -36,8 +36,7 @@ test("Orbi-Prime retries only through the bounded task lifecycle", async () => {
   const task = await prime.assign({ title: "Repair test", detail: "Fix the failing case", agentId: "coder", maxAttempts: 1 });
   await prime.start(task.id);
   await prime.block(task.id);
-  await prime.retry(task.id, "reviewer");
-  await assert.rejects(prime.start(task.id), /retry limit/);
+  await assert.rejects(prime.retry(task.id, "reviewer"), /retry limit/);
 });
 
 test("Orbi-Prime routes critical escalation through operator approval", async () => {

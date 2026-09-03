@@ -30,7 +30,7 @@ test("preload bridge exposes only fixed agent operations and removable event sub
   assert.deepEqual(Object.keys(api.agents).sort(), ["applyWorkspace", "copyActivityTrace", "create", "discardWorkspace", "list", "onActivity", "onExit", "onOutput", "resize", "stop", "write"]);
   assert.deepEqual(Object.keys(api.hires).sort(), ["copy", "importFromClipboard", "onImported"]); assert.equal(Object.isFrozen(api.hires), true);
   assert.deepEqual(Object.keys(api.commands).sort(), ["list", "upsert"]); assert.equal(Object.isFrozen(api.commands), true);
-  assert.deepEqual(Object.keys(api.hive).sort(), ["assign", "decideApproval", "snapshot", "transitionTask"]);
+  assert.deepEqual(Object.keys(api.hive).sort(), ["approvePlan", "assign", "cancelPlan", "decideApproval", "plan", "resumePlan", "snapshot", "supervisorStatus", "transitionTask"]);
   assert.equal(Object.isFrozen(api.hive), true);
   assert.deepEqual(Object.keys(api.memory).sort(), ["capture", "documentGraph", "list", "queryDocuments", "search", "semanticIndex", "semanticSearch", "semanticStatus"]);
   assert.equal(Object.isFrozen(api.memory), true);

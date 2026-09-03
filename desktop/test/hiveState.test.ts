@@ -34,6 +34,6 @@ test("Hive task ledger bounds retries and invalid transitions", async () => {
   await assert.rejects(state.transition(task.id, "completed"), /Invalid task transition/);
   await state.transition(task.id, "in-progress");
   await state.transition(task.id, "blocked");
-  await state.assign(task.id, "coder");
-  await assert.rejects(state.transition(task.id, "in-progress"), /retry limit/);
+  await assert.rejects(state.assign(task.id, "coder"), /retry limit/);
+  assert.equal((await state.listTasks())[0].status, "blocked");
 });

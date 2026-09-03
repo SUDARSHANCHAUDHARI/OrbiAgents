@@ -50,6 +50,7 @@ export class HiveState {
       const incomplete = task.dependencyIds.filter((id) => tasks.find((candidate) => candidate.id === id)?.status !== "completed");
       if (incomplete.length) throw new Error("Task dependencies are incomplete");
       if (task.status !== "pending" && task.status !== "blocked") throw new Error("Task cannot be assigned from its current status");
+      if (task.attempt >= task.maxAttempts) throw new Error("Task retry limit exceeded");
       assigned = { ...task, status: "assigned", assigneeAgentId: safeId(agentId), updatedAt: Date.now() };
       return assigned;
     }));
