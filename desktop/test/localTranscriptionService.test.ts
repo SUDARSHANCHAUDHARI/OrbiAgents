@@ -48,7 +48,7 @@ test("revoking and restoring consent discards an in-flight transcript and delete
   const whisper = path.join(root, "whisper-cli"); const ffmpeg = path.join(root, "ffmpeg"); const model = path.join(root, "ggml-base.bin");
   try {
     await writeFile(ffmpeg, "#!/bin/sh\ncp \"$5\" \"${11}\"\n");
-    await writeFile(whisper, `#!/bin/sh\nprintf '%s' "$7" > '${marker}'\nwhile [ ! -f '${release}' ]; do sleep 0.01; done\nprintf 'discard this transcript' > "${7}.txt"\n`);
+    await writeFile(whisper, `#!/bin/sh\nprintf '%s' "$7" > '${marker}'\nwhile [ ! -f '${release}' ]; do sleep 0.01; done\nprintf 'discard this transcript' > "$7.txt"\n`);
     await Promise.all([chmod(ffmpeg, 0o700), chmod(whisper, 0o700), writeFile(model, Buffer.alloc(1_000_000))]);
     const policy = new VoicePolicyStore(path.join(root, "policy.json")); await policy.load();
     const transcripts = path.join(root, "transcripts");
@@ -65,5 +65,8 @@ test("revoking and restoring consent discards an in-flight transcript and delete
     await rejected;
     assert.deepEqual(await readdir(transcripts).catch(() => []), []);
     await assert.rejects(readdir(path.dirname(output)), { code: "ENOENT" });
+    const control = await service.transcribe({ audio: new Uint8Array(200), mimeType: "audio/webm" });
+    assert.equal(control.text, "discard this transcript", "the same CLI fixture succeeds without a policy change");
+    await service.clearRetained();
   } finally { await rm(root, { recursive: true, force: true }); }
 });
