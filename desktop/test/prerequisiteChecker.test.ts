@@ -13,8 +13,23 @@ test("prerequisite checker reports only directly verified capabilities", async (
 });
 
 test("prerequisite checker fails readiness without platform, Git, or an agent runtime", async () => {
-  const report = await new PrerequisiteChecker({ platform: "linux", environment: { PATH: "/empty" }, encryptionAvailable: () => false, canExecute: async () => false }).check();
+  const report = await new PrerequisiteChecker({ platform: "freebsd", environment: { PATH: "/empty" }, encryptionAvailable: () => false, canExecute: async () => false }).check();
   assert.equal(report.ready, false); assert.deepEqual(report.checks.filter((check) => check.required).map((check) => check.status), ["fail", "fail", "fail"]); assert.equal(report.checks.find((check) => check.id === "secure-storage")?.status, "warn");
+});
+
+test("Linux prerequisites can be ready without claiming graphical release acceptance", async () => {
+  const executable = new Set(["/usr/bin/git", "/tools/codex"]);
+  const report = await new PrerequisiteChecker({ platform: "linux", environment: { PATH: ["/usr/bin", "/tools"].join(path.delimiter) }, encryptionAvailable: () => false, canExecute: async (file) => executable.has(file) }).check();
+  assert.equal(report.ready, true);
+  assert.deepEqual(report.checks.find((check) => check.id === "platform"), { id: "platform", label: "Desktop platform", required: true, status: "pass", detail: "Linux desktop detected. Graphical release acceptance remains pending." });
+  assert.equal(report.checks.some((check) => check.installCommand?.includes("brew")), false);
+});
+
+test("Linux readiness still requires Git and an agent CLI", async () => {
+  const report = await new PrerequisiteChecker({ platform: "linux", environment: { PATH: "/empty" }, encryptionAvailable: () => false, canExecute: async () => false }).check();
+  assert.equal(report.ready, false);
+  assert.deepEqual(report.checks.filter((check) => check.required).map((check) => check.status), ["pass", "fail", "fail"]);
+  assert.equal(report.checks.find((check) => check.id === "git")?.installCommand, undefined);
 });
 
 test("prerequisite checker reports the verified MemPalace executable path", async () => {
