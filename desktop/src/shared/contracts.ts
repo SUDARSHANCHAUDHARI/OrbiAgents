@@ -185,6 +185,8 @@ export interface OrbiDesktopApi {
     saveCredentialFromClipboard(request: { id: string }): Promise<LocalModelEndpoint[]>;
     clearCredential(request: { id: string }): Promise<LocalModelEndpoint[]>;
     probe(request: { id: string }): Promise<LocalModelProbeResult>;
+    complete(request: LocalModelCompletionRequest): Promise<LocalModelCompletionResult>;
+    cancel(request: { requestId: string }): Promise<void>;
   };
   files: {
     list(request: WorkspaceFileAgentRequest): Promise<WorkspaceFileEntry[]>;
@@ -245,6 +247,8 @@ export interface UpdateState { phase: UpdatePhase; currentVersion: string; avail
 export interface LocalModelEndpoint { id: string; name: string; baseUrl: string; defaultModel?: string; hasApiKey: boolean; createdAt: number; updatedAt: number; }
 export interface LocalModelEndpointCreateRequest { id: string; name: string; baseUrl: string; defaultModel?: string; }
 export interface LocalModelProbeResult { models: string[]; truncated: boolean; }
+export interface LocalModelCompletionRequest { id: string; requestId: string; model?: string; prompt: string; }
+export interface LocalModelCompletionResult { text: string; model: string; }
 export interface WorkspaceFileAgentRequest { agentId: string; }
 export interface WorkspaceFileRequest extends WorkspaceFileAgentRequest { path: string; }
 export interface WorkspaceFileWriteRequest extends WorkspaceFileRequest { content: string; expectedHash: string; }
@@ -331,6 +335,8 @@ export const IPC_CHANNELS = {
   localModelSaveCredential: "local-models:credential:save",
   localModelClearCredential: "local-models:credential:clear",
   localModelProbe: "local-models:probe",
+  localModelComplete: "local-models:complete",
+  localModelCancel: "local-models:cancel",
   fileList: "files:list",
   fileRead: "files:read",
   fileWrite: "files:write",
