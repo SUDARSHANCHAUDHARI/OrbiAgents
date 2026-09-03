@@ -181,6 +181,8 @@ input, select { height: 36px; padding: 0 10px; color: var(--orbi-ink); backgroun
 .model-execution-form textarea { min-block-size: 100px; resize: vertical; }
 .inference-panel { padding-block: 10px; }
 .inference-panel summary { cursor: pointer; }
+.supervisor-steps { padding-inline-start: 24px; overflow-wrap: anywhere; }
+.supervisor-steps p { white-space: pre-wrap; }
 .hive-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .hive-grid > div { min-height: 105px; padding: 10px; border: 1px solid #263850; border-radius: 8px; }
 .hive-grid h3 { margin: 0 0 8px; color: #8fa9c5; font-size: 11px; text-transform: uppercase; }

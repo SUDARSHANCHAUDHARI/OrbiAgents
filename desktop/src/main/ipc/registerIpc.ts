@@ -3,6 +3,7 @@ import { randomUUID } from "node:crypto";
 import { IPC_CHANNELS } from "../../shared/contracts";
 import type { PtyManager } from "../pty/ptyManager";
 import type { HiveCoordinator } from "../hive/hiveCoordinator";
+import { SupervisorService } from "../hive/supervisorService";
 import type { RuntimeAdapterStore } from "../providers/runtimeAdapterStore";
 import type { LocalModelEndpointStore } from "../models/localModelEndpointStore";
 import type { LocalModelClient } from "../models/localModelClient";
@@ -38,6 +39,8 @@ import {
 
 export function registerIpc(window: BrowserWindow, manager: PtyManager, hive: HiveCoordinator, runtimeAdapters: RuntimeAdapterStore, localModels: LocalModelEndpointStore, localModelClient: LocalModelClient, files: WorkspaceFileService, github: GitHubIngestion, git: GitWorkspaceService, prerequisites: PrerequisiteChecker, onboarding: OnboardingStore, recovery: RecoveryStore, commandHistory: CommandHistoryStore, skills: SkillCatalog, updates: UpdateService, webhooks: WebhookReceiver, voice: VoicePolicyStore, transcription: LocalTranscriptionService, catalogs: RemoteCatalogClient, remoteSkills: RemoteSkillInstaller, remoteHires: RemoteHireGallery, slackStore: SlackStore, slack: SlackClient): () => void {
   const documentGraph = new DocumentKnowledgeGraphBuilder(files);
+  const supervisor = new SupervisorService(localModelClient, hive, () => manager.list());
+  const supervisorTimer = setInterval(() => { void supervisor.tick().catch(() => undefined); }, 2_000);
   const assertTrustedSender = (senderId: number) => {
     if (senderId !== window.webContents.id) throw new Error("Untrusted IPC sender");
   };
@@ -46,6 +49,11 @@ export function registerIpc(window: BrowserWindow, manager: PtyManager, hive: Hi
     return localModelClient.complete({ id: request.id as string, requestId: request.requestId as string, model: request.model as string | undefined, prompt: request.prompt as string });
   });
   ipcMain.handle(IPC_CHANNELS.localModelCancel, (event, value: unknown) => { assertTrustedSender(event.sender.id); localModelClient.cancel(asRecord(value).requestId as string); });
+  ipcMain.handle(IPC_CHANNELS.hivePlan, async (event, value: unknown) => { assertTrustedSender(event.sender.id); const request = asRecord(value); return supervisor.plan(await validateWorkspace(request.projectPath), { id: request.id as string, model: request.model as string | undefined, requestId: request.requestId as string, prompt: request.prompt as string }); });
+  ipcMain.handle(IPC_CHANNELS.hiveSupervisorStatus, async (event, value: unknown) => { assertTrustedSender(event.sender.id); return supervisor.status(await validateWorkspace(asRecord(value).projectPath)); });
+  ipcMain.handle(IPC_CHANNELS.hiveApprovePlan, async (event, value: unknown) => { assertTrustedSender(event.sender.id); const request = asRecord(value); return supervisor.approve(await validateWorkspace(request.projectPath), validateUuid(request.runId)); });
+  ipcMain.handle(IPC_CHANNELS.hiveCancelPlan, async (event, value: unknown) => { assertTrustedSender(event.sender.id); const request = asRecord(value); return supervisor.cancel(await validateWorkspace(request.projectPath), validateUuid(request.runId)); });
+  ipcMain.handle(IPC_CHANNELS.hiveResumePlan, async (event, value: unknown) => { assertTrustedSender(event.sender.id); const request = asRecord(value); return supervisor.resume(await validateWorkspace(request.projectPath), validateUuid(request.runId)); });
   ipcMain.handle(IPC_CHANNELS.create, async (event, value: unknown) => {
     assertTrustedSender(event.sender.id);
     return manager.create(await validateCreateAgentRequest(value));
@@ -220,6 +228,8 @@ export function registerIpc(window: BrowserWindow, manager: PtyManager, hive: Hi
   ipcMain.handle(IPC_CHANNELS.slackSend, (event, value: unknown) => { assertTrustedSender(event.sender.id); return slack.send(value); });
 
   const dispose = () => {
+    clearInterval(supervisorTimer);
+    supervisor.dispose();
     localModelClient.dispose();
     for (const channel of Object.values(IPC_CHANNELS)) {
       ipcMain.removeHandler(channel);

@@ -29,21 +29,21 @@ export class HiveCoordinator {
     return { tasks: await hive.state.listTasks(), approvals: await hive.approvals.list(), blackboard: await hive.state.readBlackboard(), primeInbox: await hive.mailbox.readInbox("orbi-prime") };
   }
 
-  async assign(projectPath: string, input: { title: string; detail: string; agentId: string }): Promise<HiveSnapshot> {
+  async assign(projectPath: string, input: { title: string; detail: string; agentId: string }, deliveryInstructions?: string): Promise<HiveSnapshot> {
     if (!this.runningAgentBelongsToProject(projectPath, input.agentId)) throw new Error("A running project agent is required");
     const hive = this.project(projectPath);
     const task = await hive.prime.assign(input);
-    await this.deliver(hive, task, "New Orbi-Prime assignment");
+    await this.deliver(hive, task, "New Orbi-Prime assignment", deliveryInstructions);
     return this.snapshot(projectPath);
   }
 
-  async transitionTask(projectPath: string, taskId: string, action: "start" | "block" | "retry" | "complete", agentId?: string, result?: string): Promise<HiveSnapshot> {
+  async transitionTask(projectPath: string, taskId: string, action: "start" | "block" | "retry" | "complete", agentId?: string, result?: string, deliveryInstructions?: string): Promise<HiveSnapshot> {
     const hive = this.project(projectPath);
     if (action === "start") await hive.prime.start(taskId);
     else if (action === "block") await hive.prime.block(taskId);
     else if (action === "retry") {
       if (!agentId || !this.runningAgentBelongsToProject(projectPath, agentId)) throw new Error("A running project agent is required for retry");
-      await this.deliver(hive, await hive.prime.retry(taskId, agentId), "Orbi-Prime retry assignment");
+      await this.deliver(hive, await hive.prime.retry(taskId, agentId), "Orbi-Prime retry assignment", deliveryInstructions);
     } else {
       const task = (await hive.state.listTasks()).find((candidate) => candidate.id === taskId);
       if (!task?.assigneeAgentId) throw new Error("Assigned task not found");
@@ -112,11 +112,11 @@ export class HiveCoordinator {
     return this.agents.list().some((agent) => agent.id === agentId && agent.status === "running" && agent.workspace.sourcePath === projectPath);
   }
 
-  private async deliver(hive: ProjectHive, task: HiveTask, heading: string): Promise<void> {
+  private async deliver(hive: ProjectHive, task: HiveTask, heading: string, deliveryInstructions = "Begin this task now and report the result to the operator."): Promise<void> {
     if (!task.assigneeAgentId) throw new Error("Assigned task has no recipient");
     const message = (await hive.mailbox.readInbox(task.assigneeAgentId)).find((candidate) => candidate.conversationId === task.id && candidate.status === "delivered");
     if (!message) throw new Error("Durable assignment message was not found");
-    this.agents.write(task.assigneeAgentId, `\n[${heading}]\nTask ID: ${task.id}\n${message.body}\n\nBegin this task now and report the result to the operator.\r`);
+    this.agents.write(task.assigneeAgentId, `\n[${heading}]\nTask ID: ${task.id}\n${message.body}\n\n${deliveryInstructions}\r`);
     await hive.mailbox.acknowledge(task.assigneeAgentId, message.id);
   }
 }

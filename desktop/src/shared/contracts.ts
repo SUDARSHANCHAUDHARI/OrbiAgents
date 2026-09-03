@@ -152,6 +152,11 @@ export interface OrbiDesktopApi {
     upsert(request: CommandHistoryEntry): Promise<CommandHistoryEntry[]>;
   };
   hive: {
+    plan(request: { projectPath: string; id: string; model?: string; requestId: string; prompt: string }): Promise<SupervisorRun>;
+    supervisorStatus(request: HiveProjectRequest): Promise<SupervisorRun | null>;
+    approvePlan(request: { projectPath: string; runId: string }): Promise<SupervisorRun>;
+    cancelPlan(request: { projectPath: string; runId: string }): Promise<SupervisorRun>;
+    resumePlan(request: { projectPath: string; runId: string }): Promise<SupervisorRun>;
     snapshot(request: HiveProjectRequest): Promise<HiveSnapshot>;
     assign(request: HiveAssignRequest): Promise<HiveSnapshot>;
     transitionTask(request: HiveTaskTransitionRequest): Promise<HiveSnapshot>;
@@ -249,6 +254,8 @@ export interface LocalModelEndpointCreateRequest { id: string; name: string; bas
 export interface LocalModelProbeResult { models: string[]; truncated: boolean; }
 export interface LocalModelCompletionRequest { id: string; requestId: string; model?: string; prompt: string; }
 export interface LocalModelCompletionResult { text: string; model: string; }
+export interface SupervisorStep { title: string; detail: string; agentId: string; taskId?: string; }
+export interface SupervisorRun { id: string; projectPath: string; status: "review" | "running" | "paused" | "completed" | "cancelled"; steps: SupervisorStep[]; summary: string; }
 export interface WorkspaceFileAgentRequest { agentId: string; }
 export interface WorkspaceFileRequest extends WorkspaceFileAgentRequest { path: string; }
 export interface WorkspaceFileWriteRequest extends WorkspaceFileRequest { content: string; expectedHash: string; }
@@ -311,6 +318,11 @@ export const IPC_CHANNELS = {
   applyWorkspace: "agents:workspace:apply",
   discardWorkspace: "agents:workspace:discard",
   hiveSnapshot: "hive:snapshot",
+  hivePlan: "hive:plan",
+  hiveSupervisorStatus: "hive:supervisor:status",
+  hiveApprovePlan: "hive:plan:approve",
+  hiveCancelPlan: "hive:plan:cancel",
+  hiveResumePlan: "hive:plan:resume",
   hiveAssign: "hive:assign",
   hiveTransitionTask: "hive:task:transition",
   hiveDecideApproval: "hive:approval:decide",

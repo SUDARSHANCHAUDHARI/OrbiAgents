@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { AgentSession, HiveSnapshot } from "../../../shared/contracts";
 import { dependencyStatus, groupTasks, taskHealthStatus, taskOperationsSummary, type HiveTask, type TaskColumnId, type TaskHealthStatus } from "../command/taskBoardModel";
 import { useI18n, type MessageKey } from "../i18n";
+import { SupervisorPanel } from "./SupervisorPanel";
 
 const COLUMN_KEYS: Record<TaskColumnId, MessageKey> = { queued: "queuedColumn", active: "activeColumn", blocked: "blockedColumn", done: "doneColumn" };
 
@@ -20,6 +21,7 @@ export function HivePanel({ projectPath, agents, onSnapshot, onError }: { projec
   async function transition(taskId: string, action: "start" | "block" | "retry" | "complete") { const prompted = action === "complete" ? window.prompt(t("completedResult")) : undefined; if (action === "complete" && !prompted) return; const result = prompted ?? undefined; try { updateSnapshot(await window.orbi.hive.transitionTask({ projectPath, taskId, action, agentId: action === "retry" ? agentId : undefined, result })); onError(""); } catch (error) { onError(error instanceof Error ? error.message : String(error)); } }
   if (!projectPath) return <section className="hive-panel"><div className="section-title">{t("orbiHive")}</div><p className="empty">{t("selectHive")}</p></section>;
   return <section className="hive-panel" aria-label={t("hiveOperatorPanel")}>
+    <SupervisorPanel key={projectPath} projectPath={projectPath} agents={agents} onSnapshot={updateSnapshot} onError={onError} />
     <div className="section-title"><span>{t("orbiHive")}</span><button type="button" onClick={() => void refresh()}>{t("refresh")}</button></div>
     <form className="hive-assign" onSubmit={assign}><input aria-label={t("taskTitle")} value={title} onChange={(event) => setTitle(event.target.value)} placeholder={t("taskForPrime")} maxLength={300} required /><textarea aria-label={t("taskDetails")} value={detail} onChange={(event) => setDetail(event.target.value)} placeholder={t("taskDetails")} maxLength={20000} /><select aria-label={t("assignedAgent")} value={agentId} onChange={(event) => setAgentId(event.target.value)} required><option value="" disabled>{t("selectProjectAgent")}</option>{matchingAgents.map((agent) => <option key={agent.id} value={agent.id}>{agent.name}</option>)}</select><button type="submit" disabled={!agentId}>{t("assignPrime")}</button></form>
     <div className="hive-grid">
