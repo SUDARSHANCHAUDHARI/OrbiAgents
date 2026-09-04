@@ -45,9 +45,15 @@ findings do not establish security or clear repository-wide dependency alerts.
 Do not adopt the compile manifest as a runtime manifest without native/runtime
 verification.
 
-posthog-node 5.48.2 also requires Node ^20.20.0 or >=22.22.0, while this check ran
-with Node 22.14.0. It was not executed. This engine warning is another runtime
-compatibility limitation, not a TypeScript failure.
+posthog-node 5.48.2 requires Node ^20.20.0 or >=22.22.0, while shell checks ran
+with Node 22.14.0. The warning remains for that shell toolchain. A separate probe
+verified Electron 41.10.3 embeds Node 24.18.0 and satisfies the engine range; see
+`RUNTIME-SMOKE.md`. No PostHog client was instantiated.
+
+The isolated SQLite pin is now 13.0.3 because 11.10.0 did not compile against
+Electron 41's V8 API. Limited in-memory SQLite and PTY probes pass after explicit
+native preparation. This does not establish persistence migration or packaged
+application readiness.
 
 The normal migration launch gate stays in place. No existing app data or desktop
 dependencies are modified. Temporary dependency/build directories remain for
