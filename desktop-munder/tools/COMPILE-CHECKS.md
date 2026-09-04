@@ -13,7 +13,8 @@ node desktop-munder/tools/build-main.mjs
 ```
 
 Do not enable install scripts or launch these dependencies. The isolated compile
-environment includes upstream-pinned packages for their declarations only.
+environment includes pinned packages for their declarations only, with the
+dependency remediation below applied to the original upstream set.
 TypeScript/esbuild come from the existing desktop toolchain. Typechecks retain
 the baseline strict settings and skipLibCheck setting, use isolated dependency
 resolution, and emit no files. Vite client declarations are supplied for the web
@@ -26,11 +27,23 @@ execution, application startup and packaged assets have NOT been verified.
 
 ## Runtime blockers discovered
 
-The compile environment audit reports six high-severity package findings:
-axios, electron, extract-zip, localtunnel, toml and tunnelmole. These are not the
-renderer-only environment's earlier zero-finding audit. Do not adopt the compile
-manifest as an application runtime manifest. Dependency remediation requires
-compatibility review; no forced audit upgrades were applied.
+The original compile environment reported six high-severity package findings.
+On 2026-09-05 the remediated install reports zero known vulnerabilities:
+
+- Electron declarations move from 32.3.3 to 41.10.3, matching the version installed
+  in the existing desktop app. This does not verify the migration under Electron.
+- Unused localtunnel and its typings are removed. No references were found in the
+  migration source or imported tests; the active Tunnelmole integration remains.
+- Tunnelmole 2.4.0 has a scoped TOML 4.2.0 override. Its installed JS/TS files have
+  no TOML references; the dependency is declared in its manifest. Patched parsing
+  was checked with valid/invalid input and null-prototype output. The override is
+  outside Tunnelmole's declared TOML 3.x range; live tunnel behavior remains untested.
+
+Both typechecks and 37 migration tests pass with this change. No forced audit
+upgrade was applied, and the inert upstream lock remains unchanged. Zero audit
+findings do not establish security or clear repository-wide dependency alerts.
+Do not adopt the compile manifest as a runtime manifest without native/runtime
+verification.
 
 posthog-node 5.48.2 also requires Node ^20.20.0 or >=22.22.0, while this check ran
 with Node 22.14.0. It was not executed. This engine warning is another runtime
