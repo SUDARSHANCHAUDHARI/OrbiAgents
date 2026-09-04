@@ -777,12 +777,8 @@ export class HiveManager {
               // OrbiAgents leaves Codex hook trust under the operator's control.
               // Do not claim hook telemetry is ready merely because files exist.
               degraded = 'Codex hook trust has not been verified by OrbiAgents. Live status, cost and inbox wake may be unavailable until the operator establishes trust.';
-              // Auto mode keeps codex's OS sandbox (`-a never -s workspace-write`,
-              // agentProvider.ts). workspace-write only covers cwd, so the agent
-              // folder (inbox/.done, memory.md, outbox) and the shared hive root
-              // (research deliverables, the board for god) are added as extra
-              // writable roots. Harmless outside auto mode.
-              for (const d of this.sandboxWritableDirs(meta, dir, root, opts.extraWritableDirs)) preArgs.push('--add-dir', d);
+              // Additional hive directories are not implicitly writable in this migration.
+              // OrbiAgents: no automatic extra writable roots without per-directory consent.
             }
             else if (desc.shim === 'pi') {
               // Pi (earendil-works) has a rich pi.on(event) lifecycle. We drop a
