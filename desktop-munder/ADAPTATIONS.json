@@ -126,5 +126,46 @@
       "after": "import type { HarnessConfig } from '@/store/config';\n\n/** Only one replacement theme ships. Viewing settings never alters agents. */\nexport function OfficeThemePicker({ config: _config }: { config: HarnessConfig }) {\n  return (\n    <section aria-label=\"Office theme\" style={{ fontSize: 13, lineHeight: '20px' }}>\n      <h3 style={{ margin: '0 0 8px', color: 'var(--cth-ink-900)' }}>OrbiAgents office</h3>\n      <p style={{ margin: '0 0 8px', color: 'var(--cth-ink-700)' }}>\n        Original orbital room and robot workers with credited LPC office furniture.\n      </p>\n      <p style={{ margin: 0, color: 'var(--cth-ink-500)' }}>\n        This is the only available theme. Legacy theme selections use this room.\n        No agents or settings are changed here.\n      </p>\n    </section>\n  );\n}\n",
       "reason": "Use original robot card artwork and roster metadata; replace unavailable theme switching with a read-only summary."
     }
+  ],
+  "src/renderer/src/main.tsx": [
+    {
+      "before": "import brandLogo from '@brand/logo.png?url';",
+      "after": "import brandLogo from './assets/orbi-mark.svg?url';",
+      "reason": "Replace excluded upstream logo dependency and identify the migration splash as OrbiAgents."
+    },
+    {
+      "before": "favicon.type = 'image/png';",
+      "after": "favicon.type = 'image/svg+xml';",
+      "reason": "Replace excluded upstream logo dependency and identify the migration splash as OrbiAgents."
+    },
+    {
+      "before": "img.alt = 'Munder Difflin';",
+      "after": "img.alt = 'OrbiAgents';",
+      "reason": "Replace excluded upstream logo dependency and identify the migration splash as OrbiAgents."
+    }
+  ],
+  "src/renderer/src/App.tsx": [
+    {
+      "before": "import brandLogo from '@brand/logo.png?url';",
+      "after": "import brandLogo from './assets/orbi-mark.svg?url';",
+      "reason": "Replace excluded upstream logo dependency and identify the migration splash as OrbiAgents."
+    }
+  ],
+  "src/renderer/index.html": [
+    {
+      "before": "<title>Munder Difflin</title>",
+      "after": "<title>OrbiAgents Migration</title>",
+      "reason": "Replace excluded upstream logo dependency and identify the migration splash as OrbiAgents."
+    },
+    {
+      "before": "<div class=\"mk\">MD</div>",
+      "after": "<div class=\"mk\">OA</div>",
+      "reason": "Replace excluded upstream logo dependency and identify the migration splash as OrbiAgents."
+    },
+    {
+      "before": "<div class=\"title\">MUNDER DIFFLIN</div>",
+      "after": "<div class=\"title\">ORBIAGENTS</div>",
+      "reason": "Replace excluded upstream logo dependency and identify the migration splash as OrbiAgents."
+    }
   ]
 }
