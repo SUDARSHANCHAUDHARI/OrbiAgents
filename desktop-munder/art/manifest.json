@@ -1,0 +1,93 @@
+{
+  "source": "https://opengameart.org/content/lpc-revised-the-office",
+  "archive": "https://opengameart.org/sites/default/files/lpc_-_the_office.zip",
+  "archiveSha256": "697b688de1c18ca71ee5851ca925c4cfea8be810a82551c3595990d1e6266aaa",
+  "license": "OGA-BY-3.0",
+  "licenseUrl": "https://static.opengameart.org/OGA-BY-3.0.txt",
+  "attribution": "Eliza Wyatt and Lanea Zimmerman (Sharm)",
+  "modifications": "None. Selected original files copied byte-for-byte.",
+  "entries": [
+    {
+      "path": "art/lpc-office/Bins.png",
+      "sha256": "67c05355d09e7201964b4196cffc11c9ea2fe838582e3c031b934a6610678943",
+      "width": 160,
+      "height": 128
+    },
+    {
+      "path": "art/lpc-office/Card Table.png",
+      "sha256": "8802b24e1ac57694c8b641600833d68f5d7e8c02591c860c202d6f627c87a300",
+      "width": 128,
+      "height": 192
+    },
+    {
+      "path": "art/lpc-office/Coffee Cup.png",
+      "sha256": "8f57eb1935fea56e8d51aae16961feb1fadd16547c180b55ea7136ee82fd52e2",
+      "width": 32,
+      "height": 32
+    },
+    {
+      "path": "art/lpc-office/Coffee Maker.png",
+      "sha256": "886a299c0fb5033751aa65b27f1a1a96df34f8ba96c6ccd05640c2546f2599d8",
+      "width": 64,
+      "height": 64
+    },
+    {
+      "path": "art/lpc-office/Copy Machine - Copy Light.png",
+      "sha256": "debf32b9e46f878f294fb138f950d378b07fd6c4ddc4629b2d7c51b779be7025",
+      "width": 256,
+      "height": 32
+    },
+    {
+      "path": "art/lpc-office/Copy Machine.png",
+      "sha256": "2ea06c75a4d31deb2ec2841a17bbeffa782f27c555f662847059f11457e8a426",
+      "width": 64,
+      "height": 64
+    },
+    {
+      "path": "art/lpc-office/Desk, Ornate.png",
+      "sha256": "a3cbbee99dc231bf42ae8aa2c467a6c175cee0753ccd658deefa3f42e797737c",
+      "width": 160,
+      "height": 128
+    },
+    {
+      "path": "art/lpc-office/Laptop.png",
+      "sha256": "9eda5d655b037792facc7011c975e0ee554389551fe0ee9ceb69a42cc6ec0f30",
+      "width": 128,
+      "height": 128
+    },
+    {
+      "path": "art/lpc-office/Mailboxes.png",
+      "sha256": "1ce08faf43d204b6182d06dd0de47d3b607825edc28858f832274ded09b6e839",
+      "width": 96,
+      "height": 96
+    },
+    {
+      "path": "art/lpc-office/Rotary Phones.png",
+      "sha256": "57060493cab2c8fcc6e3bf33ee8a2ce13e7fb1649ecc10e7ef2ea49ff092bcaa",
+      "width": 128,
+      "height": 128
+    },
+    {
+      "path": "art/lpc-office/Sink.png",
+      "sha256": "2a4e280d88af5b7ad366ee77e2dc617af9c6d9eaabad338afccbd0a7ac0cbe57",
+      "width": 256,
+      "height": 192
+    },
+    {
+      "path": "art/lpc-office/TV, Widescreen.png",
+      "sha256": "ea8d20dbfac08bda1b13ae38753dd8d4ad08c077dd87500cf497b13038c29fab",
+      "width": 288,
+      "height": 128
+    },
+    {
+      "path": "art/lpc-office/Water Cooler.png",
+      "sha256": "c5f6422b7c00ac02d020af1544fad53b598833fe314d2fb90f5d434663fd00b9",
+      "width": 128,
+      "height": 64
+    },
+    {
+      "path": "art/lpc-office/Credits.txt",
+      "sha256": "9bd5567019af7e43a34044ffaed07ed75f1340046ee0ea3dd8ed2052e4a0c82b"
+    }
+  ]
+}

@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Application, Container, Graphics, Text } from "pixi.js";
+// Installs Pixi's static shader synchronizers; keep CSP script-src free of unsafe-eval.
+import "pixi.js/unsafe-eval";
 import type { ActivityEvent, AgentActivityState, AgentSession, HiveSnapshot } from "../../../shared/contracts";
 import { pointOnOfficeLink } from "../office/officeEffects";
 import { loadOfficeLayout, saveOfficeLayout } from "../office/officeLayoutStore";
@@ -31,6 +33,7 @@ export function PixelOffice({ agents, activity, hive, selectedId, onSelect }: { 
   const floorId = layout.floorId;
   const camera = layout.cameras[floorId];
   const [sizeVersion, setSizeVersion] = useState(0);
+  const [renderFailed, setRenderFailed] = useState(false);
   const reducedMotion = useReducedMotion();
   const reducedRef = useRef(reducedMotion); reducedRef.current = reducedMotion;
   const states = useMemo(() => latestStates(activity), [activity]);
@@ -79,7 +82,7 @@ export function PixelOffice({ agents, activity, hive, selectedId, onSelect }: { 
         }
       });
       setSizeVersion((value) => value + 1);
-    });
+    }).catch(() => { if (!cancelled) setRenderFailed(true); });
     const observer = new ResizeObserver(() => setSizeVersion((value) => value + 1)); observer.observe(host);
     return () => {
       cancelled = true;
@@ -128,6 +131,7 @@ export function PixelOffice({ agents, activity, hive, selectedId, onSelect }: { 
   return <section className="pixel-office" aria-label={t("pixelOffice")}>
     <header><div><span className="eyebrow">{t("liveOrbitalDeck")}</span><h2>{t(FLOOR_KEYS[floorId])} {t("floorSuffix")}</h2></div><div className="office-zoom" aria-label={t("officeControls")}><select aria-label={t("orbitalFloor")} value={floorId} onChange={(event) => selectFloor(event.target.value as OrbitalFloorId)}>{ORBITAL_FLOORS.map((floor) => <option key={floor.id} value={floor.id}>{t(FLOOR_KEYS[floor.id])} ({allOfficeAgents.filter((agent) => floorForState(agent.state) === floor.id).length})</option>)}</select>{selectedLocation && selectedLocation.floorId !== floorId ? <button aria-label={`${t("locateAgentOn")} ${t(FLOOR_KEYS[selectedLocation.floorId])} ${t("floorSuffix")}`} type="button" onClick={() => selectFloor(selectedLocation.floorId)}>⌖</button> : null}<button aria-label={t("panLeft")} type="button" onClick={() => moveCamera(96, 0)}>←</button><button aria-label={t("panUp")} type="button" onClick={() => moveCamera(0, 96)}>↑</button><button aria-label={t("panDown")} type="button" onClick={() => moveCamera(0, -96)}>↓</button><button aria-label={t("panRight")} type="button" onClick={() => moveCamera(-96, 0)}>→</button><button aria-label={`${t("setZoom")} ${camera.zoom === 1 ? 2 : 1}x`} type="button" onClick={toggleZoom}>{camera.zoom}×</button></div></header>
     <div ref={hostRef} className="pixel-office-canvas" />
+    {renderFailed ? <p role="alert">{t("pixelOffice")}: {t("stateFailed")}</p> : null}
     <div className="office-hive-status" aria-live="polite">{selectedLocation ? `${selectedLocation.agentName}: ${t(FLOOR_KEYS[selectedLocation.floorId])} ${t("floorSuffix")} · ` : ""}{hive ? `${hive.tasks.length} ${t("tasksSuffix")} · ${hive.primeInbox.length} ${t("messages")} · ${hive.approvals.filter((approval) => approval.status === "pending").length} ${t("pendingApprovals")}` : t("noHiveSelected")}</div>
     <div className="office-agent-controls" aria-label={t("accessibleAgentControls")}>{officeAgents.map((agent) => <button type="button" key={agent.id} className={agent.id === selectedId ? "selected" : ""} onClick={() => onSelect(agent.id)}><i style={{ background: `#${agent.color.toString(16).padStart(6, "0")}` }} /><span>{agent.name}<small>{t(STATE_KEYS[agent.state])} · {t(ZONE_KEYS[agent.zone])}</small></span></button>)}</div>
   </section>;
