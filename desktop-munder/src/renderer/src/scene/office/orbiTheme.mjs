@@ -1,12 +1,12 @@
 import { Texture, BufferImageSource } from 'pixi.js';
 import { createOfficeRoom } from '../../../../../theme/room.mjs';
 import { prepareLpcTexture } from '../../../../../theme/lpcTextures.mjs';
-import { createWorkerTextures, WORKER_COLORS } from '../../../../../theme/workerArt.mjs';
+import { createWorkerTextures, WORKER_COLORS, WORKER_NAMES, workerColor } from '../../../../../theme/workerArt.mjs';
 import manifest from '../../../../../art/manifest.json';
 
 const urls = import.meta.glob('../../../../../art/lpc-office/*.png', { eager: true, query: '?url', import: 'default' });
 // Keep persisted character keys compatible; scene appearance is original.
-const names = ['michael', 'jim', 'pam', 'dwight', 'kevin', 'angela', 'oscar', 'stanley', 'phyllis', 'andy', 'kelly', 'ryan', 'toby', 'creed', 'meredith'];
+const names = WORKER_NAMES;
 export function createOrbiTheme() {
   const room = createOfficeRoom(manifest.entries);
   const owned = [], workers = new Map();
@@ -28,7 +28,7 @@ export function createOrbiTheme() {
     monitor: { offTopLeftGid: -1, onGids: [] },
     palette: { background: 0x0e1720, noteColors: { todo: 0xf2df8a, doing: 0x9ecbf0, blocked: 0xf0a3a3, done: 0xa8e0b0 } },
     cast: {
-      byName: Object.fromEntries(names.map((name, i) => [name, { name, displayName: `Orbi-${i + 1}`, shirt: '#' + WORKER_COLORS[i % 3].toString(16), blurb: 'Orbital worker' }])),
+      byName: Object.fromEntries(names.map((name, i) => [name, { name, displayName: `Orbi-${i + 1}`, shirt: '#' + workerColor(name).toString(16), blurb: 'Orbital worker' }])),
       defaultCharacter: 'jim',
       async getFrames(name) {
         if (disposed) throw new Error('Theme disposed');
