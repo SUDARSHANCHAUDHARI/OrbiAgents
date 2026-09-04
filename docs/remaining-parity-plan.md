@@ -19,7 +19,7 @@ Agreed scope: desktop main/preload/renderer, desktop tests and verification scri
 
 ## External acceptance
 
-Apple signing/notarization, live Slack credentials/forwarding, production gallery hosting, human language/UI review and native graphical Linux acceptance are not completed by local unit tests. Local inference has not been exercised against a live installed model, and the callback protocol has not been exercised through a real provider CLI. General-purpose tool execution by local models and parallel multi-agent scheduling are not implemented by this bounded workflow.
+Apple signing/notarization, live Slack credentials/forwarding, production gallery hosting, human language/UI review and native graphical Linux acceptance are not completed by local unit tests. Local inference and planning have now passed against installed Ollama `qwen2.5-coder:7b`; other models remain unverified. The callback protocol has not been exercised through a real provider CLI. General-purpose tool execution by local models and parallel multi-agent scheduling are not implemented by this bounded workflow.
 
 ## Implemented
 
@@ -42,3 +42,11 @@ Verified locally on 2026-09-03:
 - Renderer performance budgets passed unchanged: entry JS 642,849 bytes raw / 118,684 gzip; CSS 30,870 raw / 7,286 gzip.
 - Production build and `package:mac:dir` passed. The local artifact is `desktop/release/mac-arm64/OrbiAgents.app`, unsigned and not notarized. Packaging required approved network access for the Electron download; nothing was published.
 - Focused quality review corrected early-cancellation races, retry rejection occurring after delivery, stale reporting capabilities, task-board refresh and the CSS budget overrun. No browser automation or session capture was used.
+
+### Follow-up: live local-model acceptance (2026-09-03)
+
+- The first live run passed inference but failed strict plan parsing. Planning now requests OpenAI-compatible JSON-object output explicitly; plain text inference is unchanged, and the strict plan validator remains intact.
+- The repeatable smoke check passed against already-installed Ollama `qwen2.5-coder:7b`: model discovery, inference marker and a valid two-step review plan. No worker was dispatched, no model downloaded, no cloud credits used, and temporary endpoint data was removed.
+- Run from `desktop`: `node --import tsx scripts/check-local-model-acceptance.ts qwen2.5-coder:7b`. An optional second argument selects another loopback `/v1` endpoint; this script does not load application credentials or project files.
+- Added an integration regression using real HTTP inference and task-report transports, real Hive persistence and a simulated worker. It checks review-before-dispatch, sequential advancement, report replay rejection, and exclusion of reporting capabilities from durable task records. It is not real provider-CLI acceptance.
+- Full desktop suite: 220 passed, zero failures/skips. Desktop and smoke-script typechecks passed. The previously recorded unsigned package predates this follow-up; packaged UI acceptance remains open.

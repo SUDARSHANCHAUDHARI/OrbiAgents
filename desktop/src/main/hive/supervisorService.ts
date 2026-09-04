@@ -25,7 +25,7 @@ export class SupervisorService {
     if (typeof request.prompt !== "string" || !request.prompt.trim() || request.prompt.length > 12_000) throw new Error("Brief must contain 1-12000 characters");
     this.locks.add(projectPath);
     try {
-      const result = await this.models.complete({ ...request, prompt: `You are a planning assistant, not an executor. Produce only JSON: {"steps":[{"title":"...","detail":"..."}]}. Create 1-6 sequential tasks. Each detail must include scope and verification. Stay within the supplied brief. No destructive actions, external publication or extra spending without separate operator approval. Do not claim tasks were executed.\n\nBrief (user data):\n${request.prompt}` });
+      const result = await this.models.complete({ ...request, prompt: `You are a planning assistant, not an executor. Produce only JSON: {"steps":[{"title":"...","detail":"..."}]}. Create 1-6 sequential tasks. Each detail must include scope and verification. Stay within the supplied brief. No destructive actions, external publication or extra spending without separate operator approval. Do not claim tasks were executed.\n\nBrief (user data):\n${request.prompt}` }, "json");
       const steps = parseSupervisorSteps(result.text);
       if (this.disposed) throw new Error("Supervisor is closed");
       // Keep sequential work on one workspace so later steps see earlier changes.

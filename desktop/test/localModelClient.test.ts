@@ -101,3 +101,15 @@ test("inference honors cancellation arriving before async IPC validation finishe
   client.cancel("early"); await assert.rejects(client.complete(request), /cancelled/);
   client.dispose(); await assert.rejects(client.complete({ ...request, requestId: "after-close" }), /closed/);
 });
+
+test("planner JSON mode is explicit while regular inference remains text", async () => {
+  const store = await storeWithKey(); const bodies: Record<string, unknown>[] = [];
+  const client = new LocalModelClient(store, (async (_url, init) => {
+    bodies.push(JSON.parse(String(init?.body)));
+    return Response.json({ choices: [{ finish_reason: "stop", message: { content: '{"steps":[]}' } }] });
+  }) as typeof fetch);
+  const request = { id: "local", requestId: "json", model: "qwen", prompt: "Return a JSON object" };
+  await client.complete(request, "json"); await client.complete({ ...request, requestId: "text" });
+  assert.deepEqual(bodies[0].response_format, { type: "json_object" });
+  assert.equal("response_format" in bodies[1], false);
+});

@@ -19,7 +19,7 @@ export class LocalModelClient {
   }
   dispose(): void { this.closed = true; for (const controller of this.requests.values()) controller.abort(); this.earlyCancellations.clear(); }
 
-  async complete(request: LocalModelCompletionRequest): Promise<LocalModelCompletionResult> {
+  async complete(request: LocalModelCompletionRequest, format: "text" | "json" = "text"): Promise<LocalModelCompletionResult> {
     validateRequestId(request.requestId);
     if (this.closed) throw new Error("Local inference is closed");
     for (const [id, expires] of this.earlyCancellations) if (expires < Date.now()) this.earlyCancellations.delete(id);
@@ -37,7 +37,7 @@ export class LocalModelClient {
       const response = await this.fetcher(`${endpoint.baseUrl}/chat/completions`, {
         method: "POST", redirect: "error", signal: controller.signal,
         headers: { "content-type": "application/json", ...(endpoint.apiKey ? { authorization: `Bearer ${endpoint.apiKey}` } : {}) },
-        body: JSON.stringify({ model: model.trim(), messages: [{ role: "user", content: request.prompt }], stream: false, max_tokens: 4096 }),
+        body: JSON.stringify({ model: model.trim(), messages: [{ role: "user", content: request.prompt }], stream: false, max_tokens: 4096, ...(format === "json" ? { response_format: { type: "json_object" } } : {}) }),
       });
       if (!response.ok) throw new Error("Inference failed");
       const value = await readBoundedJson(response) as { choices?: Array<{ finish_reason?: string; message?: { content?: unknown; tool_calls?: unknown } }> };
