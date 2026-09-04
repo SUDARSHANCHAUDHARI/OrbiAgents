@@ -47,6 +47,8 @@ Sources:
 
 ## Completion boundary
 
+Isolated preview slice: `preview/` mounts the imported tile renderer/camera and loads actual local PNGs, with viewport fitting, loading/error status and cleanup. `node desktop-munder/tools/preview.mjs build` succeeds and verifies all 14 credited asset files in its temporary output. `serve` serves built output only on loopback without opening a browser. Normal migration launch stays blocked. Browser rendering and bitmap-decoding paths have not been exercised; visual acceptance, workers and runtime adaptation remain pending.
+
 Renderer-binding slice: `theme/roomRenderer.mjs` connects composed room data and prepared LPC textures to the imported TiledMapRenderer, validates all sheets before mutation, and owns scene cleanup. Twelve migration tests pass. The integration test compiles the actual pinned renderer and uses real Pixi objects with dimension-matched texture sources; it does not decode PNGs, perform GPU rendering or establish visual quality. Browser/Electron mounting, original workers and runtime migration remain pending.
 
 Room-structure slice adds original procedural RGBA surfaces and composes floor, wall, table and counter tiles with LPC desks. Ten migration tests pass, including complete floor coverage, valid tile IDs, visible collision footprints and open doorways. No image files or upstream artwork were modified. This map data has not yet been wired into the application or visually reviewed; theme registration, remaining props, original workers and runtime migration remain incomplete.
