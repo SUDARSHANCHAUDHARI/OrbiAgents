@@ -1,0 +1,12 @@
+{
+  "name": "orbiagents-munder-migration",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Pinned upstream baseline; not yet a runnable migration",
+  "scripts": {
+    "verify:baseline": "node tools/verify-baseline.mjs",
+    "dev": "node tools/migration-gate.mjs",
+    "build": "node tools/migration-gate.mjs",
+    "start": "node tools/migration-gate.mjs"
+  }
+}
