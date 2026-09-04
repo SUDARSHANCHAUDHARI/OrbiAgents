@@ -23,3 +23,16 @@ test('compile dependency lock matches exact direct pins and contains no project 
   for (const [name, version] of Object.entries(pkg.dependencies))
     assert.equal(lock.packages['node_modules/' + name].version, version);
 });
+
+test('remediation keeps unused tunneling dependency out and pins patched TOML', () => {
+  const pkg = JSON.parse(readFileSync(tool('./compile-dependencies.json')));
+  const lock = JSON.parse(readFileSync(tool('./compile-dependencies.lock.json')));
+  assert.equal(pkg.dependencies.electron, '41.10.3');
+  assert.equal(pkg.dependencies.localtunnel, undefined);
+  assert.equal(pkg.dependencies['@types/localtunnel'], undefined);
+  assert.equal(pkg.overrides.tunnelmole.toml, '4.2.0');
+  const toml = Object.entries(lock.packages).filter(([path]) => path.endsWith('node_modules/toml'));
+  assert.ok(toml.length > 0);
+  for (const [, entry] of toml) assert.equal(entry.version, '4.2.0');
+  assert.ok(!Object.keys(lock.packages).some(path => path.endsWith('node_modules/localtunnel')));
+});

@@ -47,6 +47,8 @@ Sources:
 
 ## Completion boundary
 
+Dependency remediation (2026-09-05): isolated compile dependency audit now reports zero known vulnerabilities after removing unreferenced localtunnel/typings, aligning Electron declarations to 41.10.3, and scoping Tunnelmole's TOML override to 4.2.0. Both typechecks and 37 migration tests pass. This does not clear the inert upstream lock/repository-wide alerts or verify live tunneling/native modules. The host Node/PostHog engine warning remains; runtime launch stays blocked. See `desktop-munder/tools/COMPILE-CHECKS.md` for compatibility limits.
+
 Compilation slice: strict baseline-based web (173 root files) and node (86 root files) typechecks now pass against isolated pinned declarations. Main/preload source bundles emit with external packages and required CJS sidecars, without executing app code. This is not native-runtime or packaging verification. The wider compile environment reports six high-severity dependency findings and a PostHog Node engine mismatch; see `desktop-munder/tools/COMPILE-CHECKS.md`. These remain activation blockers. No forced upgrades or runtime launch occurred.
 
 Isolated renderer-build slice resolves the missing dependency blocker using a separately pinned renderer-only manifest/lock with install scripts disabled. The actual renderer now builds through Vite, using all application modules rather than just the room preview. npm reports zero known vulnerabilities for the isolated 266-package audit; this does not clear repository-wide alerts. The ~6.4 MB minified main chunk remains a performance concern. Main/preload build, complete typechecking, packaging, runtime and visual acceptance remain unverified. Reproduction instructions: `desktop-munder/tools/RENDERER-BUILD.md`.
