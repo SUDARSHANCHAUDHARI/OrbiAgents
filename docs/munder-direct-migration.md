@@ -47,6 +47,8 @@ Sources:
 
 ## Completion boundary
 
+Renderer-binding slice: `theme/roomRenderer.mjs` connects composed room data and prepared LPC textures to the imported TiledMapRenderer, validates all sheets before mutation, and owns scene cleanup. Twelve migration tests pass. The integration test compiles the actual pinned renderer and uses real Pixi objects with dimension-matched texture sources; it does not decode PNGs, perform GPU rendering or establish visual quality. Browser/Electron mounting, original workers and runtime migration remain pending.
+
 Room-structure slice adds original procedural RGBA surfaces and composes floor, wall, table and counter tiles with LPC desks. Ten migration tests pass, including complete floor coverage, valid tile IDs, visible collision footprints and open doorways. No image files or upstream artwork were modified. This map data has not yet been wired into the application or visually reviewed; theme registration, remaining props, original workers and runtime migration remain incomplete.
 
 Furniture composition slice: `theme/furniture.mjs` assigns approved LPC tiles to 15 desks and the coffee machine in the original layout. Desk footprints now match the three-by-two source-cell crop. Eight migration tests cover tile references, blocked footprints, seat clearance, reachability and texture dimensions. Floors, walls, other furniture, original workers and renderer registration are still pending; this is not a complete scene or runnable app.
