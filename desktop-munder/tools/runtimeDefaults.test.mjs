@@ -33,3 +33,17 @@ test('hidden helper has no unconditional permission-bypass argument', () => {
   assert.ok(!strings.includes('--dangerously-skip-permissions'));
   assert.ok(strings.includes('--disallowedTools'), 'existing tool restrictions retained');
 });
+
+test('Codex launch does not bypass hook trust and reports its unverified status', () => {
+  const source = read('src/main/hive.ts');
+  const ast = ts.createSourceFile('hive.ts', source, ts.ScriptTarget.Latest, true);
+  const strings = [];
+  function visit(node) {
+    if (ts.isStringLiteral(node)) strings.push(node.text);
+    ts.forEachChild(node, visit);
+  }
+  visit(ast);
+  assert.ok(!strings.includes('--dangerously-bypass-hook-trust'));
+  assert.ok(strings.some(s => s.startsWith('Codex hook trust has not been verified')));
+  assert.match(source, /const deg = degraded \? \{ degraded \} : \{\}/);
+});

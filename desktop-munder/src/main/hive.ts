@@ -774,13 +774,9 @@ export class HiveManager {
             if (desc.shim === 'agy') this.installAgyHooks();
             else if (desc.shim === 'codex') {
               env.CODEX_HOME = this.installCodexHooks(dir, meta.id);
-              // Codex refuses to run hooks from a config dir without persisted
-              // "hook trust" (normally an interactive gate). Our hooks.json is
-              // hive-authored inside an isolated CODEX_HOME, so we bypass that gate
-              // for this automated spawn — the flag's documented use ("automation
-              // that already vets hook sources"). Without it the hooks silently
-              // never fire. Must precede the positional prompt.
-              preArgs.push('--dangerously-bypass-hook-trust');
+              // OrbiAgents leaves Codex hook trust under the operator's control.
+              // Do not claim hook telemetry is ready merely because files exist.
+              degraded = 'Codex hook trust has not been verified by OrbiAgents. Live status, cost and inbox wake may be unavailable until the operator establishes trust.';
               // Auto mode keeps codex's OS sandbox (`-a never -s workspace-write`,
               // agentProvider.ts). workspace-write only covers cwd, so the agent
               // folder (inbox/.done, memory.md, outbox) and the shared hive root

@@ -47,6 +47,8 @@ Sources:
 
 ## Completion boundary
 
+Provider hook-trust slice removes the unconditional Codex hook-trust bypass and reports unverified hook telemetry through the existing degraded spawn result. Twenty migration tests pass, including actual-source AST checks and reversible provenance validation. No Codex process was launched and no trust store was changed. Caller-supplied permission flags, writable-directory grants and other provider configuration paths remain review targets; this is not full launch-policy enforcement.
+
 Data-isolation slice: a first-import bootstrap sets the migration app name to OrbiAgents Migration, userData to `<appData>/OrbiAgents-Migration`, and sessionData to its `chromium-session` child before other main-process imports. Tests use temporary directories and reject symlink aliases, relative/root bases and initialization after ready. Nineteen migration tests pass; real Electron startup and bundled import ordering have not been exercised. This does not isolate provider home directories, selected workspaces, harnessHome or all temporary files; those remain review targets. No actual user app data was read or migrated.
 
 First runtime-safety slice: fresh defaults for autoMode, autoUpdate and telemetryEnabled are false; hiddenClaude no longer forces bypassPermissions. Two upstream files have explicit reversible adaptations, verified against their original hashes. Sixteen migration tests pass, including AST checks of actual defaults/arguments. Existing persisted settings are not overridden. Hook trust, app-data isolation, network/update paths and live-provider acceptance remain pending; normal launch stays disabled.

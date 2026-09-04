@@ -1,4 +1,7 @@
 {
+  "src/main/hive.ts": [
+    {"before":"              // Codex refuses to run hooks from a config dir without persisted\n              // \"hook trust\" (normally an interactive gate). Our hooks.json is\n              // hive-authored inside an isolated CODEX_HOME, so we bypass that gate\n              // for this automated spawn — the flag's documented use (\"automation\n              // that already vets hook sources\"). Without it the hooks silently\n              // never fire. Must precede the positional prompt.\n              preArgs.push('--dangerously-bypass-hook-trust');","after":"              // OrbiAgents leaves Codex hook trust under the operator's control.\n              // Do not claim hook telemetry is ready merely because files exist.\n              degraded = 'Codex hook trust has not been verified by OrbiAgents. Live status, cost and inbox wake may be unavailable until the operator establishes trust.';","reason":"Do not bypass Codex hook trust; explicitly report unverified hook telemetry in the spawn result."}
+  ],
   "src/main/index.ts": [
     { "before": "import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, powerMonitor, powerSaveBlocker, screen, shell, Notification } from 'electron';", "after": "import './migrationBootstrap';\nimport { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, powerMonitor, powerSaveBlocker, screen, shell, Notification } from 'electron';", "reason": "Configure independent migration userData and sessionData before main-process dependencies are evaluated." }
   ],
