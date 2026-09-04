@@ -1,27 +1,32 @@
 import 'pixi.js/unsafe-eval';
-import { Application, Texture, ImageSource, BufferImageSource } from 'pixi.js';
+import { Application, Texture, ImageSource, BufferImageSource, Ticker } from 'pixi.js';
 import { TiledMapRenderer } from '../src/renderer/src/scene/office/TiledMapRenderer.ts';
 import { Camera } from '../src/renderer/src/scene/office/Camera.ts';
 import { createRoomRenderer } from '../theme/roomRenderer.mjs';
 import manifest from '../art/manifest.json';
 import creditsUrl from '../art/lpc-office/Credits.txt?url';
 import './style.css';
+import { createDemoWorkers } from './workers.mjs';
 
 const assetUrls = import.meta.glob('../art/lpc-office/*.png', { eager: true, query: '?url', import: 'default' });
 const host = document.querySelector('#room');
 const status = document.querySelector('#status');
 const fit = document.querySelector('#fit');
+const motion = document.querySelector('#motion');
+let paused = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 document.querySelector('#credits').href = creditsUrl;
 const abort = new AbortController();
 const textures = new Map();
 const bitmaps = [];
 const app = new Application();
-let scene, observer, initialized = false, disposed = false;
+let scene, workers, observer, initialized = false, disposed = false;
 function dispose() {
   if (disposed) return;
   disposed = true;
   abort.abort(); observer?.disconnect();
   fit.disabled = true;
+  motion.disabled = true;
+  workers?.dispose();
   scene?.dispose();
   if (initialized) app.destroy(true, { children: true });
   for (const texture of textures.values()) texture.destroy(true);
@@ -47,7 +52,7 @@ try {
   scene = createRoomRenderer({ Texture, BufferImageSource }, TiledMapRenderer, manifest.entries, textures);
   app.stage.addChild(scene.renderer.getContainer());
   app.canvas.setAttribute('role', 'img');
-  app.canvas.setAttribute('aria-label', 'Office layout with fifteen desks, meeting room and café. No workers are running.');
+  app.canvas.setAttribute('aria-label', 'Office with three simulated robot workers. Demo animations, not live agents.');
   host.appendChild(app.canvas);
   const camera = new Camera(scene.renderer.getContainer());
   camera.setMapSize(scene.renderer.width * 16, scene.renderer.height * 16);
@@ -58,11 +63,23 @@ try {
   resize();
   // Settle the initial fit before displaying the first frame.
   for (let i = 0; i < 180; i++) camera.update(0);
-  app.ticker.add(ticker => camera.update(ticker.deltaMS / 1000));
+  workers = createDemoWorkers(scene, paused);
+  app.ticker.add(ticker => {
+    camera.update(ticker.deltaMS / 1000);
+    if (!paused) workers.update(ticker.deltaMS / 1000);
+  });
+  const syncMotion = () => {
+    motion.textContent = paused ? 'Play demo' : 'Pause demo';
+    motion.setAttribute('aria-pressed', String(!paused));
+    if (paused) Ticker.shared.stop(); else Ticker.shared.start();
+  };
+  syncMotion();
+  motion.addEventListener('click', () => { paused = !paused; syncMotion(); }, { signal: abort.signal });
+  motion.disabled = false;
   observer = new ResizeObserver(resize); observer.observe(host);
   fit.addEventListener('click', () => camera.fitToScreen(), { signal: abort.signal });
   fit.disabled = false;
-  status.textContent = 'Room loaded. This preview contains no workers or agent runtime.';
+  status.textContent = 'Demo only: three original robot workers walk to desks and take coffee breaks. No live agents.';
 } catch (error) {
   dispose();
   if (error?.name !== 'AbortError') {
