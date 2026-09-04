@@ -19,8 +19,8 @@ export function createOfficeLayout() {
     for (let column = 0; column < 5; column++) {
       const x = 3 + column * 6, y = 5 + row * 7;
       const name = row === 0 && column === 0 ? 'desk-ceo' : `pc-${row * 5 + column}`;
-      desks.push({ name, x, y, width: 4, height: 2 });
-      block(x, y, 4, 2);
+      desks.push({ name, x, y, width: 3, height: 2 });
+      block(x, y, 3, 2);
       spawn(name, x + 1, y + 2);
     }
   }
