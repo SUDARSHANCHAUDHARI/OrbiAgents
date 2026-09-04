@@ -1,4 +1,7 @@
 {
+  "src/main/index.ts": [
+    { "before": "import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, powerMonitor, powerSaveBlocker, screen, shell, Notification } from 'electron';", "after": "import './migrationBootstrap';\nimport { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, powerMonitor, powerSaveBlocker, screen, shell, Notification } from 'electron';", "reason": "Configure independent migration userData and sessionData before main-process dependencies are evaluated." }
+  ],
   "src/main/config.ts": [
     { "before": "  autoMode: true,", "after": "  autoMode: false,", "reason": "Require explicit opt-in to automatic provider permissions." },
     { "before": "  autoUpdate: true,", "after": "  autoUpdate: false,", "reason": "Do not automatically download upstream application updates." },
