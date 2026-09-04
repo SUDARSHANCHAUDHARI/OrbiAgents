@@ -10,6 +10,7 @@ const root = fileURLToPath(new URL('../preview', import.meta.url));
 const config = {
   configFile: false, root,
   resolve: { alias: [
+    { find: '@', replacement: fileURLToPath(new URL('../src/renderer/src', import.meta.url)) },
     { find: /^pixi\.js$/, replacement: require.resolve('pixi.js').replace(/\.js$/, '.mjs') },
     { find: 'pixi.js/unsafe-eval', replacement: require.resolve('pixi.js/unsafe-eval').replace(/\.js$/, '.mjs') },
   ] },
