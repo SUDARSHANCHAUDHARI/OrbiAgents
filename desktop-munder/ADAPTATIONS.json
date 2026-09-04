@@ -1,16 +1,60 @@
 {
   "src/main/hive.ts": [
-    {"before":"              // Codex refuses to run hooks from a config dir without persisted\n              // \"hook trust\" (normally an interactive gate). Our hooks.json is\n              // hive-authored inside an isolated CODEX_HOME, so we bypass that gate\n              // for this automated spawn — the flag's documented use (\"automation\n              // that already vets hook sources\"). Without it the hooks silently\n              // never fire. Must precede the positional prompt.\n              preArgs.push('--dangerously-bypass-hook-trust');","after":"              // OrbiAgents leaves Codex hook trust under the operator's control.\n              // Do not claim hook telemetry is ready merely because files exist.\n              degraded = 'Codex hook trust has not been verified by OrbiAgents. Live status, cost and inbox wake may be unavailable until the operator establishes trust.';","reason":"Do not bypass Codex hook trust; explicitly report unverified hook telemetry in the spawn result."}
+    {
+      "before": "              // Codex refuses to run hooks from a config dir without persisted\n              // \"hook trust\" (normally an interactive gate). Our hooks.json is\n              // hive-authored inside an isolated CODEX_HOME, so we bypass that gate\n              // for this automated spawn — the flag's documented use (\"automation\n              // that already vets hook sources\"). Without it the hooks silently\n              // never fire. Must precede the positional prompt.\n              preArgs.push('--dangerously-bypass-hook-trust');",
+      "after": "              // OrbiAgents leaves Codex hook trust under the operator's control.\n              // Do not claim hook telemetry is ready merely because files exist.\n              degraded = 'Codex hook trust has not been verified by OrbiAgents. Live status, cost and inbox wake may be unavailable until the operator establishes trust.';",
+      "reason": "Do not bypass Codex hook trust; explicitly report unverified hook telemetry in the spawn result."
+    },
+    {
+      "before": "              for (const d of this.sandboxWritableDirs(meta, dir, root, opts.extraWritableDirs)) preArgs.push('--add-dir', d);",
+      "after": "              // OrbiAgents: no automatic extra writable roots without per-directory consent.",
+      "reason": "Disable automatic Codex extra-directory write grants pending explicit per-directory consent."
+    },
+    {
+      "before": "              // Auto mode keeps codex's OS sandbox (`-a never -s workspace-write`,\n              // agentProvider.ts). workspace-write only covers cwd, so the agent\n              // folder (inbox/.done, memory.md, outbox) and the shared hive root\n              // (research deliverables, the board for god) are added as extra\n              // writable roots. Harmless outside auto mode.",
+      "after": "              // Additional hive directories are not implicitly writable in this migration.",
+      "reason": "Describe the migration's disabled implicit directory grants accurately."
+    }
   ],
   "src/main/index.ts": [
-    { "before": "import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, powerMonitor, powerSaveBlocker, screen, shell, Notification } from 'electron';", "after": "import './migrationBootstrap';\nimport { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, powerMonitor, powerSaveBlocker, screen, shell, Notification } from 'electron';", "reason": "Configure independent migration userData and sessionData before main-process dependencies are evaluated." }
+    {
+      "before": "import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, powerMonitor, powerSaveBlocker, screen, shell, Notification } from 'electron';",
+      "after": "import './migrationBootstrap';\nimport { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, powerMonitor, powerSaveBlocker, screen, shell, Notification } from 'electron';",
+      "reason": "Configure independent migration userData and sessionData before main-process dependencies are evaluated."
+    },
+    {
+      "before": "import './migrationBootstrap';",
+      "after": "import './migrationBootstrap';\nimport { launchConsentError } from './launchConsent';",
+      "reason": "Load the migration caller-argument consent validator."
+    },
+    {
+      "before": "  const claudeProvider = isClaudeProvider(provider);",
+      "after": "  const consentError = launchConsentError(provider, opts.args ?? [], readConfig().autoMode);\n  if (consentError) return { ok: false, error: consentError };\n  const claudeProvider = isClaudeProvider(provider);",
+      "reason": "Reject unreviewed caller options before installer, workspace and provider setup when operator auto mode is off."
+    }
   ],
   "src/main/config.ts": [
-    { "before": "  autoMode: true,", "after": "  autoMode: false,", "reason": "Require explicit opt-in to automatic provider permissions." },
-    { "before": "  autoUpdate: true,", "after": "  autoUpdate: false,", "reason": "Do not automatically download upstream application updates." },
-    { "before": "  telemetryEnabled: true,", "after": "  telemetryEnabled: false,", "reason": "Disable telemetry for fresh migration configuration." }
+    {
+      "before": "  autoMode: true,",
+      "after": "  autoMode: false,",
+      "reason": "Require explicit opt-in to automatic provider permissions."
+    },
+    {
+      "before": "  autoUpdate: true,",
+      "after": "  autoUpdate: false,",
+      "reason": "Do not automatically download upstream application updates."
+    },
+    {
+      "before": "  telemetryEnabled: true,",
+      "after": "  telemetryEnabled: false,",
+      "reason": "Disable telemetry for fresh migration configuration."
+    }
   ],
   "src/main/hiddenClaude.ts": [
-    { "before": "      '--permission-mode', 'bypassPermissions',", "after": "      // OrbiAgents: retain the provider's normal permission checks.", "reason": "Hidden helper must not unconditionally bypass provider permission checks; unattended calls may now require consent or time out." }
+    {
+      "before": "      '--permission-mode', 'bypassPermissions',",
+      "after": "      // OrbiAgents: retain the provider's normal permission checks.",
+      "reason": "Hidden helper must not unconditionally bypass provider permission checks; unattended calls may now require consent or time out."
+    }
   ]
 }
