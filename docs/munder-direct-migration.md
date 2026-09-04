@@ -47,6 +47,8 @@ Sources:
 
 ## Completion boundary
 
+Geometry slice: `desktop-munder/theme/layout.mjs` defines an original 48×32-tile collision/spawn layout with 15 desks, meeting seats, four café seats and coffee-counter positions. Tests flood-fill from the entrance and verify all destinations are reachable without the renderer's forced-seat overrides. This is geometry only, not a renderable theme: visual layers, atlas assignment and registry integration remain pending.
+
 Replacement-art progress: 13 unmodified LPC office prop images plus original `Credits.txt` are imported under `desktop-munder/art/lpc-office/`. Source URL, license URL, archive/file hashes and image dimensions are recorded. Integrity tests reject modified source, modified approved art and unapproved images. These assets are not yet mapped or connected to the renderer; structure tiles, original worker identities and scene integration remain outstanding.
 
 The pinned source import is complete and its integrity checker passes. Launch/build commands deliberately fail pending adaptation; no upstream dependency installation, application tests or launch has occurred. Replacement theme, runtime adaptation, build verification, live provider acceptance and visual acceptance remain incomplete. Source import is not visual parity.
