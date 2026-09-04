@@ -1,0 +1,16 @@
+:root { color-scheme: dark; font-family: system-ui, sans-serif; background: #0e1720; color: #eee9de; }
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100dvh; display: grid; grid-template-rows: auto minmax(320px, 1fr) auto; }
+header { display: flex; justify-content: space-between; align-items: center; gap: 24px; padding: 20px 28px; border-bottom: 1px solid #435660; }
+h1 { font-size: 22px; margin: 0 0 6px; }
+p { margin: 0; line-height: 1.5; }
+a { color: #9cdcd6; }
+header p, footer { color: #bfc8cb; font-size: 14px; }
+button { padding: 10px 18px; border: 1px solid #edc679; background: #edc679; color: #17232a; border-radius: 5px; cursor: pointer; font: inherit; white-space: nowrap; }
+button:disabled { opacity: .5; cursor: wait; }
+button:focus-visible { outline: 3px solid #6fdfd4; outline-offset: 4px; }
+#room { position: relative; width: 100%; height: max(320px, calc(100dvh - 200px)); overflow: hidden; }
+canvas { display: block; image-rendering: pixelated; }
+footer { padding: 14px 28px; border-top: 1px solid #435660; }
+#status { color: #eee9de; margin-bottom: 4px; }
+@media (max-width: 560px) { header { padding: 14px; gap: 12px; } h1 { font-size: 18px; } footer { padding: 14px; } }
