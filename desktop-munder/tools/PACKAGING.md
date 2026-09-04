@@ -41,3 +41,22 @@ Native probes passed before packaging. The packaged app was not launched;
 ASAR runtime loading, full startup isolation, live providers and visual quality
 are not established by these checks. Signing/notarization/publication remain
 outside this slice.
+
+## Controlled startup probe
+
+The normal package entry remains disabled. To verify a packaged renderer load,
+run `verify-startup.mjs` with the temporary app path. The tool creates a fresh,
+sentinel-marked temporary directory. Only the explicit verification argument
+allows the gate to load main; the gate redirects Electron app data there before
+main imports, suppresses updater writes/network requests, waits for the first
+renderer load, records the canonical data paths, and exits automatically.
+
+```sh
+node desktop-munder/tools/verify-startup.mjs '/absolute/path/OrbiAgents Migration.app'
+```
+
+The verifier rejects escaped data paths, non-file renderer URLs, config writes,
+updater logs and updater version stamps. This proves packaged main/preload/
+renderer loading with an isolated fresh config. It does not verify user-driven
+features, provider launches, webhook/tunnel behavior, artwork appearance or
+long-running lifecycle behavior.

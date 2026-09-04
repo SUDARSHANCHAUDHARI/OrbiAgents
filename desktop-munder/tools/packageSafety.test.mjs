@@ -12,3 +12,13 @@ test('renderer build uses relative URLs for packaged file loading', () => {
   const source = readFileSync(new URL('./build-renderer.mjs', import.meta.url), 'utf8');
   assert.match(source, /base: '\.\/'/);
 });
+test('startup verification requires a sentinel-marked empty isolated root', () => {
+  const source = readFileSync(new URL('./launch-gate.cjs', import.meta.url), 'utf8');
+  assert.match(source, /--verify-isolated-startup=/);
+  assert.match(source, /\.orbi-isolated-startup/);
+  assert.match(source, /Verification root must contain only its sentinel/);
+  assert.match(source, /app\.setPath\('appData', root\)/);
+  assert.match(source, /ORBI_ISOLATED_STARTUP_VERIFY = '1'/);
+  const updater = readFileSync(new URL('../src/main/updater.ts', import.meta.url), 'utf8');
+  assert.match(updater, /ORBI_ISOLATED_STARTUP_VERIFY === '1'\) return/);
+});

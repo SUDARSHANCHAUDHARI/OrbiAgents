@@ -12,7 +12,8 @@ const read = file => asar.extractFile(archive, file).toString('utf8');
 const pkg = JSON.parse(read('package.json'));
 assert.equal(pkg.name, 'orbiagents-migration-package');
 assert.equal(pkg.main, 'launch-gate.cjs');
-assert.equal(read('launch-gate.cjs'), "console.error('Migration startup remains disabled pending isolation and full-app verification.');\nrequire('electron').app.quit();\n");
+assert.equal(read('launch-gate.cjs'), readFileSync(new URL('./launch-gate.cjs', import.meta.url), 'utf8'));
+assert.match(read('launch-gate.cjs'), /if \(!supplied\)[\s\S]*Migration startup remains disabled/);
 assert.match(readFileSync(join(app, 'Contents/Info.plist'), 'utf8'), /com\.sudarshantechlabs\.orbiagents\.migration/);
 for (const file of ['out/main/index.cjs', 'out/preload/index.js', 'out/main/slack-trigger.cjs', 'out/main/kg-core.cjs',
   'out/renderer/ART-CREDITS.txt', 'out/renderer/SOURCE-LICENSE.txt', 'out/renderer/FONT-LICENSE.txt'])

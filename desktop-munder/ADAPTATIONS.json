@@ -144,6 +144,13 @@
       "reason": "Replace excluded upstream logo dependency and identify the migration splash as OrbiAgents."
     }
   ],
+  "src/main/updater.ts": [
+    {
+      "before": "  /** Re-serve the last known status to a freshly loaded window. */\n  ipcMain.handle('update:current', () => lastStatus ?? { state: 'idle' });",
+      "after": "  /** Re-serve the last known status to a freshly loaded window. */\n  ipcMain.handle('update:current', () => lastStatus ?? { state: 'idle' });\n  // The packaged startup probe verifies local loading only. Keep the IPC shape\n  // available to the renderer, but do not write update state or touch a network.\n  if (process.env.ORBI_ISOLATED_STARTUP_VERIFY === '1') return;",
+      "reason": "Prevent update writes and release-network requests during the explicit isolated packaged startup probe."
+    }
+  ],
   "src/renderer/src/App.tsx": [
     {
       "before": "import brandLogo from '@brand/logo.png?url';",
