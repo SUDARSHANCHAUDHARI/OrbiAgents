@@ -11,6 +11,7 @@ export function createOfficeLayout() {
   block(0, 0, 1, height); block(width - 1, 0, 1, height);
   // East meeting/café wing with two generous doorways.
   block(33, 2, 1, 9); block(33, 14, 1, 9); block(33, 26, 1, 5);
+  const walls = [...collision];
   const spawns = [];
   const spawn = (name, x, y) => spawns.push({ name, x: x * tileSize, y: y * tileSize });
   spawn('entrance', 23, 29);
@@ -38,7 +39,7 @@ export function createOfficeLayout() {
   };
   const zone = (name, x, y, w, h) => ({ name, x: x * tileSize, y: y * tileSize, width: w * tileSize, height: h * tileSize });
   return {
-    desks, coffee,
+    desks, coffee, walls,
     primarySeatNames: desks.map(({ name }) => name),
     cafeSeatNames: [1, 2, 3, 4].map(i => `cafe-seat-${i}`),
     // Collision/spawn contract only. Visual layers and atlas remain separate.
