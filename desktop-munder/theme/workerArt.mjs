@@ -2,6 +2,12 @@
 export const WORKER_WIDTH = 18;
 export const WORKER_HEIGHT = 32;
 export const WORKER_COLORS = [0x57c8bd, 0xe3b45f, 0xaa95d8];
+// Persisted keys remain stable while display names/art are OrbiAgents-owned.
+export const WORKER_NAMES = ['michael', 'jim', 'pam', 'dwight', 'kevin', 'angela', 'oscar', 'stanley', 'phyllis', 'andy', 'kelly', 'ryan', 'toby', 'creed', 'meredith'];
+export function workerColor(name) {
+  const index = WORKER_NAMES.indexOf(name);
+  return WORKER_COLORS[(index < 0 ? 1 : index) % WORKER_COLORS.length];
+}
 export function workerFrame(direction, step, accent) {
   if (!['down', 'up', 'right'].includes(direction) || ![0, 1, 2].includes(step) || !WORKER_COLORS.includes(accent))
     throw new Error('Unsupported worker frame recipe');

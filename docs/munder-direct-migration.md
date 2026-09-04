@@ -47,6 +47,8 @@ Sources:
 
 ## Completion boundary
 
+Roster identity slice replaces the card portrait recipes with crops of the original robot scene artwork, shares accent/key mapping with the scene, and gives the 15 compatible stored character keys Orbi display names. The theme picker is now a read-only single-theme summary with no agent termination, archive or configuration-write controls. Bundled portrait/roster tests and server-rendered panel checks cover this boundary; full application typecheck/build and visual acceptance remain outstanding. Other branding and build blockers still require review.
+
 Theme integration slice connects the actual registry and OfficeFloor texture-loading path to the original 48×32 room, approved LPC sheets at 16px world scale and original robot scene frames. Legacy theme IDs fall back to this room; no paid map imports remain in the registry. Scene resources are released on failure, cancellation and teardown. Monitor overlays and optional idle errands are intentionally absent because replacement art/anchors are not implemented. Card portraits, theme-picker wording, remaining branding, full application build and live/visual acceptance remain outstanding. Registry/loader bundle tests are not a full Electron application test.
 
 Caller-input slice rejects noncanonical executable names, caller shell scripts and nonempty environment overrides before shared-spawn setup. Its 26 migration tests pass, including rejected overrides and validation ordering. This does not validate PATH-resolved binaries, inherited environment, application-generated environment or all launch paths. The full runtime remains disabled; no live-provider or visual acceptance is claimed.
