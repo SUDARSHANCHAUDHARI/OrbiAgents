@@ -47,6 +47,8 @@ Sources:
 
 ## Completion boundary
 
+PR #90 merged the disabled foundation, not a replacement app. Existing desktop verification before that merge: 222 tests, typechecks, build and security-boundary check passed. Texture-scale follow-up adds tested Pixi resolution adaptation and disjoint GIDs for all 13 approved LPC sheets; image bytes remain unchanged. This does not yet supply a complete map/atlas scene.
+
 Geometry slice: `desktop-munder/theme/layout.mjs` defines an original 48×32-tile collision/spawn layout with 15 desks, meeting seats, four café seats and coffee-counter positions. Tests flood-fill from the entrance and verify all destinations are reachable without the renderer's forced-seat overrides. This is geometry only, not a renderable theme: visual layers, atlas assignment and registry integration remain pending.
 
 Replacement-art progress: 13 unmodified LPC office prop images plus original `Credits.txt` are imported under `desktop-munder/art/lpc-office/`. Source URL, license URL, archive/file hashes and image dimensions are recorded. Integrity tests reject modified source, modified approved art and unapproved images. These assets are not yet mapped or connected to the renderer; structure tiles, original worker identities and scene integration remain outstanding.
