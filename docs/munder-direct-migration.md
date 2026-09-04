@@ -47,6 +47,8 @@ Sources:
 
 ## Completion boundary
 
+First runtime-safety slice: fresh defaults for autoMode, autoUpdate and telemetryEnabled are false; hiddenClaude no longer forces bypassPermissions. Two upstream files have explicit reversible adaptations, verified against their original hashes. Sixteen migration tests pass, including AST checks of actual defaults/arguments. Existing persisted settings are not overridden. Hook trust, app-data isolation, network/update paths and live-provider acceptance remain pending; normal launch stays disabled.
+
 Original-worker slice adds three original robot designs with 27 directional/walking frame buffers, driven by imported Character/CharacterSprite/pathfinding code in the isolated preview. Demo-only status is explicit; play/pause and initially paused reduced-motion behavior are included. Fourteen migration tests and the production preview build pass. Route/cleanup tests execute actual upstream classes; browser visual quality and live-agent integration remain unverified and incomplete.
 
 Isolated preview slice: `preview/` mounts the imported tile renderer/camera and loads actual local PNGs, with viewport fitting, loading/error status and cleanup. `node desktop-munder/tools/preview.mjs build` succeeds and verifies all 14 credited asset files in its temporary output. `serve` serves built output only on loopback without opening a browser. Normal migration launch stays blocked. Browser rendering and bitmap-decoding paths have not been exercised; visual acceptance, workers and runtime adaptation remain pending.
