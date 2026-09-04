@@ -1,0 +1,10 @@
+{
+  "src/main/config.ts": [
+    { "before": "  autoMode: true,", "after": "  autoMode: false,", "reason": "Require explicit opt-in to automatic provider permissions." },
+    { "before": "  autoUpdate: true,", "after": "  autoUpdate: false,", "reason": "Do not automatically download upstream application updates." },
+    { "before": "  telemetryEnabled: true,", "after": "  telemetryEnabled: false,", "reason": "Disable telemetry for fresh migration configuration." }
+  ],
+  "src/main/hiddenClaude.ts": [
+    { "before": "      '--permission-mode', 'bypassPermissions',", "after": "      // OrbiAgents: retain the provider's normal permission checks.", "reason": "Hidden helper must not unconditionally bypass provider permission checks; unattended calls may now require consent or time out." }
+  ]
+}

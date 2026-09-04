@@ -9,6 +9,7 @@ const manifest = JSON.parse(readFileSync(join(root, 'UPSTREAM.json'), 'utf8'));
 assert.equal(manifest.revision, '4ff5a158c253eae3f917a136a80a586e1fc60c2f');
 assert.ok(manifest.entries.length > 0);
 const seen = new Set();
+const adaptations = JSON.parse(readFileSync(join(root, 'ADAPTATIONS.json'), 'utf8'));
 const approvedArt = new Set();
 if (existsSync(join(root, 'art/manifest.json'))) {
   const art = JSON.parse(readFileSync(join(root, 'art/manifest.json'), 'utf8'));
@@ -32,8 +33,19 @@ for (const entry of manifest.entries) {
   assert.ok(!entry.target.startsWith('/') && !entry.target.split('/').includes('..'));
   assert.ok(!seen.has(entry.target), `Duplicate import: ${entry.target}`); seen.add(entry.target);
   assert.ok(lstatSync(join(root, entry.target)).isFile());
-  assert.equal(createHash('sha256').update(readFileSync(join(root, entry.target))).digest('hex'), entry.sha256, `Changed baseline: ${entry.target}`);
+  let bytes = readFileSync(join(root, entry.target));
+  if (adaptations[entry.target]) {
+    let restored = bytes.toString('utf8');
+    for (const edit of [...adaptations[entry.target]].reverse()) {
+      assert.ok(edit.before && edit.after && edit.before !== edit.after && edit.reason);
+      assert.equal(restored.split(edit.after).length, 2, `Adaptation missing or ambiguous: ${entry.target}`);
+      restored = restored.replace(edit.after, edit.before);
+    }
+    bytes = Buffer.from(restored);
+  }
+  assert.equal(createHash('sha256').update(bytes).digest('hex'), entry.sha256, `Changed baseline: ${entry.target}`);
 }
+for (const target of Object.keys(adaptations)) assert.ok(seen.has(target), `Unknown adaptation target: ${target}`);
 function checkTree(relative = '') {
   for (const name of readdirSync(join(root, relative))) {
     const path = join(relative, name); const stat = lstatSync(join(root, path));
@@ -51,4 +63,4 @@ assert.equal(pkg.private, true);
 assert.equal(pkg.scripts.postinstall, undefined);
 assert.equal(pkg.dependencies, undefined);
 for (const command of ['dev', 'build', 'start']) assert.equal(pkg.scripts[command], 'node tools/migration-gate.mjs');
-console.log(`Verified ${seen.size} byte-identical upstream files, ${approvedArt.size} approved art/credit files, retained licenses, excluded paid artwork, and disabled launch/install defaults.`);
+console.log(`Verified ${seen.size} upstream file provenances (${Object.keys(adaptations).length} explicitly adapted), ${approvedArt.size} approved art/credit files, retained licenses, excluded paid artwork, and disabled launch/install defaults.`);
