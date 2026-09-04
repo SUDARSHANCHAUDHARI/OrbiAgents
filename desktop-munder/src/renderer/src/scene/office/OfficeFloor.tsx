@@ -231,6 +231,7 @@ export function OfficeFloor() {
     while (host.firstChild) host.removeChild(host.firstChild);
 
     const mountId = ++mountIdRef.current;
+    let disposeTheme: (() => void) | undefined;
     const app = new Application();
     appRef.current = app;
 
@@ -244,6 +245,8 @@ export function OfficeFloor() {
     const init = async () => {
       // Load the active theme bundle (falls back to 'office' on a bad/absent bundle).
       const theme = await loadTheme(officeTheme);
+      disposeTheme = theme.dispose;
+      if (mountIdRef.current !== mountId) { disposeTheme?.(); return; }
       await app.init({
         background: hexNum(theme.palette.background),
         antialias: false,
@@ -277,10 +280,10 @@ export function OfficeFloor() {
       });
 
       // Load tilesets in theme order (texture[i] lines up with map tilesets[i]).
-      const tilesetTextures = await Promise.all(
-        themeTilesetUrls(theme).map(loadTexture),
-      );
-      if (mountIdRef.current !== mountId) { safeDestroy(app); return; }
+      const tilesetTextures = theme.loadTextures
+        ? await theme.loadTextures(loadTexture)
+        : await Promise.all(themeTilesetUrls(theme).map(loadTexture));
+      if (mountIdRef.current !== mountId) { safeDestroy(app); disposeTheme?.(); return; }
 
       const world = new Container();
       app.stage.addChild(world);
@@ -1720,6 +1723,8 @@ export function OfficeFloor() {
     };
 
     init().catch((err) => {
+      safeDestroy(app);
+      disposeTheme?.();
       if (mountIdRef.current !== mountId) return;
       const plan = planInitFailure(err, initRetriesRef.current);
 
@@ -1763,6 +1768,7 @@ export function OfficeFloor() {
         try { (a as any).__offMessage?.(); } catch { /* noop */ }
         try { clearInterval((a as any).__taskBoardPoll); } catch { /* noop */ }
         safeDestroy(a);
+        disposeTheme?.();
       }
       appRef.current = null;
       while (host.firstChild) host.removeChild(host.firstChild);
