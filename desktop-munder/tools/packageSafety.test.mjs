@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import test from 'node:test';
+test('package tooling requires an explicit prepared dependency directory', () => {
+  const result = spawnSync(process.execPath, [fileURLToPath(new URL('./package-macos.mjs', import.meta.url))], { encoding: 'utf8' });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Supply the prepared|Only macOS arm64/);
+});
+test('renderer build uses relative URLs for packaged file loading', () => {
+  const source = readFileSync(new URL('./build-renderer.mjs', import.meta.url), 'utf8');
+  assert.match(source, /base: '\.\/'/);
+});

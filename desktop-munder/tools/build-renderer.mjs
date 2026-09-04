@@ -19,7 +19,7 @@ const isolatedRequire = createRequire(join(resolve(dependenciesRoot), 'package.j
 const { build } = await import(require.resolve('vite'));
 const root = fileURLToPath(new URL('../src/renderer', import.meta.url));
 const outDir = mkdtempSync(join(tmpdir(), 'orbi-renderer-build-'));
-await build({ configFile: false, envDir: false, root,
+await build({ configFile: false, envDir: false, root, base: './',
   esbuild: { jsx: 'automatic' },
   define: { __APP_VERSION__: JSON.stringify('0.0.0-migration') },
   resolve: { alias: [
