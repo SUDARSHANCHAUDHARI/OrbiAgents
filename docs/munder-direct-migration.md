@@ -47,6 +47,8 @@ Sources:
 
 ## Completion boundary
 
+Caller-input slice rejects noncanonical executable names, caller shell scripts and nonempty environment overrides before shared-spawn setup. Its 26 migration tests pass, including rejected overrides and validation ordering. This does not validate PATH-resolved binaries, inherited environment, application-generated environment or all launch paths. The full runtime remains disabled; no live-provider or visual acceptance is claimed.
+
 Caller-consent slice adds a conservative argument allowlist before shared-spawn installation/workspace setup when autoMode is false. It rejects unknown switches, permission bypass, config overrides and extra-directory flags while allowing recognized model/resume and restricted Claude/Codex permission options. Generated Codex extra-directory grants are removed. Twenty-three migration tests pass. Explicit operator autoMode=true still permits caller flags; environment, provider config, executable identity and generated arguments remain outside this gate. This is not a complete sandbox or activation approval.
 
 Provider hook-trust slice removes the unconditional Codex hook-trust bypass and reports unverified hook telemetry through the existing degraded spawn result. Twenty migration tests pass, including actual-source AST checks and reversible provenance validation. No Codex process was launched and no trust store was changed. Caller-supplied permission flags, writable-directory grants and other provider configuration paths remain review targets; this is not full launch-policy enforcement.

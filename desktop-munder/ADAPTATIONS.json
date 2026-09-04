@@ -31,6 +31,16 @@
       "before": "  const claudeProvider = isClaudeProvider(provider);",
       "after": "  const consentError = launchConsentError(provider, opts.args ?? [], readConfig().autoMode);\n  if (consentError) return { ok: false, error: consentError };\n  const claudeProvider = isClaudeProvider(provider);",
       "reason": "Reject unreviewed caller options before installer, workspace and provider setup when operator auto mode is off."
+    },
+    {
+      "before": "import { launchConsentError } from './launchConsent';",
+      "after": "import { launchConsentError } from './launchConsent';\nimport { launchInputError } from './launchInputs';",
+      "reason": "Import caller executable/environment validation."
+    },
+    {
+      "before": "  const consentError = launchConsentError(provider, opts.args ?? [], readConfig().autoMode);",
+      "after": "  const inputError = launchInputError(opts, providerPreset(provider).defaultCommand);\n  if (inputError) return { ok: false, error: inputError };\n  const consentError = launchConsentError(provider, opts.args ?? [], readConfig().autoMode);",
+      "reason": "Reject caller shell-script/environment overrides and noncanonical command names before spawn side effects."
     }
   ],
   "src/main/config.ts": [

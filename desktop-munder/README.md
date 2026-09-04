@@ -8,6 +8,8 @@ Fresh configuration now defaults automatic permissions, telemetry and automatic 
 
 Source license: MIT, copyright Chaitanya Giri, retained in `baseline/LICENSE`. Bundled font notices and SIL OFL text remain beside the fonts. No paid tilesets, maps, upstream branding artwork, GitHub workflows or agent instruction files were imported. Source files still reference missing upstream art: the next slice must replace those references with an original OrbiAgents theme; do not fill them with paid assets.
 
+The shared spawn entry now rejects caller shell scripts, noncanonical executable names and nonempty caller environment overrides. This is an input boundary only: PATH resolution, inherited/application-generated environment and other launch paths still require review. Custom command paths are intentionally unavailable in this migration until reviewed.
+
 Before activating runtime code, inspect and adapt at minimum:
 
 - `src/main/config.ts`: auto mode and telemetry defaults.
