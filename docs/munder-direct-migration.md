@@ -47,6 +47,8 @@ Sources:
 
 ## Completion boundary
 
+Compilation slice: strict baseline-based web (173 root files) and node (86 root files) typechecks now pass against isolated pinned declarations. Main/preload source bundles emit with external packages and required CJS sidecars, without executing app code. This is not native-runtime or packaging verification. The wider compile environment reports six high-severity dependency findings and a PostHog Node engine mismatch; see `desktop-munder/tools/COMPILE-CHECKS.md`. These remain activation blockers. No forced upgrades or runtime launch occurred.
+
 Isolated renderer-build slice resolves the missing dependency blocker using a separately pinned renderer-only manifest/lock with install scripts disabled. The actual renderer now builds through Vite, using all application modules rather than just the room preview. npm reports zero known vulnerabilities for the isolated 266-package audit; this does not clear repository-wide alerts. The ~6.4 MB minified main chunk remains a performance concern. Main/preload build, complete typechecking, packaging, runtime and visual acceptance remain unverified. Reproduction instructions: `desktop-munder/tools/RENDERER-BUILD.md`.
 
 Build-readiness slice replaces the two unresolved `@brand/logo.png` imports with a self-contained original SVG and updates the startup title/favicon type. A renderer Vite build attempted with existing local tooling fails resolving `i18next` from `src/renderer/src/i18n/index.ts`; this is a verified dependency blocker, not a successful full build. No dependency install or upstream lifecycle scripts were run. Review and isolate the migration dependency set before retrying; the inert baseline lock and runtime launch gate remain unchanged.
