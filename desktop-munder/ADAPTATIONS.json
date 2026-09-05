@@ -14,6 +14,11 @@
       "before": "              // Auto mode keeps codex's OS sandbox (`-a never -s workspace-write`,\n              // agentProvider.ts). workspace-write only covers cwd, so the agent\n              // folder (inbox/.done, memory.md, outbox) and the shared hive root\n              // (research deliverables, the board for god) are added as extra\n              // writable roots. Harmless outside auto mode.",
       "after": "              // Additional hive directories are not implicitly writable in this migration.",
       "reason": "Describe the migration's disabled implicit directory grants accurately."
+    },
+    {
+      "before": "      ? `RUNNING BUILD: Munder Difflin v${rt.version}, ${rt.packaged ? 'packaged app' : 'local dev build'}${rt.appPath ? `, from ${rt.appPath}` : ''}. Say this version if asked which one is running, and do not assume behaviour from an older one. A local dev build inherits the launching shell's environment (umask included) where a packaged app does not, so file modes and inherited env can legitimately differ between the two. \\`log.jsonl\\` records an \\`app-start\\` event on every launch, which is how you spot a restart or a build switch.`",
+      "after": "      ? `RUNNING BUILD: OrbiAgents v${rt.version}, ${rt.packaged ? 'packaged app' : 'local dev build'}${rt.appPath ? `, from ${rt.appPath}` : ''}. Say this version if asked which one is running, and do not assume behaviour from an older one. A local dev build inherits the launching shell's environment (umask included) where a packaged app does not, so file modes and inherited env can legitimately differ between the two. \\`log.jsonl\\` records an \\`app-start\\` event on every launch, which is how you spot a restart or a build switch.`",
+      "reason": "Identify the running build as OrbiAgents in agent context."
     }
   ],
   "src/main/index.ts": [
@@ -41,6 +46,11 @@
       "before": "  const consentError = launchConsentError(provider, opts.args ?? [], readConfig().autoMode);",
       "after": "  const inputError = launchInputError(opts, providerPreset(provider).defaultCommand);\n  if (inputError) return { ok: false, error: inputError };\n  const consentError = launchConsentError(provider, opts.args ?? [], readConfig().autoMode);",
       "reason": "Reject caller shell-script/environment overrides and noncanonical command names before spawn side effects."
+    },
+    {
+      "before": "    title: isFloor ? 'Munder Difflin — Floor' : 'Munder Difflin',",
+      "after": "    title: isFloor ? 'OrbiAgents — Floor' : 'OrbiAgents',",
+      "reason": "Identify main and floor windows as OrbiAgents."
     }
   ],
   "src/main/config.ts": [
@@ -201,6 +211,90 @@
       "reason": "Describe the application as OrbiAgents in the realtime session persona."
     }
   ],
+  "src/shared/updateState.ts": [
+    {
+      "before": "export const REPO = 'chaitanyagiri/munder-difflin';",
+      "after": "export const REPO = 'SUDARSHANCHAUDHARI/OrbiAgents';",
+      "reason": "Build manual update links against OrbiAgents releases."
+    },
+    {
+      "before": "  const file = platform === 'darwin' ? `Munder-Difflin-${v}-mac-${arch}.dmg`\n    : platform === 'win32' ? `Munder-Difflin-${v}-win-x64-setup.exe`\n    : `Munder-Difflin-${v}-linux-x86_64.AppImage`;",
+      "after": "  const file = platform === 'darwin' ? `OrbiAgents-${v}-mac-${arch}.dmg`\n    : platform === 'win32' ? `OrbiAgents-${v}-win-x64-setup.exe`\n    : `OrbiAgents-${v}-linux-x86_64.AppImage`;",
+      "reason": "Use OrbiAgents installer artifact names."
+    },
+    {
+      "before": "        detail: `Restart Munder Difflin to finish updating from v${v}.`,",
+      "after": "        detail: `Restart OrbiAgents to finish updating from v${v}.`,",
+      "reason": "Identify OrbiAgents in update status copy."
+    },
+    {
+      "before": "        'Open the .dmg and drag Munder Difflin onto Applications. Choose Replace when asked.',",
+      "after": "        'Open the .dmg and drag OrbiAgents onto Applications. Choose Replace when asked.',",
+      "reason": "Identify OrbiAgents in macOS installation guidance."
+    },
+    {
+      "before": "        'Open Munder Difflin again and pick the same project.'",
+      "after": "        'Open OrbiAgents again and pick the same project.'",
+      "reason": "Identify OrbiAgents in Windows installation guidance."
+    }
+  ],
+  "src/shared/releaseDrop.ts": [
+    {
+      "before": "      <p class=\"kicker\">Munder Difflin</p>",
+      "after": "      <p class=\"kicker\">OrbiAgents</p>",
+      "reason": "Identify the bundled fallback release page as OrbiAgents."
+    }
+  ],
+  "src/shared/triggers.ts": [
+    {
+      "before": " * Munder Difflin; setting an org key lets their instance address yours.",
+      "after": " * OrbiAgents; setting an org key lets their instance address yours.",
+      "reason": "Identify OrbiAgents in organization-trigger documentation."
+    },
+    {
+      "before": "  + 'Munder Difflin running on your machine. Each teammate runs their own, so an org key '",
+      "after": "  + 'OrbiAgents running on your machine. Each teammate runs their own, so an org key '",
+      "reason": "Identify OrbiAgents in visible organization-trigger guidance."
+    }
+  ],
+  "src/shared/codexCommands.ts": [
+    {
+      "before": "      { cmd: 'codex --dangerously-bypass-approvals-and-sandbox', kind: 'cli', desc: 'Skip ALL approval prompts AND drop the OS sandbox (full filesystem access). Munder Difflin no longer uses this for auto mode; it keeps the sandbox and adds the hive agent folder via --add-dir.' },",
+      "after": "      { cmd: 'codex --dangerously-bypass-approvals-and-sandbox', kind: 'cli', desc: 'Skip ALL approval prompts AND drop the OS sandbox (full filesystem access). OrbiAgents no longer uses this for auto mode; it keeps the sandbox and adds the hive agent folder via --add-dir.' },",
+      "reason": "Identify OrbiAgents in Codex permission guidance."
+    },
+    {
+      "before": "      { cmd: 'codex -a never -s workspace-write', kind: 'cli', desc: 'Never prompt for approval (-a never) but keep the sandbox scoped to the project workspace (-s workspace-write). What Munder Difflin uses for auto mode; the hive agent folder is added with --add-dir <dir>.' },",
+      "after": "      { cmd: 'codex -a never -s workspace-write', kind: 'cli', desc: 'Never prompt for approval (-a never) but keep the sandbox scoped to the project workspace (-s workspace-write). What OrbiAgents uses for auto mode; the hive agent folder is added with --add-dir <dir>.' },",
+      "reason": "Identify OrbiAgents in Codex auto-mode guidance."
+    },
+    {
+      "before": "      { cmd: 'CODEX_NON_INTERACTIVE=1 codex', kind: 'cli', desc: 'Suppress all interactive installer / first-run prompts. Set automatically by Munder Difflin in auto mode.' }",
+      "after": "      { cmd: 'CODEX_NON_INTERACTIVE=1 codex', kind: 'cli', desc: 'Suppress all interactive installer / first-run prompts. Set automatically by OrbiAgents in auto mode.' }",
+      "reason": "Identify OrbiAgents in Codex automation guidance."
+    }
+  ],
+  "src/shared/grokCommands.ts": [
+    {
+      "before": "      { cmd: 'grok --permission-mode bypassPermissions', kind: 'cli', desc: 'Launch in always-approve mode. Munder uses this when Auto Mode is on.' }",
+      "after": "      { cmd: 'grok --permission-mode bypassPermissions', kind: 'cli', desc: 'Launch in always-approve mode. OrbiAgents uses this when Auto Mode is on.' }",
+      "reason": "Identify OrbiAgents in Grok auto-mode guidance."
+    }
+  ],
+  "src/renderer/src/components/AddAgentModal.tsx": [
+    {
+      "before": "const HIRE_PROMPT = `You are designing a \"hire\" — a ready-to-spawn AI agent for Munder Difflin, an app that runs a team of CLI coding agents. Output ONE JSON object (a hire manifest) and nothing else.",
+      "after": "const HIRE_PROMPT = `You are designing a \"hire\" — a ready-to-spawn AI agent for OrbiAgents, an app that runs a team of CLI coding agents. Output ONE JSON object (a hire manifest) and nothing else.",
+      "reason": "Identify OrbiAgents in the copyable hire-manifest prompt while preserving its protocol spec."
+    }
+  ],
+  "src/shared/ossModels.ts": [
+    {
+      "before": "export const OSS_BLOG_LINKS = {\n  openModels: 'https://munderdiffl.in/blog/run-munder-difflin-on-open-models/',\n  macMini: 'https://munderdiffl.in/blog/run-munder-difflin-on-a-mac-mini/'\n} as const;",
+      "after": "export const OSS_BLOG_LINKS = {\n  openModels: 'https://github.com/SUDARSHANCHAUDHARI/OrbiAgents#readme',\n  macMini: 'https://github.com/SUDARSHANCHAUDHARI/OrbiAgents#readme'\n} as const;",
+      "reason": "Stop local-model help actions from opening the upstream product site."
+    }
+  ],
   "src/renderer/src/components/SettingsModal.tsx": [
     {
       "before": "const SLACK_CONNECT_STEPS = `Connect Munder Difflin to Slack",
@@ -254,6 +348,26 @@
       "before": "  /** Re-serve the last known status to a freshly loaded window. */\n  ipcMain.handle('update:current', () => lastStatus ?? { state: 'idle' });",
       "after": "  /** Re-serve the last known status to a freshly loaded window. */\n  ipcMain.handle('update:current', () => lastStatus ?? { state: 'idle' });\n  // The packaged startup probe verifies local loading only. Keep the IPC shape\n  // available to the renderer, but do not write update state or touch a network.\n  if (process.env.ORBI_ISOLATED_STARTUP_VERIFY === '1') return;",
       "reason": "Prevent update writes and release-network requests during the explicit isolated packaged startup probe."
+    },
+    {
+      "before": "const REPO = 'chaitanyagiri/munder-difflin';",
+      "after": "const REPO = 'SUDARSHANCHAUDHARI/OrbiAgents';",
+      "reason": "Check OrbiAgents releases rather than upstream releases."
+    },
+    {
+      "before": "        path: `/repos/${REPO}/releases/tags/v${version}`,\n        method: 'GET',\n        headers: { 'User-Agent': 'munder-difflin-updater', Accept: 'application/vnd.github+json' },",
+      "after": "        path: `/repos/${REPO}/releases/tags/v${version}`,\n        method: 'GET',\n        headers: { 'User-Agent': 'orbiagents-updater', Accept: 'application/vnd.github+json' },",
+      "reason": "Identify OrbiAgents in tagged-release requests."
+    },
+    {
+      "before": "        path: `/repos/${REPO}/releases/latest`,\n        method: 'GET',\n        headers: { 'User-Agent': 'munder-difflin-updater', Accept: 'application/vnd.github+json' },",
+      "after": "        path: `/repos/${REPO}/releases/latest`,\n        method: 'GET',\n        headers: { 'User-Agent': 'orbiagents-updater', Accept: 'application/vnd.github+json' },",
+      "reason": "Identify OrbiAgents in latest-release requests."
+    },
+    {
+      "before": "const SIMULATED_NOTES = `# Munder Difflin v9.9.9",
+      "after": "const SIMULATED_NOTES = `# OrbiAgents v9.9.9",
+      "reason": "Identify simulated release notes as OrbiAgents."
     }
   ],
   "src/renderer/src/App.tsx": [
