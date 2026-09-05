@@ -42,8 +42,7 @@ writeFileSync(join(appDir, 'package.json'), JSON.stringify({
   description: 'Disabled migration package for validation only', author: 'SudarshanTechLabs',
   main: 'launch-gate.cjs', dependencies,
 }, null, 2));
-writeFileSync(join(appDir, 'launch-gate.cjs'),
-  "console.error('Migration startup remains disabled pending isolation and full-app verification.');\nrequire('electron').app.quit();\n");
+copyFileSync(join(toolsDir, 'launch-gate.cjs'), join(appDir, 'launch-gate.cjs'));
 const { build, Platform, Arch } = require('electron-builder');
 // Archive the already pinned and native-verified tree directly. Asking npm list
 // to expand this graph during electron-builder collection exhausts its heap.

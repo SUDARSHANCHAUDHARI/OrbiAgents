@@ -402,6 +402,9 @@ export function initAutoUpdater(getWebContents: () => WebContents | null): void 
   });
   /** Re-serve the last known status to a freshly loaded window. */
   ipcMain.handle('update:current', () => lastStatus ?? { state: 'idle' });
+  // The packaged startup probe verifies local loading only. Keep the IPC shape
+  // available to the renderer, but do not write update state or touch a network.
+  if (process.env.ORBI_ISOLATED_STARTUP_VERIFY === '1') return;
   /**
    * DEV ONLY — push a synthetic status so the update toast can be seen without a
    * real release. The toast renders for exactly two states ('downloaded' and
