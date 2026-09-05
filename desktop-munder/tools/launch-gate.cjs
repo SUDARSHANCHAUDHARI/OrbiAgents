@@ -1,4 +1,4 @@
-const { app } = require('electron');
+const { app, ipcMain } = require('electron');
 const { isAbsolute, join, sep } = require('node:path');
 const { lstatSync, readdirSync, realpathSync, writeFileSync } = require('node:fs');
 
@@ -22,6 +22,8 @@ if (!supplied) {
     process.env.ORBI_ISOLATED_STARTUP_VERIFY = '1';
     const resultFile = join(root, 'startup-result.json');
     let finished = false;
+    let preloadSenderId = null;
+    ipcMain.once('migration:preload-ready', (event) => { preloadSenderId = event.sender.id; });
     const finish = (result, exitCode = 0) => {
       if (finished) return;
       finished = true;
@@ -32,12 +34,14 @@ if (!supplied) {
     app.once('browser-window-created', (_event, window) => {
       window.webContents.once('did-finish-load', () => {
         clearTimeout(timeout);
+        if (preloadSenderId !== window.webContents.id)
+          return finish({ ok: false, error: 'preload bridge did not initialize for the loaded window' }, 1);
         const userData = realpathSync(app.getPath('userData'));
         const sessionData = realpathSync(app.getPath('sessionData'));
         const inside = (candidate) => candidate.startsWith(`${root}${sep}`);
         if (!inside(userData) || !inside(sessionData))
           return finish({ ok: false, error: 'application paths escaped verification root' }, 1);
-        finish({ ok: true, userData, sessionData, url: window.webContents.getURL() });
+        finish({ ok: true, preloadReady: true, userData, sessionData, url: window.webContents.getURL() });
       });
       window.webContents.once('did-fail-load', (_event, code, description) => {
         clearTimeout(timeout);

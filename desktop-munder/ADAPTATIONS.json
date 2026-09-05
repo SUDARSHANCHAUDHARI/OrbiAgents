@@ -144,6 +144,13 @@
       "reason": "Replace excluded upstream logo dependency and identify the migration splash as OrbiAgents."
     }
   ],
+  "src/preload/index.ts": [
+    {
+      "before": "contextBridge.exposeInMainWorld('cth', api);",
+      "after": "contextBridge.exposeInMainWorld('cth', api);\nif (process.env.ORBI_ISOLATED_STARTUP_VERIFY === '1')\n  ipcRenderer.send('migration:preload-ready');",
+      "reason": "Prove the packaged preload bridge initialized for the controlled startup window without automating renderer interactions."
+    }
+  ],
   "src/main/updater.ts": [
     {
       "before": "  /** Re-serve the last known status to a freshly loaded window. */\n  ipcMain.handle('update:current', () => lastStatus ?? { state: 'idle' });",

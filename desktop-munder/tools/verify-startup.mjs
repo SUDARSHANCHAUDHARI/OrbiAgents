@@ -18,6 +18,7 @@ if (run.error) throw run.error;
 assert.equal(run.status, 0, run.stderr || run.stdout);
 const result = JSON.parse(readFileSync(join(root, 'startup-result.json'), 'utf8'));
 assert.equal(result.ok, true);
+assert.equal(result.preloadReady, true);
 const inside = value => value.startsWith(`${root}${sep}`);
 assert.ok(inside(result.userData));
 assert.ok(inside(result.sessionData));
