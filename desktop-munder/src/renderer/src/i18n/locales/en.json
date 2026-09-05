@@ -157,21 +157,11 @@
     "openTerminalAria": "Open a system terminal in this agent's folder"
   },
   "settingsHero": {
-    "sponsoredBy": "Sponsored by",
-    "visit": "visit",
     "whatsNew": "what's new",
     "whatsNewTitle": "Show the release notes for the update you were last told about",
     "starOnGitHub": "star on GitHub",
     "reportProblem": "report a problem",
-    "fullChangelog": "full changelog →",
-    "announcement": "Announcement",
-    "proLaunch": "v0.5.0 launches with Munder Difflin Pro.",
-    "proCommunityFree": "Community stays free, stays open, and keeps getting updates.",
-    "proParagraph": "Pro ships with new features and integrations, with more posted throughout the year, and it stays ahead of Community, for power users who want the full potential of coding agents and agent harnesses. The Pro roadmap also includes a mobile app.",
-    "foundersWallTitle": "On the Founders' Wall?",
-    "foundersWallBody": "A month of Munder Difflin Pro free, then 50% off the annual plan. For the first 100 people on the wall.",
-    "seeTheWall": "see the wall",
-    "joinDiscord": "join Discord"
+    "fullChangelog": "full changelog →"
   },
   "officeTheme": {
     "title": "Office Theme",
@@ -826,7 +816,7 @@
     "localEndpoint": "LOCAL ENDPOINT · DEFAULT MODEL (PER ENGINE)",
     "defaultModelPlaceholder": "default model (provider/model)",
     "runningOpenModels": "Running open models? Step-by-step guides:",
-    "runOnOpenModels": "run Munder Difflin on open models",
+    "runOnOpenModels": "run OrbiAgents on open models",
     "setUpMacMini": "set it up on a Mac Mini",
     "autoModeCaveat": "⚠ In auto mode these engines run with full filesystem + shell access (no sandbox) — like Claude's bypass mode. Turn auto mode off (General) to make them ask first. Live end-to-end verification with real model calls is pending your keys / a local LLM."
   },
@@ -876,7 +866,7 @@
     "downloadingHeadline": "Downloading v{{version}}",
     "downloadingDetail": "{{percent}}% done. You can keep working; the restart is yours to trigger.",
     "downloadedHeadline": "v{{version}} is ready to install",
-    "downloadedDetail": "Restart Munder Difflin to finish updating from v{{v}}.",
+    "downloadedDetail": "Restart OrbiAgents to finish updating from v{{v}}.",
     "restartBtn": "Restart to update",
     "manualDetail": "This install can't update itself — download it from the release page.",
     "manualDetailReason": "This install can't update itself ({{reason}}) — download it from the release page.",
@@ -903,7 +893,7 @@
     "webhooks": "WEBHOOKS",
     "webhooksBlurb": "Let an outside system post work in.",
     "organisation": "ORGANISATION",
-    "organisationBlurb": "Let a teammate's Munder Difflin message yours."
+    "organisationBlurb": "Let a teammate's OrbiAgents installation message yours."
   },
   "orgSection": {
     "acceptMessages": "Accept messages from your organisation",

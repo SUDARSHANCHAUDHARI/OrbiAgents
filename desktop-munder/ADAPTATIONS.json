@@ -259,6 +259,115 @@
       "before": "      \"shareStatsDesc\": \"A handful of anonymous events (app opened, agent spawned, feature used) that help improve Munder Difflin — never prompts, code, file paths, or agent output. Full list in TELEMETRY.md; change anytime in Settings.\",",
       "after": "      \"shareStatsDesc\": \"A handful of anonymous events (app opened, agent spawned, feature used) that help improve OrbiAgents — never prompts, code, file paths, or agent output. Full list in TELEMETRY.md; change anytime in Settings.\",",
       "reason": "Identify OrbiAgents consistently across every step of English onboarding."
+    },
+    {
+      "before": "  \"settingsHero\": {\n    \"sponsoredBy\": \"Sponsored by\",\n    \"visit\": \"visit\",\n    \"whatsNew\": \"what's new\",",
+      "after": "  \"settingsHero\": {\n    \"whatsNew\": \"what's new\",",
+      "reason": "Use OrbiAgents product language and remove retired promotional translations in this locale."
+    },
+    {
+      "before": "    \"reportProblem\": \"report a problem\",\n    \"fullChangelog\": \"full changelog →\",\n    \"announcement\": \"Announcement\",\n    \"proLaunch\": \"v0.5.0 launches with Munder Difflin Pro.\",\n    \"proCommunityFree\": \"Community stays free, stays open, and keeps getting updates.\",\n    \"proParagraph\": \"Pro ships with new features and integrations, with more posted throughout the year, and it stays ahead of Community, for power users who want the full potential of coding agents and agent harnesses. The Pro roadmap also includes a mobile app.\",\n    \"foundersWallTitle\": \"On the Founders' Wall?\",\n    \"foundersWallBody\": \"A month of Munder Difflin Pro free, then 50% off the annual plan. For the first 100 people on the wall.\",\n    \"seeTheWall\": \"see the wall\",\n    \"joinDiscord\": \"join Discord\"\n  },",
+      "after": "    \"reportProblem\": \"report a problem\",\n    \"fullChangelog\": \"full changelog →\"\n  },",
+      "reason": "Use OrbiAgents product language and remove retired promotional translations in this locale."
+    },
+    {
+      "before": "    \"runningOpenModels\": \"Running open models? Step-by-step guides:\",\n    \"runOnOpenModels\": \"run Munder Difflin on open models\",\n    \"setUpMacMini\": \"set it up on a Mac Mini\",",
+      "after": "    \"runningOpenModels\": \"Running open models? Step-by-step guides:\",\n    \"runOnOpenModels\": \"run OrbiAgents on open models\",\n    \"setUpMacMini\": \"set it up on a Mac Mini\",",
+      "reason": "Use OrbiAgents product language and remove retired promotional translations in this locale."
+    },
+    {
+      "before": "    \"downloadedHeadline\": \"v{{version}} is ready to install\",\n    \"downloadedDetail\": \"Restart Munder Difflin to finish updating from v{{v}}.\",\n    \"restartBtn\": \"Restart to update\",",
+      "after": "    \"downloadedHeadline\": \"v{{version}} is ready to install\",\n    \"downloadedDetail\": \"Restart OrbiAgents to finish updating from v{{v}}.\",\n    \"restartBtn\": \"Restart to update\",",
+      "reason": "Use OrbiAgents product language and remove retired promotional translations in this locale."
+    },
+    {
+      "before": "    \"organisation\": \"ORGANISATION\",\n    \"organisationBlurb\": \"Let a teammate's Munder Difflin message yours.\"\n  },",
+      "after": "    \"organisation\": \"ORGANISATION\",\n    \"organisationBlurb\": \"Let a teammate's OrbiAgents installation message yours.\"\n  },",
+      "reason": "Use OrbiAgents product language and remove retired promotional translations in this locale."
+    }
+  ],
+  "src/renderer/src/i18n/locales/zh-CN.json": [
+    {
+      "before": "  \"settingsHero\": {\n    \"sponsoredBy\": \"赞助方\",\n    \"visit\": \"访问\",\n    \"whatsNew\": \"新功能\",",
+      "after": "  \"settingsHero\": {\n    \"whatsNew\": \"新功能\",",
+      "reason": "Use OrbiAgents product language and remove retired promotional translations in this locale."
+    },
+    {
+      "before": "    \"reportProblem\": \"反馈问题\",\n    \"fullChangelog\": \"完整更新日志 →\",\n    \"announcement\": \"公告\",\n    \"proLaunch\": \"v0.5.0 与 Munder Difflin Pro 一同发布。\",\n    \"proCommunityFree\": \"社区版保持免费、开源，并持续获得更新。\",\n    \"proParagraph\": \"Pro 版将带来新的功能与集成，全年持续上新；它领先于社区版，面向想要充分发挥编码智能体与智能体工具链潜力的重度用户。Pro 路线图还包括移动端应用。\",\n    \"foundersWallTitle\": \"在 Founders' Wall 上吗？\",\n    \"foundersWallBody\": \"免费获得一个月的 Munder Difflin Pro，此后年度套餐享 5 折。仅限前 100 位上榜用户。\",\n    \"seeTheWall\": \"查看榜单\",\n    \"joinDiscord\": \"加入 Discord\"\n  },",
+      "after": "    \"reportProblem\": \"反馈问题\",\n    \"fullChangelog\": \"完整更新日志 →\"\n  },",
+      "reason": "Use OrbiAgents product language and remove retired promotional translations in this locale."
+    },
+    {
+      "before": "    \"titles\": {\n      \"persona\": \"欢迎来到 MUNDER DIFFLIN\",\n      \"welcome\": \"认识你的办公室\",",
+      "after": "    \"titles\": {\n      \"persona\": \"欢迎来到 ORBIAGENTS\",\n      \"welcome\": \"认识你的办公室\",",
+      "reason": "Use OrbiAgents product language and remove retired promotional translations in this locale."
+    },
+    {
+      "before": "      \"headline\": \"一个 24/7 工作的你\",\n      \"body\": \"Munder Difflin 把你在用的 CLI 智能体变成你的克隆——一个经营着一屋子长期运行智能体、在你离开时持续工作的存在。它管理着围绕它们的一切：上下文、记忆、任务、触发器、环境、文件和集成。\",\n      \"bodyLocal\": \" 一切都在本机运行。\",",
+      "after": "      \"headline\": \"一个 24/7 工作的你\",\n      \"body\": \"OrbiAgents 将你已在使用的 CLI 智能体组织成一支轨道团队，即使你离开也能继续工作。它通过一个本地指挥中心协调长期运行的智能体、上下文、记忆、任务、触发器、文件和集成。\",\n      \"bodyLocal\": \" 一切都在本机运行。\",",
+      "reason": "Use OrbiAgents product language and remove retired promotional translations in this locale."
+    },
+    {
+      "before": "      \"shareStats\": \"共享匿名使用统计\",\n      \"shareStatsDesc\": \"少量匿名事件（打开应用、生成智能体、使用功能），用于改进 Munder Difflin——绝不包含提示词、代码、文件路径或智能体输出。完整清单见 TELEMETRY.md；可随时在设置中更改。\",\n      \"stayAwake\": \"接电源时保持唤醒（手动）\",",
+      "after": "      \"shareStats\": \"共享匿名使用统计\",\n      \"shareStatsDesc\": \"少量匿名事件（打开应用、生成智能体、使用功能），用于改进 OrbiAgents——绝不包含提示词、代码、文件路径或智能体输出。完整清单见 TELEMETRY.md；可随时在设置中更改。\",\n      \"stayAwake\": \"接电源时保持唤醒（手动）\",",
+      "reason": "Use OrbiAgents product language and remove retired promotional translations in this locale."
+    },
+    {
+      "before": "    \"runningOpenModels\": \"要跑开源模型？分步指南：\",\n    \"runOnOpenModels\": \"在开源模型上运行 Munder Difflin\",\n    \"setUpMacMini\": \"在 Mac Mini 上配置\",",
+      "after": "    \"runningOpenModels\": \"要跑开源模型？分步指南：\",\n    \"runOnOpenModels\": \"在开源模型上运行 OrbiAgents\",\n    \"setUpMacMini\": \"在 Mac Mini 上配置\",",
+      "reason": "Use OrbiAgents product language and remove retired promotional translations in this locale."
+    },
+    {
+      "before": "    \"downloadedHeadline\": \"v{{version}} 已就绪，可安装\",\n    \"downloadedDetail\": \"重启 Munder Difflin 以完成从 v{{v}} 的更新。\",\n    \"restartBtn\": \"重启以更新\",",
+      "after": "    \"downloadedHeadline\": \"v{{version}} 已就绪，可安装\",\n    \"downloadedDetail\": \"重启 OrbiAgents 以完成从 v{{v}} 的更新。\",\n    \"restartBtn\": \"重启以更新\",",
+      "reason": "Use OrbiAgents product language and remove retired promotional translations in this locale."
+    },
+    {
+      "before": "    \"organisation\": \"组织\",\n    \"organisationBlurb\": \"让队友的 Munder Difflin 给你的发消息。\"\n  },",
+      "after": "    \"organisation\": \"组织\",\n    \"organisationBlurb\": \"让队友的 OrbiAgents 安装与你的安装互发消息。\"\n  },",
+      "reason": "Use OrbiAgents product language and remove retired promotional translations in this locale."
+    }
+  ],
+  "src/renderer/src/i18n/locales/ar.json": [
+    {
+      "before": "  \"settingsHero\": {\n    \"sponsoredBy\": \"برعاية\",\n    \"visit\": \"زيارة\",\n    \"whatsNew\": \"ما الجديد\",",
+      "after": "  \"settingsHero\": {\n    \"whatsNew\": \"ما الجديد\",",
+      "reason": "Use OrbiAgents product language and remove retired promotional translations in this locale."
+    },
+    {
+      "before": "    \"reportProblem\": \"أبلغ عن مشكلة\",\n    \"fullChangelog\": \"سجل التغييرات الكامل ←\",\n    \"announcement\": \"إعلان\",\n    \"proLaunch\": \"الإصدار v0.5.0 يُطلَق مع Munder Difflin Pro.\",\n    \"proCommunityFree\": \"تبقى نسخة المجتمع مجانية ومفتوحة وتستمر في تلقّي التحديثات.\",\n    \"proParagraph\": \"تأتي Pro بميزات وتكاملات جديدة، ويُضاف المزيد على مدار السنة، وتبقى متقدّمة على نسخة المجتمع، لمن يريد أقصى ما تقدّمه وكلاء البرمجة ومنصّاتها. وتشمل خارطة طريق Pro تطبيقًا للهاتف أيضًا.\",\n    \"foundersWallTitle\": \"على حائط المؤسِّسين؟\",\n    \"foundersWallBody\": \"شهر مجاني من Munder Difflin Pro، ثم خصم 50% على الخطة السنوية. لأول 100 شخص على الحائط.\",\n    \"seeTheWall\": \"شاهد الحائط\",\n    \"joinDiscord\": \"انضم إلى Discord\"\n  },",
+      "after": "    \"reportProblem\": \"أبلغ عن مشكلة\",\n    \"fullChangelog\": \"سجل التغييرات الكامل ←\"\n  },",
+      "reason": "Use OrbiAgents product language and remove retired promotional translations in this locale."
+    },
+    {
+      "before": "    \"titles\": {\n      \"persona\": \"أهلًا بك في MUNDER DIFFLIN\",\n      \"welcome\": \"تعرَّف على مكتبك\",",
+      "after": "    \"titles\": {\n      \"persona\": \"أهلًا بك في ORBIAGENTS\",\n      \"welcome\": \"تعرَّف على مكتبك\",",
+      "reason": "Use OrbiAgents product language and remove retired promotional translations in this locale."
+    },
+    {
+      "before": "      \"headline\": \"نسخة منك، تعمل على مدار الساعة\",\n      \"body\": \"يحوّل Munder Difflin وكيل الـCLI الذي تستخدمه أصلًا إلى نسخة منك — نسخة تُدير مكتبًا من الوكلاء طويلي العمل وتواصل العمل وأنت غائب. وهو يتولّى كل ما حولهم: السياق والذاكرة والمهام والمشغّلات والبيئة والملفات والتكاملات.\",\n      \"bodyLocal\": \" كل شيء يعمل على هذا الجهاز.\",",
+      "after": "      \"headline\": \"نسخة منك، تعمل على مدار الساعة\",\n      \"body\": \"ينظّم OrbiAgents وكلاء CLI الذين تستخدمهم بالفعل في طاقم مداري يواصل العمل أثناء غيابك. وينسّق الوكلاء طويلي التشغيل والسياق والذاكرة والمهام والمشغّلات والملفات والتكاملات من مركز قيادة محلي واحد.\",\n      \"bodyLocal\": \" كل شيء يعمل على هذا الجهاز.\",",
+      "reason": "Use OrbiAgents product language and remove retired promotional translations in this locale."
+    },
+    {
+      "before": "      \"shareStats\": \"شارك إحصاءات استخدام مجهولة\",\n      \"shareStatsDesc\": \"حفنة من الأحداث المجهولة (فتح التطبيق، إنشاء وكيل، استخدام ميزة) تساعد على تحسين Munder Difflin — لا موجّهات ولا شيفرة ولا مسارات ملفات ولا مخرجات وكلاء أبدًا. القائمة الكاملة في TELEMETRY.md؛ ويمكن تغييرها في أي وقت من الإعدادات.\",\n      \"stayAwake\": \"ابقَ مستيقظًا عند التوصيل بالكهرباء (يدويًا)\",",
+      "after": "      \"shareStats\": \"شارك إحصاءات استخدام مجهولة\",\n      \"shareStatsDesc\": \"حفنة من الأحداث المجهولة (فتح التطبيق، إنشاء وكيل، استخدام ميزة) تساعد على تحسين OrbiAgents — لا موجّهات ولا شيفرة ولا مسارات ملفات ولا مخرجات وكلاء أبدًا. القائمة الكاملة في TELEMETRY.md؛ ويمكن تغييرها في أي وقت من الإعدادات.\",\n      \"stayAwake\": \"ابقَ مستيقظًا عند التوصيل بالكهرباء (يدويًا)\",",
+      "reason": "Use OrbiAgents product language and remove retired promotional translations in this locale."
+    },
+    {
+      "before": "    \"runningOpenModels\": \"تشغّل نماذج مفتوحة؟ أدلّة خطوة بخطوة:\",\n    \"runOnOpenModels\": \"شغّل Munder Difflin على نماذج مفتوحة\",\n    \"setUpMacMini\": \"أعِدّه على جهاز Mac Mini\",",
+      "after": "    \"runningOpenModels\": \"تشغّل نماذج مفتوحة؟ أدلّة خطوة بخطوة:\",\n    \"runOnOpenModels\": \"شغّل OrbiAgents على نماذج مفتوحة\",\n    \"setUpMacMini\": \"أعِدّه على جهاز Mac Mini\",",
+      "reason": "Use OrbiAgents product language and remove retired promotional translations in this locale."
+    },
+    {
+      "before": "    \"downloadedHeadline\": \"الإصدار v{{version}} جاهز للتثبيت\",\n    \"downloadedDetail\": \"أعِد تشغيل Munder Difflin لإتمام التحديث من v{{v}}.\",\n    \"restartBtn\": \"أعِد التشغيل للتحديث\",",
+      "after": "    \"downloadedHeadline\": \"الإصدار v{{version}} جاهز للتثبيت\",\n    \"downloadedDetail\": \"أعِد تشغيل OrbiAgents لإتمام التحديث من v{{v}}.\",\n    \"restartBtn\": \"أعِد التشغيل للتحديث\",",
+      "reason": "Use OrbiAgents product language and remove retired promotional translations in this locale."
+    },
+    {
+      "before": "    \"organisation\": \"المؤسسة\",\n    \"organisationBlurb\": \"دع نسخة Munder Difflin لدى زميلك تراسل نسختك.\"\n  },",
+      "after": "    \"organisation\": \"المؤسسة\",\n    \"organisationBlurb\": \"اسمح لتثبيت OrbiAgents لدى زميلك بمراسلة تثبيتك.\"\n  },",
+      "reason": "Use OrbiAgents product language and remove retired promotional translations in this locale."
     }
   ],
   "src/renderer/index.html": [
