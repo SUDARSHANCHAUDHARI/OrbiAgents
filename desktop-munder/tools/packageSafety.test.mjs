@@ -16,9 +16,14 @@ test('startup verification requires a sentinel-marked empty isolated root', () =
   const source = readFileSync(new URL('./launch-gate.cjs', import.meta.url), 'utf8');
   assert.match(source, /--verify-isolated-startup=/);
   assert.match(source, /\.orbi-isolated-startup/);
-  assert.match(source, /Verification root must contain only its sentinel/);
+  assert.match(source, /Isolated root must contain only its sentinel/);
   assert.match(source, /app\.setPath\('appData', root\)/);
   assert.match(source, /ORBI_ISOLATED_STARTUP_VERIFY = '1'/);
   const updater = readFileSync(new URL('../src/main/updater.ts', import.meta.url), 'utf8');
   assert.match(updater, /ORBI_ISOLATED_STARTUP_VERIFY === '1'\) return/);
+});
+test('manual review launcher requires an explicit packaged app path', () => {
+  const result = spawnSync(process.execPath, [fileURLToPath(new URL('./open-review-app.mjs', import.meta.url))], { encoding: 'utf8' });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Supply the unsigned migration/);
 });

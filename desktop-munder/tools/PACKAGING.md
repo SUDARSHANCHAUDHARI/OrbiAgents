@@ -67,3 +67,22 @@ requires a preload-ready signal from the same web contents that completes the
 renderer load. Together these catch missing packaged preload execution and
 renamed or omitted request handlers; they do not simulate clicks or prove the
 behavior behind each handler.
+
+## Isolated manual review
+
+After package verification, open the real app for manual visual and interaction
+review without enabling ordinary launch:
+
+```sh
+node desktop-munder/tools/open-review-app.mjs '/absolute/path/OrbiAgents Migration.app'
+```
+
+The command validates the packaged executable, creates a fresh temporary review
+root, passes only a small environment allowlist, supplies the review-only gate argument and leaves the
+window open. The gate verifies main/preload/renderer readiness, writes
+`review-ready.json`, and keeps all Electron application state beneath that root.
+Updater activity stays suppressed. Closing the app leaves the temporary review
+directory available for inspection. Provider CLIs may still use their normal
+home-directory authentication/configuration if manually launched; the allowlist
+does not pass API keys or tokens from the parent environment. The tool does
+not automate, sandbox, or certify them.
