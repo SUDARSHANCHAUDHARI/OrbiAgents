@@ -60,3 +60,10 @@ updater logs and updater version stamps. This proves packaged main/preload/
 renderer loading with an isolated fresh config. It does not verify user-driven
 features, provider launches, webhook/tunnel behavior, artwork appearance or
 long-running lifecycle behavior.
+
+`verify-ipc-contract.mjs` separately checks every statically named preload
+request against all main-process IPC registrations. The controlled startup also
+requires a preload-ready signal from the same web contents that completes the
+renderer load. Together these catch missing packaged preload execution and
+renamed or omitted request handlers; they do not simulate clicks or prove the
+behavior behind each handler.

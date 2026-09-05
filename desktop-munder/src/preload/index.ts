@@ -1419,5 +1419,7 @@ const api = {
 };
 
 contextBridge.exposeInMainWorld('cth', api);
+if (process.env.ORBI_ISOLATED_STARTUP_VERIFY === '1')
+  ipcRenderer.send('migration:preload-ready');
 
 export type CthApi = typeof api;
