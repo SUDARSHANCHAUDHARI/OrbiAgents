@@ -127,6 +127,75 @@
       "reason": "Use original robot card artwork and roster metadata; replace unavailable theme switching with a read-only summary."
     }
   ],
+  "src/renderer/src/components/ReleaseDrop.tsx": [
+    {
+      "before": "        aria-label={`What's new in Munder Difflin ${version}`}",
+      "after": "        aria-label={`What's new in OrbiAgents ${version}`}",
+      "reason": "Identify the release-notes dialog as OrbiAgents."
+    },
+    {
+      "before": "            Munder Difflin <span style={{ color: YELLOW }}>v{version.replace(/^v/, '')}</span>",
+      "after": "            OrbiAgents <span style={{ color: YELLOW }}>v{version.replace(/^v/, '')}</span>",
+      "reason": "Show the OrbiAgents identity in release-notes chrome."
+    }
+  ],
+  "src/renderer/src/components/SettingsHeroCard.tsx": [
+    {
+      "before": "const GITHUB_REPO_URL = 'https://github.com/chaitanyagiri/munder-difflin';",
+      "after": "const GITHUB_REPO_URL = 'https://github.com/SUDARSHANCHAUDHARI/OrbiAgents';",
+      "reason": "Direct Settings repository actions to the OrbiAgents repository."
+    },
+    {
+      "before": "            }}>MUNDER DIFFLIN</span>",
+      "after": "            }}>ORBIAGENTS</span>",
+      "reason": "Show the OrbiAgents identity in Settings."
+    }
+  ],
+  "src/renderer/src/components/UpdateToast.tsx": [
+    {
+      "before": "const GITHUB_REPO_URL = 'https://github.com/chaitanyagiri/munder-difflin';",
+      "after": "const GITHUB_REPO_URL = 'https://github.com/SUDARSHANCHAUDHARI/OrbiAgents';",
+      "reason": "Direct update release actions to the OrbiAgents repository."
+    },
+    {
+      "before": "          ? 'Restart Munder Difflin whenever you like to apply it — nothing restarts on its own.'",
+      "after": "          ? 'Restart OrbiAgents whenever you like to apply it — nothing restarts on its own.'",
+      "reason": "Identify OrbiAgents in downloaded-update guidance."
+    }
+  ],
+  "src/renderer/src/ide/IdePanel.tsx": [
+    {
+      "before": "          MUNDER DIFFLIN · IDE",
+      "after": "          ORBIAGENTS · IDE",
+      "reason": "Identify the full IDE surface as OrbiAgents."
+    }
+  ],
+  "src/renderer/src/components/FullscreenTerminal.tsx": [
+    {
+      "before": "        }}>MUNDER DIFFLIN · FOCUS MODE</span>",
+      "after": "        }}>ORBIAGENTS · FOCUS MODE</span>",
+      "reason": "Identify the fullscreen focus surface as OrbiAgents."
+    }
+  ],
+  "src/renderer/src/realtime/tools.ts": [
+    {
+      "before": "        'About the Munder Difflin app itself: the running version and the latest release notes (changelog). Use for \"what version is this\" or \"what is new in this release\".',",
+      "after": "        'About the OrbiAgents app itself: the running version and the latest release notes (changelog). Use for \"what version is this\" or \"what is new in this release\".',",
+      "reason": "Describe the application as OrbiAgents to the realtime assistant."
+    },
+    {
+      "before": "          return `This is Munder Difflin version ${info.version}. ${notes ? `Latest release notes: ${clip(notes, 1600)}` : 'No release notes are bundled with this build.'}`;",
+      "after": "          return `This is OrbiAgents version ${info.version}. ${notes ? `Latest release notes: ${clip(notes, 1600)}` : 'No release notes are bundled with this build.'}`;",
+      "reason": "Have realtime app-info responses identify OrbiAgents."
+    }
+  ],
+  "src/renderer/src/realtime/session.ts": [
+    {
+      "before": "- get_app_info — the Munder Difflin app itself: its version and the latest release notes. Use for \"what version is this\" or \"what's new in this release\".",
+      "after": "- get_app_info — the OrbiAgents app itself: its version and the latest release notes. Use for \"what version is this\" or \"what's new in this release\".",
+      "reason": "Describe the application as OrbiAgents in the realtime session persona."
+    }
+  ],
   "src/renderer/src/main.tsx": [
     {
       "before": "import brandLogo from '@brand/logo.png?url';",
