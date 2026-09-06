@@ -440,6 +440,11 @@
       "before": "    \"organisation\": \"ORGANISATION\",\n    \"organisationBlurb\": \"Let a teammate's Munder Difflin message yours.\"\n  },",
       "after": "    \"organisation\": \"ORGANISATION\",\n    \"organisationBlurb\": \"Let a teammate's OrbiAgents installation message yours.\"\n  },",
       "reason": "Use OrbiAgents product language and remove retired promotional translations in this locale."
+    },
+    {
+      "before": "      \"smoke\": [\n        \"the floor runs itself 🚬\",\n        \"boss break.\",\n        \"thinking big thoughts 🚬\",\n        \"I DECLARE… a break\"\n      ]\n    },\n    \"suckUp\": [\n      \"already shipped {{done}} tasks, {{godName}}. raise? 🥺\",\n      \"{{done}} tasks done this week, boss!\",\n      \"great vision as always, boss!\",\n      \"I was JUST about to do exactly that!\",\n      \"love the tie today, {{godName}}\",\n      \"working hard, boss! 💪\",\n      \"best boss ever. genuinely.\"\n    ],\n    \"gossip\": [\n      \"has he ever actually written code?\",\n      \"another 'quick sync' that took an hour…\",\n      \"'world's best boss' — he bought that mug himself\",\n      \"he pinned MY task as his idea\",\n      \"the cigar smell, honestly…\",\n      \"he watered the plant. ONE plant. his own.\",\n      \"did you hear him? 'I DECLARE… a break'\"\n    ],\n",
+      "after": "      \"smoke\": [\n        \"checking the wider system\",\n        \"strategy break.\",\n        \"planning the next orbit\",\n        \"stepping back for perspective\"\n      ]\n    },\n    \"suckUp\": [\n      \"{{done}} tasks shipped, {{godName}}. queue is clear.\",\n      \"{{done}} tasks completed this week.\",\n      \"the priority order worked well.\",\n      \"I was about to pick up that task.\",\n      \"handoff is ready, {{godName}}.\",\n      \"status is green across the board. 💪\",\n      \"the crew is aligned and moving.\"\n    ],\n    \"gossip\": [\n      \"the review queue moved quickly today.\",\n      \"that quick sync was actually quick.\",\n      \"the build stayed green after the merge.\",\n      \"the handoff notes saved us time.\",\n      \"someone cleaned up the task board.\",\n      \"the new worker found its desk immediately.\",\n      \"next orbit starts after this break.\"\n    ],\n",
+      "reason": "Replace copied-show floor chatter with localized OrbiAgents operations dialogue while preserving pool keys and lengths."
     }
   ],
   "src/renderer/src/i18n/locales/zh-CN.json": [
@@ -482,6 +487,11 @@
       "before": "    \"organisation\": \"组织\",\n    \"organisationBlurb\": \"让队友的 Munder Difflin 给你的发消息。\"\n  },",
       "after": "    \"organisation\": \"组织\",\n    \"organisationBlurb\": \"让队友的 OrbiAgents 安装与你的安装互发消息。\"\n  },",
       "reason": "Use OrbiAgents product language and remove retired promotional translations in this locale."
+    },
+    {
+      "before": "      \"smoke\": [\n        \"这层楼自己就能运转 🚬\",\n        \"老板休息一下。\",\n        \"思考人生 🚬\",\n        \"我宣布……休息一下\"\n      ]\n    },\n    \"suckUp\": [\n      \"{{godName}}，已经交付了 {{done}} 个任务。加薪吗？🥺\",\n      \"老板，这周完成了 {{done}} 个任务！\",\n      \"一如既往的好眼光，老板！\",\n      \"我正要去做那件事！\",\n      \"今天领带不错，{{godName}}\",\n      \"努力工作，老板！💪\",\n      \"史上最好的老板。真心话。\"\n    ],\n    \"gossip\": [\n      \"他到底写过代码没有？\",\n      \"又一个拖了一小时的「快速同步」…\",\n      \"「世界上最好的老板」——那个杯子是他自己买的\",\n      \"他把我的任务据为己有，说是他的主意\",\n      \"说真的，那股雪茄味…\",\n      \"他浇了那盆植物。就一盆。他自己的。\",\n      \"你听见了吗？「我宣布……休息一下」\"\n    ],\n",
+      "after": "      \"smoke\": [\n        \"检查整个系统\",\n        \"策略休息。\",\n        \"规划下一次轨道任务\",\n        \"退一步看看全局\"\n      ]\n    },\n    \"suckUp\": [\n      \"{{godName}}，已交付 {{done}} 个任务，队列已清空。\",\n      \"本周已完成 {{done}} 个任务。\",\n      \"优先级安排得很顺利。\",\n      \"我正准备接下那个任务。\",\n      \"{{godName}}，交接记录已准备好。\",\n      \"任务看板全部正常。💪\",\n      \"团队目标一致，进展顺利。\"\n    ],\n    \"gossip\": [\n      \"今天的审核队列推进得很快。\",\n      \"这次快速同步真的很快。\",\n      \"合并后构建仍然正常。\",\n      \"交接记录为我们节省了时间。\",\n      \"有人整理了任务看板。\",\n      \"新成员马上找到了自己的工位。\",\n      \"休息之后开始下一次轨道任务。\"\n    ],\n",
+      "reason": "Replace copied-show floor chatter with localized OrbiAgents operations dialogue while preserving pool keys and lengths."
     }
   ],
   "src/renderer/src/i18n/locales/ar.json": [
@@ -524,6 +534,11 @@
       "before": "    \"organisation\": \"المؤسسة\",\n    \"organisationBlurb\": \"دع نسخة Munder Difflin لدى زميلك تراسل نسختك.\"\n  },",
       "after": "    \"organisation\": \"المؤسسة\",\n    \"organisationBlurb\": \"اسمح لتثبيت OrbiAgents لدى زميلك بمراسلة تثبيتك.\"\n  },",
       "reason": "Use OrbiAgents product language and remove retired promotional translations in this locale."
+    },
+    {
+      "before": "      \"smoke\": [\n        \"الأرضية تُدير نفسها 🚬\",\n        \"استراحة المدير.\",\n        \"أفكّر أفكارًا كبيرة 🚬\",\n        \"أُعلن… استراحة\"\n      ]\n    },\n    \"suckUp\": [\n      \"أنجزتُ {{done}} مهمة بالفعل يا {{godName}}. زيادة؟ 🥺\",\n      \"{{done}} مهمة أُنجزت هذا الأسبوع يا مدير!\",\n      \"رؤية رائعة كعادتك يا مدير!\",\n      \"كنتُ على وشك فعل ذلك تمامًا!\",\n      \"أعجبتني ربطة عنقك اليوم يا {{godName}}\",\n      \"أعمل بجدّ يا مدير! 💪\",\n      \"أفضل مدير على الإطلاق. بصدق.\"\n    ],\n    \"gossip\": [\n      \"هل كتب سطر شيفرة واحدًا في حياته؟\",\n      \"\\\"اجتماع سريع\\\" آخر استغرق ساعة…\",\n      \"\\\"أفضل مدير في العالم\\\" — هو من اشترى ذلك الكوب بنفسه\",\n      \"نسب مهمتي إلى نفسه على أنها فكرته\",\n      \"رائحة السيجار، بصراحة…\",\n      \"سقى النبتة. نبتة واحدة. نبتته هو.\",\n      \"أسمعتَه؟ \\\"أُعلن… استراحة\\\"\"\n    ],\n",
+      "after": "      \"smoke\": [\n        \"أتفقّد النظام كاملًا\",\n        \"استراحة للتخطيط.\",\n        \"أخطط للمدار التالي\",\n        \"أتراجع خطوة لرؤية الصورة كاملة\"\n      ]\n    },\n    \"suckUp\": [\n      \"تم تسليم {{done}} مهمة يا {{godName}}، وقائمة الانتظار فارغة.\",\n      \"اكتملت {{done}} مهمة هذا الأسبوع.\",\n      \"نجح ترتيب الأولويات جيدًا.\",\n      \"كنت على وشك تولّي تلك المهمة.\",\n      \"ملاحظات التسليم جاهزة يا {{godName}}.\",\n      \"كل الحالات خضراء على اللوحة. 💪\",\n      \"الفريق متوافق ويتقدم.\"\n    ],\n    \"gossip\": [\n      \"تحركت قائمة المراجعة بسرعة اليوم.\",\n      \"كان الاجتماع السريع سريعًا فعلًا.\",\n      \"ظل البناء ناجحًا بعد الدمج.\",\n      \"وفّرت ملاحظات التسليم وقتنا.\",\n      \"رتّب أحدهم لوحة المهام.\",\n      \"وجد العامل الجديد مكتبه فورًا.\",\n      \"يبدأ المدار التالي بعد هذه الاستراحة.\"\n    ],\n",
+      "reason": "Replace copied-show floor chatter with localized OrbiAgents operations dialogue while preserving pool keys and lengths."
     }
   ],
   "src/renderer/index.html": [
