@@ -3459,9 +3459,7 @@ ipcMain.handle('hive:patchAgentRole', (_evt, id: unknown, role: unknown) => {
   return hive.patchAgentRole(id, role);
 });
 
-// ─── IPC: Settings hero payload (remote data, cached) ───────────────────────
-/** Plan copy and sponsor, fetched from the repo so they can change without a
- *  release. Validated in shared/heroPayload before it reaches the renderer. */
+// ─── IPC: Settings identity payload (local, compatibility bridge) ───────────
 ipcMain.handle('hero:payload', async (_evt, force: unknown) =>
   loadHero(join(app.getPath('userData'), 'hero.json'), { force: force === true }));
 
