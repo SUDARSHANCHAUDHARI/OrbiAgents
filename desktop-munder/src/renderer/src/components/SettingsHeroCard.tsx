@@ -29,7 +29,7 @@ import { Icon } from './Icon';
 import { DEFAULT_HERO, type HeroPayload } from '@shared/heroPayload';
 import { manualDownloadUrl, pendingVersion, reduceStatus, type UpdateStatus } from '@shared/updateState';
 
-const GITHUB_REPO_URL = 'https://github.com/chaitanyagiri/munder-difflin';
+const GITHUB_REPO_URL = 'https://github.com/SUDARSHANCHAUDHARI/OrbiAgents';
 const FOUNDERS_WALL_URL = 'https://munderdiffl.in/wall.html';
 const DISCORD_URL = 'https://discord.gg/SEDzP5ZPk5';
 
@@ -92,7 +92,7 @@ export function SettingsHeroCard() {
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
             <span style={{
               fontFamily: 'var(--cth-font-display)', fontSize: 13, lineHeight: '20px', color: INK
-            }}>MUNDER DIFFLIN</span>
+            }}>ORBIAGENTS</span>
             {version && (
               <span style={{
                 fontFamily: MONO, fontSize: 15, fontWeight: 700, color: INK
