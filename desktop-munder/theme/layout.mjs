@@ -37,9 +37,18 @@ export function createOfficeLayout() {
     machineStand: { x: 38, y: 17 }, sinkTile: { x: 42, y: 16 },
     sinkStand: { x: 42, y: 17 }, maxCups: 4,
   };
+  // Licensed LPC props placed on otherwise open tiles. Their adjacent stand
+  // points stay walkable so the imported idle-errand director can use them.
+  const props = [
+    { name: 'water-cooler', image: 'Water Cooler.png', sx: 0, sy: 0, width: 1, height: 2, x: 30, y: 27 },
+    { name: 'copy-machine', image: 'Copy Machine.png', sx: 0, sy: 0, width: 2, height: 2, x: 35, y: 3 },
+    { name: 'bin-entry', image: 'Bins.png', sx: 0, sy: 0, width: 1, height: 1, x: 2, y: 28 },
+    { name: 'bin-cafe', image: 'Bins.png', sx: 1, sy: 0, width: 1, height: 1, x: 45, y: 27 },
+  ];
+  for (const prop of props) block(prop.x, prop.y, prop.width, prop.height);
   const zone = (name, x, y, w, h) => ({ name, x: x * tileSize, y: y * tileSize, width: w * tileSize, height: h * tileSize });
   return {
-    desks, coffee, walls,
+    desks, coffee, props, walls,
     primarySeatNames: desks.map(({ name }) => name),
     cafeSeatNames: [1, 2, 3, 4].map(i => `cafe-seat-${i}`),
     // Collision/spawn contract only. Visual layers and atlas remain separate.

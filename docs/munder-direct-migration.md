@@ -47,6 +47,8 @@ Sources:
 
 ## Completion boundary
 
+Room-life parity (2026-09-06): all 15 desks now paint original procedural off-monitor blocks that the imported `DeskScreen` replaces with animated lit screens while workers are seated. The replacement room also stamps licensed LPC water-cooler, copier and bin props into collision-safe positions; three reachable dispenser/bin anchors activate the imported idle-errand director. No excluded artwork or new binary asset was added. Structural tests verify GIDs, transparency, prop crops, collisions and reachable stands; visual quality still requires human review.
+
 English onboarding identity (2026-09-05): the first-run persona screen and title-bar logo now identify OrbiAgents and describe its local orbital crew/command-center product instead of Munder Difflin. A focused test rejects Munder branding anywhere in the English onboarding object. Other locales and visible settings/update/Slack/realtime references are explicitly outside this slice and remain to migrate; internal protocol/storage compatibility identifiers remain unchanged.
 
 English application chrome identity (2026-09-05): release notes, Settings identity and repository actions, update guidance, IDE/focus-mode titles, and realtime app descriptions now identify OrbiAgents. A focused source test protects these visible surfaces and repository links. Paid Pro/founders promotion, Slack-facing copy, and non-English locales remain separate migration slices; internal protocol and storage compatibility identifiers remain unchanged.
