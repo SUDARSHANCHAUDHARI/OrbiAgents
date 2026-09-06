@@ -256,7 +256,7 @@ function teardownMedia(): void {
 function micFriendly(msg: string): string {
   const m = msg.toLowerCase();
   if (m.includes('permission') || m.includes('notallowed') || m.includes('denied'))
-    return 'microphone permission denied — allow mic access to talk to Michael';
+    return 'microphone permission denied — allow mic access to talk to the orchestrator';
   if (m.includes('notfound') || m.includes('device'))
     return 'no microphone found — check your input device';
   return msg;

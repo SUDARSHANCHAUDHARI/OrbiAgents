@@ -1,6 +1,7 @@
 {
   "src/shared/godIdentity.ts": [{"before":"export const DEFAULT_GOD_NAME = 'Michael';","after":"export const DEFAULT_GOD_NAME = 'Orbi Prime';","reason":"Use an original OrbiAgents orchestrator name for fresh installations."}],
   "src/renderer/src/hooks/useHive.ts": [
+    {"before":"    'self-contained prompt to Michael via an outbox message with \"to\":\"god\". Do not do the task yourself.)'","after":"    'self-contained prompt to the orchestrator via an outbox message with \"to\":\"god\". Do not do the task yourself.)'","reason":"Use neutral orchestrator language in assistant enrichment instructions."},
     {"before":"// The first thing Michael (god) is told on a fresh spawn — orient him and put\n// him to work running the floor. Kept terse and action-oriented.\nconst INITIAL_GOD_PROMPT = [\n  \"You're online as Michael, the orchestrator of the hive. Get oriented, then start running the floor:\"","after":"// The first thing the orchestrator is told on a fresh spawn. Use the resolved\n// display name so a saved rename and the fresh-install default stay truthful.\nconst initialGodPrompt = (godName: string) => [\n  `You're online as ${godName}, the orchestrator of the hive. Get oriented, then start running the floor:`","reason":"Orient fresh orchestrators using their resolved name."},
     {"before":"            await submitToPty(GOD_PTY, INITIAL_GOD_PROMPT, godProvider);","after":"            await submitToPty(GOD_PTY, initialGodPrompt(godName), godProvider);","reason":"Pass the resolved name into the orientation prompt."}
   ],
@@ -29,6 +30,7 @@
     }
   ],
   "src/main/index.ts": [
+    {"before":"5. REPORT TO GOD — the agent then tells you (Michael) what it did.","after":"5. REPORT TO ORCHESTRATOR — the agent then tells you what it did.","reason":"Remove the upstream character name from generated Slack work instructions."},
     {
       "before": "import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, powerMonitor, powerSaveBlocker, screen, shell, Notification } from 'electron';",
       "after": "import './migrationBootstrap';\nimport { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, powerMonitor, powerSaveBlocker, screen, shell, Notification } from 'electron';",
@@ -217,6 +219,7 @@
     }
   ],
   "src/renderer/src/realtime/session.ts": [
+    {"before":"    return 'microphone permission denied — allow mic access to talk to Michael';","after":"    return 'microphone permission denied — allow mic access to talk to the orchestrator';","reason":"Use neutral orchestrator language in a user-visible microphone error."},
     {
       "before": "- get_app_info — the Munder Difflin app itself: its version and the latest release notes. Use for \"what version is this\" or \"what's new in this release\".",
       "after": "- get_app_info — the OrbiAgents app itself: its version and the latest release notes. Use for \"what version is this\" or \"what's new in this release\".",
@@ -372,6 +375,7 @@
     }
   ],
   "src/main/updater.ts": [
+    {"before":"messaging, routing, and remembering, coordinated by your clone, Michael, who you talk to.","after":"messaging, routing, and remembering, coordinated by your Orbi Prime orchestrator.","reason":"Use OrbiAgents identity in simulated release notes."},
     {
       "before": "  /** Re-serve the last known status to a freshly loaded window. */\n  ipcMain.handle('update:current', () => lastStatus ?? { state: 'idle' });",
       "after": "  /** Re-serve the last known status to a freshly loaded window. */\n  ipcMain.handle('update:current', () => lastStatus ?? { state: 'idle' });\n  // The packaged startup probe verifies local loading only. Keep the IPC shape\n  // available to the renderer, but do not write update state or touch a network.\n  if (process.env.ORBI_ISOLATED_STARTUP_VERIFY === '1') return;",
