@@ -346,7 +346,7 @@ async function runDownload(): Promise<{ ok: boolean; error?: string }> {
 const SIMULATED_NOTES = `# OrbiAgents v9.9.9
 
 **A local hive of Claude Code, Antigravity, Codex, Grok & Copilot agents that run themselves** —
-messaging, routing, and remembering, coordinated by your clone, Michael, who you talk to.
+messaging, routing, and remembering, coordinated by your Orbi Prime orchestrator.
 
 ---
 

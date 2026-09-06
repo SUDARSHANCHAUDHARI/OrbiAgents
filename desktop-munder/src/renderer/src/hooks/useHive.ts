@@ -163,7 +163,7 @@ function enrichTaskPrompt(text: string): string {
     `ENRICH TASK: ${text}`,
     '',
     '(Identify the relevant project, cd in, gather READ-ONLY context, then send the improved,',
-    'self-contained prompt to Michael via an outbox message with "to":"god". Do not do the task yourself.)'
+    'self-contained prompt to the orchestrator via an outbox message with "to":"god". Do not do the task yourself.)'
   ].join('\n');
 }
 
