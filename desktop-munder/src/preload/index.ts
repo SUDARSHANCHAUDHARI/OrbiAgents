@@ -785,7 +785,7 @@ const api = {
   /** Which external tools (uv, mempalace, git, each agent engine) are actually
    *  present on this machine, with a platform-resolved install command each. */
   toolsStatus: (): Promise<ToolStatus[]> => ipcRenderer.invoke('tools:status'),
-  /** Settings hero payload — plan + sponsor, fetched from the repo and cached. */
+  /** Compiled local Settings identity payload. */
   heroPayload: (force?: boolean): Promise<{ hero: HeroPayload; fetchedAt: number; stale: boolean }> =>
     ipcRenderer.invoke('hero:payload', force),
   /** Skills already installed for the coding agents on this machine. */

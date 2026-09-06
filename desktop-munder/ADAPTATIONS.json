@@ -1,4 +1,5 @@
 {
+  "src/main/hero.ts": [{"before":"/**\n * Fetch + cache the Settings hero payload.\n *\n * Same shape as the skills catalog: served from cache when fresh, refreshed in\n * the background otherwise, and NEVER fatal — a failed fetch falls back to the\n * cached copy, then to the defaults compiled into the app. The card must render\n * instantly and offline, because it sits at the top of a dialog people open to\n * change a folder.\n */\nimport { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';\nimport { dirname } from 'node:path';\nimport { getText } from './fetchText';\nimport { parseHeroPayload, DEFAULT_HERO, type HeroPayload } from '../shared/heroPayload';\n\nconst HERO_URL =\n  'https://raw.githubusercontent.com/chaitanyagiri/munder-difflin/main/docs/hero.json';\n/** Plan copy and sponsors change on a human timescale. */\nconst TTL_MS = 6 * 60 * 60 * 1000;\n\nexport async function loadHero(\n  cachePath: string,\n  opts: { force?: boolean } = {}\n): Promise<{ hero: HeroPayload; fetchedAt: number; stale: boolean }> {\n  let cached: { hero: HeroPayload; fetchedAt: number } | null = null;\n  try {\n    if (existsSync(cachePath)) cached = JSON.parse(readFileSync(cachePath, 'utf8'));\n  } catch { cached = null; }\n\n  if (cached && !opts.force && Date.now() - cached.fetchedAt < TTL_MS) {\n    return { hero: cached.hero, fetchedAt: cached.fetchedAt, stale: false };\n  }\n\n  try {\n    const body = await getText(HERO_URL, { timeoutMs: 8000 });\n    // Parse the JSON and the SHAPE separately: valid JSON that is not a hero\n    // payload must still degrade to defaults rather than render as undefined.\n    const hero = parseHeroPayload(JSON.parse(body));\n    const payload = { hero, fetchedAt: Date.now() };\n    try {\n      mkdirSync(dirname(cachePath), { recursive: true });\n      writeFileSync(cachePath, JSON.stringify(payload));\n    } catch { /* cache is an optimisation */ }\n    return { ...payload, stale: false };\n  } catch {\n    if (cached) return { hero: cached.hero, fetchedAt: cached.fetchedAt, stale: true };\n    return { hero: DEFAULT_HERO, fetchedAt: 0, stale: true };\n  }\n}\n","after":"/** Local Settings identity payload. The IPC shape remains stable for callers\n * while product copy stays compiled-in, deterministic, and offline. */\nimport { DEFAULT_HERO, type HeroPayload } from '../shared/heroPayload';\n\nexport async function loadHero(\n  _cachePath: string,\n  _opts: { force?: boolean } = {}\n): Promise<{ hero: HeroPayload; fetchedAt: number; stale: boolean }> {\n  return { hero: DEFAULT_HERO, fetchedAt: 0, stale: false };\n}\n","reason":"Keep the imported Settings payload IPC contract while eliminating upstream promotional network and cache access."}],
   "src/main/hive.ts": [
     {
       "before": "              // Codex refuses to run hooks from a config dir without persisted\n              // \"hook trust\" (normally an interactive gate). Our hooks.json is\n              // hive-authored inside an isolated CODEX_HOME, so we bypass that gate\n              // for this automated spawn — the flag's documented use (\"automation\n              // that already vets hook sources\"). Without it the hooks silently\n              // never fire. Must precede the positional prompt.\n              preArgs.push('--dangerously-bypass-hook-trust');",
@@ -51,6 +52,11 @@
       "before": "    title: isFloor ? 'Munder Difflin — Floor' : 'Munder Difflin',",
       "after": "    title: isFloor ? 'OrbiAgents — Floor' : 'OrbiAgents',",
       "reason": "Identify main and floor windows as OrbiAgents."
+    },
+    {
+      "before": "// ─── IPC: Settings hero payload (remote data, cached) ───────────────────────\n/** Plan copy and sponsor, fetched from the repo so they can change without a\n *  release. Validated in shared/heroPayload before it reaches the renderer. */",
+      "after": "// ─── IPC: Settings identity payload (local, compatibility bridge) ───────────",
+      "reason": "Describe the retained hero IPC as a local compatibility bridge."
     }
   ],
   "src/main/config.ts": [
@@ -348,6 +354,11 @@
       "before": "contextBridge.exposeInMainWorld('cth', api);",
       "after": "contextBridge.exposeInMainWorld('cth', api);\nif (process.env.ORBI_ISOLATED_STARTUP_VERIFY === '1')\n  ipcRenderer.send('migration:preload-ready');",
       "reason": "Prove the packaged preload bridge initialized for the controlled startup window without automating renderer interactions."
+    },
+    {
+      "before": "  /** Settings hero payload — plan + sponsor, fetched from the repo and cached. */",
+      "after": "  /** Compiled local Settings identity payload. */",
+      "reason": "Document that Settings identity copy is compiled locally."
     }
   ],
   "src/main/updater.ts": [
