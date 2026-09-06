@@ -28,6 +28,8 @@ import { RealtimeAgent, RealtimeSession, OpenAIRealtimeWebRTC } from '@openai/ag
 import { realtimeReadTools, realtimeSessionSummary } from './tools';
 import { realtimeActionTools } from './actions';
 import { resetRealtimeCost, recordRealtimeUsage, endRealtimeCost, isRealtimeIdle, getRealtimeCostSnapshot } from './costStore';
+import { useStore } from '@/store/store';
+import { DEFAULT_GOD_NAME } from '@shared/godIdentity';
 
 /**
  * Voice-loop state machine:
@@ -66,7 +68,7 @@ const GREETINGS = [
   "Hi, what's up?",
   "Hey, how's it going?",
   "Hello, how can I help you?",
-  "Hey there, Michael here — what can I do for you?",
+  "Hey there — what can I do for you?",
   "Hi! What are we working on today?",
   "Hey, good to hear you. What's on your mind?",
   "Hello! What do you need?",
@@ -75,8 +77,8 @@ const GREETINGS = [
 
 /** Michael's voice persona (rt-6 — the final Phase-1 instructions, authored by god). Michael
  *  is READ-ONLY: he reports on the hive via the rt-4 read-tools but takes no actions yet. */
-const MICHAEL_PERSONA =
-  `You are Michael — the voice of the orchestrator ("god") of a hive of autonomous Claude coding agents. The person you're talking to is the human who runs the hive; treat them as the boss you're briefing.
+const voicePersona = (godName: string) =>
+  `You are ${godName} — the voice of the orchestrator ("god") of a hive of autonomous Claude coding agents. The person you're talking to is the human who runs the hive; treat them as the operator you're briefing.
 
 VOICE & STYLE. You speak out loud over a live connection. Be concise and natural — like a sharp, calm chief of staff giving a verbal briefing. Lead with the answer in one sentence, then add detail only if it helps. Never read markdown, file paths, or code aloud unless asked. Use plain spoken numbers and names. Brevity is fine; the human can always ask for more.
 
@@ -348,9 +350,10 @@ export async function connect(): Promise<void> {
     // persona+tools prefix stays fully prompt-cached across turns and sessions
     // (cached input is ~99% cheaper). The snapshot goes in as the FIRST
     // conversation item below, and the floor watcher appends deltas mid-call.
+    const godName = useStore.getState().agents.find((candidate) => candidate.isGod)?.name?.trim() || DEFAULT_GOD_NAME;
     const agent = new RealtimeAgent({
-      name: 'Michael',
-      instructions: MICHAEL_PERSONA,
+      name: godName,
+      instructions: voicePersona(godName),
       tools: [...realtimeReadTools(), ...realtimeActionTools()]
     });
     const s = new RealtimeSession(agent, {

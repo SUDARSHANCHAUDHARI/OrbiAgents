@@ -403,8 +403,8 @@ export function OnboardingWizard({ onComplete }: OnboardingWizardProps) {
                         Each option is a <strong>CLI engine</strong> (Claude Code, Codex,
                         Antigravity/Gemini, or a local proxy like Qwen). Engines marked
                         INSTALLED are already on this machine; INSTALLS ON FIRST RUN means the app
-                        sets it up when Michael first starts.
-                        <strong> Your clone</strong> (Michael) is the engine that orchestrates the whole
+                        sets it up when Orbi Prime first starts.
+                        <strong> Your clone</strong> (Orbi Prime) is the engine that orchestrates the whole
                         hive. Recommended: Claude Code · Opus 4.8 · 1M. Other providers can be wired
                         per agent later.
                       </Trans>
