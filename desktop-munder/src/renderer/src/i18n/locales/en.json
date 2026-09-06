@@ -725,29 +725,29 @@
         "tidying up a little"
       ],
       "smoke": [
-        "the floor runs itself 🚬",
-        "boss break.",
-        "thinking big thoughts 🚬",
-        "I DECLARE… a break"
+        "checking the wider system",
+        "strategy break.",
+        "planning the next orbit",
+        "stepping back for perspective"
       ]
     },
     "suckUp": [
-      "already shipped {{done}} tasks, {{godName}}. raise? 🥺",
-      "{{done}} tasks done this week, boss!",
-      "great vision as always, boss!",
-      "I was JUST about to do exactly that!",
-      "love the tie today, {{godName}}",
-      "working hard, boss! 💪",
-      "best boss ever. genuinely."
+      "{{done}} tasks shipped, {{godName}}. queue is clear.",
+      "{{done}} tasks completed this week.",
+      "the priority order worked well.",
+      "I was about to pick up that task.",
+      "handoff is ready, {{godName}}.",
+      "status is green across the board. 💪",
+      "the crew is aligned and moving."
     ],
     "gossip": [
-      "has he ever actually written code?",
-      "another 'quick sync' that took an hour…",
-      "'world's best boss' — he bought that mug himself",
-      "he pinned MY task as his idea",
-      "the cigar smell, honestly…",
-      "he watered the plant. ONE plant. his own.",
-      "did you hear him? 'I DECLARE… a break'"
+      "the review queue moved quickly today.",
+      "that quick sync was actually quick.",
+      "the build stayed green after the merge.",
+      "the handoff notes saved us time.",
+      "someone cleaned up the task board.",
+      "the new worker found its desk immediately.",
+      "next orbit starts after this break."
     ],
     "cheer": [
       "done! ✔",
