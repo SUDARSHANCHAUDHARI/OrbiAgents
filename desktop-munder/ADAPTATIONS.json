@@ -201,6 +201,30 @@
       "reason": "Describe the application as OrbiAgents in the realtime session persona."
     }
   ],
+  "src/renderer/src/components/SettingsModal.tsx": [
+    {
+      "before": "const SLACK_CONNECT_STEPS = `Connect Munder Difflin to Slack",
+      "after": "const SLACK_CONNECT_STEPS = `Connect OrbiAgents to Slack",
+      "reason": "Identify OrbiAgents in the Slack connection walkthrough."
+    },
+    {
+      "before": "   \"Munder Difflin\" and pick your workspace.",
+      "after": "   \"OrbiAgents\" and pick your workspace.",
+      "reason": "Tell users to name their Slack app OrbiAgents."
+    },
+    {
+      "before": "   to your channel:  /invite @MunderDifflin`;",
+      "after": "   to your channel:  /invite @OrbiAgents`;",
+      "reason": "Use the OrbiAgents bot name in the Slack invitation command."
+    }
+  ],
+  "resources/md-slack-reply.cjs": [
+    {
+      "before": " * The Munder Difflin main process runs a loopback-only HTTP endpoint (bound to",
+      "after": " * The OrbiAgents main process runs a loopback-only HTTP endpoint (bound to",
+      "reason": "Identify OrbiAgents in bundled Slack reply-helper documentation."
+    }
+  ],
   "src/renderer/src/main.tsx": [
     {
       "before": "import brandLogo from '@brand/logo.png?url';",
