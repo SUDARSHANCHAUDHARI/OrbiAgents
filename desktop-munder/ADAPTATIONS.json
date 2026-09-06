@@ -163,6 +163,28 @@
       "before": "import brandLogo from '@brand/logo.png?url';",
       "after": "import brandLogo from './assets/orbi-mark.svg?url';",
       "reason": "Replace excluded upstream logo dependency and identify the migration splash as OrbiAgents."
+    },
+    {
+      "before": "          alt=\"Munder Difflin\"",
+      "after": "          alt=\"OrbiAgents\"",
+      "reason": "Identify the visible application title-bar logo as OrbiAgents."
+    }
+  ],
+  "src/renderer/src/i18n/locales/en.json": [
+    {
+      "before": "      \"persona\": \"WELCOME TO MUNDER DIFFLIN\",",
+      "after": "      \"persona\": \"WELCOME TO ORBIAGENTS\",",
+      "reason": "Replace the upstream product identity on the English first-run onboarding screen."
+    },
+    {
+      "before": "      \"body\": \"Munder Difflin turns the CLI agent you already use into a clone of you — one that runs an office of long-running agents and keeps working while you're away. It manages everything around them: context, memory, tasks, triggers, environment, files, and integrations.\",",
+      "after": "      \"body\": \"OrbiAgents turns the CLI agent you already use into an orbital crew that keeps working while you're away. It coordinates long-running agents, context, memory, tasks, triggers, files, and integrations from one local command center.\",",
+      "reason": "Describe the OrbiAgents product instead of the upstream Munder identity during English onboarding."
+    },
+    {
+      "before": "      \"shareStatsDesc\": \"A handful of anonymous events (app opened, agent spawned, feature used) that help improve Munder Difflin — never prompts, code, file paths, or agent output. Full list in TELEMETRY.md; change anytime in Settings.\",",
+      "after": "      \"shareStatsDesc\": \"A handful of anonymous events (app opened, agent spawned, feature used) that help improve OrbiAgents — never prompts, code, file paths, or agent output. Full list in TELEMETRY.md; change anytime in Settings.\",",
+      "reason": "Identify OrbiAgents consistently across every step of English onboarding."
     }
   ],
   "src/renderer/index.html": [
