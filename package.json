@@ -17,6 +17,7 @@
     "desktop:check:localization": "pnpm --dir desktop-munder check:localization",
     "desktop:check:performance": "pnpm --dir desktop-munder check:performance",
     "desktop:test": "pnpm --dir desktop-munder test",
+    "desktop:test:upstream": "pnpm --dir desktop-munder test:upstream",
     "desktop:typecheck": "pnpm --dir desktop-munder typecheck",
     "desktop:legacy:dev": "pnpm --dir desktop dev",
     "desktop:legacy:build": "pnpm --dir desktop build"

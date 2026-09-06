@@ -1,0 +1,8 @@
+{
+  "plan": {
+    "label": "Local",
+    "blurb": "OrbiAgents runs locally and connects only to services you explicitly configure."
+  },
+  "sponsor": null,
+  "notice": null
+}

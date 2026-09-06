@@ -1,0 +1,7 @@
+appId: com.sudarshantechlabs.orbiagents
+productName: OrbiAgents
+
+releaseInfo:
+  releaseNotesFile: build/release-notes.md
+
+publish: null

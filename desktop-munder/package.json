@@ -6,6 +6,7 @@
   "scripts": {
     "verify:baseline": "node tools/verify-baseline.mjs",
     "test": "node --test tools/*.test.mjs",
+    "test:upstream": "node tools/run-with-dependencies.mjs test-upstream",
     "check:security": "node --test tools/launchConsent.test.mjs tools/launchInputs.test.mjs tools/neutralSettings.test.mjs tools/runtimeDefaults.test.mjs",
     "check:design-system": "node --test tools/branding.test.mjs tools/chromeBranding.test.mjs tools/room.test.mjs tools/roomRenderer.test.mjs tools/themeIntegration.test.mjs tools/workers.test.mjs",
     "check:accessibility": "node --test tools/onboardingBranding.test.mjs tools/themeIntegration.test.mjs",
