@@ -29,6 +29,19 @@ const rendererOutput = run('build-renderer.mjs', [dependenciesRoot]);
 const mainDir = mainOutput.match(/Main\/preload source bundles: (.+)\. External/)[1];
 const rendererDir = rendererOutput.match(/Renderer-only build: (.+)\. Not/)[1];
 const staging = mkdtempSync(join(tmpdir(), 'orbi-package-'));
+const iconRenderDir = join(staging, 'icon-render');
+const iconsetDir = join(staging, 'OrbiAgents.iconset');
+mkdirSync(iconRenderDir);
+mkdirSync(iconsetDir);
+const iconSource = resolve(toolsDir, '../src/renderer/src/assets/orbi-mark.svg');
+execFileSync('/usr/bin/qlmanage', ['-t', '-s', '1024', '-o', iconRenderDir, iconSource], { stdio: 'ignore' });
+const iconPng = join(iconRenderDir, 'orbi-mark.svg.png');
+for (const [points, pixels] of [[16, 16], [16, 32], [32, 32], [32, 64], [128, 128], [128, 256], [256, 256], [256, 512], [512, 512], [512, 1024]]) {
+  const suffix = pixels === points ? `${points}x${points}` : `${points}x${points}@2x`;
+  execFileSync('/usr/bin/sips', ['-z', String(pixels), String(pixels), iconPng, '--out', join(iconsetDir, `icon_${suffix}.png`)], { stdio: 'ignore' });
+}
+const appIcon = join(staging, 'OrbiAgents.icns');
+execFileSync('/usr/bin/iconutil', ['-c', 'icns', iconsetDir, '-o', appIcon]);
 const appDir = join(staging, 'app');
 mkdirSync(join(appDir, 'out'), { recursive: true });
 cpSync(mainDir, join(appDir, 'out'), { recursive: true });
@@ -56,7 +69,7 @@ await build({ projectDir: packedDir, targets: Platform.MAC.createTarget(['dir'],
     electronVersion: pinned.dependencies.electron, electronDist: join(electronRoot, 'dist'),
     directories: { output: join(staging, 'dist') }, asar: true,
     asarUnpack: ['**/*.node', '**/spawn-helper'], npmRebuild: false, nodeGypRebuild: false,
-    publish: null, mac: { identity: null, notarize: false, hardenedRuntime: false },
+    publish: null, mac: { icon: appIcon, identity: null, notarize: false, hardenedRuntime: false },
   },
 });
 execFileSync(process.execPath, [join(toolsDir, 'verify-package.mjs'),
