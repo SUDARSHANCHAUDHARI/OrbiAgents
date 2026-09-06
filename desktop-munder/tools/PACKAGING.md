@@ -1,21 +1,20 @@
-# Unsigned migration packaging
+# Unsigned local packaging
 
-This is a validation artifact, not an installable release or a usable app. Its
-entry point prints a warning and quits. It does not load application main.
-Do not replace the installed desktop app or remove the launch gate.
+This creates a usable local QA build. It remains unsigned, unnotarized, and is
+not suitable for public distribution. Ordinary launch loads the application;
+the verification arguments retain isolated startup and review modes.
 
-Prepare the isolated compile dependencies and native probes as documented in
-`COMPILE-CHECKS.md` and `RUNTIME-SMOKE.md`, then run from the repo root:
+Run from the repository root:
 
 ```sh
-CSC_IDENTITY_AUTO_DISCOVERY=false node desktop-munder/tools/package-macos.mjs "$orbi_deps_dir"
+pnpm desktop:package:mac
 ```
 
-Only macOS arm64 is supported by this tool. It checks direct dependency pins,
-runs the SQLite/PTy probe with the pinned local Electron, builds main/preload
-and renderer, then writes a new temporary `orbi-package-*` directory. It does
-not install dependencies, launch the app, sign, notarize, publish, or modify
-the existing app and user data. Temporary outputs are retained for inspection.
+Only macOS arm64 is supported. The command prepares an isolated dependency
+tree, checks direct dependency pins, runs SQLite and PTY probes with the pinned
+Electron, builds main/preload and renderer, then promotes the verified app to
+`desktop-munder/release/mac-arm64/OrbiAgents.app`. It does not launch, sign,
+notarize, publish, or modify legacy application data.
 
 Renderer URLs are relative for `loadFile`. Staging provides `preload/index.js`
 at the path expected by upstream. The prepared dependency tree is archived
@@ -28,7 +27,7 @@ pruning, package size, and replacing the default Electron icon remain work.
 The final archive verifier runs automatically, or can be repeated:
 
 ```sh
-node desktop-munder/tools/verify-package.mjs '/absolute/path/OrbiAgents Migration.app'
+node desktop-munder/tools/verify-package.mjs desktop-munder/release/mac-arm64/OrbiAgents.app
 ```
 
 It checks the exact disabled launcher, separate app ID, main/preload/sidecars,

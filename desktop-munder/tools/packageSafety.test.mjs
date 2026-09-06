@@ -27,3 +27,21 @@ test('manual review launcher requires an explicit packaged app path', () => {
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /Supply the unsigned migration/);
 });
+test('ordinary package launch enters the application while verification stays isolated', () => {
+  const source = readFileSync(new URL('./launch-gate.cjs', import.meta.url), 'utf8');
+  assert.match(source, /if \(!supplied\) \{\s*require\('\.\/out\/main\/index\.cjs'\)/);
+  assert.match(source, /--review-isolated=/);
+});
+test('durable package copy relocates temporary framework symlinks', () => {
+  const source = readFileSync(new URL('./package-macos.mjs', import.meta.url), 'utf8');
+  assert.match(source, /target\.startsWith\(`\$\{stagedApp\}\/`\)/);
+  assert.match(source, /symlinkSync\(relative\(dirname\(destination\), relocatedTarget\)/);
+});
+test('package staging removes compile-only dependencies before archiving', () => {
+  const source = readFileSync(new URL('./package-macos.mjs', import.meta.url), 'utf8');
+  assert.match(source, /npm', \['prune', '--omit=dev', '--ignore-scripts'/);
+});
+test('public build runner always removes its temporary dependency tree', () => {
+  const source = readFileSync(new URL('./run-with-dependencies.mjs', import.meta.url), 'utf8');
+  assert.match(source, /finally \{\s*rmSync\(dependencyRoot, \{ recursive: true, force: true \}\)/);
+});

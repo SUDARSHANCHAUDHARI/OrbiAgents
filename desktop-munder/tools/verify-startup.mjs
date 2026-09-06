@@ -8,7 +8,7 @@ if (!process.argv[2]) throw new Error('Supply the unsigned migration .app path')
 const app = resolve(process.argv[2]);
 const root = realpathSync(mkdtempSync(join(tmpdir(), 'orbi-isolated-startup-')));
 writeFileSync(join(root, '.orbi-isolated-startup'), '', { mode: 0o600 });
-const executable = join(app, 'Contents/MacOS', 'OrbiAgents Migration');
+const executable = join(app, 'Contents/MacOS', 'OrbiAgents');
 const env = Object.fromEntries(Object.entries(process.env).filter(([name]) =>
   !/(TOKEN|SECRET|PASSWORD|API_KEY|ELECTRON_RENDERER_URL)/i.test(name)));
 const run = spawnSync(executable, [`--verify-isolated-startup=${root}`], {
