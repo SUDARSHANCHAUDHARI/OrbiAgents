@@ -1,5 +1,10 @@
 # Remaining desktop parity work
 
+> Historical implementation plan. Its coding scope is complete for the legacy
+> desktop. The Munder-derived application is now the default desktop target; see
+> `munder-direct-migration.md` for its current verified status and remaining
+> external acceptance boundaries.
+
 Agreed scope: desktop main/preload/renderer, desktop tests and verification scripts, and project documentation. Preserve existing local files. No browser automation, captures, workflow expansion, Windows work, credentials or external publication.
 
 ## Success criteria

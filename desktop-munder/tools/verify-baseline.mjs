@@ -48,6 +48,7 @@ for (const entry of manifest.entries) {
 for (const target of Object.keys(adaptations)) assert.ok(seen.has(target), `Unknown adaptation target: ${target}`);
 function checkTree(relative = '') {
   for (const name of readdirSync(join(root, relative))) {
+    if (relative === '' && name === 'release') continue;
     const path = join(relative, name); const stat = lstatSync(join(root, path));
     assert.ok(!stat.isSymbolicLink(), `Symlink: ${path}`);
     assert.ok(!['AGENTS.md', 'CLAUDE.md', 'SKILL.md', '.github', 'node_modules'].includes(name), `Unexpected imported content: ${path}`);
@@ -62,5 +63,8 @@ const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
 assert.equal(pkg.private, true);
 assert.equal(pkg.scripts.postinstall, undefined);
 assert.equal(pkg.dependencies, undefined);
-for (const command of ['dev', 'build', 'start']) assert.equal(pkg.scripts[command], 'node tools/migration-gate.mjs');
-console.log(`Verified ${seen.size} upstream file provenances (${Object.keys(adaptations).length} explicitly adapted), ${approvedArt.size} approved art/credit files, retained licenses, excluded paid artwork, and disabled launch/install defaults.`);
+assert.equal(pkg.scripts.dev, 'node tools/run-with-dependencies.mjs dev');
+assert.equal(pkg.scripts.build, 'node tools/run-with-dependencies.mjs build');
+assert.equal(pkg.scripts.start, 'node tools/open-built-app.mjs');
+assert.equal(pkg.scripts['package:mac'], 'node tools/run-with-dependencies.mjs package');
+console.log(`Verified ${seen.size} upstream file provenances (${Object.keys(adaptations).length} explicitly adapted), ${approvedArt.size} approved art/credit files, retained licenses, excluded paid artwork, and explicit dependency preparation.`);

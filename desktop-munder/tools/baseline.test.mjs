@@ -9,19 +9,21 @@ import test from 'node:test';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const run = (directory, script) => spawnSync(process.execPath, [join(directory, 'tools', script)], { encoding: 'utf8' });
 
-test('pinned source verifies and migration launch fails closed', () => {
+test('pinned source verifies and activation scripts remain dependency-isolated', () => {
   const verification = run(root, 'verify-baseline.mjs');
   assert.equal(verification.status, 0, verification.stderr);
-  const launch = run(root, 'migration-gate.mjs');
-  assert.equal(launch.status, 1);
-  assert.match(launch.stderr, /not launch-ready/);
+  const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
+  assert.match(pkg.scripts.dev, /run-with-dependencies\.mjs dev/);
+  assert.match(pkg.scripts.build, /run-with-dependencies\.mjs build/);
+  assert.equal(pkg.dependencies, undefined);
+  assert.equal(pkg.scripts.postinstall, undefined);
 });
 
 test('verifier rejects modified source and unapproved artwork', () => {
   const scratch = mkdtempSync(join(tmpdir(), 'orbi-baseline-test-'));
   try {
     const copy = join(scratch, 'baseline');
-    cpSync(root, copy, { recursive: true });
+    cpSync(root, copy, { recursive: true, filter: (source) => source !== join(root, 'release') });
     const manifest = JSON.parse(readFileSync(join(copy, 'UPSTREAM.json'), 'utf8'));
     const target = join(copy, manifest.entries[0].target);
     const original = readFileSync(target);

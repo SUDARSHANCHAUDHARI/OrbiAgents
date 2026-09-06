@@ -6,8 +6,7 @@ const verifyPrefix = '--verify-isolated-startup=';
 const reviewPrefix = '--review-isolated=';
 const supplied = process.argv.find((arg) => arg.startsWith(verifyPrefix) || arg.startsWith(reviewPrefix));
 if (!supplied) {
-  console.error('Migration startup remains disabled pending isolation and full-app verification.');
-  app.quit();
+  require('./out/main/index.cjs');
 } else {
   try {
     const review = supplied.startsWith(reviewPrefix);

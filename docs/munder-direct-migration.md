@@ -1,5 +1,23 @@
 # Direct Munder migration
 
+## Current status (2026-09-06)
+
+The migrated application is now the repository's default desktop target. Root
+`desktop:dev`, `desktop:build`, `desktop:test`, `desktop:typecheck`, and macOS
+packaging commands route to `desktop-munder`; the previous implementation is
+retained behind `desktop:legacy:*` commands.
+
+Ordinary packaged launch is enabled. Dependencies remain isolated and pinned,
+native SQLite and PTY probes run before packaging, and the durable unsigned app
+is written to `desktop-munder/release/mac-arm64/OrbiAgents.app`. A controlled
+fresh-data startup has verified main, preload, renderer, file assets, storage
+isolation, and updater suppression. The historical entries below describe the
+incremental migration and may mention blockers that were subsequently closed.
+
+Still external: subjective visual acceptance, real provider credentials and
+services, Apple Developer ID signing/notarization, and public publication. None
+of those can be certified by source or local automated checks.
+
 ## Agreed goal
 
 Adopt Munder's actual desktop implementation and visual experience, not another approximation. Preserve OrbiAgents history and local data. Keep changes to upstream behavior minimal and explicit.

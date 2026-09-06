@@ -1,12 +1,20 @@
 {
   "name": "orbiagents-munder-migration",
-  "version": "0.0.0",
+  "version": "0.4.6-orbi.1",
   "private": true,
-  "description": "Pinned upstream baseline; not yet a runnable migration",
+  "description": "OrbiAgents local-first multi-agent desktop application",
   "scripts": {
     "verify:baseline": "node tools/verify-baseline.mjs",
-    "dev": "node tools/migration-gate.mjs",
-    "build": "node tools/migration-gate.mjs",
-    "start": "node tools/migration-gate.mjs"
+    "test": "node --test tools/*.test.mjs",
+    "check:security": "node --test tools/launchConsent.test.mjs tools/launchInputs.test.mjs tools/neutralSettings.test.mjs tools/runtimeDefaults.test.mjs",
+    "check:design-system": "node --test tools/branding.test.mjs tools/chromeBranding.test.mjs tools/room.test.mjs tools/roomRenderer.test.mjs tools/themeIntegration.test.mjs tools/workers.test.mjs",
+    "check:accessibility": "node --test tools/onboardingBranding.test.mjs tools/themeIntegration.test.mjs",
+    "check:localization": "node --test tools/floorLocaleCopy.test.mjs tools/localizedBranding.test.mjs",
+    "check:performance": "node --test tools/lazyIde.test.mjs tools/rendererDependencies.test.mjs",
+    "typecheck": "node tools/run-with-dependencies.mjs typecheck",
+    "build": "node tools/run-with-dependencies.mjs build",
+    "package:mac": "node tools/run-with-dependencies.mjs package",
+    "dev": "node tools/run-with-dependencies.mjs dev",
+    "start": "node tools/open-built-app.mjs"
   }
 }

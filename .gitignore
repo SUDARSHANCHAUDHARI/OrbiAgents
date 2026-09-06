@@ -4,6 +4,7 @@ out/
 desktop/dist/
 desktop/out/
 desktop/release/
+desktop-munder/release/
 desktop/.electron-vite/
 .env
 .env.local

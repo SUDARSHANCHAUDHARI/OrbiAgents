@@ -208,6 +208,8 @@ OrbiAgents/
 │   ├── src/
 │   ├── webview-ui/
 │   └── e2e/                     # Playwright E2E tests
+├── desktop-munder/              # Default Munder-derived Electron desktop
+├── desktop/                     # Legacy Electron desktop
 ├── docs/
 │   ├── assets/screenshots/
 │   ├── architecture-next.md

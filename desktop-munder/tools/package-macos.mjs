@@ -1,7 +1,7 @@
-// Assemble an unsigned, default-deny migration app. Never launches it.
+// Assemble an unsigned local OrbiAgents app. Never launches it.
 import { createRequire } from 'node:module';
-import { cpSync, copyFileSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join, dirname, resolve } from 'node:path';
+import { cpSync, copyFileSync, lstatSync, mkdtempSync, mkdirSync, readFileSync, readdirSync, readlinkSync, rmSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs';
+import { join, dirname, relative, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { execFileSync } from 'node:child_process';
@@ -51,11 +51,18 @@ cpSync(rendererDir, join(appDir, 'out/renderer'), { recursive: true });
 cpSync(join(dependenciesRoot, 'node_modules'), join(appDir, 'node_modules'), { recursive: true });
 const dependencies = Object.fromEntries(Object.entries(pinned.dependencies).filter(([name]) => name !== 'electron' && !name.startsWith('@types/')));
 writeFileSync(join(appDir, 'package.json'), JSON.stringify({
-  name: 'orbiagents-migration-package', version: '0.0.0', private: true,
-  description: 'Disabled migration package for validation only', author: 'SudarshanTechLabs',
+  name: 'orbiagents-desktop', version: '0.4.6-orbi.1', private: true,
+  description: 'OrbiAgents local-first multi-agent desktop application', author: 'SudarshanTechLabs',
   main: 'launch-gate.cjs', dependencies,
 }, null, 2));
 copyFileSync(join(toolsDir, 'launch-gate.cjs'), join(appDir, 'launch-gate.cjs'));
+// The compile tree also contains Electron and type-only packages. Prune the
+// staged copy against the runtime manifest before archiving so they are not
+// shipped as dead weight. Lifecycle scripts stay disabled.
+execFileSync('npm', ['prune', '--omit=dev', '--ignore-scripts', '--no-audit', '--no-fund'], {
+  cwd: appDir,
+  stdio: 'inherit',
+});
 const { build, Platform, Arch } = require('electron-builder');
 // Archive the already pinned and native-verified tree directly. Asking npm list
 // to expand this graph during electron-builder collection exhausts its heap.
@@ -65,7 +72,7 @@ await require('@electron/asar').createPackageWithOptions(appDir, join(packedDir,
   unpack: '**/{*.node,spawn-helper}',
 });
 await build({ projectDir: packedDir, targets: Platform.MAC.createTarget(['dir'], Arch.arm64), publish: 'never',
-  config: { appId: 'com.sudarshantechlabs.orbiagents.migration', productName: 'OrbiAgents Migration',
+  config: { appId: 'com.sudarshantechlabs.orbiagents', productName: 'OrbiAgents',
     electronVersion: pinned.dependencies.electron, electronDist: join(electronRoot, 'dist'),
     directories: { output: join(staging, 'dist') }, asar: true,
     asarUnpack: ['**/*.node', '**/spawn-helper'], npmRebuild: false, nodeGypRebuild: false,
@@ -73,5 +80,29 @@ await build({ projectDir: packedDir, targets: Platform.MAC.createTarget(['dir'],
   },
 });
 execFileSync(process.execPath, [join(toolsDir, 'verify-package.mjs'),
-  join(staging, 'dist/mac-arm64/OrbiAgents Migration.app')], { stdio: 'inherit' });
-console.log(`Unsigned disabled migration package: ${staging}`);
+  join(staging, 'dist/mac-arm64/OrbiAgents.app')], { stdio: 'inherit' });
+const releaseDir = resolve(toolsDir, '../release/mac-arm64');
+const releaseApp = join(releaseDir, 'OrbiAgents.app');
+mkdirSync(releaseDir, { recursive: true });
+rmSync(releaseApp, { recursive: true, force: true });
+const stagedApp = join(staging, 'dist/mac-arm64/OrbiAgents.app');
+cpSync(stagedApp, releaseApp, { recursive: true });
+// The custom Electron distribution produces absolute links within macOS
+// frameworks. Relocate those links into the durable app instead of retaining
+// temporary paths or dereferencing the framework repeatedly.
+const relocateLinks = (directory) => {
+  for (const name of readdirSync(directory)) {
+    const destination = join(directory, name);
+    const info = lstatSync(destination);
+    if (info.isDirectory()) relocateLinks(destination);
+    if (!info.isSymbolicLink()) continue;
+    const target = readlinkSync(destination);
+    if (!target.startsWith(`${stagedApp}/`))
+      throw new Error(`Package contains an external symlink: ${destination}`);
+    const relocatedTarget = join(releaseApp, target.slice(stagedApp.length + 1));
+    unlinkSync(destination);
+    symlinkSync(relative(dirname(destination), relocatedTarget), destination);
+  }
+};
+relocateLinks(releaseApp);
+console.log(`Unsigned local package: ${releaseApp}`);

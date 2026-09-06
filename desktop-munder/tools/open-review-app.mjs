@@ -5,7 +5,7 @@ import { spawn } from 'node:child_process';
 
 if (!process.argv[2]) throw new Error('Supply the unsigned migration .app path');
 const app = resolve(process.argv[2]);
-const executable = join(app, 'Contents/MacOS', 'OrbiAgents Migration');
+const executable = join(app, 'Contents/MacOS', 'OrbiAgents');
 accessSync(executable, constants.X_OK);
 const root = realpathSync(mkdtempSync(join(tmpdir(), 'orbi-isolated-review-')));
 writeFileSync(join(root, '.orbi-isolated-review'), '', { mode: 0o600 });
