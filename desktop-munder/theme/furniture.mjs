@@ -27,6 +27,8 @@ export function createOfficeFurniture(entries) {
     stamp(desk.name, 'Desk, Ornate.png', 0, 0, 3, 2, desk.x, desk.y);
   stamp('coffee-machine', 'Coffee Maker.png', 0, 0, 1, 1,
     layout.coffee.machineStand.x, layout.coffee.machineStand.y - 1);
+  for (const prop of layout.props)
+    stamp(prop.name, prop.image, prop.sx, prop.sy, prop.width, prop.height, prop.x, prop.y);
   return {
     ...layout, placements,
     map: { ...map, tilesets, layers: [

@@ -37,3 +37,12 @@ test('desk footprints and perimeter are blocked without forced seat overrides', 
   }
   assert.deepEqual(createOfficeLayout(), createOfficeLayout());
 });
+
+test('licensed room props are blocked while their interaction stands stay reachable', () => {
+  const { map, props } = createOfficeLayout();
+  const collision = map.layers.find(l => l.name === 'collision').data;
+  for (const prop of props) for (let y = prop.y; y < prop.y + prop.height; y++)
+    for (let x = prop.x; x < prop.x + prop.width; x++) assert.equal(collision[y * map.width + x], 1, prop.name);
+  for (const { x, y } of [{ x: 29, y: 28 }, { x: 3, y: 28 }, { x: 44, y: 27 }, { x: 35, y: 5 }])
+    assert.equal(collision[y * map.width + x], 0, `stand ${x},${y}`);
+});

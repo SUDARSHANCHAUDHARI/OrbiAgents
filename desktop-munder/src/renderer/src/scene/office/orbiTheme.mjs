@@ -23,9 +23,12 @@ export function createOrbiTheme() {
     cafeStands: [['cafe-stand-coffee', 'coffee'], ['cafe-stand-vending', 'vending']],
     coffee: room.coffee,
     anchors: { calendar: { x: 4, y: 1 }, boards: { x: 38, y: 2 }, clock: { x: 24, y: 1 } },
-    errandSpots: [],
-    // No monitor artwork exists in this pack; do not sample unrelated GIDs.
-    monitor: { offTopLeftGid: -1, onGids: [] },
+    errandSpots: [
+      { kind: 'dispenser', stand: { x: 29, y: 28 }, facing: 'right', fx: { x: 30, y: 27 }, duration: 3.5 },
+      { kind: 'bin', stand: { x: 3, y: 28 }, facing: 'left', fx: { x: 2, y: 28 }, duration: 2.6 },
+      { kind: 'bin', stand: { x: 44, y: 27 }, facing: 'right', fx: { x: 45, y: 27 }, duration: 2.6 },
+    ],
+    monitor: { offTopLeftGid: 7, onGids: [[11, 0, 0], [12, 1, 0], [13, 0, 1], [14, 1, 1]] },
     palette: { background: 0x0e1720, noteColors: { todo: 0xf2df8a, doing: 0x9ecbf0, blocked: 0xf0a3a3, done: 0xa8e0b0 } },
     cast: {
       byName: Object.fromEntries(names.map((name, i) => [name, { name, displayName: `Orbi-${i + 1}`, shirt: '#' + workerColor(name).toString(16), blurb: 'Orbital worker' }])),
