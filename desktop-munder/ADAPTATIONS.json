@@ -403,6 +403,10 @@
     }
   ],
   "src/renderer/src/App.tsx": [
+    {"before":"import { useEffect, useState } from 'react';","after":"import { lazy, Suspense, useEffect, useState } from 'react';","reason":"Load the Monaco workspace only when its overlay opens."},
+    {"before":"import { TaskDetailOverlay } from '@/components/TaskDetailOverlay';\nimport { IdePanel } from '@/ide/IdePanel';","after":"import { TaskDetailOverlay } from '@/components/TaskDetailOverlay';","reason":"Remove the eager workspace-editor import from application startup."},
+    {"before":"// Injected at build time from package.json (see electron.vite.config.ts).","after":"const IdePanel = lazy(() => import('@/ide/IdePanel').then((module) => ({ default: module.IdePanel })));\n\n// Injected at build time from package.json (see electron.vite.config.ts).","reason":"Create a lazy chunk boundary for the optional workspace editor."},
+    {"before":"      {ideOpen && <IdePanel />}","after":"      {ideOpen && (\n        <Suspense fallback={(\n          <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'grid', placeItems: 'center', background: 'var(--cth-paper-100)' }}>\n            <PixelPanel title=\"WORKSPACE\">\n              <span style={{ fontFamily: 'var(--cth-font-mono)', fontSize: 12 }}>Loading editor…</span>\n            </PixelPanel>\n          </div>\n        )}>\n          <IdePanel />\n        </Suspense>\n      )}","reason":"Show immediate loading feedback while the workspace chunk initializes."},
     {
       "before": "import brandLogo from '@brand/logo.png?url';",
       "after": "import brandLogo from './assets/orbi-mark.svg?url';",

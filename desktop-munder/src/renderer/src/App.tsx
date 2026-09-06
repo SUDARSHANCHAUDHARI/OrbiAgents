@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { useStore, selectedAgent } from '@/store/store';
 import { startMockLoop, stopMockLoop } from '@/store/mockEvents';
 import type { HarnessConfig } from '@/store/config';
@@ -29,9 +29,10 @@ import { SidebarSplitter } from '@/components/SidebarSplitter';
 import { acquireTerminal, notifyThemeChangeAll } from '@/components/terminalPool';
 import { FullscreenTerminal } from '@/components/FullscreenTerminal';
 import { TaskDetailOverlay } from '@/components/TaskDetailOverlay';
-import { IdePanel } from '@/ide/IdePanel';
 import { useHoldOptionToTalk } from '@/freeflow/holdOption';
 import brandLogo from './assets/orbi-mark.svg?url';
+
+const IdePanel = lazy(() => import('@/ide/IdePanel').then((module) => ({ default: module.IdePanel })));
 
 // Injected at build time from package.json (see electron.vite.config.ts).
 declare const __APP_VERSION__: string;
@@ -510,7 +511,17 @@ export function App() {
       )}
 
       {fullscreenAgentId && <FullscreenTerminal config={config} />}
-      {ideOpen && <IdePanel />}
+      {ideOpen && (
+        <Suspense fallback={(
+          <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'grid', placeItems: 'center', background: 'var(--cth-paper-100)' }}>
+            <PixelPanel title="WORKSPACE">
+              <span style={{ fontFamily: 'var(--cth-font-mono)', fontSize: 12 }}>Loading editor…</span>
+            </PixelPanel>
+          </div>
+        )}>
+          <IdePanel />
+        </Suspense>
+      )}
       <TaskDetailOverlay />
     </div>
   );
