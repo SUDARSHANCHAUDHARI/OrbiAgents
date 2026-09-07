@@ -1689,7 +1689,7 @@
     },
     {
       "source": "package-lock.json",
-      "target": "baseline/package-lock.json",
+      "target": "baseline/package-lock.snapshot.json",
       "sha256": "7541c5c0d5715f17c3afb66e9f953d9cdcf79895710739c96fd9b47d92f71e9a"
     },
     {

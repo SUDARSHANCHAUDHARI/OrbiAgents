@@ -58,6 +58,8 @@ function checkTree(relative = '') {
 }
 checkTree();
 assert.match(readFileSync(join(root, 'baseline/LICENSE'), 'utf8'), /Copyright \(c\) 2026 Chaitanya Giri/);
+assert.ok(existsSync(join(root, 'baseline/package-lock.snapshot.json')));
+assert.ok(!existsSync(join(root, 'baseline/package-lock.json')), 'Archived upstream lock must not look installable');
 assert.ok(existsSync(join(root, 'src/renderer/src/assets/fonts/LICENSE.txt')));
 const pkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
 assert.equal(pkg.private, true);

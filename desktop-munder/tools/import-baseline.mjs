@@ -32,8 +32,9 @@ function visit(relative) {
     excluded.push(relative); return;
   }
   // Operational build/config files stay inert until adapted deliberately.
+  const baselineName = relative === 'package-lock.json' ? 'package-lock.snapshot.json' : relative;
   const target = exact.includes(relative) && !relative.startsWith('resources/')
-    ? `baseline/${relative}` : relative;
+    ? `baseline/${baselineName}` : relative;
   if (existsSync(join(root, target))) throw new Error(`Refusing to replace ${target}`);
   entries.push({ source: relative, target, sha256: createHash('sha256').update(readFileSync(file)).digest('hex') });
 }
