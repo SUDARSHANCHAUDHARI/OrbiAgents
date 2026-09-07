@@ -50,6 +50,12 @@ Munder commits `72c1d5fe0a95d9eec4e1938f9434da1d470d13f3` and
 UTF-8 characters, enforce bounded newline-delimited byte frames, and log
 oversized-frame rejection before closing the one-request connection.
 
+Process identity guard (2026-09-07): imported Munder commit
+`7e1ce3c2d75519ef98beb011e98f9769183fe2df`. A delayed POSIX process-group
+cleanup now snapshots member start times and rechecks identity before SIGKILL,
+preventing a recycled PGID from terminating unrelated processes while retaining
+the orphan cleanup fallback when process inspection itself fails.
+
 ## Agreed goal
 
 Adopt Munder's actual desktop implementation and visual experience, not another approximation. Preserve OrbiAgents history and local data. Keep changes to upstream behavior minimal and explicit.
