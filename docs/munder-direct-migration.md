@@ -18,6 +18,13 @@ Still external: subjective visual acceptance, real provider credentials and
 services, Apple Developer ID signing/notarization, and public publication. None
 of those can be certified by source or local automated checks.
 
+Imported-suite harness (2026-09-06): all 96 upstream test files now run through
+the pinned temporary dependency environment. Orbi-owned hero, release-notes,
+builder, and telemetry fixtures replace excluded upstream product files. The
+upstream PR-evidence policy is created only inside a disposable suite copy; no
+GitHub Actions workflow is added to this repository. The complete imported
+suite passes without skipped or weakened assertions.
+
 ## Agreed goal
 
 Adopt Munder's actual desktop implementation and visual experience, not another approximation. Preserve OrbiAgents history and local data. Keep changes to upstream behavior minimal and explicit.

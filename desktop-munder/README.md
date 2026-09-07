@@ -15,6 +15,7 @@ Run from the repository root:
 
 ```sh
 pnpm desktop:test
+pnpm desktop:test:upstream
 pnpm desktop:typecheck
 pnpm desktop:build
 pnpm desktop:package:mac
@@ -35,6 +36,11 @@ Fresh settings keep automatic permissions, telemetry, and automatic updates
 off. Application data is stored separately under `OrbiAgents-Migration`; no
 legacy data is copied automatically. Provider CLIs can access their own normal
 authentication only after the operator hires or starts an agent.
+
+`desktop:test:upstream` runs all 96 imported upstream test files against pinned
+temporary dependencies. It copies the suite to a disposable directory and adds
+the upstream PR-evidence policy fixture there because GitHub workflows are
+intentionally not imported or enabled in this repository.
 
 The legacy desktop remains available through `desktop:legacy:dev` and
 `desktop:legacy:build`. Migration history and remaining external acceptance

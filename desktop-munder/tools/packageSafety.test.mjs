@@ -43,5 +43,12 @@ test('package staging removes compile-only dependencies before archiving', () =>
 });
 test('public build runner always removes its temporary dependency tree', () => {
   const source = readFileSync(new URL('./run-with-dependencies.mjs', import.meta.url), 'utf8');
-  assert.match(source, /finally \{\s*rmSync\(dependencyRoot, \{ recursive: true, force: true \}\)/);
+  assert.match(source, /finally \{[\s\S]{0,160}rmSync\(dependencyRoot, \{ recursive: true, force: true \}\)/);
+});
+test('upstream suite runs from a disposable copy without adding a repository workflow', () => {
+  const source = readFileSync(new URL('./run-with-dependencies.mjs', import.meta.url), 'utf8');
+  assert.match(source, /orbi-upstream-suite-/);
+  assert.match(source, /writeFileSync\(join\(workflowDir, 'pr-evidence\.yml'\)/);
+  assert.match(source, /cwd: suiteRoot/);
+  assert.match(source, /if \(suiteTempRoot\) rmSync\(suiteTempRoot, \{ recursive: true, force: true \}\)/);
 });
