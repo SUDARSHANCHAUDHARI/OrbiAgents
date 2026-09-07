@@ -39,7 +39,16 @@ test('durable package copy relocates temporary framework symlinks', () => {
 });
 test('package staging removes compile-only dependencies before archiving', () => {
   const source = readFileSync(new URL('./package-macos.mjs', import.meta.url), 'utf8');
+  assert.match(source, /runtime-dependencies\.json/);
+  assert.match(source, /Runtime dependency is not pinned/);
   assert.match(source, /npm', \['prune', '--omit=dev', '--ignore-scripts'/);
+});
+test('main build records external runtime packages for exact package pruning', () => {
+  const source = readFileSync(new URL('./build-main.mjs', import.meta.url), 'utf8');
+  assert.match(source, /metafile: true/);
+  assert.match(source, /output\.imports\.filter\(entry => entry\.external\)/);
+  assert.match(source, /builtinModules/);
+  assert.match(source, /runtime-dependencies\.json/);
 });
 test('public build runner always removes its temporary dependency tree', () => {
   const source = readFileSync(new URL('./run-with-dependencies.mjs', import.meta.url), 'utf8');

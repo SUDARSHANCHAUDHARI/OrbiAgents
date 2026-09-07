@@ -25,6 +25,13 @@ upstream PR-evidence policy is created only inside a disposable suite copy; no
 GitHub Actions workflow is added to this repository. The complete imported
 suite passes without skipped or weakened assertions.
 
+Packaging audit (2026-09-07): the main/preload build now records the external
+packages it actually imports, and packaging prunes the isolated compile tree to
+that exact pinned runtime set. Already-bundled Monaco, React Icons, Pixi, React,
+and other renderer libraries are no longer duplicated in `app.asar`. The local
+unsigned app decreased from 710 MB to 386 MB; archive verification, native
+SQLite/PTY probes, and isolated renderer startup pass after pruning.
+
 ## Agreed goal
 
 Adopt Munder's actual desktop implementation and visual experience, not another approximation. Preserve OrbiAgents history and local data. Keep changes to upstream behavior minimal and explicit.

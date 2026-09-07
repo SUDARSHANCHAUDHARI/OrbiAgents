@@ -12,6 +12,11 @@ const read = file => asar.extractFile(archive, file).toString('utf8');
 const pkg = JSON.parse(read('package.json'));
 assert.equal(pkg.name, 'orbiagents-desktop');
 assert.equal(pkg.main, 'launch-gate.cjs');
+assert.deepEqual(Object.keys(pkg.dependencies).sort(), [
+  'better-sqlite3', 'electron-updater', 'node-pty', 'posthog-node', 'tunnelmole',
+]);
+for (const compileOnly of ['monaco-editor', 'pixi.js', 'react', 'react-icons'])
+  assert.ok(!asar.listPackage(archive).some(file => file.startsWith(`/node_modules/${compileOnly}/`)), `${compileOnly} must not be duplicated in the package`);
 assert.equal(read('launch-gate.cjs'), readFileSync(new URL('./launch-gate.cjs', import.meta.url), 'utf8'));
 assert.match(read('launch-gate.cjs'), /if \(!supplied\)[\s\S]*require\('\.\/out\/main\/index\.cjs'\)/);
 assert.match(readFileSync(join(app, 'Contents/Info.plist'), 'utf8'), /com\.sudarshantechlabs\.orbiagents/);
