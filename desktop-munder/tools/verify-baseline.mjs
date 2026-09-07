@@ -31,6 +31,7 @@ if (existsSync(join(root, 'art/manifest.json'))) {
 }
 for (const entry of manifest.entries) {
   assert.ok(!entry.target.startsWith('/') && !entry.target.split('/').includes('..'));
+  if (entry.updatedBy) assert.match(entry.updatedBy, /^[0-9a-f]{40}$/);
   assert.ok(!seen.has(entry.target), `Duplicate import: ${entry.target}`); seen.add(entry.target);
   assert.ok(lstatSync(join(root, entry.target)).isFile());
   let bytes = readFileSync(join(root, entry.target));
