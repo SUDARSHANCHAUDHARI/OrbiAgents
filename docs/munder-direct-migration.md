@@ -44,6 +44,12 @@ git-content operation against symlink escapes, dangling-link writes, FIFO hangs,
 and final-component replacement races. Per-file provenance records the newer
 upstream commit while retaining the original migration baseline revision.
 
+Hook framing hardening (2026-09-07): imported the final reviewed state from
+Munder commits `72c1d5fe0a95d9eec4e1938f9434da1d470d13f3` and
+`718668312266f58a1d7416893d4732134fc71d98`. Hook requests now preserve split
+UTF-8 characters, enforce bounded newline-delimited byte frames, and log
+oversized-frame rejection before closing the one-request connection.
+
 ## Agreed goal
 
 Adopt Munder's actual desktop implementation and visual experience, not another approximation. Preserve OrbiAgents history and local data. Keep changes to upstream behavior minimal and explicit.

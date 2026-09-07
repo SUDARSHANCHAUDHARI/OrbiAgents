@@ -97,7 +97,8 @@
     {
       "source": "src/main/hooks.ts",
       "target": "src/main/hooks.ts",
-      "sha256": "2c0608053c1a03d5a68efa24069e1665e918991a11073d93dc8694838b9d63b6"
+      "sha256": "056e3129402759b284c51fb9b90ba06c2dfafbfa90174ddb35a2e142b261dbe7",
+      "updatedBy": "718668312266f58a1d7416893d4732134fc71d98"
     },
     {
       "source": "src/main/index.ts",
@@ -1379,6 +1380,12 @@
       "source": "test/hook-event-contract.test.cjs",
       "target": "test/hook-event-contract.test.cjs",
       "sha256": "0a34558b075551ad1b99c07e3064bf4d9d869be5caa1433068684c9cd8011506"
+    },
+    {
+      "source": "test/hooks-framing.test.cjs",
+      "target": "test/hooks-framing.test.cjs",
+      "sha256": "173da76de4a078c9c36e63cae6547235936fcdeb43843aad271cd83632668809",
+      "updatedBy": "718668312266f58a1d7416893d4732134fc71d98"
     },
     {
       "source": "test/fs-path-containment.test.cjs",
