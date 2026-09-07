@@ -32,6 +32,12 @@ and other renderer libraries are no longer duplicated in `app.asar`. The local
 unsigned app decreased from 710 MB to 386 MB; archive verification, native
 SQLite/PTY probes, and isolated renderer startup pass after pruning.
 
+Dependency-alert hygiene (2026-09-07): the byte-identical upstream lockfile is
+retained for provenance as `baseline/package-lock.snapshot.json`, not as an
+installable manifest. Import and integrity tools preserve and verify that name.
+The active pnpm workspace audit reports zero known vulnerabilities; historical
+upstream dependency metadata is never installed by OrbiAgents tooling.
+
 ## Agreed goal
 
 Adopt Munder's actual desktop implementation and visual experience, not another approximation. Preserve OrbiAgents history and local data. Keep changes to upstream behavior minimal and explicit.
