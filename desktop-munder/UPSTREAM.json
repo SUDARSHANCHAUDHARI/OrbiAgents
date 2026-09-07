@@ -55,12 +55,14 @@
     {
       "source": "src/main/fs.ts",
       "target": "src/main/fs.ts",
-      "sha256": "fde8a55826bb8da4662e20f6fe5a52abde9389dc4041d49ce0079c86459c48d6"
+      "sha256": "3fc7e820dc704730fe1723476a0796b625e81825d359eb1800a26fb0c7b57d0e",
+      "updatedBy": "70cf9ab507706d0ec176d3262a015c821f511a99"
     },
     {
       "source": "src/main/git.ts",
       "target": "src/main/git.ts",
-      "sha256": "565483225a9117f8777b5848c8d6b297506a26c5239c4a329e259d0149be3c82"
+      "sha256": "7cdd597e52859469266c522c3e4521c5906ac820bea1b25d4e6e731e4754a025",
+      "updatedBy": "70cf9ab507706d0ec176d3262a015c821f511a99"
     },
     {
       "source": "src/main/github.ts",
@@ -830,7 +832,8 @@
     {
       "source": "src/renderer/src/markdown/mdLinks.ts",
       "target": "src/renderer/src/markdown/mdLinks.ts",
-      "sha256": "d335ecdd56a8be7e04eb36e6f140cdc20211efff36892e9120db44d7e497a819"
+      "sha256": "9b36e77a259c26cf1110d911ea4dd73bc783fc658247b71cd00a50d4a12994d9",
+      "updatedBy": "70cf9ab507706d0ec176d3262a015c821f511a99"
     },
     {
       "source": "src/renderer/src/markdown/rehypeAutoDir.ts",
@@ -1378,6 +1381,12 @@
       "sha256": "0a34558b075551ad1b99c07e3064bf4d9d869be5caa1433068684c9cd8011506"
     },
     {
+      "source": "test/fs-path-containment.test.cjs",
+      "target": "test/fs-path-containment.test.cjs",
+      "sha256": "a1920e01132be6292a945432d753eb5ca9fa254e6462ab01039a81faf8cde74f",
+      "updatedBy": "70cf9ab507706d0ec176d3262a015c821f511a99"
+    },
+    {
       "source": "test/hooks-notification.test.cjs",
       "target": "test/hooks-notification.test.cjs",
       "sha256": "00921f79c9c6a70718676010904f62b796a5310b710deffed16fc394c18da688"
@@ -1390,7 +1399,8 @@
     {
       "source": "test/ide-image.test.cjs",
       "target": "test/ide-image.test.cjs",
-      "sha256": "a980042604e0a00f7a227e589c7f5c98a65bf21965bd8a7e2d79200a227b71ed"
+      "sha256": "841d7b2159d3a429701221fd5e0943d25c5078afd3afce2a50953402ea3a3880",
+      "updatedBy": "70cf9ab507706d0ec176d3262a015c821f511a99"
     },
     {
       "source": "test/ime-guard.test.cjs",

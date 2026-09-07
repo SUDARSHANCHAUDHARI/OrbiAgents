@@ -38,6 +38,12 @@ installable manifest. Import and integrity tools preserve and verify that name.
 The active pnpm workspace audit reports zero known vulnerabilities; historical
 upstream dependency metadata is never installed by OrbiAgents tooling.
 
+Upstream security update (2026-09-07): imported Munder commit
+`70cf9ab507706d0ec176d3262a015c821f511a99` protects every workspace file and
+git-content operation against symlink escapes, dangling-link writes, FIFO hangs,
+and final-component replacement races. Per-file provenance records the newer
+upstream commit while retaining the original migration baseline revision.
+
 ## Agreed goal
 
 Adopt Munder's actual desktop implementation and visual experience, not another approximation. Preserve OrbiAgents history and local data. Keep changes to upstream behavior minimal and explicit.
