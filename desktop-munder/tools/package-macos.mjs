@@ -49,16 +49,21 @@ cpSync(mainDir, join(appDir, 'out'), { recursive: true });
 copyFileSync(join(appDir, 'out/preload/index.cjs'), join(appDir, 'out/preload/index.js'));
 cpSync(rendererDir, join(appDir, 'out/renderer'), { recursive: true });
 cpSync(join(dependenciesRoot, 'node_modules'), join(appDir, 'node_modules'), { recursive: true });
-const dependencies = Object.fromEntries(Object.entries(pinned.dependencies).filter(([name]) => name !== 'electron' && !name.startsWith('@types/')));
+const runtimeDependencyNames = JSON.parse(readFileSync(join(mainDir, 'runtime-dependencies.json')));
+const dependencies = Object.fromEntries(runtimeDependencyNames.map(name => {
+  const version = pinned.dependencies[name];
+  if (!version) throw new Error(`Runtime dependency is not pinned: ${name}`);
+  return [name, version];
+}));
 writeFileSync(join(appDir, 'package.json'), JSON.stringify({
   name: 'orbiagents-desktop', version: '0.4.6-orbi.1', private: true,
   description: 'OrbiAgents local-first multi-agent desktop application', author: 'SudarshanTechLabs',
   main: 'launch-gate.cjs', dependencies,
 }, null, 2));
 copyFileSync(join(toolsDir, 'launch-gate.cjs'), join(appDir, 'launch-gate.cjs'));
-// The compile tree also contains Electron and type-only packages. Prune the
-// staged copy against the runtime manifest before archiving so they are not
-// shipped as dead weight. Lifecycle scripts stay disabled.
+// Renderer libraries are already bundled by Vite. Prune the staged compile
+// tree against the dependencies observed in the main/preload esbuild output so
+// neither those libraries nor compile-only packages ship a second time.
 execFileSync('npm', ['prune', '--omit=dev', '--ignore-scripts', '--no-audit', '--no-fund'], {
   cwd: appDir,
   stdio: 'inherit',

@@ -21,8 +21,10 @@ at the path expected by upstream. The prepared dependency tree is archived
 directly with native libraries and PTY helpers unpacked. Electron-builder's
 prepacked-ASAR path avoids its dependency collection, which exhausted the
 default Node heap in the initial attempt. No memory-limit increase is needed.
-The archive currently includes the full prepared dependency tree; dependency
-pruning, package size, and replacing the default Electron icon remain work.
+The main/preload build records its actual external package imports. Packaging
+uses that generated manifest to prune compile-only and already-bundled renderer
+libraries before archiving. The OrbiAgents icon is derived from the original
+repository SVG.
 
 The final archive verifier runs automatically, or can be repeated:
 
@@ -30,28 +32,29 @@ The final archive verifier runs automatically, or can be repeated:
 node desktop-munder/tools/verify-package.mjs desktop-munder/release/mac-arm64/OrbiAgents.app
 ```
 
-It checks the exact disabled launcher, separate app ID, main/preload/sidecars,
-relative renderer asset references, source/font/art notices, all 13 approved
-PNG hashes, unpacked macOS arm64 native modules and executable PTY helper.
+It checks the enabled launcher, exact runtime dependency set, absence of large
+duplicated renderer libraries, separate app ID, main/preload/sidecars, relative
+renderer asset references, source/font/art notices, all 13 approved PNG hashes,
+unpacked macOS arm64 native modules and executable PTY helper.
 
-Verified 2026-09-05: unsigned package assembled with Electron 41.10.3 and
-electron-builder 26.15.3; archive verification and 41 focused tests pass.
-Native probes passed before packaging. The packaged app was not launched;
-ASAR runtime loading, full startup isolation, live providers and visual quality
-are not established by these checks. Signing/notarization/publication remain
-outside this slice.
+Verified 2026-09-07: unsigned package assembled with Electron 41.10.3 and
+electron-builder 26.15.3; archive verification and isolated packaged startup
+pass. Native probes pass before packaging. Runtime dependency pruning reduced
+the app from 710 MB to 386 MB and `app.asar` from 428 MB to 104 MB. Live
+providers and subjective visual quality are not established by these checks.
+Signing, notarization and publication remain outside this slice.
 
 ## Controlled startup probe
 
-The normal package entry remains disabled. To verify a packaged renderer load,
-run `verify-startup.mjs` with the temporary app path. The tool creates a fresh,
+Ordinary launch is enabled. To verify a packaged renderer load without touching
+normal application data, run `verify-startup.mjs` with the durable app path. The tool creates a fresh,
 sentinel-marked temporary directory. Only the explicit verification argument
 allows the gate to load main; the gate redirects Electron app data there before
 main imports, suppresses updater writes/network requests, waits for the first
 renderer load, records the canonical data paths, and exits automatically.
 
 ```sh
-node desktop-munder/tools/verify-startup.mjs '/absolute/path/OrbiAgents Migration.app'
+node desktop-munder/tools/verify-startup.mjs '/absolute/path/OrbiAgents.app'
 ```
 
 The verifier rejects escaped data paths, non-file renderer URLs, config writes,
@@ -69,11 +72,11 @@ behavior behind each handler.
 
 ## Isolated manual review
 
-After package verification, open the real app for manual visual and interaction
-review without enabling ordinary launch:
+After package verification, open the real app with an isolated data root for
+manual visual and interaction review:
 
 ```sh
-node desktop-munder/tools/open-review-app.mjs '/absolute/path/OrbiAgents Migration.app'
+node desktop-munder/tools/open-review-app.mjs '/absolute/path/OrbiAgents.app'
 ```
 
 The command validates the packaged executable, creates a fresh temporary review

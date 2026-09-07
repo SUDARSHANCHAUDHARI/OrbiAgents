@@ -1,8 +1,8 @@
 # Isolated renderer build
 
 This builds the actual renderer, not Electron main/preload or a distributable app.
-No dev server, provider or app process is started. The normal migration commands
-remain blocked. Existing `desktop/` dependencies supply Vite; the renderer uses
+No dev server, provider or app process is started. The root desktop commands
+are active. Existing `desktop/` dependencies supply Vite; the renderer uses
 the separate dependency set below. Full typechecking is not part of this command.
 
 From the repository root, prepare a fresh temporary directory:
@@ -24,7 +24,10 @@ Verified 2026-09-04: npm reported zero known vulnerabilities in this isolated
 266-package audit. This is not a security audit or a clearance of repository-wide
 dependency alerts. The renderer build succeeded with a roughly 6.4 MB minified
 main chunk and mixed static/dynamic import warnings; performance remains pending.
+The renderer dependencies are bundled into the renderer output and pruned from
+the packaged runtime tree, avoiding a second copy in `app.asar`.
 
 Build output goes to a new temporary directory and includes source/font/art
 notices. Approved PNG hashes are checked. Rendering and live behavior are not
-verified by this build. Temporary directories are not removed automatically.
+verified by this build. The public root commands create and remove their own
+temporary dependency directories automatically.

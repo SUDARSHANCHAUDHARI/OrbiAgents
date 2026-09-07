@@ -9,8 +9,11 @@ test('main/preload build emits source bundles and required sidecars without laun
   const result = spawnSync(process.execPath, [tool('./build-main.mjs')], { encoding: 'utf8' });
   assert.equal(result.status, 0, result.stderr);
   const directory = result.stdout.match(/Main\/preload source bundles: (.+)\. External/)[1];
-  for (const file of ['main/index.cjs', 'preload/index.cjs', 'main/slack-trigger.cjs', 'main/kg-core.cjs'])
+  for (const file of ['main/index.cjs', 'preload/index.cjs', 'main/slack-trigger.cjs', 'main/kg-core.cjs', 'runtime-dependencies.json'])
     assert.ok(statSync(join(directory, file)).size > 0);
+  assert.deepEqual(JSON.parse(readFileSync(join(directory, 'runtime-dependencies.json'))), [
+    'better-sqlite3', 'electron-updater', 'node-pty', 'posthog-node', 'tunnelmole',
+  ]);
   // These are intentionally external, not a claim that native modules work.
   assert.match(readFileSync(join(directory, 'main/index.cjs'), 'utf8'), /require\("electron"\)/);
 });
