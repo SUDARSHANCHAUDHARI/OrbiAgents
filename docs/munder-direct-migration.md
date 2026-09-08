@@ -72,6 +72,11 @@ Claude-config preservation (2026-09-08): imported Munder commit
 non-object Claude configuration is no longer replaced by generated permission
 state; the global and project files are handled as independent safe-write boundaries.
 
+Hive Git-lock recovery (2026-09-08): imported Munder commit
+`8cb110fe28f9ca5efa777b11522da847769fd6bf`. Hive commits now clear stale
+`HEAD.lock` as well as `index.lock`, retain the existing age threshold, and warn
+when retry exhaustion or another Git failure prevents durable history.
+
 ## Agreed goal
 
 Adopt Munder's actual desktop implementation and visual experience, not another approximation. Preserve OrbiAgents history and local data. Keep changes to upstream behavior minimal and explicit.
