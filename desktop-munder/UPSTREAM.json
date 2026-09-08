@@ -105,8 +105,8 @@
     {
       "source": "src/main/index.ts",
       "target": "src/main/index.ts",
-      "sha256": "e29e606b9ebd4955fad0ea39e40a76494919e3c607986e2f169483d411abb255",
-      "updatedBy": "8c73ccacf4ac62d3709f539e8c766aafbf68fe4a"
+      "sha256": "182e8713309296528a88102526d639e69db06a90e2754121c4f6ff2dc79db957",
+      "updatedBy": "087e32d90f441988ace8a41b524de6521a803d4f"
     },
     {
       "source": "src/main/integrationBroker.ts",
@@ -499,7 +499,8 @@
     {
       "source": "src/renderer/src/components/SettingsModal.tsx",
       "target": "src/renderer/src/components/SettingsModal.tsx",
-      "sha256": "b30b68a5a981df3b0832121e6359e2ecbf8e6baf2d33528e31affd1b4f0ac69d"
+      "sha256": "ffe917c217743ef2fc81dcdcb2b4cc0da8afbe63082bdd7ac35a1e9daed70dac",
+      "updatedBy": "087e32d90f441988ace8a41b524de6521a803d4f"
     },
     {
       "source": "src/renderer/src/components/SetupPanel.tsx",
@@ -1590,6 +1591,12 @@
       "source": "test/skills.test.cjs",
       "target": "test/skills.test.cjs",
       "sha256": "b63c9015ec8251c395815e39324fc1a8e5cdbdbedabc1e30f91de17c62fb8309"
+    },
+    {
+      "source": "test/slack-stop-persist.test.cjs",
+      "target": "test/slack-stop-persist.test.cjs",
+      "sha256": "80ace2cbaf5e881ec4339a388ed26359be6bb67e7594eecd494459336979f9bc",
+      "updatedBy": "087e32d90f441988ace8a41b524de6521a803d4f"
     },
     {
       "source": "test/slack.test.cjs",
