@@ -25,7 +25,8 @@
     {
       "source": "src/main/config.ts",
       "target": "src/main/config.ts",
-      "sha256": "7b5d5d282cc0fad389b14ab4351c125b5ebc0c8e3abeaf14d2064547768faf92"
+      "sha256": "f293a48534a92dbfac6fff5b2d00aa9fca3b0b7c5fd78ebe62097f362ff1efb4",
+      "updatedBy": "1ea876c1cba7bb308f0c9bfae7cdff3b02e39764"
     },
     {
       "source": "src/main/control.ts",
@@ -1256,6 +1257,12 @@
       "source": "test/bundled-fonts.test.cjs",
       "target": "test/bundled-fonts.test.cjs",
       "sha256": "3a7b94da0f7024231abf1d4bae1732a315f41160453783212d6841c67f5aa76a"
+    },
+    {
+      "source": "test/claude-permissions-config.test.cjs",
+      "target": "test/claude-permissions-config.test.cjs",
+      "sha256": "447020421552ff74749864d08c3ba0155ea34c884ff0aef1945848cf4be65aaa",
+      "updatedBy": "1ea876c1cba7bb308f0c9bfae7cdff3b02e39764"
     },
     {
       "source": "test/cli-install-ladder.test.cjs",

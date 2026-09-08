@@ -67,6 +67,11 @@ Malformed-outbox recovery (2026-09-08): imported Munder commit
 CR/LF bytes inside JSON strings, logs successful repairs, and quarantines other
 malformed files with a structured drop event that excludes raw payload details.
 
+Claude-config preservation (2026-09-08): imported Munder commit
+`1ea876c1cba7bb308f0c9bfae7cdff3b02e39764`. Existing malformed, unreadable, or
+non-object Claude configuration is no longer replaced by generated permission
+state; the global and project files are handled as independent safe-write boundaries.
+
 ## Agreed goal
 
 Adopt Munder's actual desktop implementation and visual experience, not another approximation. Preserve OrbiAgents history and local data. Keep changes to upstream behavior minimal and explicit.
