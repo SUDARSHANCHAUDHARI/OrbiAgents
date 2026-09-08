@@ -56,6 +56,12 @@ cleanup now snapshots member start times and rechecks identity before SIGKILL,
 preventing a recycled PGID from terminating unrelated processes while retaining
 the orphan cleanup fallback when process inspection itself fails.
 
+Abnormal-exit diagnostics (2026-09-08): imported Munder commit
+`de85b5528af8d0863ceb24e586ae6a0669ff5c11`. Signal deaths and non-zero exits
+now create a durable structured lifecycle event. A bounded raw PTY tail is saved
+locally under the hive's gitignored `crashes/` directory, keeping possible tokens,
+paths, and prompt fragments out of committed history while preserving crash clues.
+
 ## Agreed goal
 
 Adopt Munder's actual desktop implementation and visual experience, not another approximation. Preserve OrbiAgents history and local data. Keep changes to upstream behavior minimal and explicit.

@@ -582,7 +582,20 @@ function removeWorkerScratch(workerId: string): void {
 // SAME pty/window (no user click). Provider-agnostic. Idempotent by construction: the
 // relaunch carries `noAutoInstall`, so the installer can never fire (let alone loop) a
 // second time — a binary that's somehow still missing just spawns and exits normally.
-ptyManager.setExitHandler((id, exitCode) => {
+ptyManager.setExitHandler((id, exitCode, info) => {
+  // Record before teardown removes the PTY-to-agent mapping.
+  try {
+    const dyingAgent = ptyToAgent.get(id);
+    if (dyingAgent) {
+      hive.recordAgentExit(dyingAgent, {
+        exitCode,
+        signal: info?.signal,
+        tail: info?.tail,
+        command: info?.command
+      });
+    }
+  } catch (e) { console.error('[pty] recordAgentExit failed:', e); }
+
   const pending = pendingInstallRelaunch.get(id);
   if (pending) {
     pendingInstallRelaunch.delete(id);
