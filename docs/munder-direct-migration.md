@@ -89,6 +89,12 @@ undrained message IDs instead of only a count, so an idle worker is nudged for
 new mail without re-announcing the same backlog every cooldown. Draining the
 inbox or tearing down the worker resets the bounded announcement state.
 
+Slack stop persistence (2026-09-08): imported Munder commit
+`087e32d90f441988ace8a41b524de6521a803d4f`. A user-initiated Stop now persists
+`slackEnabled: false` before server teardown and immediately updates the Settings
+toggle, while quit, reset, and hive-home lifecycle teardown leave the preference
+unchanged.
+
 ## Agreed goal
 
 Adopt Munder's actual desktop implementation and visual experience, not another approximation. Preserve OrbiAgents history and local data. Keep changes to upstream behavior minimal and explicit.
