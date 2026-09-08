@@ -105,8 +105,8 @@
     {
       "source": "src/main/index.ts",
       "target": "src/main/index.ts",
-      "sha256": "9a7e49d05fc90abb75fcd215793646b0fb77307b1008dba904c205e40f8b1888",
-      "updatedBy": "de85b5528af8d0863ceb24e586ae6a0669ff5c11"
+      "sha256": "e29e606b9ebd4955fad0ea39e40a76494919e3c607986e2f169483d411abb255",
+      "updatedBy": "8c73ccacf4ac62d3709f539e8c766aafbf68fe4a"
     },
     {
       "source": "src/main/integrationBroker.ts",
@@ -263,7 +263,8 @@
     {
       "source": "src/main/workerWake.ts",
       "target": "src/main/workerWake.ts",
-      "sha256": "5d733f7edae9540bb8e2282d114b4787848a520dc146057ac0a8ae339e66bc97"
+      "sha256": "2a1c8a180e305760d362d7bc10852dd138418a150b9cef83309e7f767376142b",
+      "updatedBy": "8c73ccacf4ac62d3709f539e8c766aafbf68fe4a"
     },
     {
       "source": "src/preload/index.d.ts",
@@ -1718,7 +1719,8 @@
     {
       "source": "test/worker-wake.test.cjs",
       "target": "test/worker-wake.test.cjs",
-      "sha256": "ae89632670b11a1815d0a030cae9823f694023385697e58911bee87eed241aeb"
+      "sha256": "00c1aa9dcd70cfd8608ecba03505ee22e87d1ba7015bdacce5a6e1058c3dc830",
+      "updatedBy": "8c73ccacf4ac62d3709f539e8c766aafbf68fe4a"
     },
     {
       "source": "LICENSE",

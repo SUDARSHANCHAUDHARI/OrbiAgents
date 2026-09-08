@@ -83,6 +83,12 @@ and `21d40011`. On POSIX, Codex, Gemini, and Antigravity hook commands now retai
 quoted launcher and shim paths when the selected hive directory contains spaces;
 Windows retains its existing command shape.
 
+Edge-triggered worker wake (2026-09-08): imported Munder commit
+`8c73ccacf4ac62d3709f539e8c766aafbf68fe4a`. The main process now supplies
+undrained message IDs instead of only a count, so an idle worker is nudged for
+new mail without re-announcing the same backlog every cooldown. Draining the
+inbox or tearing down the worker resets the bounded announcement state.
+
 ## Agreed goal
 
 Adopt Munder's actual desktop implementation and visual experience, not another approximation. Preserve OrbiAgents history and local data. Keep changes to upstream behavior minimal and explicit.
