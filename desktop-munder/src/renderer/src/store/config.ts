@@ -5,7 +5,8 @@ import {
   providerPreset,
   inferAgentProvider,
   isClaudeProvider,
-  type AgentProvider
+  type AgentProvider,
+  type AgentProviderPreset
 } from '@shared/agentProvider';
 import type {
   ContextTriggerConfig,
@@ -303,6 +304,22 @@ export function modelProvidersForAgent(isGod = false) {
   return AGENT_PROVIDER_PRESETS.filter((preset) =>
     preset.supportsModel && (!isGod || preset.canReceiveInbox)
   );
+}
+
+/** The onboarding engine step's two groups (issue #355). Hiding inbox-less
+ *  engines there read as "not supported at all", when the truth is narrower:
+ *  a print-mode / bridge-less CLI can be hired as a worker but cannot run the
+ *  orchestrator, because it must drain hive mail. Show those engines as disabled
+ *  worker-only rows; custom remains hidden because it is not a preset engine. */
+export function onboardingEngineChoices(): {
+  eligible: AgentProviderPreset[];
+  workersOnly: AgentProviderPreset[];
+} {
+  const eligible = modelProvidersForAgent(true);
+  const workersOnly = AGENT_PROVIDER_PRESETS.filter(
+    (preset) => preset.id !== 'custom' && !eligible.includes(preset)
+  );
+  return { eligible, workersOnly };
 }
 
 /** Native <select> values must carry both provider and model because each

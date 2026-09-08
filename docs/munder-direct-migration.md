@@ -95,6 +95,11 @@ Slack stop persistence (2026-09-08): imported Munder commit
 toggle, while quit, reset, and hive-home lifecycle teardown leave the preference
 unchanged.
 
+Workers-only onboarding engines (2026-09-08): imported Munder commit
+`fd1120eba241935084637d58dc943d84c3c497e2`. Kimi and Copilot now remain visible
+as disabled, explained worker-only rows during orchestrator setup instead of
+appearing unsupported; inbox-capable engines remain the only selectable choices.
+
 ## Agreed goal
 
 Adopt Munder's actual desktop implementation and visual experience, not another approximation. Preserve OrbiAgents history and local data. Keep changes to upstream behavior minimal and explicit.
