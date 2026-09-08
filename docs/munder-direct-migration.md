@@ -77,6 +77,12 @@ Hive Git-lock recovery (2026-09-08): imported Munder commit
 `HEAD.lock` as well as `index.lock`, retain the existing age threshold, and warn
 when retry exhaustion or another Git failure prevents durable history.
 
+Provider-hook path quoting (2026-09-08): imported the merged Munder state at
+`c212970e0b06e326467f336bdafbd170a138e616`, incorporating commits `008a83d6`
+and `21d40011`. On POSIX, Codex, Gemini, and Antigravity hook commands now retain
+quoted launcher and shim paths when the selected hive directory contains spaces;
+Windows retains its existing command shape.
+
 ## Agreed goal
 
 Adopt Munder's actual desktop implementation and visual experience, not another approximation. Preserve OrbiAgents history and local data. Keep changes to upstream behavior minimal and explicit.

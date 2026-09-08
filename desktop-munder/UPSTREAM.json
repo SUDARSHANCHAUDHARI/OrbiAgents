@@ -93,8 +93,8 @@
     {
       "source": "src/main/hive.ts",
       "target": "src/main/hive.ts",
-      "sha256": "59affbbe7394a4432b58fd5693ab2cd37411ca392a59fea1088b2772f676737c",
-      "updatedBy": "8cb110fe28f9ca5efa777b11522da847769fd6bf"
+      "sha256": "5a878269d8b84859d3c86c4a267d3fb3c27abfac6af0720fbf6e6de846a595c3",
+      "updatedBy": "c212970e0b06e326467f336bdafbd170a138e616"
     },
     {
       "source": "src/main/hooks.ts",
@@ -1373,7 +1373,8 @@
     {
       "source": "test/hive-hook-node.test.cjs",
       "target": "test/hive-hook-node.test.cjs",
-      "sha256": "36a1e5264a7b262786c903ec44da3f057c4d38723f1b84fc5bd758dec31309c3"
+      "sha256": "1581f305c0b2ab67bf83d5eba28dd95b23ccbd50e07afa5b29e2447f6da07909",
+      "updatedBy": "c212970e0b06e326467f336bdafbd170a138e616"
     },
     {
       "source": "test/hive-nudge.test.cjs",
