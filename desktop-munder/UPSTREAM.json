@@ -444,7 +444,8 @@
     {
       "source": "src/renderer/src/components/OnboardingWizard.tsx",
       "target": "src/renderer/src/components/OnboardingWizard.tsx",
-      "sha256": "4fc8476aa5c61c27e721902a4f23ead1f0dda4098375b7edf637000cdf9718fd"
+      "sha256": "974c133cbfdb233acb7a00a9f4f6f92e85f2391a0c5106b538fa9f93357939cf",
+      "updatedBy": "fd1120eba241935084637d58dc943d84c3c497e2"
     },
     {
       "source": "src/renderer/src/components/PixelBadge.tsx",
@@ -765,17 +766,20 @@
     {
       "source": "src/renderer/src/i18n/locales/ar.json",
       "target": "src/renderer/src/i18n/locales/ar.json",
-      "sha256": "7b06bbe6c8cd42e0eef34df9dd0367285138a63d78646de36138afdf82b28fb4"
+      "sha256": "bd9d2bef54d08dbe9283133b8ce30ca1dc6f9a66a9a8d83b7284acb9cd283d51",
+      "updatedBy": "fd1120eba241935084637d58dc943d84c3c497e2"
     },
     {
       "source": "src/renderer/src/i18n/locales/en.json",
       "target": "src/renderer/src/i18n/locales/en.json",
-      "sha256": "69f99ffb78def8db9d6a6c63d26170f1e2767edb342e8a17a01a1a2e3f23b4e4"
+      "sha256": "990870396db6873d57be0e07536c046a43d53dfea46a65798e0553b38805dded",
+      "updatedBy": "fd1120eba241935084637d58dc943d84c3c497e2"
     },
     {
       "source": "src/renderer/src/i18n/locales/zh-CN.json",
       "target": "src/renderer/src/i18n/locales/zh-CN.json",
-      "sha256": "d61ad5e4ff9cb600a77e795f5ee4902a7acf722000db922334fa33e48dd3b8f1"
+      "sha256": "885316c6aa5bc7f96774a0c05c9bb904195caf9ae5e09898b8373de4372abf3a",
+      "updatedBy": "fd1120eba241935084637d58dc943d84c3c497e2"
     },
     {
       "source": "src/renderer/src/i18n/useDirection.ts",
@@ -986,7 +990,8 @@
     {
       "source": "src/renderer/src/store/config.ts",
       "target": "src/renderer/src/store/config.ts",
-      "sha256": "812303051314c422934a76bb564d67752271b24177948dec5bdebb850119a9c8"
+      "sha256": "f69410514a9788faf1bd82f126597a0edc932d4295eedb866b91f5b72e5556be",
+      "updatedBy": "fd1120eba241935084637d58dc943d84c3c497e2"
     },
     {
       "source": "src/renderer/src/store/focusMode.ts",
@@ -1515,7 +1520,8 @@
     {
       "source": "test/provider-config.test.cjs",
       "target": "test/provider-config.test.cjs",
-      "sha256": "73d12a7d87ce8bba9ef21ee1c4184ff57c421343f7412f7b162fe2a6acedc979"
+      "sha256": "433a82716f7925ef73b1e7225b7da75f016d0d0e329b9fea9af06aff5a27c251",
+      "updatedBy": "fd1120eba241935084637d58dc943d84c3c497e2"
     },
     {
       "source": "test/proxy-bridge-retry.test.cjs",
