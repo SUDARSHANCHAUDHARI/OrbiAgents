@@ -62,6 +62,11 @@ now create a durable structured lifecycle event. A bounded raw PTY tail is saved
 locally under the hive's gitignored `crashes/` directory, keeping possible tokens,
 paths, and prompt fragments out of committed history while preserving crash clues.
 
+Malformed-outbox recovery (2026-09-08): imported Munder commit
+`ce684c58d3e2c01f24e80d158ba093cc89940015`. The router narrowly repairs literal
+CR/LF bytes inside JSON strings, logs successful repairs, and quarantines other
+malformed files with a structured drop event that excludes raw payload details.
+
 ## Agreed goal
 
 Adopt Munder's actual desktop implementation and visual experience, not another approximation. Preserve OrbiAgents history and local data. Keep changes to upstream behavior minimal and explicit.
