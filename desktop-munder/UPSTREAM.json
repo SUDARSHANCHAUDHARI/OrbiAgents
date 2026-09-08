@@ -92,8 +92,8 @@
     {
       "source": "src/main/hive.ts",
       "target": "src/main/hive.ts",
-      "sha256": "212e89fa7bbc9cb7e18d312f60cfeb38cad1fbc2cee8be672798885d5a36947b",
-      "updatedBy": "de85b5528af8d0863ceb24e586ae6a0669ff5c11"
+      "sha256": "98813509404cbcdde6966f29a02ccb097a045cdbadee99232904bc1132afe165",
+      "updatedBy": "ce684c58d3e2c01f24e80d158ba093cc89940015"
     },
     {
       "source": "src/main/hooks.ts",
@@ -1356,6 +1356,12 @@
       "source": "test/hive-cwd.test.cjs",
       "target": "test/hive-cwd.test.cjs",
       "sha256": "57fd1be1e8c1cfcc183ce9c71a81064078ce0001e578b9856db607ef3b2e6015"
+    },
+    {
+      "source": "test/hive-malformed-outbox.test.cjs",
+      "target": "test/hive-malformed-outbox.test.cjs",
+      "sha256": "d8ab152674a925364b5d0205610652786d1645a5a108d34fd3a305a0d255acaa",
+      "updatedBy": "ce684c58d3e2c01f24e80d158ba093cc89940015"
     },
     {
       "source": "test/hive-hook-node.test.cjs",
