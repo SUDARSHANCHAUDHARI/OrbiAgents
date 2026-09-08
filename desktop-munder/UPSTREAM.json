@@ -148,7 +148,8 @@
     {
       "source": "src/main/procKill.ts",
       "target": "src/main/procKill.ts",
-      "sha256": "dcc00a6037d0407b798a3dffcefa85206d304dbe17aac2febc83bd19e0bed882"
+      "sha256": "f7fef3f822466127a8a6ee333f7ebc68f312490c82cdade598544023aac7b268",
+      "updatedBy": "7e1ce3c2d75519ef98beb011e98f9769183fe2df"
     },
     {
       "source": "src/main/pty.ts",
@@ -1472,7 +1473,8 @@
     {
       "source": "test/proc-kill.test.cjs",
       "target": "test/proc-kill.test.cjs",
-      "sha256": "20a9c2bb1fb8a0744f4b17fb5bc302cb83e4bdcb648fba6e5cd54d24e92470f6"
+      "sha256": "ce67bf2e315ba97ba632c30544bb295f16c414875e91d88623070f90189c8df9",
+      "updatedBy": "7e1ce3c2d75519ef98beb011e98f9769183fe2df"
     },
     {
       "source": "test/provider-automation.test.cjs",
