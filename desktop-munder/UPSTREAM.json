@@ -92,7 +92,8 @@
     {
       "source": "src/main/hive.ts",
       "target": "src/main/hive.ts",
-      "sha256": "521ea1b408ea2909b9ef30e83f4a112721a591745d38d6b17f3f1a126a377676"
+      "sha256": "212e89fa7bbc9cb7e18d312f60cfeb38cad1fbc2cee8be672798885d5a36947b",
+      "updatedBy": "de85b5528af8d0863ceb24e586ae6a0669ff5c11"
     },
     {
       "source": "src/main/hooks.ts",
@@ -103,7 +104,8 @@
     {
       "source": "src/main/index.ts",
       "target": "src/main/index.ts",
-      "sha256": "df21ab0377e74ee407336962924f019fd02a16b8465fa6ed83808cf7ef7e051c"
+      "sha256": "9a7e49d05fc90abb75fcd215793646b0fb77307b1008dba904c205e40f8b1888",
+      "updatedBy": "de85b5528af8d0863ceb24e586ae6a0669ff5c11"
     },
     {
       "source": "src/main/integrationBroker.ts",
@@ -154,7 +156,8 @@
     {
       "source": "src/main/pty.ts",
       "target": "src/main/pty.ts",
-      "sha256": "bfcd3d0fb5108a801578220189f971d9999189b6b5963314f8355595dadc1dde"
+      "sha256": "9932ea4b7a5ae2cf35498724f8e8c9db2b51a23a2eed1975d4d15636151fccb0",
+      "updatedBy": "de85b5528af8d0863ceb24e586ae6a0669ff5c11"
     },
     {
       "source": "src/main/ptyEnv.ts",
@@ -1186,6 +1189,18 @@
       "source": "src/shared/weeklySchedule.ts",
       "target": "src/shared/weeklySchedule.ts",
       "sha256": "6da60e5a9366d1dab2cc868c4c6670d75cab842de84ceccc5b9599e29ec6c52e"
+    },
+    {
+      "source": "test/agent-exit-record.test.cjs",
+      "target": "test/agent-exit-record.test.cjs",
+      "sha256": "4e2339bc4fb13b55779acb0f0451a856175bf0d2d904ffb534fa6714f33bd40f",
+      "updatedBy": "de85b5528af8d0863ceb24e586ae6a0669ff5c11"
+    },
+    {
+      "source": "test/agent-exit-signal-e2e.test.cjs",
+      "target": "test/agent-exit-signal-e2e.test.cjs",
+      "sha256": "adea937f75320ac4202196ef119bb5c7d5eb3f1770d0c3578aea18712aa7ca1e",
+      "updatedBy": "de85b5528af8d0863ceb24e586ae6a0669ff5c11"
     },
     {
       "source": "test/agent-provider.test.cjs",

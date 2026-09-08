@@ -29,6 +29,17 @@ export function withHiveRuntimeFallback(path: string, hiveRoot?: string): string
   return [...entries, dir].join(delimiter);
 }
 
+/** How much trailing PTY output to retain per session for crash diagnostics. */
+const TAIL_MAX = 8192;
+
+/** Exit details are passed by value because the session is removed first. */
+export interface PtyExitInfo {
+  signal?: number;
+  tail?: string;
+  command?: string;
+  cwd?: string;
+}
+
 interface PtySession {
   id: string;
   proc: pty.IPty;
@@ -46,6 +57,8 @@ interface PtySession {
    *  file) and the idle handshake that gates god's PTY nudge (never type into a
    *  PTY that produced output in the last few seconds = mid-stream). */
   lastOutputAt: number;
+  /** Bounded recent output retained only for abnormal-exit diagnostics. */
+  tail: string;
   /** True after the child has emitted at least one frame. Automation waits for
    *  this before typing, so startup prompts cannot outrun the TUI subscription. */
   hasOutput: boolean;
@@ -309,7 +322,8 @@ export class PtyManager {
    *  externally), so the main process can run the SAME lifecycle teardown
    *  (archive, worktree removal, map cleanup) that the explicit kill() path
    *  runs. Best-effort — set once by the main process. */
-  private exitHandler: ((id: string, exitCode?: number) => void) | null = null;
+  private exitHandler:
+    ((id: string, exitCode?: number, info?: PtyExitInfo) => void) | null = null;
 
   /** The default/fallback output sink — set to the PRIMARY window. Used only for
    *  sessions with no recorded owner; owned sessions route to their owner. */
@@ -345,7 +359,9 @@ export class PtyManager {
    *  onExit after the session is cleaned up. The exit code is forwarded so the
    *  handler can distinguish a clean exit (e.g. a successful first-time CLI
    *  install → auto restart-and-continue) from a crash. */
-  setExitHandler(handler: (id: string, exitCode?: number) => void): void {
+  setExitHandler(
+    handler: (id: string, exitCode?: number, info?: PtyExitInfo) => void
+  ): void {
     this.exitHandler = handler;
   }
 
@@ -667,6 +683,7 @@ export class PtyManager {
         command: resolved,
         lastOutputAt: Date.now(),
         hasOutput: false,
+        tail: '',
         owner
       };
       this.sessions.set(opts.id, session);
@@ -677,6 +694,7 @@ export class PtyManager {
         if (this.sessions.get(opts.id) !== session) return;
         session.hasOutput = true;
         session.lastOutputAt = Date.now();
+        session.tail = (session.tail + data).slice(-TAIL_MAX);
         // Route to the session's owner window (multi-window owner routing).
         this.safeSend(`pty:data:${opts.id}`, data, session.owner);
       });
@@ -688,7 +706,14 @@ export class PtyManager {
         this.sessions.delete(opts.id);
         // Natural exit must run the same lifecycle teardown as an explicit kill.
         // Guarded so a teardown error can never crash node-pty's exit callback.
-        try { this.exitHandler?.(opts.id, exitCode); } catch { /* never throw out of onExit */ }
+        try {
+          this.exitHandler?.(opts.id, exitCode, {
+            signal,
+            tail: session.tail,
+            command: session.command,
+            cwd: session.cwd
+          });
+        } catch { /* never throw out of onExit */ }
       });
 
       return { ok: true };
