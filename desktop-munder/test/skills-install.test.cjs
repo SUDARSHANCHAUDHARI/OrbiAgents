@@ -16,7 +16,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const loadTs = require('./load-ts.cjs');
 
-const { parseGitHubSourceUrl, safeSkillDirName, uninstallSkill } =
+const { parseGitHubSourceUrl, resolveRepoRootSkillDir, safeSkillDirName, uninstallSkill } =
   loadTs('src/main/skills.ts');
 
 const tmpdir = (t) => {
@@ -46,6 +46,61 @@ test('a skill folder name that could escape its directory is refused', () => {
   // A traversal reduces to its LAST segment, which is a plain, safe folder name —
   // the caller joins it onto the skills root, so there is nothing left to escape.
   assert.equal(safeSkillDirName('a/../../b'), 'b');
+});
+
+const lister = (dirs) => async (p) => {
+  if (!(p in dirs)) throw new Error('Not Found (404)');
+  return dirs[p];
+};
+const file = (name) => ({ name, path: name, type: 'file', size: 10, download_url: 'x' });
+const dir = (name) => ({ name, path: name, type: 'dir' });
+
+test('a repo whose root holds SKILL.md is the skill itself', async () => {
+  const resolved = await resolveRepoRootSkillDir(lister({ '': [file('SKILL.md'), file('README.md')] }), 'demo');
+  assert.deepEqual(resolved, { path: '' });
+});
+
+test('a repo-root entry resolves to skills/<name> instead of walking the whole repo', async () => {
+  const resolved = await resolveRepoRootSkillDir(lister({
+    '': [dir('skills'), dir('src'), file('README.md')],
+    'skills/frontend-slides': [{ name: 'SKILL.md', path: 'skills/frontend-slides/SKILL.md', type: 'file', size: 10, download_url: 'x' }]
+  }), 'frontend-slides');
+  assert.deepEqual(resolved, { path: 'skills/frontend-slides' });
+});
+
+test('.claude/skills/<name> and a bare <name> directory are probed as fallbacks', async () => {
+  const viaClaude = await resolveRepoRootSkillDir(lister({
+    '': [dir('.claude'), file('README.md')],
+    '.claude/skills/demo': [{ name: 'SKILL.md', path: '.claude/skills/demo/SKILL.md', type: 'file', size: 1, download_url: 'x' }]
+  }), 'demo');
+  assert.deepEqual(viaClaude, { path: '.claude/skills/demo' });
+
+  const viaBare = await resolveRepoRootSkillDir(lister({
+    '': [dir('demo'), file('README.md')],
+    demo: [{ name: 'SKILL.md', path: 'demo/SKILL.md', type: 'file', size: 1, download_url: 'x' }]
+  }), 'demo');
+  assert.deepEqual(viaBare, { path: 'demo' });
+});
+
+test('a missing candidate is skipped in favor of the next known layout', async () => {
+  const resolved = await resolveRepoRootSkillDir(lister({
+    '': [dir('skills'), dir('demo')],
+    demo: [{ name: 'SKILL.md', path: 'demo/SKILL.md', type: 'file', size: 1, download_url: 'x' }]
+  }), 'demo');
+  assert.deepEqual(resolved, { path: 'demo' });
+});
+
+test('no SKILL.md is refused before files are downloaded', async () => {
+  const resolved = await resolveRepoRootSkillDir(lister({ '': [dir('src'), file('README.md')] }), 'demo');
+  assert.equal(resolved.unsupported, true);
+  assert.match(resolved.error, /SKILL\.md/);
+});
+
+test('root listing failures are reported and unsafe names do not crash probing', async () => {
+  const failed = await resolveRepoRootSkillDir(async () => { throw new Error('API rate limit exceeded'); }, 'demo');
+  assert.match(failed.error, /rate limit/);
+  const unsafe = await resolveRepoRootSkillDir(lister({ '': [dir('src')] }), '../../etc');
+  assert.equal(unsafe.unsupported, true);
 });
 
 test('uninstall refuses anything outside a managed skills root', (t) => {

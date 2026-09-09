@@ -208,7 +208,8 @@
     {
       "source": "src/main/skills.ts",
       "target": "src/main/skills.ts",
-      "sha256": "fe1c39169d0c4d2ef0ddb0dc60dc96fcffab8738da47d8889e42c64182b730b2"
+      "sha256": "47b95096ea69c53f9dcb4789615475d1bcf2ceaa1dc75700ca571d93de7b8a81",
+      "updatedBy": "586bf7021a02ec32a2d3736f3d41b3be451aae49"
     },
     {
       "source": "src/main/slack-trigger.cjs",
@@ -1593,7 +1594,8 @@
     {
       "source": "test/skills-install.test.cjs",
       "target": "test/skills-install.test.cjs",
-      "sha256": "21e493b9f224f878ab22675b191613310e27c0f0e29f57aa9f05afcdb3a995a1"
+      "sha256": "0891e126bfaa58bb2052050f2577ad6f18c1e3487a999fcc5b7fcfa8151f2ca6",
+      "updatedBy": "586bf7021a02ec32a2d3736f3d41b3be451aae49"
     },
     {
       "source": "test/skills.test.cjs",
