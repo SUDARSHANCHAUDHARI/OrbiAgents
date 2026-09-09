@@ -86,6 +86,7 @@ import { detectNodeVersion, nodeIsUsable, resolveNodeInstaller } from './nodeIns
 import { toolCatalog, type ToolStatus } from '../shared/toolCatalog';
 import { listLocalSkills, loadCatalog, installSkill, uninstallSkill, type LocalSkill } from './skills';
 import { loadHero } from './hero';
+import { loadModelCatalog } from './modelCatalog';
 import {
   CODEX_REMOTE_SOCKET_RELATIVE,
   codexRemoteAliasPath,
@@ -3475,6 +3476,9 @@ ipcMain.handle('hive:patchAgentRole', (_evt, id: unknown, role: unknown) => {
 // ─── IPC: Settings identity payload (local, compatibility bridge) ───────────
 ipcMain.handle('hero:payload', async (_evt, force: unknown) =>
   loadHero(join(app.getPath('userData'), 'hero.json'), { force: force === true }));
+
+ipcMain.handle('models:catalog', async (_evt, force: unknown) =>
+  loadModelCatalog(join(app.getPath('userData'), 'orbi-model-catalog.json'), { force: force === true }));
 
 // ─── IPC: skills (installed locally, and the browsable catalog) ─────────────
 /** Skills the CLIs on this machine can already use. Scans the registered repos

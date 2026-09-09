@@ -242,6 +242,12 @@
     "agentsModels": {
       "defaultModel": "Default agent model",
       "defaultModelDesc": "Every newly spawned Claude agent ({{godName}} included) starts on this model unless picked per-agent. Marked \"· default\" in the model pickers.",
+      "refreshCatalog": "Refresh model catalog",
+      "refreshingCatalog": "Refreshing…",
+      "catalogUpdated": "Model catalog updated.",
+      "catalogCurrent": "Using the latest available catalog.",
+      "catalogCached": "Offline: using the last validated catalog.",
+      "catalogUnavailable": "Refresh unavailable; bundled models remain active.",
       "savedNote": "saved — applies to newly spawned agents",
       "saveFailed": "save failed",
       "advanced": "Advanced",
