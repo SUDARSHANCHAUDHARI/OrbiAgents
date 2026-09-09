@@ -536,7 +536,8 @@
     {
       "source": "src/renderer/src/components/TasksKanban.tsx",
       "target": "src/renderer/src/components/TasksKanban.tsx",
-      "sha256": "34fab8e07f8340c313a78c9c19a13e90b9ee91fa367a8dbb34dd4b086d2f8e0b"
+      "sha256": "46bfe46c7bd8065e91659bb1f76b8d90c4c8ec8e52cfd9b0639bf6b05cdf8e34",
+      "updatedBy": "6c759a240f0ed115daf3205e78dde7dd61295362"
     },
     {
       "source": "src/renderer/src/components/TerminalView.tsx",

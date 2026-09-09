@@ -100,6 +100,11 @@ Workers-only onboarding engines (2026-09-08): imported Munder commit
 as disabled, explained worker-only rows during orchestrator setup instead of
 appearing unsupported; inbox-capable engines remain the only selectable choices.
 
+Task-ID visibility (2026-09-09): imported Munder commit
+`6c759a240f0ed115daf3205e78dde7dd61295362`. Kanban cards and task details now
+show the complete task identifier used in messages and dispatches, without
+requiring the operator to open each card to identify it.
+
 ## Agreed goal
 
 Adopt Munder's actual desktop implementation and visual experience, not another approximation. Preserve OrbiAgents history and local data. Keep changes to upstream behavior minimal and explicit.

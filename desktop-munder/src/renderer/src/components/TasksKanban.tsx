@@ -221,9 +221,9 @@ export function TasksKanban() {
 }
 
 // ─── Card ────────────────────────────────────────────────────────────────────
-// Deliberately minimal — a colored status edge, the title, a whisper of an
-// assignee. Everything else (the full contract, deps, controls) lives in the
-// detail view a click away: a kanban card can carry a title at most.
+// Deliberately minimal — a colored status edge, the task id, the title, and a
+// whisper of an assignee. Everything else (the full contract, deps, controls)
+// lives in the detail view a click away.
 
 function TaskCard({ task, accent, assigneeName, onOpen, onDismiss }: {
   task: HiveTask;
@@ -248,6 +248,12 @@ function TaskCard({ task, accent, assigneeName, onOpen, onDismiss }: {
       >
         <span style={{ width: 4, flexShrink: 0, background: accent, boxShadow: 'inset -1px 0 0 var(--cth-ink-700)' }} />
         <span style={{ flex: 1, minWidth: 0, padding: '6px 18px 6px 7px', display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {/* This is the handle used in dispatches and messages. Keep it
+              visible without requiring the operator to open task details. */}
+          <span style={{
+            fontFamily: 'var(--cth-font-mono)', fontSize: 10,
+            color: 'var(--cth-ink-500)'
+          }}>{task.id}</span>
           <span style={{
             fontFamily: 'var(--cth-font-ui)', fontSize: 12, lineHeight: '16px',
             color: 'var(--cth-ink-900)',
@@ -333,6 +339,9 @@ export function TaskDetail({ task, all, assigneeName, onMove, onAssign, onClose 
 
             {/* Fact row */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+              <span style={{
+                fontFamily: 'var(--cth-font-mono)', fontSize: 10, color: 'var(--cth-ink-500)'
+              }}>{task.id}</span>
               <span style={{
                 fontFamily: 'var(--cth-font-display)', fontSize: 8, padding: '2px 6px 1px',
                 background: col.accent, color: 'var(--cth-ink-900)', boxShadow: 'inset 0 0 0 1px var(--cth-ink-300)'
