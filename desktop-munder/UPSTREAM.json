@@ -429,7 +429,8 @@
     {
       "source": "src/renderer/src/components/MessageQueueComposer.tsx",
       "target": "src/renderer/src/components/MessageQueueComposer.tsx",
-      "sha256": "b3e7c0f9336afbb1301ffc42986c67bfa063d0eb059c4e9ad70e235f90f8e546"
+      "sha256": "8d58c6f1e4c01fa80afa0e98ae7f87c6087ace5208c194676fc86e563557c22b",
+      "updatedBy": "2ef48bba1da43acecc339a7d898054cf0aee7a47"
     },
     {
       "source": "src/renderer/src/components/MichaelBooting.tsx",
