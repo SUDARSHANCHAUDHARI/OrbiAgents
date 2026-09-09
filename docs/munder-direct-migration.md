@@ -110,6 +110,11 @@ Busy-terminal hold status (2026-09-09): imported Munder commit
 terminal drafts, command pickers, and exited terminals even while an agent is
 busy, instead of hiding the actionable blocker behind a generic queued label.
 
+Repository-root skill resolution (2026-09-09): imported Munder commit
+`586bf7021a02ec32a2d3736f3d41b3be451aae49`. GitHub repository-root catalog
+entries now resolve the directory containing `SKILL.md` before applying download
+limits, preventing small nested skills from being rejected as oversized repos.
+
 ## Agreed goal
 
 Adopt Munder's actual desktop implementation and visual experience, not another approximation. Preserve OrbiAgents history and local data. Keep changes to upstream behavior minimal and explicit.
