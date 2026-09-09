@@ -111,8 +111,8 @@
     {
       "source": "src/main/index.ts",
       "target": "src/main/index.ts",
-      "sha256": "fef7351246e7d61261ccec495d0e7624fdaf1a31e27d6db81a92589c6835c35c",
-      "updatedBy": "928e032a7e817ca6a203a2a26893711120366a2d"
+      "sha256": "fd4cb0c24897387c9366b90ee08358f8b851d49af26205070500f91f65869c85",
+      "updatedBy": "12096fd04b2bb596ad021b5279afb222649390c0"
     },
     {
       "source": "src/main/modelCatalog.ts",
@@ -274,6 +274,12 @@
       "source": "src/main/workerLaunch.ts",
       "target": "src/main/workerLaunch.ts",
       "sha256": "026b74e0e65cb7bd29ba17737407974f4d26912ea36fcb6376b427595e4e85ea"
+    },
+    {
+      "source": "src/main/worktreeDeps.ts",
+      "target": "src/main/worktreeDeps.ts",
+      "sha256": "93deed399001a7fb6422cf0985900582bc8a381b0d36b6d642cd2e4015e5ed78",
+      "updatedBy": "12096fd04b2bb596ad021b5279afb222649390c0"
     },
     {
       "source": "src/main/workerWake.ts",
@@ -1769,6 +1775,12 @@
       "source": "test/worker-permission-parity.test.cjs",
       "target": "test/worker-permission-parity.test.cjs",
       "sha256": "f42fd1a2ddc1ce3e67e043191f7b25c08268decd469046e3b794ce7ba54950fd"
+    },
+    {
+      "source": "test/worktree-deps.test.cjs",
+      "target": "test/worktree-deps.test.cjs",
+      "sha256": "b619847c5208cc903db56cfd880768ea11e5aed121acc554aeac66dfe75a0ed4",
+      "updatedBy": "12096fd04b2bb596ad021b5279afb222649390c0"
     },
     {
       "source": "test/worker-wake.test.cjs",

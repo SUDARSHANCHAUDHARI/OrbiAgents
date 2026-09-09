@@ -172,6 +172,8 @@ Sources:
 
 ## Completion boundary
 
+Isolated-worktree dependency parity (2026-09-09): newly created worker worktrees reuse an existing base-checkout `node_modules` through a platform-appropriate link, avoiding redundant installs while preserving isolation. Cleanup removes only a symlink whose resolved target is proven to be that base dependency directory, before dirty/integration checks; real or foreign dependency entries are left untouched.
+
 Race-safe realtime task mutations (2026-09-09): voice create, assign, update, and delete actions now call the Hive's atomic task operations instead of writing a potentially stale whole-ledger snapshot. Failed atomic mutations return explicit spoken errors, and the existing task-mutation contract now covers the realtime action path.
 
 Per-file transcript usage cache parity (2026-09-09): each physical transcript tail is parsed once and accumulated into an unfiltered total plus per-session buckets, eliminating repeated parsing when several agents share a workspace. Filtered totals preserve input, output, cache read/write, model, and cost fields; records without a session ID remain unfiltered-only. Manual benchmark media and scripts were intentionally excluded from product source.
