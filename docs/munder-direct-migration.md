@@ -172,6 +172,8 @@ Sources:
 
 ## Completion boundary
 
+Cross-platform power onboarding parity (2026-09-09): the reliability step now selects macOS, Windows, or Linux guidance from the isolated preload platform value. macOS and Windows expose their OS-owned power-settings deep links through the restricted allowlist; Linux shows desktop-environment guidance without a nonfunctional button. English, Arabic, and Simplified Chinese carry the complete platform-specific copy. Focused source contracts protect the platform routing, safe schemes, and locale keys.
+
 Standing-goal delivery parity (2026-09-09): durable agent briefings are delivered once per live session instead of being repeated on every prompt. Edits are injected once at the next prompt, clearing a goal explicitly revokes the previous briefing, and delivery state remains isolated per agent. Six focused regressions mirror upstream PR #367.
 
 Room-life parity (2026-09-06): all 15 desks now paint original procedural off-monitor blocks that the imported `DeskScreen` replaces with animated lit screens while workers are seated. The replacement room also stamps licensed LPC water-cooler, copier and bin props into collision-safe positions; three reachable dispenser/bin anchors activate the imported idle-errand director. No excluded artwork or new binary asset was added. Structural tests verify GIDs, transparency, prop crops, collisions and reachable stands; visual quality still requires human review.

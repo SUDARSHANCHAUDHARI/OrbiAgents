@@ -111,8 +111,8 @@
     {
       "source": "src/main/index.ts",
       "target": "src/main/index.ts",
-      "sha256": "61a3bdce891403df924c3aba5f5136b44441d79ac90dde7e13c919b610e83d45",
-      "updatedBy": "4a0baaa3fefdea398ce3b2676f2b0ee784cd9bac"
+      "sha256": "0808353ecf727a9b9321ea0e60dadbbab140deecb2ed1fab34c50543eca662be",
+      "updatedBy": "3b8045e98012fbba4e4ef4675f00e833cb296617"
     },
     {
       "source": "src/main/modelCatalog.ts",
@@ -459,8 +459,8 @@
     {
       "source": "src/renderer/src/components/OnboardingWizard.tsx",
       "target": "src/renderer/src/components/OnboardingWizard.tsx",
-      "sha256": "974c133cbfdb233acb7a00a9f4f6f92e85f2391a0c5106b538fa9f93357939cf",
-      "updatedBy": "fd1120eba241935084637d58dc943d84c3c497e2"
+      "sha256": "5a75e9545931d9ec3540190098ab4678a2ac7c116c76e0621a4fad6b2832ac09",
+      "updatedBy": "3b8045e98012fbba4e4ef4675f00e833cb296617"
     },
     {
       "source": "src/renderer/src/components/PixelBadge.tsx",
@@ -782,20 +782,20 @@
     {
       "source": "src/renderer/src/i18n/locales/ar.json",
       "target": "src/renderer/src/i18n/locales/ar.json",
-      "sha256": "379beb1c309c760978a7ad01f7df055fdaab1065a41756c291a5b95cd88e0a48",
-      "updatedBy": "4a0baaa3fefdea398ce3b2676f2b0ee784cd9bac"
+      "sha256": "df21ca0da5bfa3eb85589a3110917f4aee9ac3c1a25bf0098ab3748bed350eed",
+      "updatedBy": "3b8045e98012fbba4e4ef4675f00e833cb296617"
     },
     {
       "source": "src/renderer/src/i18n/locales/en.json",
       "target": "src/renderer/src/i18n/locales/en.json",
-      "sha256": "5af43775135c12ca4368e6016ea69c5f96173d7afe261270a3d9e9bf00afa3f5",
-      "updatedBy": "4a0baaa3fefdea398ce3b2676f2b0ee784cd9bac"
+      "sha256": "db415bb4373d089260416885a748d25aedb39da7db8890b2a6fbfe353e790bb6",
+      "updatedBy": "3b8045e98012fbba4e4ef4675f00e833cb296617"
     },
     {
       "source": "src/renderer/src/i18n/locales/zh-CN.json",
       "target": "src/renderer/src/i18n/locales/zh-CN.json",
-      "sha256": "2b4b98aa26c7f8168aa03870383b3f9d24e80fb21225bcc4b9b3920b4758c00d",
-      "updatedBy": "4a0baaa3fefdea398ce3b2676f2b0ee784cd9bac"
+      "sha256": "929c5811b5e941e4c32f118656c8b182ed4ccbe1a4d8bc71aa6965e7478e2b40",
+      "updatedBy": "3b8045e98012fbba4e4ef4675f00e833cb296617"
     },
     {
       "source": "src/renderer/src/i18n/useDirection.ts",
