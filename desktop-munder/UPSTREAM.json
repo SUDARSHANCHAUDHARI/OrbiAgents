@@ -111,8 +111,8 @@
     {
       "source": "src/main/index.ts",
       "target": "src/main/index.ts",
-      "sha256": "0808353ecf727a9b9321ea0e60dadbbab140deecb2ed1fab34c50543eca662be",
-      "updatedBy": "3b8045e98012fbba4e4ef4675f00e833cb296617"
+      "sha256": "fef7351246e7d61261ccec495d0e7624fdaf1a31e27d6db81a92589c6835c35c",
+      "updatedBy": "928e032a7e817ca6a203a2a26893711120366a2d"
     },
     {
       "source": "src/main/modelCatalog.ts",
@@ -185,7 +185,8 @@
     {
       "source": "src/main/realtimeActions.ts",
       "target": "src/main/realtimeActions.ts",
-      "sha256": "06616313b40b3fad322a88dbcf82f79c29542554e56ab1d2ce63cc793ea16c48"
+      "sha256": "a21c8004182e31bfe7ae0b2c13ea5056582806a9aab65c8a1ab8fd6c4affb339",
+      "updatedBy": "928e032a7e817ca6a203a2a26893711120366a2d"
     },
     {
       "source": "src/main/realtimeCompletionWatcher.ts",
@@ -1425,7 +1426,8 @@
     {
       "source": "test/hive-task-mutation.test.cjs",
       "target": "test/hive-task-mutation.test.cjs",
-      "sha256": "facf047be72a65cdea5c7f640e67217db92a8fcb9aecd3a49f0cb36125e5d72e"
+      "sha256": "d2f0cdad4030a15aea92173b1982fdc216ca69f6b952528c1f45afddd2b22c60",
+      "updatedBy": "928e032a7e817ca6a203a2a26893711120366a2d"
     },
     {
       "source": "test/hive-unknown-recipient.test.cjs",
