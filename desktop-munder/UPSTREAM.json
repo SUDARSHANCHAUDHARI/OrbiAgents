@@ -105,8 +105,8 @@
     {
       "source": "src/main/hooks.ts",
       "target": "src/main/hooks.ts",
-      "sha256": "056e3129402759b284c51fb9b90ba06c2dfafbfa90174ddb35a2e142b261dbe7",
-      "updatedBy": "718668312266f58a1d7416893d4732134fc71d98"
+      "sha256": "d67983a0b7d4adeb49bd8dcc227424615abd6cb44af29606d1f472643ef2a7c7",
+      "updatedBy": "daf242b24366a4c3dbc7ccbea0813eefd76af0f0"
     },
     {
       "source": "src/main/index.ts",
@@ -1515,6 +1515,12 @@
       "source": "test/node-install.test.cjs",
       "target": "test/node-install.test.cjs",
       "sha256": "54c89f4f867cf407c71366406fc09d2de537a49646e6da52839e2d71b88ec03b"
+    },
+    {
+      "source": "test/standing-goal-injection.test.cjs",
+      "target": "test/standing-goal-injection.test.cjs",
+      "sha256": "21909fdf8e2309fe616178e27d22ab141c4357d0b2522daf5181c16e27746d7b",
+      "updatedBy": "daf242b24366a4c3dbc7ccbea0813eefd76af0f0"
     },
     {
       "source": "test/office-gl-recovery.test.cjs",
