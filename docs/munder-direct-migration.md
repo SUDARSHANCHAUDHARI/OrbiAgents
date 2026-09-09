@@ -105,6 +105,11 @@ Task-ID visibility (2026-09-09): imported Munder commit
 show the complete task identifier used in messages and dispatches, without
 requiring the operator to open each card to identify it.
 
+Busy-terminal hold status (2026-09-09): imported Munder commit
+`2ef48bba1da43acecc339a7d898054cf0aee7a47`. Queued-message status now reports
+terminal drafts, command pickers, and exited terminals even while an agent is
+busy, instead of hiding the actionable blocker behind a generic queued label.
+
 ## Agreed goal
 
 Adopt Munder's actual desktop implementation and visual experience, not another approximation. Preserve OrbiAgents history and local data. Keep changes to upstream behavior minimal and explicit.
