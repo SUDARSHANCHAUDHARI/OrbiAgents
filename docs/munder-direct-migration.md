@@ -120,6 +120,11 @@ Remote model catalog (2026-09-09): adapted Munder PR #440 merge
 pickers use validated six-hour cached data with bundled and stale-cache fallbacks,
 and Settings provides an accessible manual refresh with honest offline status.
 
+Synchronous Hive Git maintenance (2026-09-09): imported Munder PR #406 merge
+`216094195973ce69c071c7f4cfaf0ee4918a8cf2`. Hive Git commands disable detached
+automatic garbage collection so commit completion is a true quiescent boundary
+for immediate reads and teardown.
+
 ## Agreed goal
 
 Adopt Munder's actual desktop implementation and visual experience, not another approximation. Preserve OrbiAgents history and local data. Keep changes to upstream behavior minimal and explicit.

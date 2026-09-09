@@ -2621,7 +2621,9 @@ export class HiveManager {
 
   // — git (single committer, retry + stale-lock recovery) —
   private git(args: string[], cwd: string): { ok: boolean; out: string; err: string } {
-    const res = spawnSync('git', ['-c', 'commit.gpgsign=false', '-c', 'user.name=Hive', '-c', 'user.email=hive@local', ...args], {
+    // Keep automatic maintenance attached to the command. Detached GC can keep
+    // writing .git/objects after spawnSync returns and race immediate teardown.
+    const res = spawnSync('git', ['-c', 'commit.gpgsign=false', '-c', 'gc.autoDetach=false', '-c', 'user.name=Hive', '-c', 'user.email=hive@local', ...args], {
       cwd, encoding: 'utf8', timeout: 8000
     });
     return { ok: res.status === 0, out: res.stdout ?? '', err: res.stderr ?? '' };
