@@ -172,6 +172,8 @@ Sources:
 
 ## Completion boundary
 
+Race-safe realtime task mutations (2026-09-09): voice create, assign, update, and delete actions now call the Hive's atomic task operations instead of writing a potentially stale whole-ledger snapshot. Failed atomic mutations return explicit spoken errors, and the existing task-mutation contract now covers the realtime action path.
+
 Per-file transcript usage cache parity (2026-09-09): each physical transcript tail is parsed once and accumulated into an unfiltered total plus per-session buckets, eliminating repeated parsing when several agents share a workspace. Filtered totals preserve input, output, cache read/write, model, and cost fields; records without a session ID remain unfiltered-only. Manual benchmark media and scripts were intentionally excluded from product source.
 
 Cross-platform power onboarding parity (2026-09-09): the reliability step now selects macOS, Windows, or Linux guidance from the isolated preload platform value. macOS and Windows expose their OS-owned power-settings deep links through the restricted allowlist; Linux shows desktop-environment guidance without a nonfunctional button. English, Arabic, and Simplified Chinese carry the complete platform-specific copy. Focused source contracts protect the platform routing, safe schemes, and locale keys.
