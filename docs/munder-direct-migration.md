@@ -172,6 +172,8 @@ Sources:
 
 ## Completion boundary
 
+Workspace-aware breaker progress (2026-09-09): the no-progress circuit now considers recent activity in each agent's own working directory alongside coordination files and tool events. The main beat samples only fixed workspace/Git metadata paths, avoiding directory walks; recent work prevents false trips while stale or unavailable signals retain the prior behavior.
+
 Isolated-worktree dependency parity (2026-09-09): newly created worker worktrees reuse an existing base-checkout `node_modules` through a platform-appropriate link, avoiding redundant installs while preserving isolation. Cleanup removes only a symlink whose resolved target is proven to be that base dependency directory, before dirty/integration checks; real or foreign dependency entries are left untouched.
 
 Race-safe realtime task mutations (2026-09-09): voice create, assign, update, and delete actions now call the Hive's atomic task operations instead of writing a potentially stale whole-ledger snapshot. Failed atomic mutations return explicit spoken errors, and the existing task-mutation contract now covers the realtime action path.

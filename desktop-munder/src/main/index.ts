@@ -1053,6 +1053,22 @@ function lastCoordinationAt(agentId: string): number {
   return Math.max(...times);
 }
 
+/** Newest cheap fixed-path signal that the agent changed its own workspace. */
+function lastWorkAt(agentId: string): number {
+  const cwd = hive.registry().agents[agentId]?.cwd;
+  if (!cwd) return 0;
+  const times: number[] = [0];
+  const pushMtime = (path: string): void => { try { times.push(statSync(path).mtimeMs); } catch { /* missing */ } };
+  pushMtime(cwd);
+  const git = join(cwd, '.git');
+  pushMtime(join(git, 'index'));
+  pushMtime(join(git, 'logs', 'HEAD'));
+  pushMtime(join(git, 'FETCH_HEAD'));
+  pushMtime(join(git, 'refs', 'remotes'));
+  pushMtime(join(git, 'packed-refs'));
+  return Math.max(...times);
+}
+
 /** PTY id owning a given agent id, or undefined. */
 function ptyForAgent(agentId: string): string | undefined {
   for (const [ptyId, a] of ptyToAgent) if (a === agentId) return ptyId;
@@ -1193,7 +1209,8 @@ function runBreakerBeat(progressWindowMs: number): void {
     inputs.push({
       agentId: id,
       sample,
-      progressing: now - lastCoordinationAt(id) < progressWindowMs || now - lastSpanAt < progressWindowMs
+      progressing: now - lastCoordinationAt(id) < progressWindowMs || now - lastSpanAt < progressWindowMs,
+      lastWorkAt: lastWorkAt(id)
     });
   }
   for (const d of breaker.tick(inputs, now)) {

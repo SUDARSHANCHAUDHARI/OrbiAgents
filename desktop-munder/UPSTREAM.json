@@ -16,7 +16,8 @@
     {
       "source": "src/main/breaker.ts",
       "target": "src/main/breaker.ts",
-      "sha256": "b9878deb2e3d0f73a971e049c3b5ffe52a8668a2fe29c4caa82182d449aef527"
+      "sha256": "6a5b0a49d8af03e3cdf767296e98b1d3b5015a51de4dce92e1963924897b5f10",
+      "updatedBy": "aa22f7e09411f9f91049bc5c839dc6809a53bcc5"
     },
     {
       "source": "src/main/cliInstall.ts",
@@ -111,8 +112,8 @@
     {
       "source": "src/main/index.ts",
       "target": "src/main/index.ts",
-      "sha256": "fd4cb0c24897387c9366b90ee08358f8b851d49af26205070500f91f65869c85",
-      "updatedBy": "12096fd04b2bb596ad021b5279afb222649390c0"
+      "sha256": "405d1904f1ef2f93fed973a7f58a40dfe9cf38d67ca429942f3bb1ca8843a537",
+      "updatedBy": "aa22f7e09411f9f91049bc5c839dc6809a53bcc5"
     },
     {
       "source": "src/main/modelCatalog.ts",
@@ -1284,7 +1285,8 @@
     {
       "source": "test/breaker.test.cjs",
       "target": "test/breaker.test.cjs",
-      "sha256": "24e57795b8b2b814c31b4a06750b3ccdce9f4674406c50ce5b9ff5e7a5bb328e"
+      "sha256": "933716822fa2c8fe22fdf9c36d137ebee856a97a0e128e45d6841bf348527baa",
+      "updatedBy": "aa22f7e09411f9f91049bc5c839dc6809a53bcc5"
     },
     {
       "source": "test/broadcast-targets.test.cjs",
