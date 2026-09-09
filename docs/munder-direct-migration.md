@@ -172,6 +172,8 @@ Sources:
 
 ## Completion boundary
 
+Per-file transcript usage cache parity (2026-09-09): each physical transcript tail is parsed once and accumulated into an unfiltered total plus per-session buckets, eliminating repeated parsing when several agents share a workspace. Filtered totals preserve input, output, cache read/write, model, and cost fields; records without a session ID remain unfiltered-only. Manual benchmark media and scripts were intentionally excluded from product source.
+
 Cross-platform power onboarding parity (2026-09-09): the reliability step now selects macOS, Windows, or Linux guidance from the isolated preload platform value. macOS and Windows expose their OS-owned power-settings deep links through the restricted allowlist; Linux shows desktop-environment guidance without a nonfunctional button. English, Arabic, and Simplified Chinese carry the complete platform-specific copy. Focused source contracts protect the platform routing, safe schemes, and locale keys.
 
 Standing-goal delivery parity (2026-09-09): durable agent briefings are delivered once per live session instead of being repeated on every prompt. Edits are injected once at the next prompt, clearing a goal explicitly revokes the previous briefing, and delivery state remains isolated per agent. Six focused regressions mirror upstream PR #367.

@@ -43,14 +43,15 @@ function makeProject() {
 }
 
 function rec(output, opts = {}) {
-  return JSON.stringify({
+  const record = {
     type: 'assistant',
-    sessionId: opts.sessionId ?? 's1',
     message: {
       model: opts.model ?? 'claude-haiku-4-5',
-      usage: { input_tokens: opts.input ?? 10, output_tokens: output, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 }
+      usage: { input_tokens: opts.input ?? 10, output_tokens: output, cache_read_input_tokens: opts.cacheRead ?? 0, cache_creation_input_tokens: opts.cacheWrite ?? 0 }
     }
-  });
+  };
+  if (opts.sessionId !== null) record.sessionId = opts.sessionId ?? 's1';
+  return JSON.stringify(record);
 }
 
 let failures = 0;
@@ -123,6 +124,28 @@ test('sessionId filter sums only that session, incrementally too', () => {
   assert.equal(readAgentUsage(cwd, { sessionId: 's1' }).outputTokens, 111);
   assert.equal(readAgentUsage(cwd, { sessionId: 's2' }).outputTokens, 1887);
   assert.equal(readAgentUsage(cwd).outputTokens, 1998, 'unfiltered still sums everything');
+});
+
+test('filtered totals preserve every usage field and model cost', () => {
+  const { cwd, dir } = makeProject();
+  fs.writeFileSync(path.join(dir, 'a.jsonl'),
+    rec(100, { sessionId: 's1', model: 'claude-haiku-4-5', input: 7, cacheRead: 3, cacheWrite: 5 }) + '\n' +
+    rec(200, { sessionId: 's2', model: 'claude-opus-4-8', input: 9, cacheRead: 11, cacheWrite: 13 }) + '\n');
+  const s1 = readAgentUsage(cwd, { sessionId: 's1' });
+  const s2 = readAgentUsage(cwd, { sessionId: 's2' });
+  const all = readAgentUsage(cwd);
+  const fields = (usage) => [usage.inputTokens, usage.outputTokens, usage.cacheReadTokens, usage.cacheWriteTokens];
+  assert.deepEqual(fields(s1), [7, 100, 3, 5]);
+  assert.deepEqual(fields(s2), [9, 200, 11, 13]);
+  assert.deepEqual(fields(all), [16, 300, 14, 18]);
+  assert.ok(Math.abs(s1.estimatedCostUsd + s2.estimatedCostUsd - all.estimatedCostUsd) < 1e-12);
+});
+
+test('records without a session id belong only to the unfiltered total', () => {
+  const { cwd, dir } = makeProject();
+  fs.writeFileSync(path.join(dir, 'a.jsonl'), rec(100, { sessionId: 's1' }) + '\n' + rec(400, { sessionId: null }) + '\n');
+  assert.equal(readAgentUsage(cwd, { sessionId: 's1' }).outputTokens, 100);
+  assert.equal(readAgentUsage(cwd).outputTokens, 500);
 });
 
 test('malformed lines and non-assistant records are skipped', () => {

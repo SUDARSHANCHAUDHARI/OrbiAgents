@@ -241,7 +241,8 @@
     {
       "source": "src/main/transcript.ts",
       "target": "src/main/transcript.ts",
-      "sha256": "e6e2c352cea21b0a376abee3e7089412589e44ceccfb9fcef109b9fd91f749dc"
+      "sha256": "a9cb029a0028f59ff7cbc6078a538cc96b39c7e0ea976c880e58fb34f2841f40",
+      "updatedBy": "cc4691fb0c3fd2daeb7e1da36ba42ab45527a047"
     },
     {
       "source": "src/main/triggerHistory.ts",
@@ -1704,7 +1705,8 @@
     {
       "source": "test/transcript-usage.test.cjs",
       "target": "test/transcript-usage.test.cjs",
-      "sha256": "b360fdaafa4a42f0bb0421a591836496aea2f586019cc74cca923f9e5cf2671c"
+      "sha256": "26f86314acf22155e128dd64538f3a033f0bddf17b505a7aa0f7a9d73e654131",
+      "updatedBy": "cc4691fb0c3fd2daeb7e1da36ba42ab45527a047"
     },
     {
       "source": "test/tui-theme-hint.test.cjs",
