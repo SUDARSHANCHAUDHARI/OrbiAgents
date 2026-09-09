@@ -15,6 +15,7 @@ import type {
 } from '@shared/triggers';
 import { isNewer } from '@shared/updateState';
 import modelCatalog from '@shared/modelCatalog.json';
+import type { CatalogModel, ModelCatalog } from '@shared/modelCatalogPayload';
 
 export {
   AGENT_PROVIDER_PRESETS,
@@ -174,18 +175,7 @@ export interface ModelOption {
  *  count as that release, it matches the update badge's own comparison, and the
  *  alternative would hide a new model from exactly the testers meant to
  *  exercise it. Bound a model to the release, not to its rc. */
-interface CatalogModel {
-  /** absent = use the CLI default (no --model flag) */
-  id?: string;
-  label: string;
-  minAppVersion?: string | null;
-  maxAppVersion?: string | null;
-}
-
-interface ModelCatalog {
-  version: number;
-  providers: Record<string, CatalogModel[]>;
-}
+export type { CatalogModel, ModelCatalog } from '@shared/modelCatalogPayload';
 
 /** The model presets every provider picker offers.
  *
@@ -242,7 +232,47 @@ interface ModelCatalog {
  *  - kimi: managed Kimi Code aliases accepted by `kimi --model <alias>`.
  *  - custom: no presets at all; the command field is the whole interface.
  */
-const CATALOG: ModelCatalog = modelCatalog;
+const BAKED: ModelCatalog = modelCatalog;
+let CATALOG: ModelCatalog = BAKED;
+
+export function applyRemoteModelCatalog(remote: ModelCatalog | null): boolean {
+  const next: ModelCatalog = remote
+    ? { version: BAKED.version, providers: { ...BAKED.providers, ...remote.providers } }
+    : BAKED;
+  if (JSON.stringify(next) === JSON.stringify(CATALOG)) return false;
+  CATALOG = next;
+  return true;
+}
+
+export const MODEL_CATALOG_EVENT = 'orbi:model-catalog';
+
+export interface ModelCatalogRefreshStatus {
+  changed: boolean;
+  available: boolean;
+  stale: boolean;
+  fetchedAt: number;
+}
+
+export async function refreshModelCatalogStatus(force = false): Promise<ModelCatalogRefreshStatus> {
+  try {
+    const bridge = (globalThis as { cth?: { modelCatalog?: (force?: boolean) => Promise<{
+      catalog: ModelCatalog | null; stale: boolean; fetchedAt: number;
+    }> } }).cth;
+    if (!bridge?.modelCatalog) return { changed: false, available: false, stale: true, fetchedAt: 0 };
+    const { catalog, stale, fetchedAt } = await bridge.modelCatalog(force);
+    const changed = applyRemoteModelCatalog(catalog);
+    if (changed && typeof window !== 'undefined') window.dispatchEvent(new CustomEvent(MODEL_CATALOG_EVENT));
+    return { changed, available: catalog !== null, stale, fetchedAt };
+  } catch {
+    return { changed: false, available: false, stale: true, fetchedAt: 0 };
+  }
+}
+
+export async function refreshModelCatalog(force = false): Promise<boolean> {
+  return (await refreshModelCatalogStatus(force)).changed;
+}
+
+if (typeof window !== 'undefined') void refreshModelCatalog();
 
 declare const __APP_VERSION__: string | undefined;
 
@@ -294,8 +324,10 @@ export function modelsForProvider(provider: AgentProvider): ModelOption[] {
   return modelsForProviderAtVersion(provider, runningAppVersion());
 }
 
-/** The Claude presets, for the surfaces that only ever offer Claude models. */
-export const AGENT_MODELS: ModelOption[] = modelsForProvider('claude');
+/** Dynamic Claude presets for surfaces that only offer Claude models. */
+export function agentModels(): ModelOption[] {
+  return modelsForProvider('claude');
+}
 
 /** Providers shown in the Command Center's cross-provider model picker.
  *  God must remain on a provider with a working inbox drain; otherwise switching

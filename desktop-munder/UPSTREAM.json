@@ -3,6 +3,12 @@
   "revision": "4ff5a158c253eae3f917a136a80a586e1fc60c2f",
   "entries": [
     {
+      "source": "docs/model-catalog.json",
+      "target": "docs/model-catalog.json",
+      "sha256": "2f2a5c1b0b5feb946c729092bfb9067b92df8383124dd418942a4733dd09817a",
+      "updatedBy": "4a0baaa3fefdea398ce3b2676f2b0ee784cd9bac"
+    },
+    {
       "source": "src/main/analytics.ts",
       "target": "src/main/analytics.ts",
       "sha256": "b6efb72ed673d3048af071b295be0ed6837ab931326b39022ab5d87ac75407ce"
@@ -105,8 +111,14 @@
     {
       "source": "src/main/index.ts",
       "target": "src/main/index.ts",
-      "sha256": "182e8713309296528a88102526d639e69db06a90e2754121c4f6ff2dc79db957",
-      "updatedBy": "087e32d90f441988ace8a41b524de6521a803d4f"
+      "sha256": "61a3bdce891403df924c3aba5f5136b44441d79ac90dde7e13c919b610e83d45",
+      "updatedBy": "4a0baaa3fefdea398ce3b2676f2b0ee784cd9bac"
+    },
+    {
+      "source": "src/main/modelCatalog.ts",
+      "target": "src/main/modelCatalog.ts",
+      "sha256": "09647dfe20f7853862dec2a20ac7f59a4c049a684111f2750e538ff58126f7e1",
+      "updatedBy": "4a0baaa3fefdea398ce3b2676f2b0ee784cd9bac"
     },
     {
       "source": "src/main/integrationBroker.ts",
@@ -275,7 +287,8 @@
     {
       "source": "src/preload/index.ts",
       "target": "src/preload/index.ts",
-      "sha256": "c9e258c1ee8fd31cf6f502f57c7375fd39d4a367d7f035ff0f580b1c72b3565b"
+      "sha256": "74d280e44ccb53aa35831c184653a80fa6977b5450e6c682c4303513df4c8cc1",
+      "updatedBy": "4a0baaa3fefdea398ce3b2676f2b0ee784cd9bac"
     },
     {
       "source": "src/renderer/index.html",
@@ -502,8 +515,8 @@
     {
       "source": "src/renderer/src/components/SettingsModal.tsx",
       "target": "src/renderer/src/components/SettingsModal.tsx",
-      "sha256": "ffe917c217743ef2fc81dcdcb2b4cc0da8afbe63082bdd7ac35a1e9daed70dac",
-      "updatedBy": "087e32d90f441988ace8a41b524de6521a803d4f"
+      "sha256": "bc080d1f907e7dbea7ecaff67a4b5b1dc98e93f6b33c678df766b21a3fa11342",
+      "updatedBy": "4a0baaa3fefdea398ce3b2676f2b0ee784cd9bac"
     },
     {
       "source": "src/renderer/src/components/SetupPanel.tsx",
@@ -769,20 +782,20 @@
     {
       "source": "src/renderer/src/i18n/locales/ar.json",
       "target": "src/renderer/src/i18n/locales/ar.json",
-      "sha256": "bd9d2bef54d08dbe9283133b8ce30ca1dc6f9a66a9a8d83b7284acb9cd283d51",
-      "updatedBy": "fd1120eba241935084637d58dc943d84c3c497e2"
+      "sha256": "379beb1c309c760978a7ad01f7df055fdaab1065a41756c291a5b95cd88e0a48",
+      "updatedBy": "4a0baaa3fefdea398ce3b2676f2b0ee784cd9bac"
     },
     {
       "source": "src/renderer/src/i18n/locales/en.json",
       "target": "src/renderer/src/i18n/locales/en.json",
-      "sha256": "990870396db6873d57be0e07536c046a43d53dfea46a65798e0553b38805dded",
-      "updatedBy": "fd1120eba241935084637d58dc943d84c3c497e2"
+      "sha256": "5af43775135c12ca4368e6016ea69c5f96173d7afe261270a3d9e9bf00afa3f5",
+      "updatedBy": "4a0baaa3fefdea398ce3b2676f2b0ee784cd9bac"
     },
     {
       "source": "src/renderer/src/i18n/locales/zh-CN.json",
       "target": "src/renderer/src/i18n/locales/zh-CN.json",
-      "sha256": "885316c6aa5bc7f96774a0c05c9bb904195caf9ae5e09898b8373de4372abf3a",
-      "updatedBy": "fd1120eba241935084637d58dc943d84c3c497e2"
+      "sha256": "2b4b98aa26c7f8168aa03870383b3f9d24e80fb21225bcc4b9b3920b4758c00d",
+      "updatedBy": "4a0baaa3fefdea398ce3b2676f2b0ee784cd9bac"
     },
     {
       "source": "src/renderer/src/i18n/useDirection.ts",
@@ -993,8 +1006,8 @@
     {
       "source": "src/renderer/src/store/config.ts",
       "target": "src/renderer/src/store/config.ts",
-      "sha256": "f69410514a9788faf1bd82f126597a0edc932d4295eedb866b91f5b72e5556be",
-      "updatedBy": "fd1120eba241935084637d58dc943d84c3c497e2"
+      "sha256": "fb1ac0f8266a99238e47f136f2e25edf7243fb2abce76a035815f8aa59748167",
+      "updatedBy": "4a0baaa3fefdea398ce3b2676f2b0ee784cd9bac"
     },
     {
       "source": "src/renderer/src/store/focusMode.ts",
@@ -1139,7 +1152,14 @@
     {
       "source": "src/shared/modelCatalog.json",
       "target": "src/shared/modelCatalog.json",
-      "sha256": "c1d09d6bb747d2f26cc59eaedf49a0406bc8d99e58e5ca21d423205472dff290"
+      "sha256": "6a71370801322652dc636078385a9a43eff1a0ca8277771992ec7a62fea04e40",
+      "updatedBy": "4a0baaa3fefdea398ce3b2676f2b0ee784cd9bac"
+    },
+    {
+      "source": "src/shared/modelCatalogPayload.ts",
+      "target": "src/shared/modelCatalogPayload.ts",
+      "sha256": "00a92cc613eee6705bb437d8754e8a9855a8fc015277494d395669ae7e145915",
+      "updatedBy": "4a0baaa3fefdea398ce3b2676f2b0ee784cd9bac"
     },
     {
       "source": "src/shared/ossModels.ts",
@@ -1482,7 +1502,14 @@
     {
       "source": "test/model-catalog.test.cjs",
       "target": "test/model-catalog.test.cjs",
-      "sha256": "8c9e44b8102c93de627f133f1441edf2db63bd54c178b7f1df68ba0b2637a3e0"
+      "sha256": "ae62e5eb0f4864a743ca0eacbd9f478821e1a485d74e5481068ce157d35cbfae",
+      "updatedBy": "4a0baaa3fefdea398ce3b2676f2b0ee784cd9bac"
+    },
+    {
+      "source": "test/model-catalog-remote.test.cjs",
+      "target": "test/model-catalog-remote.test.cjs",
+      "sha256": "5e29af9c5681857b3e632697b65b27d73047637b4f0082d3001ad6ce951a0d5b",
+      "updatedBy": "4a0baaa3fefdea398ce3b2676f2b0ee784cd9bac"
     },
     {
       "source": "test/node-install.test.cjs",
@@ -1523,8 +1550,8 @@
     {
       "source": "test/provider-config.test.cjs",
       "target": "test/provider-config.test.cjs",
-      "sha256": "433a82716f7925ef73b1e7225b7da75f016d0d0e329b9fea9af06aff5a27c251",
-      "updatedBy": "fd1120eba241935084637d58dc943d84c3c497e2"
+      "sha256": "c9402044c1e529f6dbee30a5c12d811207826e87bcb2f1279ad9f36999582cc5",
+      "updatedBy": "4a0baaa3fefdea398ce3b2676f2b0ee784cd9bac"
     },
     {
       "source": "test/proxy-bridge-retry.test.cjs",

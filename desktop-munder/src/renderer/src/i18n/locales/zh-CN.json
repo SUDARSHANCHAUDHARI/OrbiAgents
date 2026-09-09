@@ -242,6 +242,12 @@
     "agentsModels": {
       "defaultModel": "默认智能体模型",
       "defaultModelDesc": "每个新生成的 Claude 智能体（含 {{godName}}）默认使用此模型，除非按智能体单独选择。在模型选择器中标记为「· 默认」。",
+      "refreshCatalog": "刷新模型目录",
+      "refreshingCatalog": "正在刷新…",
+      "catalogUpdated": "模型目录已更新。",
+      "catalogCurrent": "正在使用最新的可用目录。",
+      "catalogCached": "离线：正在使用上次验证的目录。",
+      "catalogUnavailable": "无法刷新；继续使用内置模型。",
       "savedNote": "已保存——适用于新生成的智能体",
       "saveFailed": "保存失败",
       "advanced": "高级",

@@ -115,6 +115,11 @@ Repository-root skill resolution (2026-09-09): imported Munder commit
 entries now resolve the directory containing `SKILL.md` before applying download
 limits, preventing small nested skills from being rejected as oversized repos.
 
+Remote model catalog (2026-09-09): adapted Munder PR #440 merge
+`4a0baaa3fefdea398ce3b2676f2b0ee784cd9bac` to an Orbi-owned endpoint. Model
+pickers use validated six-hour cached data with bundled and stale-cache fallbacks,
+and Settings provides an accessible manual refresh with honest offline status.
+
 ## Agreed goal
 
 Adopt Munder's actual desktop implementation and visual experience, not another approximation. Preserve OrbiAgents history and local data. Keep changes to upstream behavior minimal and explicit.
