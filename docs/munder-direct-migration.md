@@ -172,6 +172,8 @@ Sources:
 
 ## Completion boundary
 
+Theme-relative task-board choreography (2026-09-11): workers carrying new, assigned, or completed task cards now walk beside the active theme's rendered board ensemble instead of stale upstream tiles. For the original OrbiAgents room, blocker, todo, and archive actions resolve to the verified walkable tiles 39/4, 41/4, and 43/4 beneath the board at 38/2. Source and collision regression tests plus reversible provenance protect the binding; live choreography timing remains a human review step.
+
 Theme-relative coffee steam (2026-09-11): the brewing animation now derives its position and depth from the active theme's coffee-machine stand instead of the imported office's hard-coded tile. In the original OrbiAgents room it therefore appears above the machine at tile 38/16 rather than unrelated workspace tile 26/17. A source regression test and reversible provenance entry protect the theme-relative binding; live visual timing remains a human review step.
 
 Original desk variety (2026-09-11): the 15 workstations now alternate between both complete horizontal designs on the approved ornate-desk sheet instead of repeating one silhouette throughout the workspace. Every desk retains its original 3×2 collision footprint, seat, accessory, and live-monitor coordinates. Furniture tests protect both crop families and their deterministic 8/7 distribution; visual acceptance remains a human review step.
