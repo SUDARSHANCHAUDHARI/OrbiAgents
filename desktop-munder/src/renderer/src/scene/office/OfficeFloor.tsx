@@ -1200,9 +1200,10 @@ export function OfficeFloor() {
         stand: Tile;
         thought: string;
       }
-      const PIN_STAND: Tile = { x: 8, y: 11 };      // under the blockers board
-      const TAKE_STAND: Tile = { x: 9, y: 11 };     // under the todo board
-      const ARCHIVE_STAND: Tile = { x: 12, y: 11 }; // beside the archive table
+      const boardStandY = BOARD_TILE.y + 2;
+      const PIN_STAND: Tile = { x: BOARD_TILE.x + 1, y: boardStandY };
+      const TAKE_STAND: Tile = { x: BOARD_TILE.x + 3, y: boardStandY };
+      const ARCHIVE_STAND: Tile = { x: BOARD_TILE.x + 5, y: boardStandY };
       /** What the boards currently SHOW (lags the ledger while moves play). */
       let visualTasks = new Map<string, BoardTask>();
       const moveQueue: BoardMove[] = [];
