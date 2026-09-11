@@ -172,6 +172,8 @@ Sources:
 
 ## Completion boundary
 
+Human-conversation breaker progress (2026-09-11): each `UserPromptSubmit` hook now stamps an expiring five-minute progress clock. Prose-only answers no longer look stalled merely because they touch no tools or workspace files; stale prompts still permit the no-progress breaker, and loop, error-storm, velocity, and budget arms remain independent.
+
 Work-token agent caps (2026-09-11): per-agent ceilings now measure input, output, and cache-creation tokens while excluding cache reads, preventing large reused contexts from prematurely stopping productive agents. Floor-wide budgets continue to count every token kind for cost protection. Command-center meters and localized limit guidance use the same distinction, with focused regressions covering cached reads, cache writes, cap reasons, and floor accounting.
 
 Workspace-aware breaker progress (2026-09-09): the no-progress circuit now considers recent activity in each agent's own working directory alongside coordination files and tool events. The main beat samples only fixed workspace/Git metadata paths, avoiding directory walks; recent work prevents false trips while stale or unavailable signals retain the prior behavior.

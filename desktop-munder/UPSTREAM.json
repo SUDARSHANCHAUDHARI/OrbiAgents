@@ -16,8 +16,8 @@
     {
       "source": "src/main/breaker.ts",
       "target": "src/main/breaker.ts",
-      "sha256": "4df4e37ebf97376bf61a7d7386cfee617161075bca0f105051a056c7a7e00943",
-      "updatedBy": "510cc21f56f585a7b47692fd22abc4e67b16ceba"
+      "sha256": "df695cf8c1982d58e6e1688740b4ac8a9a48e1c97fe671d36ce1c5362ca3c38c",
+      "updatedBy": "32dcc90ddb1d80beb2a318a2582128a2e3ec6d82"
     },
     {
       "source": "src/main/cliInstall.ts",
@@ -106,8 +106,8 @@
     {
       "source": "src/main/hooks.ts",
       "target": "src/main/hooks.ts",
-      "sha256": "d67983a0b7d4adeb49bd8dcc227424615abd6cb44af29606d1f472643ef2a7c7",
-      "updatedBy": "daf242b24366a4c3dbc7ccbea0813eefd76af0f0"
+      "sha256": "916d999d9250064a4e56a2fec24ccd806733bc924212eec7801e5bd657a07249",
+      "updatedBy": "32dcc90ddb1d80beb2a318a2582128a2e3ec6d82"
     },
     {
       "source": "src/main/index.ts",
@@ -1286,8 +1286,8 @@
     {
       "source": "test/breaker.test.cjs",
       "target": "test/breaker.test.cjs",
-      "sha256": "c313b0e25e17cd4fdcdafa04734e2a5bdd6e56ff9344f7f7fe50b7fd6ab67e73",
-      "updatedBy": "510cc21f56f585a7b47692fd22abc4e67b16ceba"
+      "sha256": "53b75d23144e11f4c98db2ef8387946de2bca58bddc3ce578b100620b6755c0f",
+      "updatedBy": "32dcc90ddb1d80beb2a318a2582128a2e3ec6d82"
     },
     {
       "source": "test/broadcast-targets.test.cjs",
