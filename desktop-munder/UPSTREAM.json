@@ -16,8 +16,8 @@
     {
       "source": "src/main/breaker.ts",
       "target": "src/main/breaker.ts",
-      "sha256": "df695cf8c1982d58e6e1688740b4ac8a9a48e1c97fe671d36ce1c5362ca3c38c",
-      "updatedBy": "32dcc90ddb1d80beb2a318a2582128a2e3ec6d82"
+      "sha256": "3323acf651f2923903f60d88b8200002e7d19ba3d2cebf4b22b944e966290118",
+      "updatedBy": "76ec0348a8d045e8afdb73f64390d561b7825bf6"
     },
     {
       "source": "src/main/cliInstall.ts",
@@ -1286,8 +1286,8 @@
     {
       "source": "test/breaker.test.cjs",
       "target": "test/breaker.test.cjs",
-      "sha256": "53b75d23144e11f4c98db2ef8387946de2bca58bddc3ce578b100620b6755c0f",
-      "updatedBy": "32dcc90ddb1d80beb2a318a2582128a2e3ec6d82"
+      "sha256": "2648d3f4715f74107cb79cfab99fc8e83a792259b85c8cef3072de6aac41c6a2",
+      "updatedBy": "76ec0348a8d045e8afdb73f64390d561b7825bf6"
     },
     {
       "source": "test/broadcast-targets.test.cjs",
