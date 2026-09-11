@@ -172,6 +172,8 @@ Sources:
 
 ## Completion boundary
 
+Approved room furniture density (2026-09-11): the boardroom table, café table, and kitchen sink now use grid-aligned crops from the already-approved LPC office sheets instead of generic procedural obstacle blocks. Every crop remains inside its existing collision footprint, so navigation and worker behavior are unchanged. Furniture tests protect exact tile coverage, required assets, and all prior reachable spawn points.
+
 Original room floor hierarchy (2026-09-11): the procedural OrbiAgents atlas now distinguishes workspace aisles, boardroom, café, entrance runner, and east-wing thresholds with eight original pixel-floor treatments. Stable monitor GIDs and collision geometry remain unchanged. Structural tests protect tile validity, full opacity, zone identity, and both doorway connections; visual acceptance remains a human review step.
 
 Pi custom-model propagation (2026-09-11): each isolated Pi worker directory now receives the operator's `~/.pi/agent/models.json` and `models-store.json` when those files exist. Missing files remain absent so Pi can use its defaults; no other global Pi data is copied. Three isolated-home regressions cover both files, neither file, and a partial configuration.
