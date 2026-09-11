@@ -128,6 +128,11 @@
       "before": "    init().catch((err) => {\n      disposeTheme?.();",
       "after": "    init().catch((err) => {\n      safeDestroy(app);\n      disposeTheme?.();",
       "reason": "Stop the failed scene before releasing theme textures."
+    },
+    {
+      "before": "      machineG.position.set(26 * ts0, 17 * ts0);\n      machineG.zIndex = 19 * ts0;",
+      "after": "      machineG.position.set(MACHINE_STAND.x * ts0, (MACHINE_STAND.y - 1) * ts0);\n      machineG.zIndex = (MACHINE_STAND.y - 1) * ts0;",
+      "reason": "Anchor brewing steam to the active theme's coffee machine instead of an upstream room coordinate."
     }
   ],
   "src/renderer/src/scene/office/portraitArt.ts": [

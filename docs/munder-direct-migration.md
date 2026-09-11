@@ -172,6 +172,8 @@ Sources:
 
 ## Completion boundary
 
+Theme-relative coffee steam (2026-09-11): the brewing animation now derives its position and depth from the active theme's coffee-machine stand instead of the imported office's hard-coded tile. In the original OrbiAgents room it therefore appears above the machine at tile 38/16 rather than unrelated workspace tile 26/17. A source regression test and reversible provenance entry protect the theme-relative binding; live visual timing remains a human review step.
+
 Original desk variety (2026-09-11): the 15 workstations now alternate between both complete horizontal designs on the approved ornate-desk sheet instead of repeating one silhouette throughout the workspace. Every desk retains its original 3×2 collision footprint, seat, accessory, and live-monitor coordinates. Furniture tests protect both crop families and their deterministic 8/7 distribution; visual acceptance remains a human review step.
 
 Original wall depth (2026-09-11): the procedural room atlas now gives the outer horizontal perimeter, side perimeter, east-wing divider, and doorway jambs distinct original pixel treatments. Existing floor and live-monitor GIDs, collision cells, and both east-wing passages remain unchanged. Structural tests protect opacity, wall roles, and open doorway centers; visual acceptance remains a human review step.
