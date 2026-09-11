@@ -33,6 +33,10 @@ export function createOfficeFurniture(entries) {
   stamp('boardroom-table', 'Card Table.png', 0, 0, 3, 2, 39, 6);
   stamp('cafe-table', 'Card Table.png', 0, 2, 3, 2, 38, 19);
   stamp('kitchen-sink', 'Sink.png', 0, 0, 1, 2, 42, 15);
+  // Wall-mounted details sit on the blocked top perimeter and therefore add
+  // visual landmarks without consuming a single walkable tile.
+  stamp('operations-display', 'TV, Widescreen.png', 0, 0, 3, 2, 38, 0);
+  stamp('team-mailboxes', 'Mailboxes.png', 0, 1, 3, 1, 28, 1);
   for (const prop of layout.props)
     stamp(prop.name, prop.image, prop.sx, prop.sy, prop.width, prop.height, prop.x, prop.y);
   return {
