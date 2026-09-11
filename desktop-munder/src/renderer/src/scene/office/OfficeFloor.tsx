@@ -495,8 +495,8 @@ export function OfficeFloor() {
 
       const machineG = new Graphics(); // steam over the counter machine while brewing
       machineG.eventMode = 'none';
-      machineG.position.set(26 * ts0, 17 * ts0);
-      machineG.zIndex = 19 * ts0;
+      machineG.position.set(MACHINE_STAND.x * ts0, (MACHINE_STAND.y - 1) * ts0);
+      machineG.zIndex = (MACHINE_STAND.y - 1) * ts0;
       charLayer.addChild(machineG);
       let machineBusy = 0;
       const drawMachine = (t: number): void => {
