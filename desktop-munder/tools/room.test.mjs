@@ -59,11 +59,28 @@ test('workspace, boardroom, café, entrance and doorways have distinct floor tre
   assert.equal(at(33, 24), 22);
 });
 
-test('all desks expose procedural off monitors for the live DeskScreen overlay', () => {
+test('all desks expose accessories beside procedural monitors', () => {
   const { map, desks } = createOfficeRoom(entries);
   const above = map.layers.find(l => l.name === 'furniture-above').data;
+  const accessoryImages = new Set();
   for (const desk of desks) {
+    const accessory = above[desk.y * map.width + desk.x];
+    const sheet = map.tilesets.find(t => accessory >= t.firstgid && accessory < t.firstgid + t.tilecount);
+    assert.ok(sheet, `desk ${desk.name} accessory has a valid tileset`);
+    accessoryImages.add(sheet.image);
     const x = desk.x + 1, y = desk.y;
     assert.deepEqual([above[y * map.width + x], above[y * map.width + x + 1], above[(y + 1) * map.width + x], above[(y + 1) * map.width + x + 1]], [7, 8, 9, 10]);
+  }
+  assert.deepEqual(accessoryImages, new Set([
+    'art/lpc-office/Laptop.png',
+    'art/lpc-office/Rotary Phones.png',
+    'art/lpc-office/Coffee Cup.png',
+  ]));
+});
+
+test('desk accessories require every approved source sheet', () => {
+  for (const image of ['Laptop.png', 'Rotary Phones.png', 'Coffee Cup.png']) {
+    const withoutImage = entries.filter(entry => entry.path !== `art/lpc-office/${image}`);
+    assert.throws(() => createOfficeRoom(withoutImage), new RegExp(`Missing desk accessory sheet: ${image.replace('.', '\\.')}`));
   }
 });
