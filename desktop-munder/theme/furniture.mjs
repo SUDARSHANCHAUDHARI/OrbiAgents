@@ -23,8 +23,10 @@ export function createOfficeFurniture(entries) {
     }
     placements.push({ name, image: sheet.image, sx, sy, width, height, x, y });
   };
-  for (const desk of layout.desks)
-    stamp(desk.name, 'Desk, Ornate.png', 0, 0, 3, 2, desk.x, desk.y);
+  // Alternate the sheet's two complete horizontal designs to keep the
+  // workstation grid legible without repeating one identical silhouette.
+  for (const [index, desk] of layout.desks.entries())
+    stamp(desk.name, 'Desk, Ornate.png', 0, index % 2 === 0 ? 0 : 2, 3, 2, desk.x, desk.y);
   stamp('coffee-machine', 'Coffee Maker.png', 0, 0, 1, 1,
     layout.coffee.machineStand.x, layout.coffee.machineStand.y - 1);
   // Replace the largest procedural obstacle blocks with approved LPC props.
