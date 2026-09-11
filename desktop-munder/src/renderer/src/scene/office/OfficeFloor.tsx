@@ -1143,7 +1143,7 @@ export function OfficeFloor() {
       const askG = new Graphics();
       askG.eventMode = 'static';
       askG.cursor = 'pointer';
-      const askBoardTile: Tile = { x: BOARD_TILE.x - 8, y: BOARD_TILE.y };
+      const askBoardTile: Tile = { x: BOARD_TILE.x - 3, y: BOARD_TILE.y };
       askG.position.set(askBoardTile.x * tsB, askBoardTile.y * tsB);
       askG.zIndex = (askBoardTile.y + 1) * tsB;
       askG.on('pointertap', (ev) => {

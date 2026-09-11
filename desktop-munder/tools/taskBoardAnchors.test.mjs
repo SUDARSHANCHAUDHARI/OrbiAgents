@@ -21,10 +21,17 @@ test('Orbi task-board choreography destinations are walkable', () => {
 });
 
 test('human-question board shares the active board band with clear Orbi tiles', () => {
-  assert.match(source, /const askBoardTile: Tile = \{ x: BOARD_TILE\.x - 8, y: BOARD_TILE\.y \}/);
+  assert.match(source, /const askBoardTile: Tile = \{ x: BOARD_TILE\.x - 3, y: BOARD_TILE\.y \}/);
   assert.match(source, /askG\.position\.set\(askBoardTile\.x \* tsB, askBoardTile\.y \* tsB\)/);
   assert.doesNotMatch(source, /askG\.position\.set\(14 \* tsB \+ 25, 10 \* tsB\)/);
   const { map } = createOfficeRoom(entries);
   const collision = map.layers.find(layer => layer.name === 'collision').data;
-  for (const x of [30, 31]) assert.equal(collision[2 * map.width + x], 0, `human board tile ${x},2`);
+  const below = map.layers.find(layer => layer.name === 'furniture-below').data;
+  const above = map.layers.find(layer => layer.name === 'furniture-above').data;
+  for (const x of [35, 36]) {
+    const index = 2 * map.width + x;
+    assert.equal(collision[index], 0, `human board tile ${x},2 collision`);
+    assert.equal(below[index], 0, `human board tile ${x},2 furniture below`);
+    assert.equal(above[index], 0, `human board tile ${x},2 furniture above`);
+  }
 });
