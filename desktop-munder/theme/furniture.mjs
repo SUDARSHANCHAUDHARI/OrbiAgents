@@ -27,6 +27,12 @@ export function createOfficeFurniture(entries) {
     stamp(desk.name, 'Desk, Ornate.png', 0, 0, 3, 2, desk.x, desk.y);
   stamp('coffee-machine', 'Coffee Maker.png', 0, 0, 1, 1,
     layout.coffee.machineStand.x, layout.coffee.machineStand.y - 1);
+  // Replace the largest procedural obstacle blocks with approved LPC props.
+  // Crops stay entirely inside the existing collision footprints, so this is
+  // visual density only and cannot change navigation.
+  stamp('boardroom-table', 'Card Table.png', 0, 0, 3, 2, 39, 6);
+  stamp('cafe-table', 'Card Table.png', 0, 2, 3, 2, 38, 19);
+  stamp('kitchen-sink', 'Sink.png', 0, 0, 1, 2, 42, 15);
   for (const prop of layout.props)
     stamp(prop.name, prop.image, prop.sx, prop.sy, prop.width, prop.height, prop.x, prop.y);
   return {
