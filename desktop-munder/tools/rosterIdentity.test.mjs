@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { createRequire, Module } from 'node:module';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
-import { WORKER_NAMES, workerColor, workerFrame } from '../theme/workerArt.mjs';
+import { WORKER_COLORS, WORKER_NAMES, workerColor, workerFrame } from '../theme/workerArt.mjs';
 const require = createRequire(new URL('../../desktop/package.json', import.meta.url));
 const { build } = await import(require.resolve('vite'));
 async function bundle(path) {
@@ -23,6 +23,15 @@ const picker = await bundle('components/OfficeThemePicker.tsx');
 
 test('all persisted roster keys retain original robot portrait and accent mapping', () => {
   assert.equal(WORKER_NAMES.length, 15);
+  assert.equal(WORKER_COLORS.length, WORKER_NAMES.length);
+  assert.equal(new Set(WORKER_NAMES.map(workerColor)).size, WORKER_NAMES.length,
+    'every persisted worker must have a distinct visual accent');
+  const channels = color => [color >> 16, (color >> 8) & 255, color & 255];
+  for (let i = 0; i < WORKER_COLORS.length; i++) for (let j = i + 1; j < WORKER_COLORS.length; j++) {
+    const a = channels(WORKER_COLORS[i]), b = channels(WORKER_COLORS[j]);
+    assert.ok(Math.hypot(...a.map((value, channel) => value - b[channel])) >= 40,
+      `worker accents ${i} and ${j} are too similar`);
+  }
   assert.deepEqual(cast.OFFICE_CAST.map(c => c.name), WORKER_NAMES);
   for (const [i, name] of WORKER_NAMES.entries()) {
     const pixels = portraits.portraitPixels(name);

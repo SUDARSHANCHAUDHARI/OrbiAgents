@@ -33,7 +33,7 @@ test('original robots have distinct directional and walking frames', () => {
     assert.equal(pixels[3], 0);
     seen.add(Buffer.from(pixels).toString('base64'));
   }
-  assert.equal(seen.size, 27);
+  assert.equal(seen.size, WORKER_COLORS.length * 9);
   assert.throws(() => workerFrame('left', 0, WORKER_COLORS[0]), /Unsupported/);
 });
 
