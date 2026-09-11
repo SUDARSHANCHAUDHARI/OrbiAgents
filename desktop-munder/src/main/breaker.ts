@@ -54,6 +54,8 @@ export interface BreakerInput {
   sample: AgentUsageSample | null;
   /** Did the agent make coordination progress recently (file-mtime signal)? */
   progressing: boolean;
+  /** Newest observed change in the agent's own working directory. */
+  lastWorkAt?: number;
 }
 
 const LEVELS: BreakerLevel[] = ['healthy', 'steering', 'constrained', 'stopped'];
@@ -332,7 +334,9 @@ export class CircuitBreaker {
         // arms above still backstop). Debounced: fires only after
         // NO_PROGRESS_BEATS consecutive beats, so a one-beat blip never steers.
         const toolActive = nowMs - s.lastDistinctToolAt < PROGRESS_TOOL_WINDOW_MS;
-        if (!input.progressing && !toolActive) {
+        const workActive = typeof input.lastWorkAt === 'number' && input.lastWorkAt > 0
+          && nowMs - input.lastWorkAt < PROGRESS_TOOL_WINDOW_MS;
+        if (!input.progressing && !toolActive && !workActive) {
           s.noProgressBeats += 1;
           if (s.noProgressBeats >= NO_PROGRESS_BEATS) {
             return { tripping: true, reason: 'no-progress: generating tokens without coordinating (stale log/files)' };

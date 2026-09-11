@@ -54,8 +54,8 @@ const T0 = 1_000_000_000_000; // fixed epoch base so tests are deterministic
 const BEAT = 30_000;
 
 /** Run one beat for a single agent; returns its decision. */
-function beat(b, id, s, progressing, now) {
-  return b.tick([{ agentId: id, sample: s, progressing }], now)[0];
+function beat(b, id, s, progressing, now, lastWorkAt) {
+  return b.tick([{ agentId: id, sample: s, progressing, lastWorkAt }], now)[0];
 }
 
 // ── regression: pre-existing trips still fire ────────────────────────────────
@@ -176,6 +176,33 @@ test('recent distinct tool calls exempt the no-progress trip', () => {
   b.recordToolUse('a', 'Read', { file: 'y' }, T0 + 2 * BEAT - 1000);
   const d = beat(b, 'a', sample('a', T0 + 2 * BEAT, 9000), false, T0 + 2 * BEAT);
   assert.equal(d.state.level, 'healthy', `reason: ${d.state.reason}`);
+});
+
+test('a recently changed working directory counts as progress', () => {
+  const b = makeBreaker();
+  beat(b, 'a', sample('a', T0, 0), false, T0, T0 - 1000);
+  beat(b, 'a', sample('a', T0 + BEAT, 5000), false, T0 + BEAT, T0 + BEAT - 1000);
+  const d = beat(b, 'a', sample('a', T0 + 2 * BEAT, 9000), false, T0 + 2 * BEAT, T0 + 2 * BEAT - 1000);
+  assert.equal(d.state.level, 'healthy', `reason: ${d.state.reason}`);
+});
+
+test('a stale working directory still trips the no-progress arm', () => {
+  const b = makeBreaker();
+  const stale = T0 - 10 * 60_000;
+  beat(b, 'a', sample('a', T0, 0), false, T0, stale);
+  beat(b, 'a', sample('a', T0 + BEAT, 5000), false, T0 + BEAT, stale);
+  const d = beat(b, 'a', sample('a', T0 + 2 * BEAT, 9000), false, T0 + 2 * BEAT, stale);
+  assert.equal(d.state.level, 'steering', `reason: ${d.state.reason}`);
+  assert.match(d.state.reason, /no-progress/);
+});
+
+test('an absent lastWorkAt preserves previous no-progress behavior', () => {
+  const b = makeBreaker();
+  beat(b, 'a', sample('a', T0, 0), false, T0);
+  beat(b, 'a', sample('a', T0 + BEAT, 5000), false, T0 + BEAT);
+  const d = beat(b, 'a', sample('a', T0 + 2 * BEAT, 9000), false, T0 + 2 * BEAT);
+  assert.equal(d.state.level, 'steering', `reason: ${d.state.reason}`);
+  assert.match(d.state.reason, /no-progress/);
 });
 
 test('REPEATED identical tool calls do not count as progress', () => {
