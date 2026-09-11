@@ -172,6 +172,8 @@ Sources:
 
 ## Completion boundary
 
+Pi custom-model propagation (2026-09-11): each isolated Pi worker directory now receives the operator's `~/.pi/agent/models.json` and `models-store.json` when those files exist. Missing files remain absent so Pi can use its defaults; no other global Pi data is copied. Three isolated-home regressions cover both files, neither file, and a partial configuration.
+
 Tool-key collision regressions (2026-09-11): the imported SHA-256 tool-call key now has the upstream long-common-prefix and 4,096-byte-boundary regression cases. Different Bash commands whose distinguishing text appears beyond the old 200-character horizon remain distinct, while genuinely identical long commands and deliberately capped strings still trip consistently.
 
 Human-conversation breaker progress (2026-09-11): each `UserPromptSubmit` hook now stamps an expiring five-minute progress clock. Prose-only answers no longer look stalled merely because they touch no tools or workspace files; stale prompts still permit the no-progress breaker, and loop, error-storm, velocity, and budget arms remain independent.
