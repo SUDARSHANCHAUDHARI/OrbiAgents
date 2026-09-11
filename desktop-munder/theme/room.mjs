@@ -3,7 +3,7 @@ import { createOfficeFurniture } from './furniture.mjs';
 // Original procedural surfaces, not derived from the excluded upstream atlas.
 // Six opaque surface tiles plus transparent 2x2 off/on monitor overlays.
 export function createRoomAtlas() {
-  const width = 352, height = 16;
+  const width = 416, height = 16;
   const pixels = new Uint8Array(width * height * 4);
   const palette = [[66, 78, 87], [160, 153, 134], [112, 82, 61],
     [78, 101, 111], [110, 72, 53], [155, 145, 119]];
@@ -52,9 +52,15 @@ export function createRoomAtlas() {
   fillTile(19, [118, 96, 70], (x, y, b) => x === 0 || y === 0 ? [151, 128, 90] : b);
   fillTile(20, [74, 66, 88], (x, y, b) => x < 2 || x > 13 ? [104, 88, 118] : y % 5 === 0 ? [84, 75, 99] : b);
   fillTile(21, [137, 119, 82], (x, y, b) => y < 3 || y > 12 ? [174, 149, 94] : x % 5 === 0 ? [151, 130, 88] : b);
+  // Original architectural wall faces. Existing monitor and floor GIDs stay
+  // stable; these variants only replace the old single-color wall tile.
+  fillTile(22, [48, 66, 78], (x, y, b) => y < 3 ? [86, 108, 119] : y > 12 ? [28, 42, 51] : x % 8 === 0 ? [55, 75, 87] : b);
+  fillTile(23, [45, 62, 74], (x, y, b) => x < 3 ? [79, 101, 113] : x > 12 ? [27, 40, 49] : y % 8 === 0 ? [52, 71, 83] : b);
+  fillTile(24, [61, 70, 91], (x, y, b) => x < 2 ? [103, 92, 123] : x > 12 ? [35, 38, 57] : y % 6 === 0 ? [70, 79, 101] : b);
+  fillTile(25, [117, 91, 48], (x, y, b) => x < 3 || x > 12 ? [174, 139, 65] : y < 2 ? [150, 119, 57] : y > 12 ? [70, 52, 33] : b);
   return { width, height, pixels, tileset: {
     firstgid: 1, image: 'orbi-original-room', imagewidth: width, imageheight: height,
-    tilewidth: 16, tileheight: 16, columns: 22, tilecount: 22,
+    tilewidth: 16, tileheight: 16, columns: 26, tilecount: 26,
   } };
 }
 
@@ -79,7 +85,11 @@ export function createOfficeRoom(entries) {
     else if (y >= 28 && x >= 18 && x <= 28) floor[i] = 21;
     else if ([7, 8, 13, 14, 19, 20, 25, 26, 31, 32].includes(x)) floor[i] = 16;
     else floor[i] = (x + y) % 7 === 0 ? 15 : 1;
-    if (walls[i]) wallTiles[i] = 4;
+    if (walls[i]) {
+      if (x === 33) wallTiles[i] = [10, 14, 22, 26, 30].includes(y) ? 26 : 25;
+      else if (y <= 1 || y === map.height - 1) wallTiles[i] = 23;
+      else wallTiles[i] = 24;
+    }
     // Make every remaining reserved table/counter footprint visible.
     if (collision[i] && !walls[i] && !furniture[i])
       furniture[i] = x >= 36 && x < 45 && y >= 15 && y < 17 ? 6 : 5;

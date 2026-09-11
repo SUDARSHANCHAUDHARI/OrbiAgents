@@ -34,7 +34,7 @@ test('original atlas has zone surfaces and transparent off/on monitor tiles', ()
   for (let tile = 0; tile < 6; tile++) for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++)
     assert.equal(atlas.pixels[(y * atlas.width + tile * 16 + x) * 4 + 3], 255);
   assert.equal(atlas.tileset.firstgid, 1);
-  assert.equal(atlas.tileset.tilecount, 22);
+  assert.equal(atlas.tileset.tilecount, 26);
   assert.deepEqual(atlas, createRoomAtlas());
   const colors = new Set(Array.from({ length: 6 }, (_, i) => atlas.pixels.slice(i * 64, i * 64 + 3).join(',')));
   assert.equal(colors.size, 6);
@@ -45,6 +45,8 @@ test('original atlas has zone surfaces and transparent off/on monitor tiles', ()
   }
   for (let tile = 14; tile < 22; tile++)
     assert.ok(alpha(tile).every(value => value === 255), `zone tile ${tile} opacity`);
+  for (let tile = 22; tile < 26; tile++)
+    assert.ok(alpha(tile).every(value => value === 255), `wall tile ${tile} opacity`);
 });
 
 test('workspace, boardroom, café, entrance and doorways have distinct floor treatments', () => {
@@ -57,6 +59,19 @@ test('workspace, boardroom, café, entrance and doorways have distinct floor tre
   assert.equal(at(23, 29), 21);
   assert.equal(at(33, 12), 22);
   assert.equal(at(33, 24), 22);
+});
+
+test('perimeter, side, divider and doorway-jamb walls remain structurally distinct', () => {
+  const { map } = createOfficeRoom(entries);
+  const walls = map.layers.find(l => l.name === 'walls').data;
+  const at = (x, y) => walls[y * map.width + x];
+  assert.equal(at(20, 0), 23);
+  assert.equal(at(0, 12), 24);
+  assert.equal(at(33, 8), 25);
+  assert.equal(at(33, 10), 26);
+  assert.equal(at(33, 14), 26);
+  assert.equal(at(33, 12), 0);
+  assert.equal(at(33, 24), 0);
 });
 
 test('all desks expose accessories beside procedural monitors', () => {
