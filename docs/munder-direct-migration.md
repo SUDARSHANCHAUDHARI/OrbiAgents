@@ -172,7 +172,7 @@ Sources:
 
 ## Completion boundary
 
-Theme-relative human board (2026-09-11): the interactive Ask Me board now shares the active theme's north-wall board band instead of floating at the imported office's workspace coordinate. In the original OrbiAgents room it occupies clear tiles 30–31/2, separated from the task-board ensemble while retaining its pulse and click behavior. Source and collision regression tests plus reversible provenance protect the placement; live interaction remains a human review step.
+Theme-relative human board (2026-09-11, clearance corrected 2026-09-12): the interactive Ask Me board now shares the active theme's north-wall board band instead of floating at the imported office's workspace coordinate. In the original OrbiAgents room it occupies empty tiles 35–36/2 between the mailbox bank and task-board ensemble, directly above the copier without overlapping it, while retaining its pulse and click behavior. Source, collision, and furniture-layer regression tests plus reversible provenance protect the placement; live interaction remains a human review step.
 
 Theme-relative task-board choreography (2026-09-11): workers carrying new, assigned, or completed task cards now walk beside the active theme's rendered board ensemble instead of stale upstream tiles. For the original OrbiAgents room, blocker, todo, and archive actions resolve to the verified walkable tiles 39/4, 41/4, and 43/4 beneath the board at 38/2. Source and collision regression tests plus reversible provenance protect the binding; live choreography timing remains a human review step.
 
