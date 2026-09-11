@@ -172,6 +172,8 @@ Sources:
 
 ## Completion boundary
 
+Work-token agent caps (2026-09-11): per-agent ceilings now measure input, output, and cache-creation tokens while excluding cache reads, preventing large reused contexts from prematurely stopping productive agents. Floor-wide budgets continue to count every token kind for cost protection. Command-center meters and localized limit guidance use the same distinction, with focused regressions covering cached reads, cache writes, cap reasons, and floor accounting.
+
 Workspace-aware breaker progress (2026-09-09): the no-progress circuit now considers recent activity in each agent's own working directory alongside coordination files and tool events. The main beat samples only fixed workspace/Git metadata paths, avoiding directory walks; recent work prevents false trips while stale or unavailable signals retain the prior behavior.
 
 Isolated-worktree dependency parity (2026-09-09): newly created worker worktrees reuse an existing base-checkout `node_modules` through a platform-appropriate link, avoiding redundant installs while preserving isolation. Cleanup removes only a symlink whose resolved target is proven to be that base dependency directory, before dirty/integration checks; real or foreign dependency entries are left untouched.
