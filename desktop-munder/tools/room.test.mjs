@@ -12,7 +12,7 @@ test('room layers cover every tile, show every obstacle, and preserve paths', ()
   const collision = map.layers.find(l => l.name === 'collision').data;
   assert.equal(new Set(map.layers.map(l => l.name)).size, map.layers.length);
   for (let i = 0; i < floor.length; i++) {
-    assert.ok(floor[i] >= 1 && floor[i] <= 3);
+    assert.ok(floor[i] === 1 || (floor[i] >= 15 && floor[i] <= 22));
     assert.equal(Boolean(walls[i] || furniture[i]), Boolean(collision[i]), `obstacle at ${i}`);
   }
   for (const layer of map.layers.filter(l => l.type === 'tilelayer')) {
@@ -28,13 +28,13 @@ test('room layers cover every tile, show every obstacle, and preserve paths', ()
   }
 });
 
-test('original atlas has six opaque surfaces and transparent off/on monitor tiles', () => {
+test('original atlas has zone surfaces and transparent off/on monitor tiles', () => {
   const atlas = createRoomAtlas();
   assert.equal(atlas.pixels.length, atlas.width * atlas.height * 4);
   for (let tile = 0; tile < 6; tile++) for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++)
     assert.equal(atlas.pixels[(y * atlas.width + tile * 16 + x) * 4 + 3], 255);
   assert.equal(atlas.tileset.firstgid, 1);
-  assert.equal(atlas.tileset.tilecount, 14);
+  assert.equal(atlas.tileset.tilecount, 22);
   assert.deepEqual(atlas, createRoomAtlas());
   const colors = new Set(Array.from({ length: 6 }, (_, i) => atlas.pixels.slice(i * 64, i * 64 + 3).join(',')));
   assert.equal(colors.size, 6);
@@ -43,6 +43,20 @@ test('original atlas has six opaque surfaces and transparent off/on monitor tile
     assert.ok(alpha(tile).some(value => value === 0), `monitor tile ${tile} transparency`);
     assert.ok(alpha(tile).some(value => value === 255), `monitor tile ${tile} pixels`);
   }
+  for (let tile = 14; tile < 22; tile++)
+    assert.ok(alpha(tile).every(value => value === 255), `zone tile ${tile} opacity`);
+});
+
+test('workspace, boardroom, café, entrance and doorways have distinct floor treatments', () => {
+  const { map } = createOfficeRoom(entries);
+  const floor = map.layers.find(l => l.name === 'floor').data;
+  const at = (x, y) => floor[y * map.width + x];
+  assert.ok([1, 15, 16].includes(at(5, 10)));
+  assert.ok([17, 18].includes(at(40, 8)));
+  assert.ok([19, 20].includes(at(40, 24)));
+  assert.equal(at(23, 29), 21);
+  assert.equal(at(33, 12), 22);
+  assert.equal(at(33, 24), 22);
 });
 
 test('all desks expose procedural off monitors for the live DeskScreen overlay', () => {
