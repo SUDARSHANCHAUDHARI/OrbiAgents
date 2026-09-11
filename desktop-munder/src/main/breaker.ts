@@ -67,6 +67,16 @@ const actionFor = (l: BreakerLevel): BreakerAction =>
 const tokensOf = (s: AgentUsageSample | null): number =>
   s ? s.input + s.output + s.cacheRead + s.cacheCreation : 0;
 
+/** Tokens an agent's own WORK put through the model — prompt input, generated
+ *  output, context newly written to the cache — 0 when unknown. Excludes
+ *  cacheRead: cached context is re-billed on every request, so that part of the
+ *  total grows with the request count against a large fixed context, not with
+ *  what the agent does (#189: 98.6% and 99.2% of the counted figure at the rows
+ *  where two agents crossed a 4M cap, 4–6 minutes into a session). A per-agent
+ *  BUDGET is tested against this; tokensOf() stays the display/cost figure. */
+const workTokensOf = (s: AgentUsageSample | null): number =>
+  s ? s.input + s.output + s.cacheCreation : 0;
+
 const DEFAULTS = {
   enabled: true,
   hardStop: false,
@@ -301,10 +311,18 @@ export class CircuitBreaker {
     if (s.errorCount >= cfg.errorStormLimit) {
       return { tripping: true, reason: `error storm: ${s.errorCount} consecutive api errors/retries` };
     }
-    // (a) per-agent token limit — this agent's own total over its configured cap
+    // (a) per-agent token limit — this agent's own WORK tokens over its configured
+    // cap. Measured without cacheRead (#189): tested against the all-kinds total,
+    // a cap is a timer on session length — context re-read on every request
+    // dominates it — and an agent stopped four minutes in for re-reads it does not
+    // control learns to distrust the breaker. The reason names both figures so an
+    // operator can see what tripped and what the agent cost.
     const perAgentCap = cfg.agentTokenCaps?.[input.agentId];
-    if (typeof perAgentCap === 'number' && perAgentCap > 0 && tokensOf(input.sample) > perAgentCap) {
-      return { tripping: true, reason: `token limit: ${tokensOf(input.sample).toLocaleString()} over the agent cap of ${perAgentCap.toLocaleString()}` };
+    if (typeof perAgentCap === 'number' && perAgentCap > 0) {
+      const work = workTokensOf(input.sample);
+      if (work > perAgentCap) {
+        return { tripping: true, reason: `token limit: ${work.toLocaleString()} work tokens over the agent cap of ${perAgentCap.toLocaleString()} (${tokensOf(input.sample).toLocaleString()} total incl. cache reads)` };
+      }
     }
     // (a) cost cap — floor total over cap, this agent is the biggest spender
     if (isTopSpender && typeof costCapUsd === 'number') {

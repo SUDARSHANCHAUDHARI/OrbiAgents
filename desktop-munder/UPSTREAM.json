@@ -16,8 +16,8 @@
     {
       "source": "src/main/breaker.ts",
       "target": "src/main/breaker.ts",
-      "sha256": "6a5b0a49d8af03e3cdf767296e98b1d3b5015a51de4dce92e1963924897b5f10",
-      "updatedBy": "aa22f7e09411f9f91049bc5c839dc6809a53bcc5"
+      "sha256": "4df4e37ebf97376bf61a7d7386cfee617161075bca0f105051a056c7a7e00943",
+      "updatedBy": "510cc21f56f585a7b47692fd22abc4e67b16ceba"
     },
     {
       "source": "src/main/cliInstall.ts",
@@ -32,8 +32,8 @@
     {
       "source": "src/main/config.ts",
       "target": "src/main/config.ts",
-      "sha256": "f293a48534a92dbfac6fff5b2d00aa9fca3b0b7c5fd78ebe62097f362ff1efb4",
-      "updatedBy": "1ea876c1cba7bb308f0c9bfae7cdff3b02e39764"
+      "sha256": "f971d2c1b09390b04be80d654e58171417b1b76c122c16717daf33e73fc77e97",
+      "updatedBy": "510cc21f56f585a7b47692fd22abc4e67b16ceba"
     },
     {
       "source": "src/main/control.ts",
@@ -392,7 +392,8 @@
     {
       "source": "src/renderer/src/components/CommandCenterPanel.tsx",
       "target": "src/renderer/src/components/CommandCenterPanel.tsx",
-      "sha256": "03a06f4f225131c99c86ed678d534760b1eb06992823a443ec8d5d675a487086"
+      "sha256": "138cdec43b933ff638635df07a0350102104b4c5bcd614e64a3f38dee0de5aed",
+      "updatedBy": "510cc21f56f585a7b47692fd22abc4e67b16ceba"
     },
     {
       "source": "src/renderer/src/components/EditAgentModal.tsx",
@@ -791,20 +792,20 @@
     {
       "source": "src/renderer/src/i18n/locales/ar.json",
       "target": "src/renderer/src/i18n/locales/ar.json",
-      "sha256": "df21ca0da5bfa3eb85589a3110917f4aee9ac3c1a25bf0098ab3748bed350eed",
-      "updatedBy": "3b8045e98012fbba4e4ef4675f00e833cb296617"
+      "sha256": "c7bf1ec626cc35356c3f12d40377c94e283efd1c8e5ca6c674ead685ef67726f",
+      "updatedBy": "510cc21f56f585a7b47692fd22abc4e67b16ceba"
     },
     {
       "source": "src/renderer/src/i18n/locales/en.json",
       "target": "src/renderer/src/i18n/locales/en.json",
-      "sha256": "db415bb4373d089260416885a748d25aedb39da7db8890b2a6fbfe353e790bb6",
-      "updatedBy": "3b8045e98012fbba4e4ef4675f00e833cb296617"
+      "sha256": "71a1016e50bbc3cc0d17c03b7ae4726c7d88acfa586e6428bbb4536aaf8a83fc",
+      "updatedBy": "510cc21f56f585a7b47692fd22abc4e67b16ceba"
     },
     {
       "source": "src/renderer/src/i18n/locales/zh-CN.json",
       "target": "src/renderer/src/i18n/locales/zh-CN.json",
-      "sha256": "929c5811b5e941e4c32f118656c8b182ed4ccbe1a4d8bc71aa6965e7478e2b40",
-      "updatedBy": "3b8045e98012fbba4e4ef4675f00e833cb296617"
+      "sha256": "512247bb78bf388a36b8fdf628d8be7610f4eb2856ff340459d315ee2ffb48b3",
+      "updatedBy": "510cc21f56f585a7b47692fd22abc4e67b16ceba"
     },
     {
       "source": "src/renderer/src/i18n/useDirection.ts",
@@ -1285,8 +1286,8 @@
     {
       "source": "test/breaker.test.cjs",
       "target": "test/breaker.test.cjs",
-      "sha256": "933716822fa2c8fe22fdf9c36d137ebee856a97a0e128e45d6841bf348527baa",
-      "updatedBy": "aa22f7e09411f9f91049bc5c839dc6809a53bcc5"
+      "sha256": "c313b0e25e17cd4fdcdafa04734e2a5bdd6e56ff9344f7f7fe50b7fd6ab67e73",
+      "updatedBy": "510cc21f56f585a7b47692fd22abc4e67b16ceba"
     },
     {
       "source": "test/broadcast-targets.test.cjs",
