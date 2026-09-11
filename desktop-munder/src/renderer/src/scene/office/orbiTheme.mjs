@@ -1,7 +1,7 @@
 import { Texture, BufferImageSource } from 'pixi.js';
 import { createOfficeRoom } from '../../../../../theme/room.mjs';
 import { prepareLpcTexture } from '../../../../../theme/lpcTextures.mjs';
-import { createWorkerTextures, WORKER_COLORS, WORKER_NAMES, workerColor } from '../../../../../theme/workerArt.mjs';
+import { createWorkerTextures, WORKER_NAMES, workerColor } from '../../../../../theme/workerArt.mjs';
 import manifest from '../../../../../art/manifest.json';
 
 const urls = import.meta.glob('../../../../../art/lpc-office/*.png', { eager: true, query: '?url', import: 'default' });
@@ -35,9 +35,9 @@ export function createOrbiTheme() {
       defaultCharacter: 'jim',
       async getFrames(name) {
         if (disposed) throw new Error('Theme disposed');
-        const index = Math.max(0, names.indexOf(name)) % 3;
-        if (!workers.has(index)) workers.set(index, createWorkerTextures({ Texture, BufferImageSource }, WORKER_COLORS[index]));
-        return workers.get(index).frames;
+        const color = workerColor(name);
+        if (!workers.has(color)) workers.set(color, createWorkerTextures({ Texture, BufferImageSource }, color));
+        return workers.get(color).frames;
       },
     },
     async loadTextures(load) {

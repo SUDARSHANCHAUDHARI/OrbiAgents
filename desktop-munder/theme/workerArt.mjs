@@ -1,12 +1,18 @@
 // Original OrbiAgents robot design. No TV-character recipes or external pixels.
 export const WORKER_WIDTH = 18;
 export const WORKER_HEIGHT = 32;
-export const WORKER_COLORS = [0x57c8bd, 0xe3b45f, 0xaa95d8];
+// One high-contrast accent per persisted worker. Geometry stays shared so the
+// fleet reads as one robot family, while color makes individuals recognizable.
+export const WORKER_COLORS = [
+  0x57c8bd, 0xe3b45f, 0xaa95d8, 0xe15759, 0x4e79a7,
+  0x59a14f, 0xf28e2b, 0xb07aa1, 0xff9da7, 0x9c755f,
+  0x17becf, 0xbcbd22, 0x9467bd, 0x8c564b, 0x2f4b7c,
+];
 // Persisted keys remain stable while display names/art are OrbiAgents-owned.
 export const WORKER_NAMES = ['michael', 'jim', 'pam', 'dwight', 'kevin', 'angela', 'oscar', 'stanley', 'phyllis', 'andy', 'kelly', 'ryan', 'toby', 'creed', 'meredith'];
 export function workerColor(name) {
   const index = WORKER_NAMES.indexOf(name);
-  return WORKER_COLORS[(index < 0 ? 1 : index) % WORKER_COLORS.length];
+  return WORKER_COLORS[index < 0 ? 1 : index];
 }
 export function workerFrame(direction, step, accent) {
   if (!['down', 'up', 'right'].includes(direction) || ![0, 1, 2].includes(step) || !WORKER_COLORS.includes(accent))
