@@ -9,8 +9,8 @@ test('furniture stamps resolve only approved source cells and match blocked foot
   const data = map.layers.find(l => l.name === 'furniture-below').data;
   const collision = map.layers.find(l => l.name === 'collision').data;
   const spawns = map.layers.find(l => l.name === 'spawn-points').objects;
-  assert.equal(placements.length, 23);
-  assert.equal(data.filter(Boolean).length, 113);
+  assert.equal(placements.length, 25);
+  assert.equal(data.filter(Boolean).length, 122);
   for (const placement of placements) {
     const sheet = map.tilesets.find(t => t.image === placement.image);
     for (let dy = 0; dy < placement.height; dy++) for (let dx = 0; dx < placement.width; dx++) {
@@ -30,7 +30,7 @@ test('furniture stamps resolve only approved source cells and match blocked foot
   const machine = placements.find(p => p.name === 'coffee-machine');
   assert.equal(machine.x, coffee.machineStand.x);
   assert.equal(machine.y + 1, coffee.machineStand.y);
-  for (const name of ['boardroom-table', 'cafe-table', 'kitchen-sink', 'water-cooler', 'copy-machine', 'bin-entry', 'bin-cafe'])
+  for (const name of ['boardroom-table', 'cafe-table', 'kitchen-sink', 'operations-display', 'team-mailboxes', 'water-cooler', 'copy-machine', 'bin-entry', 'bin-cafe'])
     assert.ok(placements.some(p => p.name === name), name);
 });
 
@@ -40,4 +40,6 @@ test('missing required art fails instead of silently rendering an empty scene', 
   assert.throws(() => createOfficeFurniture(entries.filter(e => !e.path.endsWith('Water Cooler.png'))), /Missing furniture sheet/);
   assert.throws(() => createOfficeFurniture(entries.filter(e => !e.path.endsWith('Card Table.png'))), /Missing furniture sheet/);
   assert.throws(() => createOfficeFurniture(entries.filter(e => !e.path.endsWith('Sink.png'))), /Missing furniture sheet/);
+  assert.throws(() => createOfficeFurniture(entries.filter(e => !e.path.endsWith('TV, Widescreen.png'))), /Missing furniture sheet/);
+  assert.throws(() => createOfficeFurniture(entries.filter(e => !e.path.endsWith('Mailboxes.png'))), /Missing furniture sheet/);
 });
