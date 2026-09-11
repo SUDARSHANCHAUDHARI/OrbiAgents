@@ -138,6 +138,11 @@
       "before": "      const PIN_STAND: Tile = { x: 8, y: 11 };      // under the blockers board\n      const TAKE_STAND: Tile = { x: 9, y: 11 };     // under the todo board\n      const ARCHIVE_STAND: Tile = { x: 12, y: 11 }; // beside the archive table",
       "after": "      const boardStandY = BOARD_TILE.y + 2;\n      const PIN_STAND: Tile = { x: BOARD_TILE.x + 1, y: boardStandY };\n      const TAKE_STAND: Tile = { x: BOARD_TILE.x + 3, y: boardStandY };\n      const ARCHIVE_STAND: Tile = { x: BOARD_TILE.x + 5, y: boardStandY };",
       "reason": "Keep task-card choreography beside the active theme's boards instead of walking workers to upstream room coordinates."
+    },
+    {
+      "before": "      askG.position.set(14 * tsB + 25, 10 * tsB);\n      askG.zIndex = 11 * tsB;",
+      "after": "      const askBoardTile: Tile = { x: BOARD_TILE.x - 8, y: BOARD_TILE.y };\n      askG.position.set(askBoardTile.x * tsB, askBoardTile.y * tsB);\n      askG.zIndex = (askBoardTile.y + 1) * tsB;",
+      "reason": "Place the human-question board on the active theme's board band instead of a stale upstream workspace coordinate."
     }
   ],
   "src/renderer/src/scene/office/portraitArt.ts": [
