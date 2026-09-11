@@ -66,6 +66,11 @@ export function createOfficeRoom(entries) {
   const furniture = map.layers.find(l => l.name === 'furniture-below').data;
   const furnitureAbove = Array(floor.length).fill(0);
   const collision = map.layers.find(l => l.name === 'collision').data;
+  const accessoryGid = (image, sx = 0, sy = 0) => {
+    const sheet = map.tilesets.find(t => t.image === `art/lpc-office/${image}`);
+    if (!sheet) throw new Error(`Missing desk accessory sheet: ${image}`);
+    return sheet.firstgid + sy * sheet.columns + sx;
+  };
   for (let y = 0; y < map.height; y++) for (let x = 0; x < map.width; x++) {
     const i = y * map.width + x;
     if (x === 33 && ((y >= 11 && y <= 13) || (y >= 23 && y <= 25))) floor[i] = 22;
@@ -81,7 +86,14 @@ export function createOfficeRoom(entries) {
   }
   // Every desk gets the original procedural off-monitor block. DeskScreen
   // overlays gids 11..14 while its worker is seated and animates inside it.
-  for (const desk of result.desks) {
+  const accessories = [
+    ['Laptop.png', 0, 0],
+    ['Rotary Phones.png', 1, 0],
+    ['Coffee Cup.png', 0, 0],
+  ];
+  for (const [index, desk] of result.desks.entries()) {
+    const [image, sx, sy] = accessories[index % accessories.length];
+    furnitureAbove[desk.y * map.width + desk.x] = accessoryGid(image, sx, sy);
     const x = desk.x + 1, y = desk.y;
     furnitureAbove[y * map.width + x] = 7;
     furnitureAbove[y * map.width + x + 1] = 8;

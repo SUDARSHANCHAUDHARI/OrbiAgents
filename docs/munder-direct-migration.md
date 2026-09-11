@@ -172,6 +172,8 @@ Sources:
 
 ## Completion boundary
 
+Original desk accessories (2026-09-11): every workstation now has a deterministic laptop, rotary phone, or coffee-cup overlay drawn from the approved LPC sheets. Accessories occupy the desk column beside the existing four-tile live monitor, so animated screens, collision geometry, and worker paths remain unchanged. Structural tests protect valid tile ownership, all three accessory families, monitor coverage, and required-asset failures; visual acceptance remains a human review step.
+
 Original room wall landmarks (2026-09-11): an operations display and team mailbox bank now use approved LPC crops on the already-blocked top perimeter. They add recognizable destinations to the boardroom/workspace boundary without consuming walkable floor area or changing navigation. Furniture tests protect their exact coverage and required-asset behavior.
 
 Approved room furniture density (2026-09-11): the boardroom table, café table, and kitchen sink now use grid-aligned crops from the already-approved LPC office sheets instead of generic procedural obstacle blocks. Every crop remains inside its existing collision footprint, so navigation and worker behavior are unchanged. Furniture tests protect exact tile coverage, required assets, and all prior reachable spawn points.
