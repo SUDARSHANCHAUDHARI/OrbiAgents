@@ -172,6 +172,8 @@ Sources:
 
 ## Completion boundary
 
+Original wall depth (2026-09-11): the procedural room atlas now gives the outer horizontal perimeter, side perimeter, east-wing divider, and doorway jambs distinct original pixel treatments. Existing floor and live-monitor GIDs, collision cells, and both east-wing passages remain unchanged. Structural tests protect opacity, wall roles, and open doorway centers; visual acceptance remains a human review step.
+
 Original desk accessories (2026-09-11): every workstation now has a deterministic laptop, rotary phone, or coffee-cup overlay drawn from the approved LPC sheets. Accessories occupy the desk column beside the existing four-tile live monitor, so animated screens, collision geometry, and worker paths remain unchanged. Structural tests protect valid tile ownership, all three accessory families, monitor coverage, and required-asset failures; visual acceptance remains a human review step.
 
 Original room wall landmarks (2026-09-11): an operations display and team mailbox bank now use approved LPC crops on the already-blocked top perimeter. They add recognizable destinations to the boardroom/workspace boundary without consuming walkable floor area or changing navigation. Furniture tests protect their exact coverage and required-asset behavior.
