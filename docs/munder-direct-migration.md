@@ -172,6 +172,8 @@ Sources:
 
 ## Completion boundary
 
+Original desk variety (2026-09-11): the 15 workstations now alternate between both complete horizontal designs on the approved ornate-desk sheet instead of repeating one silhouette throughout the workspace. Every desk retains its original 3×2 collision footprint, seat, accessory, and live-monitor coordinates. Furniture tests protect both crop families and their deterministic 8/7 distribution; visual acceptance remains a human review step.
+
 Original wall depth (2026-09-11): the procedural room atlas now gives the outer horizontal perimeter, side perimeter, east-wing divider, and doorway jambs distinct original pixel treatments. Existing floor and live-monitor GIDs, collision cells, and both east-wing passages remain unchanged. Structural tests protect opacity, wall roles, and open doorway centers; visual acceptance remains a human review step.
 
 Original desk accessories (2026-09-11): every workstation now has a deterministic laptop, rotary phone, or coffee-cup overlay drawn from the approved LPC sheets. Accessories occupy the desk column beside the existing four-tile live monitor, so animated screens, collision geometry, and worker paths remain unchanged. Structural tests protect valid tile ownership, all three accessory families, monitor coverage, and required-asset failures; visual acceptance remains a human review step.

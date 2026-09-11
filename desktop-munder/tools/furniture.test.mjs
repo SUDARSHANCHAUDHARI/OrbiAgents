@@ -26,6 +26,12 @@ test('furniture stamps resolve only approved source cells and match blocked foot
     assert.equal(stamp.width, desk.width);
     assert.equal(stamp.height, desk.height);
   }
+  const deskStyles = placements
+    .filter(placement => desks.some(desk => desk.name === placement.name))
+    .map(placement => placement.sy);
+  assert.deepEqual(new Set(deskStyles), new Set([0, 2]));
+  assert.equal(deskStyles.filter(sy => sy === 0).length, 8);
+  assert.equal(deskStyles.filter(sy => sy === 2).length, 7);
   for (const spawn of spawns) assert.equal(data[(spawn.y / 16) * map.width + spawn.x / 16], 0);
   const machine = placements.find(p => p.name === 'coffee-machine');
   assert.equal(machine.x, coffee.machineStand.x);
