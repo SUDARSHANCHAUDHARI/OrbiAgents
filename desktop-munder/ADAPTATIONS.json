@@ -100,6 +100,11 @@
   ],
   "src/renderer/src/scene/office/OfficeFloor.tsx": [
     {
+      "before": "import { Application, Container, Graphics, Ticker, Texture } from 'pixi.js';",
+      "after": "import { AnimatedSprite, Application, Container, Graphics, Ticker, Texture } from 'pixi.js';",
+      "reason": "Animate the approved copier scanner-light frames in the replacement room."
+    },
+    {
       "before": "    const app = new Application();\n",
       "after": "    let disposeTheme: (() => void) | undefined;\n    const app = new Application();\n",
       "reason": "Load replacement theme textures and release scene-owned resources on failure, stale mount and teardown."
@@ -143,6 +148,11 @@
       "before": "      askG.position.set(14 * tsB + 25, 10 * tsB);\n      askG.zIndex = 11 * tsB;",
       "after": "      const askBoardTile: Tile = { x: BOARD_TILE.x - 3, y: BOARD_TILE.y };\n      askG.position.set(askBoardTile.x * tsB, askBoardTile.y * tsB);\n      askG.zIndex = (askBoardTile.y + 1) * tsB;",
       "reason": "Place the human-question board on the active theme's board band instead of a stale upstream workspace coordinate."
+    },
+    {
+      "before": "      const camera = new Camera(world);",
+      "after": "      // The approved LPC copier includes a separate eight-frame scanner-light\n      // strip. Resolve both sheets through their map metadata, then locate the\n      // body by GID so this ambient animation follows any compatible room.\n      const copierBodySheet = theme.tilesets.find(sheet => sheet.image?.endsWith('/Copy Machine.png'));\n      const copierLightSheet = theme.tilesets.find(sheet => sheet.image?.endsWith('/Copy Machine - Copy Light.png'));\n      if (copierBodySheet?.firstgid != null && copierLightSheet?.firstgid != null) {\n        let copierTile: Tile | undefined;\n        for (let y = 0; y < mapRenderer.height && !copierTile; y++) for (let x = 0; x < mapRenderer.width; x++) {\n          if (mapRenderer.gidAt('furniture-below', x, y) === copierBodySheet.firstgid) {\n            copierTile = { x, y };\n            break;\n          }\n        }\n        const lightFrames = Array.from({ length: 8 }, (_, index) =>\n          mapRenderer.textureForGid(copierLightSheet.firstgid! + index));\n        if (copierTile && lightFrames.every((frame): frame is Texture => frame != null)) {\n          const copierLight = new AnimatedSprite(lightFrames);\n          copierLight.eventMode = 'none';\n          copierLight.position.set((copierTile.x + 1) * mapRenderer.tileSize, copierTile.y * mapRenderer.tileSize);\n          copierLight.zIndex = (copierTile.y + 1) * mapRenderer.tileSize - 1;\n          copierLight.animationSpeed = 0.1;\n          copierLight.play();\n          charLayer.addChild(copierLight);\n        } else {\n          for (const frame of lightFrames) frame?.destroy();\n        }\n      }\n\n      const camera = new Camera(world);",
+      "reason": "Discover the copier through active map GIDs and animate its approved scanner-light strip without a room coordinate."
     }
   ],
   "src/renderer/src/scene/office/portraitArt.ts": [

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Application, Container, Graphics, Ticker, Texture } from 'pixi.js';
+import { AnimatedSprite, Application, Container, Graphics, Ticker, Texture } from 'pixi.js';
 // PixiJS uses new Function() internally, blocked by Electron CSP — this patches it.
 import 'pixi.js/unsafe-eval';
 import { useStore, type Agent } from '@/store/store';
@@ -294,6 +294,34 @@ export function OfficeFloor() {
       const tileCount = mapRenderer.getContainer().children.reduce(
         (n, c) => n + ((c as Container).children?.length ?? 0), 0);
       console.log(`[OfficeFloor] map ${mapRenderer.width}x${mapRenderer.height}, ${tileCount} tile sprites rendered`);
+
+      // The approved LPC copier includes a separate eight-frame scanner-light
+      // strip. Resolve both sheets through their map metadata, then locate the
+      // body by GID so this ambient animation follows any compatible room.
+      const copierBodySheet = theme.tilesets.find(sheet => sheet.image?.endsWith('/Copy Machine.png'));
+      const copierLightSheet = theme.tilesets.find(sheet => sheet.image?.endsWith('/Copy Machine - Copy Light.png'));
+      if (copierBodySheet?.firstgid != null && copierLightSheet?.firstgid != null) {
+        let copierTile: Tile | undefined;
+        for (let y = 0; y < mapRenderer.height && !copierTile; y++) for (let x = 0; x < mapRenderer.width; x++) {
+          if (mapRenderer.gidAt('furniture-below', x, y) === copierBodySheet.firstgid) {
+            copierTile = { x, y };
+            break;
+          }
+        }
+        const lightFrames = Array.from({ length: 8 }, (_, index) =>
+          mapRenderer.textureForGid(copierLightSheet.firstgid! + index));
+        if (copierTile && lightFrames.every((frame): frame is Texture => frame != null)) {
+          const copierLight = new AnimatedSprite(lightFrames);
+          copierLight.eventMode = 'none';
+          copierLight.position.set((copierTile.x + 1) * mapRenderer.tileSize, copierTile.y * mapRenderer.tileSize);
+          copierLight.zIndex = (copierTile.y + 1) * mapRenderer.tileSize - 1;
+          copierLight.animationSpeed = 0.1;
+          copierLight.play();
+          charLayer.addChild(copierLight);
+        } else {
+          for (const frame of lightFrames) frame?.destroy();
+        }
+      }
 
       const camera = new Camera(world);
       camera.setMapSize(mapRenderer.width * mapRenderer.tileSize, mapRenderer.height * mapRenderer.tileSize);
