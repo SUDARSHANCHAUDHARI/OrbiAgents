@@ -172,6 +172,8 @@ Sources:
 
 ## Completion boundary
 
+Tool-key collision regressions (2026-09-11): the imported SHA-256 tool-call key now has the upstream long-common-prefix and 4,096-byte-boundary regression cases. Different Bash commands whose distinguishing text appears beyond the old 200-character horizon remain distinct, while genuinely identical long commands and deliberately capped strings still trip consistently.
+
 Human-conversation breaker progress (2026-09-11): each `UserPromptSubmit` hook now stamps an expiring five-minute progress clock. Prose-only answers no longer look stalled merely because they touch no tools or workspace files; stale prompts still permit the no-progress breaker, and loop, error-storm, velocity, and budget arms remain independent.
 
 Work-token agent caps (2026-09-11): per-agent ceilings now measure input, output, and cache-creation tokens while excluding cache reads, preventing large reused contexts from prematurely stopping productive agents. Floor-wide budgets continue to count every token kind for cost protection. Command-center meters and localized limit guidance use the same distinction, with focused regressions covering cached reads, cache writes, cap reasons, and floor accounting.
