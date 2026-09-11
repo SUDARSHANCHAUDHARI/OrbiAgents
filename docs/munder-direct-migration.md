@@ -172,6 +172,8 @@ Sources:
 
 ## Completion boundary
 
+Original room floor hierarchy (2026-09-11): the procedural OrbiAgents atlas now distinguishes workspace aisles, boardroom, café, entrance runner, and east-wing thresholds with eight original pixel-floor treatments. Stable monitor GIDs and collision geometry remain unchanged. Structural tests protect tile validity, full opacity, zone identity, and both doorway connections; visual acceptance remains a human review step.
+
 Pi custom-model propagation (2026-09-11): each isolated Pi worker directory now receives the operator's `~/.pi/agent/models.json` and `models-store.json` when those files exist. Missing files remain absent so Pi can use its defaults; no other global Pi data is copied. Three isolated-home regressions cover both files, neither file, and a partial configuration.
 
 Tool-key collision regressions (2026-09-11): the imported SHA-256 tool-call key now has the upstream long-common-prefix and 4,096-byte-boundary regression cases. Different Bash commands whose distinguishing text appears beyond the old 200-character horizon remain distinct, while genuinely identical long commands and deliberately capped strings still trip consistently.
