@@ -172,6 +172,8 @@ Sources:
 
 ## Completion boundary
 
+Original worker chassis variety (2026-09-12): the procedural OrbiAgents worker family now uses five original head silhouettes—single antenna, twin antenna, side receivers, crown sensor, and reinforced sensor bar—plus matching chest-panel details. The 18×32 texture contract, three walking directions, persisted roster keys, and the first three established accent identities remain unchanged. Source tests protect five distinct opaque silhouettes across the 15-color roster and all direction/step combinations; live pixel-art quality remains a human review step.
+
 Copier scanner activity (2026-09-12): the previously unused approved eight-frame copier-light strip now animates over the copier's scanner bed. The scene discovers the light and body sheets from active theme metadata, locates the body through its furniture-layer GID, and offsets the overlay to its top-right tile; no room coordinate is embedded in the renderer. Missing or incomplete frames are destroyed instead of leaving partial scene resources. Provenance, source, map-placement, type, and build checks protect the integration; live animation quality remains a human review step.
 
 Theme-relative human board (2026-09-11, clearance corrected 2026-09-12): the interactive Ask Me board now shares the active theme's north-wall board band instead of floating at the imported office's workspace coordinate. In the original OrbiAgents room it occupies empty tiles 35–36/2 between the mailbox bank and task-board ensemble, directly above the copier without overlapping it, while retaining its pulse and click behavior. Source, collision, and furniture-layer regression tests plus reversible provenance protect the placement; live interaction remains a human review step.

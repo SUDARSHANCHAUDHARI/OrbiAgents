@@ -37,6 +37,14 @@ test('original robots have distinct directional and walking frames', () => {
   assert.throws(() => workerFrame('left', 0, WORKER_COLORS[0]), /Unsupported/);
 });
 
+test('original worker family has five recognizable chassis silhouettes', () => {
+  const silhouettes = new Set(WORKER_COLORS.map(color => {
+    const pixels = workerFrame('down', 0, color);
+    return Buffer.from(pixels.filter((_, index) => index % 4 === 3)).toString('base64');
+  }));
+  assert.equal(silhouettes.size, 5);
+});
+
 test('actual characters reach desks and coffee, then release their scene resources', () => {
   const previousRaf = globalThis.requestAnimationFrame, previousCancel = globalThis.cancelAnimationFrame;
   globalThis.requestAnimationFrame = () => 1; globalThis.cancelAnimationFrame = () => {};
