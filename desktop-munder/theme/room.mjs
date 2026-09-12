@@ -3,7 +3,7 @@ import { createOfficeFurniture } from './furniture.mjs';
 // Original procedural surfaces, not derived from the excluded upstream atlas.
 // Six opaque surface tiles plus transparent monitor and shared-chair overlays.
 export function createRoomAtlas() {
-  const width = 688, height = 16;
+  const width = 720, height = 16;
   const pixels = new Uint8Array(width * height * 4);
   const palette = [[66, 78, 87], [160, 153, 134], [112, 82, 61],
     [78, 101, 111], [110, 72, 53], [155, 145, 119]];
@@ -117,9 +117,13 @@ export function createRoomAtlas() {
   rect(41, 5, 4, 10, 15, viewport.glass); rect(41, 7, 7, 7, 7, viewport.star);
   rect(42, 2, 0, 13, 14, viewport.frame); rect(42, 4, 0, 11, 12, viewport.rim);
   rect(42, 5, 0, 10, 11, viewport.glass); rect(42, 9, 4, 9, 4, viewport.star);
+  fillTile(43, [99, 79, 40], (x, y, b) => x < 2 || x > 13 || y < 2 || y > 13
+    ? [172, 139, 65] : (x + y) % 6 === 0 ? [116, 94, 48] : b);
+  fillTile(44, [52, 72, 82], (x, y, b) => x === 0 || y === 0
+    ? [89, 117, 124] : (x + y) % 8 === 0 ? [64, 88, 97] : b);
   return { width, height, pixels, tileset: {
     firstgid: 1, image: 'orbi-original-room', imagewidth: width, imageheight: height,
-    tilewidth: 16, tileheight: 16, columns: 43, tilecount: 43,
+    tilewidth: 16, tileheight: 16, columns: 45, tilecount: 45,
   } };
 }
 
@@ -155,6 +159,15 @@ export function createOfficeRoom(entries) {
         const edge = x === 36 ? 0 : x === 44 ? 2 : 1;
         furniture[i] = (y === 15 ? 30 : 33) + edge;
       } else furniture[i] = 5;
+    }
+  }
+  const commandDesk = result.desks.find(desk => desk.name === 'desk-ceo');
+  if (!commandDesk) throw new Error('Missing command desk');
+  for (let y = commandDesk.y - 1; y <= commandDesk.y + commandDesk.height + 1; y++) {
+    for (let x = commandDesk.x - 1; x <= commandDesk.x + commandDesk.width; x++) {
+      const border = x === commandDesk.x - 1 || x === commandDesk.x + commandDesk.width
+        || y === commandDesk.y - 1 || y === commandDesk.y + commandDesk.height + 1;
+      floor[y * map.width + x] = border ? 44 : 45;
     }
   }
   // Every desk gets the original procedural off-monitor block. DeskScreen
