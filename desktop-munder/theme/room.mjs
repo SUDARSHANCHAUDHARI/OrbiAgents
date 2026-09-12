@@ -3,7 +3,7 @@ import { createOfficeFurniture } from './furniture.mjs';
 // Original procedural surfaces, not derived from the excluded upstream atlas.
 // Six opaque surface tiles plus transparent monitor and shared-chair overlays.
 export function createRoomAtlas() {
-  const width = 656, height = 16;
+  const width = 688, height = 16;
   const pixels = new Uint8Array(width * height * 4);
   const palette = [[66, 78, 87], [160, 153, 134], [112, 82, 61],
     [78, 101, 111], [110, 72, 53], [155, 145, 119]];
@@ -110,9 +110,16 @@ export function createRoomAtlas() {
   rect(39, 10, 5, 12, 6, airlock.light);
   rect(40, 0, 1, 13, 15, airlock.frame); rect(40, 0, 3, 10, 14, airlock.panel);
   rect(40, 0, 3, 2, 14, airlock.seam); rect(40, 10, 5, 11, 7, airlock.light);
+
+  const viewport = { frame: [27, 43, 54, 255], rim: [83, 111, 119, 255],
+    glass: [38, 91, 116, 255], star: [157, 226, 215, 255] };
+  rect(41, 2, 1, 13, 15, viewport.frame); rect(41, 4, 3, 11, 15, viewport.rim);
+  rect(41, 5, 4, 10, 15, viewport.glass); rect(41, 7, 7, 7, 7, viewport.star);
+  rect(42, 2, 0, 13, 14, viewport.frame); rect(42, 4, 0, 11, 12, viewport.rim);
+  rect(42, 5, 0, 10, 11, viewport.glass); rect(42, 9, 4, 9, 4, viewport.star);
   return { width, height, pixels, tileset: {
     firstgid: 1, image: 'orbi-original-room', imagewidth: width, imageheight: height,
-    tilewidth: 16, tileheight: 16, columns: 41, tilecount: 41,
+    tilewidth: 16, tileheight: 16, columns: 43, tilecount: 43,
   } };
 }
 
@@ -198,6 +205,16 @@ export function createOfficeRoom(entries) {
     const index = airlockY * map.width + entranceX + offset;
     if (!walls[index] || furnitureAbove[index]) throw new Error('Entrance airlock has no clear wall');
     furnitureAbove[index] = atlas.tileset.firstgid + 39 + offset;
+  }
+  for (const zone of zoneObjects.filter(({ name }) => name === 'boardroom' || name === 'cafeteria')) {
+    const x = (zone.x + zone.width) / map.tilewidth;
+    const centerY = (zone.y + zone.height / 2) / map.tileheight;
+    for (let offset = -1; offset <= 0; offset++) {
+      const y = centerY + offset;
+      const index = y * map.width + x;
+      if (!walls[index] || furnitureAbove[index]) throw new Error(`Zone viewport has no clear wall: ${zone.name}`);
+      furnitureAbove[index] = atlas.tileset.firstgid + 42 + offset;
+    }
   }
   return { ...result, atlas, map: { ...map,
     tilesets: [atlas.tileset, ...map.tilesets],
