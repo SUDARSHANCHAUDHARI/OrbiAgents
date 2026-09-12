@@ -34,7 +34,7 @@ test('original atlas has opaque structural surfaces and transparent overlays', (
   for (let tile = 0; tile < 6; tile++) for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++)
     assert.equal(atlas.pixels[(y * atlas.width + tile * 16 + x) * 4 + 3], 255);
   assert.equal(atlas.tileset.firstgid, 1);
-  assert.equal(atlas.tileset.tilecount, 38);
+  assert.equal(atlas.tileset.tilecount, 41);
   assert.deepEqual(atlas, createRoomAtlas());
   const colors = new Set(Array.from({ length: 6 }, (_, i) => atlas.pixels.slice(i * 64, i * 64 + 3).join(',')));
   assert.equal(colors.size, 6);
@@ -56,6 +56,10 @@ test('original atlas has opaque structural surfaces and transparent overlays', (
   for (let tile = 35; tile < 38; tile++) {
     assert.ok(alpha(tile).some(value => value === 0), `zone sign ${tile} transparency`);
     assert.ok(alpha(tile).some(value => value === 255), `zone sign ${tile} pixels`);
+  }
+  for (let tile = 38; tile < 41; tile++) {
+    assert.ok(alpha(tile).some(value => value === 0), `airlock tile ${tile} transparency`);
+    assert.ok(alpha(tile).some(value => value === 255), `airlock tile ${tile} pixels`);
   }
 });
 
@@ -116,6 +120,24 @@ test('semantic zones place distinct signs on existing blocked walls', () => {
     assert.notEqual(walls[index], 0, `${name} wall`);
     assert.equal(collision[index], 1, `${name} collision remains blocked`);
   }
+});
+
+test('entrance spawn aligns with a three-tile airlock and clear interior approach', () => {
+  const { map } = createOfficeRoom(entries);
+  const above = map.layers.find(l => l.name === 'furniture-above').data;
+  const walls = map.layers.find(l => l.name === 'walls').data;
+  const collision = map.layers.find(l => l.name === 'collision').data;
+  const entrance = map.layers.find(l => l.name === 'spawn-points').objects.find(point => point.name === 'entrance');
+  const x = entrance.x / map.tilewidth, y = entrance.y / map.tileheight;
+  assert.deepEqual([x, y], [23, 29]);
+  assert.deepEqual([above[31 * map.width + x - 1], above[31 * map.width + x], above[31 * map.width + x + 1]], [39, 40, 41]);
+  for (const doorX of [x - 1, x, x + 1]) {
+    const index = 31 * map.width + doorX;
+    assert.notEqual(walls[index], 0);
+    assert.equal(collision[index], 1);
+  }
+  assert.equal(collision[y * map.width + x], 0);
+  assert.equal(collision[(y + 1) * map.width + x], 0);
 });
 
 test('workspace, boardroom, café, entrance and doorways have distinct floor treatments', () => {

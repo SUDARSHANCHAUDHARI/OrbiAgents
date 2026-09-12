@@ -3,7 +3,7 @@ import { createOfficeFurniture } from './furniture.mjs';
 // Original procedural surfaces, not derived from the excluded upstream atlas.
 // Six opaque surface tiles plus transparent monitor and shared-chair overlays.
 export function createRoomAtlas() {
-  const width = 608, height = 16;
+  const width = 656, height = 16;
   const pixels = new Uint8Array(width * height * 4);
   const palette = [[66, 78, 87], [160, 153, 134], [112, 82, 61],
     [78, 101, 111], [110, 72, 53], [155, 145, 119]];
@@ -100,9 +100,19 @@ export function createRoomAtlas() {
   for (const [x, y] of [[4, 5], [9, 5], [4, 9], [9, 9]]) rect(35, x, y, x + 2, y + 2, sign.mark);
   rect(36, 4, 6, 11, 8, sign.mark); rect(36, 3, 9, 4, 11, sign.mark); rect(36, 11, 9, 12, 11, sign.mark);
   rect(37, 4, 6, 10, 10, sign.mark); rect(37, 10, 7, 12, 9, sign.mark); rect(37, 5, 11, 9, 11, sign.mark);
+
+  const airlock = { frame: [31, 47, 57, 255], panel: [72, 96, 105, 255],
+    light: [92, 211, 200, 255], seam: [20, 31, 39, 255] };
+  rect(38, 2, 1, 15, 15, airlock.frame); rect(38, 5, 3, 15, 14, airlock.panel);
+  rect(38, 13, 3, 15, 14, airlock.seam); rect(38, 4, 5, 5, 7, airlock.light);
+  rect(39, 0, 1, 15, 15, airlock.frame); rect(39, 1, 3, 14, 14, airlock.panel);
+  rect(39, 7, 3, 8, 14, airlock.seam); rect(39, 3, 5, 5, 6, airlock.light);
+  rect(39, 10, 5, 12, 6, airlock.light);
+  rect(40, 0, 1, 13, 15, airlock.frame); rect(40, 0, 3, 10, 14, airlock.panel);
+  rect(40, 0, 3, 2, 14, airlock.seam); rect(40, 10, 5, 11, 7, airlock.light);
   return { width, height, pixels, tileset: {
     firstgid: 1, image: 'orbi-original-room', imagewidth: width, imageheight: height,
-    tilewidth: 16, tileheight: 16, columns: 38, tilecount: 38,
+    tilewidth: 16, tileheight: 16, columns: 41, tilecount: 41,
   } };
 }
 
@@ -179,6 +189,15 @@ export function createOfficeRoom(entries) {
     const index = y * map.width + x;
     if (!walls[index] || furnitureAbove[index]) throw new Error(`Zone sign has no clear wall: ${zone.name}`);
     furnitureAbove[index] = atlas.tileset.firstgid + tile;
+  }
+  const entrance = spawnObjects.find(point => point.name === 'entrance');
+  if (!entrance) throw new Error('Missing entrance spawn');
+  const entranceX = entrance.x / map.tilewidth;
+  const airlockY = map.height - 1;
+  for (let offset = -1; offset <= 1; offset++) {
+    const index = airlockY * map.width + entranceX + offset;
+    if (!walls[index] || furnitureAbove[index]) throw new Error('Entrance airlock has no clear wall');
+    furnitureAbove[index] = atlas.tileset.firstgid + 39 + offset;
   }
   return { ...result, atlas, map: { ...map,
     tilesets: [atlas.tileset, ...map.tilesets],
