@@ -25,7 +25,7 @@ export function createOfficeLayout() {
       spawn(name, x + 1, y + 2);
     }
   }
-  block(38, 5, 5, 4); // Meeting table, with seats outside its footprint.
+  block(38, 6, 5, 2); // Extended meeting table, with seats beside its footprint.
   spawn('warroom-1', 37, 6); spawn('warroom-2', 43, 6);
   block(38, 19, 4, 2);
   for (const [i, x, y] of [[1, 37, 19], [2, 42, 19], [3, 38, 21], [4, 41, 21]])
