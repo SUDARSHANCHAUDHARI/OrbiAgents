@@ -9,8 +9,8 @@ test('furniture stamps resolve only approved source cells and match blocked foot
   const data = map.layers.find(l => l.name === 'furniture-below').data;
   const collision = map.layers.find(l => l.name === 'collision').data;
   const spawns = map.layers.find(l => l.name === 'spawn-points').objects;
-  assert.equal(placements.length, 25);
-  assert.equal(data.filter(Boolean).length, 128);
+  assert.equal(placements.length, 26);
+  assert.equal(data.filter(Boolean).length, 130);
   for (const placement of placements) {
     const sheet = map.tilesets.find(t => t.image === placement.image);
     for (let dy = 0; dy < placement.height; dy++) for (let dx = 0; dx < placement.width; dx++) {
@@ -43,7 +43,10 @@ test('furniture stamps resolve only approved source cells and match blocked foot
   const cafe = placements.find(p => p.name === 'cafe-table');
   assert.deepEqual(cafe.sourceColumns, [0, 1, 1, 2]);
   assert.deepEqual([cafe.x, cafe.y, cafe.width, cafe.height], [38, 19, 4, 2]);
-  for (const name of ['boardroom-table', 'cafe-table', 'kitchen-sink', 'operations-display', 'team-mailboxes', 'water-cooler', 'copy-machine', 'bin-entry', 'bin-cafe'])
+  const dispenser = placements.find(p => p.name === 'cafe-refreshment-dispenser');
+  assert.deepEqual([dispenser.image, dispenser.sx, dispenser.sy, dispenser.x, dispenser.y],
+    ['art/lpc-office/Water Cooler.png', 1, 0, 44, 15]);
+  for (const name of ['boardroom-table', 'cafe-table', 'kitchen-sink', 'cafe-refreshment-dispenser', 'operations-display', 'team-mailboxes', 'water-cooler', 'copy-machine', 'bin-entry', 'bin-cafe'])
     assert.ok(placements.some(p => p.name === name), name);
 });
 

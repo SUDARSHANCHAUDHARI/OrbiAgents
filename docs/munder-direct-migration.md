@@ -172,6 +172,8 @@ Sources:
 
 ## Completion boundary
 
+Café refreshment dispenser (2026-09-12): the existing `cafe-stand-vending` interaction point now has a visible two-tile dispenser directly above it, using a distinct model from the approved LPC water-cooler sheet. It replaces two counter-end cells without changing the kitchen collision footprint, keeps the stand reachable, and preserves the separate workspace cooler. Furniture and room tests protect the exact source variant, placement, GIDs, collision, and stand alignment; live visual acceptance remains a human review step.
+
 Original connected kitchen counter (2026-09-12): all 15 previously generic fallback cells around the coffee maker and sink now use original left, middle, and right countertop/facade pixel tiles. The approved appliances remain intact, the full 9×2 collision footprint is unchanged, and connected edge treatments replace the repeated flat blocks. Atlas and room tests protect opacity, exact edge GIDs, appliance coexistence, collision, and removal of the generic counter fallback; live visual acceptance remains a human review step.
 
 Coherent café table (2026-09-12): the café's full 4×2 collision footprint now uses a complete table assembled from the approved card-table sheet's left, repeated center, and right cells instead of ending in a generic fallback column. All four semantic café seats remain adjacent and walkable. Layout, furniture, and room tests protect exact source-cell composition, collision coverage, chair orientation, and reachability; live visual acceptance remains a human review step.
