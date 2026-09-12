@@ -88,6 +88,23 @@ test('boardroom and café seats have directional chairs without blocking paths',
   }
 });
 
+test('every workstation seat has an up-facing chair and remains walkable', () => {
+  const { map, desks } = createOfficeRoom(entries);
+  const above = map.layers.find(l => l.name === 'furniture-above').data;
+  const collision = map.layers.find(l => l.name === 'collision').data;
+  const spawns = map.layers.find(l => l.name === 'spawn-points').objects;
+  assert.equal(desks.length, 15);
+  for (const desk of desks) {
+    const seat = spawns.find(point => point.name === desk.name);
+    assert.ok(seat, `seat for ${desk.name}`);
+    const x = seat.x / map.tilewidth, y = seat.y / map.tileheight;
+    const index = y * map.width + x;
+    assert.deepEqual([x, y], [desk.x + 1, desk.y + 2]);
+    assert.equal(above[index], 27, `up-facing chair for ${desk.name}`);
+    assert.equal(collision[index], 0, `walkable chair for ${desk.name}`);
+  }
+});
+
 test('kitchen counter uses connected original surfaces around real appliances', () => {
   const { map } = createOfficeRoom(entries);
   const below = map.layers.find(l => l.name === 'furniture-below').data;
