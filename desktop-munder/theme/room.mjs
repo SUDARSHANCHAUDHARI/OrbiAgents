@@ -3,7 +3,7 @@ import { createOfficeFurniture } from './furniture.mjs';
 // Original procedural surfaces, not derived from the excluded upstream atlas.
 // Six opaque surface tiles plus transparent monitor and shared-chair overlays.
 export function createRoomAtlas() {
-  const width = 464, height = 16;
+  const width = 560, height = 16;
   const pixels = new Uint8Array(width * height * 4);
   const palette = [[66, 78, 87], [160, 153, 134], [112, 82, 61],
     [78, 101, 111], [110, 72, 53], [155, 145, 119]];
@@ -76,9 +76,24 @@ export function createRoomAtlas() {
   rect(28, 5, 4, 7, 11, chair.frame); rect(28, 4, 5, 6, 9, chair.cushion);
   rect(28, 5, 10, 10, 12, chair.outline); rect(28, 6, 11, 9, 12, chair.highlight);
   rect(28, 5, 13, 6, 15, chair.frame); rect(28, 9, 13, 10, 15, chair.frame);
+
+  // Original two-row kitchen counter with distinct left, middle, and right edges.
+  for (let tile = 29; tile < 32; tile++) fillTile(tile, [104, 119, 122], (x, y, b) => {
+    if (y < 3) return [181, 169, 143];
+    if (y === 3) return [61, 72, 76];
+    if ((tile === 29 && x < 2) || (tile === 31 && x > 13)) return [54, 68, 73];
+    return (x + y) % 9 === 0 ? [115, 132, 134] : b;
+  });
+  for (let tile = 32; tile < 35; tile++) fillTile(tile, [75, 91, 96], (x, y, b) => {
+    if (y < 2) return [94, 111, 114];
+    if (y > 13) return [43, 54, 59];
+    if ((tile === 32 && x < 2) || (tile === 34 && x > 13)) return [49, 63, 68];
+    if (x === 7 || x === 8) return [61, 76, 81];
+    return b;
+  });
   return { width, height, pixels, tileset: {
     firstgid: 1, image: 'orbi-original-room', imagewidth: width, imageheight: height,
-    tilewidth: 16, tileheight: 16, columns: 29, tilecount: 29,
+    tilewidth: 16, tileheight: 16, columns: 35, tilecount: 35,
   } };
 }
 
@@ -108,9 +123,13 @@ export function createOfficeRoom(entries) {
       else if (y <= 1 || y === map.height - 1) wallTiles[i] = 23;
       else wallTiles[i] = 24;
     }
-    // Make every remaining reserved table/counter footprint visible.
-    if (collision[i] && !walls[i] && !furniture[i])
-      furniture[i] = x >= 36 && x < 45 && y >= 15 && y < 17 ? 6 : 5;
+    // Fill uncovered appliance-counter cells with original connected surfaces.
+    if (collision[i] && !walls[i] && !furniture[i]) {
+      if (x >= 36 && x < 45 && y >= 15 && y < 17) {
+        const edge = x === 36 ? 0 : x === 44 ? 2 : 1;
+        furniture[i] = (y === 15 ? 30 : 33) + edge;
+      } else furniture[i] = 5;
+    }
   }
   // Every desk gets the original procedural off-monitor block. DeskScreen
   // overlays gids 11..14 while its worker is seated and animates inside it.
