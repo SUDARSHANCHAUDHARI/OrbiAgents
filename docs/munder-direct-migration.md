@@ -172,6 +172,8 @@ Sources:
 
 ## Completion boundary
 
+Original entrance airlock (2026-09-12): the semantic entrance and its floor runner now terminate at a visible three-tile original orbital airlock on the bottom perimeter. Placement derives from the entrance spawn, the interior approach remains open, and the existing boundary collision stays intact. Atlas and room tests protect transparent pixel content, complete left/center/right coverage, spawn alignment, wall ownership, and unchanged approach/perimeter walkability; live visual acceptance remains a human review step.
+
 Original semantic zone signs (2026-09-12): workspace, boardroom, and cafeteria zones now receive distinct original transparent pixel signs on existing blocked walls. Positions derive from the map's semantic zone rectangles rather than unrelated scene coordinates, and glyphs distinguish a work grid, meeting table, and café mug. Atlas and room tests protect transparency, unique GIDs, zone-relative placement, wall ownership, and unchanged collision; live visual acceptance remains a human review step.
 
 Café refreshment dispenser (2026-09-12): the existing `cafe-stand-vending` interaction point now has a visible two-tile dispenser directly above it, using a distinct model from the approved LPC water-cooler sheet. It replaces two counter-end cells without changing the kitchen collision footprint, keeps the stand reachable, and preserves the separate workspace cooler. Furniture and room tests protect the exact source variant, placement, GIDs, collision, and stand alignment; live visual acceptance remains a human review step.
