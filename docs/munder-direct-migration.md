@@ -172,6 +172,8 @@ Sources:
 
 ## Completion boundary
 
+Original semantic zone signs (2026-09-12): workspace, boardroom, and cafeteria zones now receive distinct original transparent pixel signs on existing blocked walls. Positions derive from the map's semantic zone rectangles rather than unrelated scene coordinates, and glyphs distinguish a work grid, meeting table, and café mug. Atlas and room tests protect transparency, unique GIDs, zone-relative placement, wall ownership, and unchanged collision; live visual acceptance remains a human review step.
+
 Café refreshment dispenser (2026-09-12): the existing `cafe-stand-vending` interaction point now has a visible two-tile dispenser directly above it, using a distinct model from the approved LPC water-cooler sheet. It replaces two counter-end cells without changing the kitchen collision footprint, keeps the stand reachable, and preserves the separate workspace cooler. Furniture and room tests protect the exact source variant, placement, GIDs, collision, and stand alignment; live visual acceptance remains a human review step.
 
 Original connected kitchen counter (2026-09-12): all 15 previously generic fallback cells around the coffee maker and sink now use original left, middle, and right countertop/facade pixel tiles. The approved appliances remain intact, the full 9×2 collision footprint is unchanged, and connected edge treatments replace the repeated flat blocks. Atlas and room tests protect opacity, exact edge GIDs, appliance coexistence, collision, and removal of the generic counter fallback; live visual acceptance remains a human review step.
