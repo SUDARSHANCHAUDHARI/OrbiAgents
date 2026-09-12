@@ -172,6 +172,8 @@ Sources:
 
 ## Completion boundary
 
+Original east-wing viewports (2026-09-12): the boardroom and cafeteria now each receive a two-tile illuminated orbital viewport on their shared exterior perimeter. Positions derive from the right edge and vertical center of each semantic zone, while the underlying wall and collision remain intact. Atlas and room tests protect transparent pixel content, complete top/bottom coverage, zone-relative placement, exterior-wall ownership, and unchanged collision; live visual acceptance remains a human review step.
+
 Original entrance airlock (2026-09-12): the semantic entrance and its floor runner now terminate at a visible three-tile original orbital airlock on the bottom perimeter. Placement derives from the entrance spawn, the interior approach remains open, and the existing boundary collision stays intact. Atlas and room tests protect transparent pixel content, complete left/center/right coverage, spawn alignment, wall ownership, and unchanged approach/perimeter walkability; live visual acceptance remains a human review step.
 
 Original semantic zone signs (2026-09-12): workspace, boardroom, and cafeteria zones now receive distinct original transparent pixel signs on existing blocked walls. Positions derive from the map's semantic zone rectangles rather than unrelated scene coordinates, and glyphs distinguish a work grid, meeting table, and café mug. Atlas and room tests protect transparency, unique GIDs, zone-relative placement, wall ownership, and unchanged collision; live visual acceptance remains a human review step.
