@@ -38,6 +38,15 @@ test('desk footprints and perimeter are blocked without forced seat overrides', 
   assert.deepEqual(createOfficeLayout(), createOfficeLayout());
 });
 
+test('boardroom collision matches the extended table and leaves surrounding floor open', () => {
+  const { map } = createOfficeLayout();
+  const collision = map.layers.find(l => l.name === 'collision').data;
+  const at = (x, y) => collision[y * map.width + x];
+  for (let y = 6; y < 8; y++) for (let x = 38; x < 43; x++) assert.equal(at(x, y), 1);
+  for (const [x, y] of [[38, 5], [42, 5], [38, 8], [42, 8], [37, 6], [43, 6]])
+    assert.equal(at(x, y), 0, `open boardroom tile ${x},${y}`);
+});
+
 test('licensed room props are blocked while their interaction stands stay reachable', () => {
   const { map, props } = createOfficeLayout();
   const collision = map.layers.find(l => l.name === 'collision').data;

@@ -172,6 +172,8 @@ Sources:
 
 ## Completion boundary
 
+Coherent boardroom table (2026-09-12): the boardroom's oversized generic 5×4 obstacle is replaced by a complete 5×2 table assembled from the approved card-table sheet's left, repeatable center, and right cells. Its two semantic seats remain adjacent and walkable while six formerly reserved floor cells reopen for natural movement. Layout and furniture tests protect exact collision, source-cell composition, placement, and reachability; live visual acceptance remains a human review step.
+
 Animated operations display (2026-09-12): the approved LPC widescreen sheet's powered-off, color-broadcast, and three static states now cycle across the north-wall display as one synchronized 3×2 image. The scene validates the sheet geometry, discovers the placed display through its top-left furniture GID, and assembles all six animated cells without embedding the Orbi room coordinate. Invalid or incomplete frames fail closed. Provenance, placement, source, type, and build checks protect the integration; live animation pacing remains a human review step.
 
 Original shared-space chairs (2026-09-12): the boardroom and café now place six original transparent pixel chairs beneath their existing worker seats. Each chair faces its adjacent table, is derived from the semantic shared-seat spawn contract, and leaves collision and pathfinding unchanged. Atlas and room tests protect transparency, directional placement, valid GIDs, and walkable seat cells; live visual acceptance remains a human review step.

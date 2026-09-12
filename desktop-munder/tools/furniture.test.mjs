@@ -10,12 +10,13 @@ test('furniture stamps resolve only approved source cells and match blocked foot
   const collision = map.layers.find(l => l.name === 'collision').data;
   const spawns = map.layers.find(l => l.name === 'spawn-points').objects;
   assert.equal(placements.length, 25);
-  assert.equal(data.filter(Boolean).length, 122);
+  assert.equal(data.filter(Boolean).length, 126);
   for (const placement of placements) {
     const sheet = map.tilesets.find(t => t.image === placement.image);
     for (let dy = 0; dy < placement.height; dy++) for (let dx = 0; dx < placement.width; dx++) {
       const index = (placement.y + dy) * map.width + placement.x + dx;
-      const expected = sheet.firstgid + (placement.sy + dy) * sheet.columns + placement.sx + dx;
+      const sx = placement.sourceColumns?.[dx] ?? placement.sx + dx;
+      const expected = sheet.firstgid + (placement.sy + dy) * sheet.columns + sx;
       assert.equal(data[index], expected);
       assert.ok(expected >= sheet.firstgid && expected < sheet.firstgid + sheet.tilecount);
       assert.equal(collision[index], 1, placement.name + ' should not obstruct a path');
@@ -36,6 +37,9 @@ test('furniture stamps resolve only approved source cells and match blocked foot
   const machine = placements.find(p => p.name === 'coffee-machine');
   assert.equal(machine.x, coffee.machineStand.x);
   assert.equal(machine.y + 1, coffee.machineStand.y);
+  const boardroom = placements.find(p => p.name === 'boardroom-table');
+  assert.deepEqual(boardroom.sourceColumns, [0, 1, 1, 1, 2]);
+  assert.deepEqual([boardroom.x, boardroom.y, boardroom.width, boardroom.height], [38, 6, 5, 2]);
   for (const name of ['boardroom-table', 'cafe-table', 'kitchen-sink', 'operations-display', 'team-mailboxes', 'water-cooler', 'copy-machine', 'bin-entry', 'bin-cafe'])
     assert.ok(placements.some(p => p.name === name), name);
 });

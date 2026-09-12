@@ -23,6 +23,22 @@ export function createOfficeFurniture(entries) {
     }
     placements.push({ name, image: sheet.image, sx, sy, width, height, x, y });
   };
+  const stampColumns = (name, image, sourceColumns, sy, height, x, y) => {
+    const sheet = tilesets.find(t => t.image === `art/lpc-office/${image}`);
+    if (!sheet) throw new Error(`Missing furniture sheet: ${image}`);
+    if (!sourceColumns.length || sourceColumns.some(sx => sx < 0 || sx >= sheet.columns)
+      || sy < 0 || sy + height > sheet.tilecount / sheet.columns)
+      throw new Error(`Furniture crop outside sheet: ${name}`);
+    if (x < 0 || y < 0 || x + sourceColumns.length > map.width || y + height > map.height)
+      throw new Error(`Furniture outside map: ${name}`);
+    for (let row = 0; row < height; row++) for (const [col, sx] of sourceColumns.entries()) {
+      const index = (y + row) * map.width + x + col;
+      if (data[index]) throw new Error(`Overlapping furniture: ${name}`);
+      data[index] = sheet.firstgid + (sy + row) * sheet.columns + sx;
+    }
+    placements.push({ name, image: sheet.image, sourceColumns, sy,
+      width: sourceColumns.length, height, x, y });
+  };
   // Alternate the sheet's two complete horizontal designs to keep the
   // workstation grid legible without repeating one identical silhouette.
   for (const [index, desk] of layout.desks.entries())
@@ -32,7 +48,7 @@ export function createOfficeFurniture(entries) {
   // Replace the largest procedural obstacle blocks with approved LPC props.
   // Crops stay entirely inside the existing collision footprints, so this is
   // visual density only and cannot change navigation.
-  stamp('boardroom-table', 'Card Table.png', 0, 0, 3, 2, 39, 6);
+  stampColumns('boardroom-table', 'Card Table.png', [0, 1, 1, 1, 2], 0, 2, 38, 6);
   stamp('cafe-table', 'Card Table.png', 0, 2, 3, 2, 38, 19);
   stamp('kitchen-sink', 'Sink.png', 0, 0, 1, 2, 42, 15);
   // Wall-mounted details sit on the blocked top perimeter and therefore add
