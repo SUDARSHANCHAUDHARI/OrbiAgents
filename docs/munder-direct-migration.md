@@ -172,6 +172,8 @@ Sources:
 
 ## Completion boundary
 
+Deterministic Pixi Node test environment (2026-09-12): migration tests now preload a test-only minimal `navigator.userAgent` shim before importing Pixi's CommonJS bundle. This fixes the five Pixi test-file crashes under the repository's active Node 20 shell without changing renderer or packaged runtime behavior. The full migration suite, design-system checks, accessibility checks, typechecks, and production build protect the boundary.
+
 Original east-wing viewports (2026-09-12): the boardroom and cafeteria now each receive a two-tile illuminated orbital viewport on their shared exterior perimeter. Positions derive from the right edge and vertical center of each semantic zone, while the underlying wall and collision remain intact. Atlas and room tests protect transparent pixel content, complete top/bottom coverage, zone-relative placement, exterior-wall ownership, and unchanged collision; live visual acceptance remains a human review step.
 
 Original entrance airlock (2026-09-12): the semantic entrance and its floor runner now terminate at a visible three-tile original orbital airlock on the bottom perimeter. Placement derives from the entrance spawn, the interior approach remains open, and the existing boundary collision stays intact. Atlas and room tests protect transparent pixel content, complete left/center/right coverage, spawn alignment, wall ownership, and unchanged approach/perimeter walkability; live visual acceptance remains a human review step.
