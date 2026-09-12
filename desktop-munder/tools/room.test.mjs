@@ -12,7 +12,7 @@ test('room layers cover every tile, show every obstacle, and preserve paths', ()
   const collision = map.layers.find(l => l.name === 'collision').data;
   assert.equal(new Set(map.layers.map(l => l.name)).size, map.layers.length);
   for (let i = 0; i < floor.length; i++) {
-    assert.ok(floor[i] === 1 || (floor[i] >= 15 && floor[i] <= 22));
+    assert.ok(floor[i] === 1 || (floor[i] >= 15 && floor[i] <= 22) || floor[i] === 44 || floor[i] === 45);
     assert.equal(Boolean(walls[i] || furniture[i]), Boolean(collision[i]), `obstacle at ${i}`);
   }
   for (const layer of map.layers.filter(l => l.type === 'tilelayer')) {
@@ -34,7 +34,7 @@ test('original atlas has opaque structural surfaces and transparent overlays', (
   for (let tile = 0; tile < 6; tile++) for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++)
     assert.equal(atlas.pixels[(y * atlas.width + tile * 16 + x) * 4 + 3], 255);
   assert.equal(atlas.tileset.firstgid, 1);
-  assert.equal(atlas.tileset.tilecount, 43);
+  assert.equal(atlas.tileset.tilecount, 45);
   assert.deepEqual(atlas, createRoomAtlas());
   const colors = new Set(Array.from({ length: 6 }, (_, i) => atlas.pixels.slice(i * 64, i * 64 + 3).join(',')));
   assert.equal(colors.size, 6);
@@ -65,6 +65,8 @@ test('original atlas has opaque structural surfaces and transparent overlays', (
     assert.ok(alpha(tile).some(value => value === 0), `viewport tile ${tile} transparency`);
     assert.ok(alpha(tile).some(value => value === 255), `viewport tile ${tile} pixels`);
   }
+  for (let tile = 43; tile < 45; tile++)
+    assert.ok(alpha(tile).every(value => value === 255), `command floor ${tile} opacity`);
 });
 
 test('boardroom and café seats have directional chairs without blocking paths', () => {
@@ -157,6 +159,25 @@ test('east-wing zones place two-tile viewports on the exterior wall', () => {
       assert.equal(collision[index], 1);
     }
   }
+});
+
+test('Orbi Prime desk has a semantic command platform without collision changes', () => {
+  const { map, desks } = createOfficeRoom(entries);
+  const floor = map.layers.find(l => l.name === 'floor').data;
+  const collision = map.layers.find(l => l.name === 'collision').data;
+  const desk = desks.find(item => item.name === 'desk-ceo');
+  const counts = new Map([[44, 0], [45, 0]]);
+  for (let y = desk.y - 1; y <= desk.y + desk.height + 1; y++) {
+    for (let x = desk.x - 1; x <= desk.x + desk.width; x++) {
+      const border = x === desk.x - 1 || x === desk.x + desk.width
+        || y === desk.y - 1 || y === desk.y + desk.height + 1;
+      const gid = floor[y * map.width + x];
+      assert.equal(gid, border ? 44 : 45, `command platform ${x},${y}`);
+      counts.set(gid, counts.get(gid) + 1);
+    }
+  }
+  assert.deepEqual([...counts], [[44, 16], [45, 9]]);
+  assert.equal(collision[(desk.y + 2) * map.width + desk.x + 1], 0, 'command seat stays walkable');
 });
 
 test('workspace, boardroom, café, entrance and doorways have distinct floor treatments', () => {
