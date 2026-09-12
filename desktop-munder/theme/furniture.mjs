@@ -49,7 +49,7 @@ export function createOfficeFurniture(entries) {
   // Crops stay entirely inside the existing collision footprints, so this is
   // visual density only and cannot change navigation.
   stampColumns('boardroom-table', 'Card Table.png', [0, 1, 1, 1, 2], 0, 2, 38, 6);
-  stamp('cafe-table', 'Card Table.png', 0, 2, 3, 2, 38, 19);
+  stampColumns('cafe-table', 'Card Table.png', [0, 1, 1, 2], 2, 2, 38, 19);
   stamp('kitchen-sink', 'Sink.png', 0, 0, 1, 2, 42, 15);
   // Wall-mounted details sit on the blocked top perimeter and therefore add
   // visual landmarks without consuming a single walkable tile.
