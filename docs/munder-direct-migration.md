@@ -172,6 +172,8 @@ Sources:
 
 ## Completion boundary
 
+Original connected kitchen counter (2026-09-12): all 15 previously generic fallback cells around the coffee maker and sink now use original left, middle, and right countertop/facade pixel tiles. The approved appliances remain intact, the full 9×2 collision footprint is unchanged, and connected edge treatments replace the repeated flat blocks. Atlas and room tests protect opacity, exact edge GIDs, appliance coexistence, collision, and removal of the generic counter fallback; live visual acceptance remains a human review step.
+
 Coherent café table (2026-09-12): the café's full 4×2 collision footprint now uses a complete table assembled from the approved card-table sheet's left, repeated center, and right cells instead of ending in a generic fallback column. All four semantic café seats remain adjacent and walkable. Layout, furniture, and room tests protect exact source-cell composition, collision coverage, chair orientation, and reachability; live visual acceptance remains a human review step.
 
 Coherent boardroom table (2026-09-12): the boardroom's oversized generic 5×4 obstacle is replaced by a complete 5×2 table assembled from the approved card-table sheet's left, repeatable center, and right cells. Its two semantic seats remain adjacent and walkable while six formerly reserved floor cells reopen for natural movement. Layout and furniture tests protect exact collision, source-cell composition, placement, and reachability; live visual acceptance remains a human review step.

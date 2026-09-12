@@ -28,13 +28,13 @@ test('room layers cover every tile, show every obstacle, and preserve paths', ()
   }
 });
 
-test('original atlas has zone surfaces and transparent off/on monitor tiles', () => {
+test('original atlas has opaque structural surfaces and transparent overlays', () => {
   const atlas = createRoomAtlas();
   assert.equal(atlas.pixels.length, atlas.width * atlas.height * 4);
   for (let tile = 0; tile < 6; tile++) for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++)
     assert.equal(atlas.pixels[(y * atlas.width + tile * 16 + x) * 4 + 3], 255);
   assert.equal(atlas.tileset.firstgid, 1);
-  assert.equal(atlas.tileset.tilecount, 29);
+  assert.equal(atlas.tileset.tilecount, 35);
   assert.deepEqual(atlas, createRoomAtlas());
   const colors = new Set(Array.from({ length: 6 }, (_, i) => atlas.pixels.slice(i * 64, i * 64 + 3).join(',')));
   assert.equal(colors.size, 6);
@@ -51,6 +51,8 @@ test('original atlas has zone surfaces and transparent off/on monitor tiles', ()
     assert.ok(alpha(tile).some(value => value === 0), `chair tile ${tile} transparency`);
     assert.ok(alpha(tile).some(value => value === 255), `chair tile ${tile} pixels`);
   }
+  for (let tile = 29; tile < 35; tile++)
+    assert.ok(alpha(tile).every(value => value === 255), `counter tile ${tile} opacity`);
 });
 
 test('boardroom and café seats have directional chairs without blocking paths', () => {
@@ -65,6 +67,21 @@ test('boardroom and café seats have directional chairs without blocking paths',
     const index = y * map.width + x;
     assert.equal(above[index], gid, `chair at ${x},${y}`);
     assert.equal(collision[index], 0, `walkable seat at ${x},${y}`);
+  }
+});
+
+test('kitchen counter uses connected original surfaces around real appliances', () => {
+  const { map } = createOfficeRoom(entries);
+  const below = map.layers.find(l => l.name === 'furniture-below').data;
+  const collision = map.layers.find(l => l.name === 'collision').data;
+  const at = (x, y) => below[y * map.width + x];
+  assert.deepEqual([at(36, 15), at(37, 15), at(43, 15), at(44, 15)], [30, 31, 31, 32]);
+  assert.deepEqual([at(36, 16), at(37, 16), at(43, 16), at(44, 16)], [33, 34, 34, 35]);
+  for (let y = 15; y < 17; y++) for (let x = 36; x < 45; x++) {
+    const gid = at(x, y);
+    assert.equal(collision[y * map.width + x], 1);
+    assert.notEqual(gid, 6, `generic counter fallback at ${x},${y}`);
+    assert.ok((gid >= 30 && gid <= 35) || gid >= 257, `counter or appliance GID at ${x},${y}`);
   }
 });
 
