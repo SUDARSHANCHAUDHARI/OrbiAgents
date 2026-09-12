@@ -153,6 +153,31 @@
       "before": "      const camera = new Camera(world);",
       "after": "      // The approved LPC copier includes a separate eight-frame scanner-light\n      // strip. Resolve both sheets through their map metadata, then locate the\n      // body by GID so this ambient animation follows any compatible room.\n      const copierBodySheet = theme.tilesets.find(sheet => sheet.image?.endsWith('/Copy Machine.png'));\n      const copierLightSheet = theme.tilesets.find(sheet => sheet.image?.endsWith('/Copy Machine - Copy Light.png'));\n      if (copierBodySheet?.firstgid != null && copierLightSheet?.firstgid != null) {\n        let copierTile: Tile | undefined;\n        for (let y = 0; y < mapRenderer.height && !copierTile; y++) for (let x = 0; x < mapRenderer.width; x++) {\n          if (mapRenderer.gidAt('furniture-below', x, y) === copierBodySheet.firstgid) {\n            copierTile = { x, y };\n            break;\n          }\n        }\n        const lightFrames = Array.from({ length: 8 }, (_, index) =>\n          mapRenderer.textureForGid(copierLightSheet.firstgid! + index));\n        if (copierTile && lightFrames.every((frame): frame is Texture => frame != null)) {\n          const copierLight = new AnimatedSprite(lightFrames);\n          copierLight.eventMode = 'none';\n          copierLight.position.set((copierTile.x + 1) * mapRenderer.tileSize, copierTile.y * mapRenderer.tileSize);\n          copierLight.zIndex = (copierTile.y + 1) * mapRenderer.tileSize - 1;\n          copierLight.animationSpeed = 0.1;\n          copierLight.play();\n          charLayer.addChild(copierLight);\n        } else {\n          for (const frame of lightFrames) frame?.destroy();\n        }\n      }\n\n      const camera = new Camera(world);",
       "reason": "Discover the copier through active map GIDs and animate its approved scanner-light strip without a room coordinate."
+    },
+    {
+      "before": "      const camera = new Camera(world);",
+      "after": "      // The wall display sheet supplies five complete 3x2 screen states. Find\n      // its placed top-left GID, then animate each of the six cells in lockstep\n      // so the licensed broadcast/static artwork stays crisp at world scale.\n      const displaySheet = theme.tilesets.find(sheet => sheet.image?.endsWith('/TV, Widescreen.png'));\n      if (displaySheet?.firstgid != null && displaySheet.columns === 9 && (displaySheet.tilecount ?? 0) >= 36) {\n        let displayTile: Tile | undefined;\n        for (let y = 0; y < mapRenderer.height && !displayTile; y++) for (let x = 0; x < mapRenderer.width; x++) {\n          if (mapRenderer.gidAt('furniture-below', x, y) === displaySheet.firstgid) {\n            displayTile = { x, y };\n            break;\n          }\n        }\n        const stateOffsets = [0, 3, 18, 21, 24];\n        const displayFrames = Array.from({ length: 2 }, (_, row) =>\n          Array.from({ length: 3 }, (_, column) => stateOffsets.map(offset =>\n            mapRenderer.textureForGid(displaySheet.firstgid! + offset + row * displaySheet.columns! + column))));\n        if (displayTile && displayFrames.flat(2).every((frame): frame is Texture => frame != null)) {\n          for (let row = 0; row < 2; row++) for (let column = 0; column < 3; column++) {\n            const screenCell = new AnimatedSprite(displayFrames[row][column] as Texture[]);\n            screenCell.eventMode = 'none';\n            screenCell.position.set((displayTile.x + column) * mapRenderer.tileSize,\n              (displayTile.y + row) * mapRenderer.tileSize);\n            screenCell.zIndex = (displayTile.y + 2) * mapRenderer.tileSize - 1;\n            screenCell.animationSpeed = 0.008;\n            screenCell.play();\n            charLayer.addChild(screenCell);\n          }\n        } else {\n          for (const frame of displayFrames.flat(2)) frame?.destroy();\n        }\n      }\n\n      const camera = new Camera(world);",
+      "reason": "Discover the approved wall display through active map GIDs and animate all five complete sheet states without a room coordinate."
+    },
+    {
+      "before": "      const charLayer = mapRenderer.getCharacterContainer();",
+      "after": "      const charLayer = mapRenderer.getCharacterContainer();\n      const ambientTextures: Texture[] = [];\n      (app as any).__ambientTextures = ambientTextures;",
+      "reason": "Track caller-owned ambient subtextures so successful scene teardown releases them."
+    },
+    {
+      "before": "          copierLight.play();\n          charLayer.addChild(copierLight);",
+      "after": "          copierLight.play();\n          charLayer.addChild(copierLight);\n          ambientTextures.push(...lightFrames);",
+      "reason": "Track caller-owned copier animation frames for scene teardown."
+    },
+    {
+      "before": "        if (displayTile && displayFrames.flat(2).every((frame): frame is Texture => frame != null)) {\n          for (let row = 0; row < 2; row++) for (let column = 0; column < 3; column++) {",
+      "after": "        if (displayTile && displayFrames.flat(2).every((frame): frame is Texture => frame != null)) {\n          ambientTextures.push(...displayFrames.flat(2) as Texture[]);\n          for (let row = 0; row < 2; row++) for (let column = 0; column < 3; column++) {",
+      "reason": "Track caller-owned operations-display animation frames for scene teardown."
+    },
+    {
+      "before": "  try { app.destroy(true, { children: true }); } catch { /* noop */ }\n}",
+      "after": "  try { app.destroy(true, { children: true }); } catch { /* noop */ }\n  for (const texture of ((app as any).__ambientTextures ?? []) as Texture[])\n    if (!texture.destroyed) texture.destroy();\n}",
+      "reason": "Release caller-owned ambient subtextures after their scene sprites are destroyed."
     }
   ],
   "src/renderer/src/scene/office/portraitArt.ts": [
