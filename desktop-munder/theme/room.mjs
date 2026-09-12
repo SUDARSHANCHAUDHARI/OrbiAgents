@@ -203,14 +203,14 @@ export function createOfficeRoom(entries) {
     furnitureAbove[(y + 1) * map.width + x + 1] = 10;
   }
   const spawnObjects = map.layers.find(l => l.name === 'spawn-points').objects;
-  const sharedSeatNames = ['warroom-1', 'warroom-2', ...result.cafeSeatNames];
-  for (const name of sharedSeatNames) {
+  const seatNames = [...result.primarySeatNames, 'warroom-1', 'warroom-2', ...result.cafeSeatNames];
+  for (const name of seatNames) {
     const spawn = spawnObjects.find(point => point.name === name);
-    if (!spawn) throw new Error(`Missing shared-seat spawn: ${name}`);
+    if (!spawn) throw new Error(`Missing seat spawn: ${name}`);
     const x = spawn.x / map.tilewidth, y = spawn.y / map.tileheight;
     const blocked = (dx, dy) => Boolean(collision[(y + dy) * map.width + x + dx]);
     const tile = blocked(0, -1) ? 26 : blocked(-1, 0) ? 27 : blocked(1, 0) ? 28 : -1;
-    if (tile < 0) throw new Error(`Shared seat has no supported table-facing direction: ${name}`);
+    if (tile < 0) throw new Error(`Seat has no supported furniture-facing direction: ${name}`);
     furnitureAbove[y * map.width + x] = atlas.tileset.firstgid + tile;
   }
   const zoneObjects = map.layers.find(l => l.name === 'zones').objects;
