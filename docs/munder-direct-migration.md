@@ -172,6 +172,8 @@ Sources:
 
 ## Completion boundary
 
+Orbi Prime command console (2026-09-12): the focal `desk-ceo` workstation now replaces its ordinary left-side accessory with an original two-tile illuminated command-console wing while retaining the approved ornate desk and the existing four-tile animated monitor. Both console cells remain inside the desk's established collision footprint, and the semantic seat remains walkable. Atlas and room tests protect transparency, exact desk-relative placement, live-monitor coexistence, collision, and reachability; live visual acceptance remains a human review step.
+
 Orbi Prime command platform (2026-09-12): the semantic `desk-ceo` workstation now sits on a distinct original 5×5 command platform with a gold perimeter and technical inner deck. Its placement derives from the desk geometry rather than a renderer coordinate; desk artwork, animated monitor, seat, and collision remain unchanged. Atlas and room tests protect full opacity, exact 16/9 border-to-center coverage, semantic placement, and seat walkability; live visual acceptance remains a human review step.
 
 Deterministic Pixi Node test environment (2026-09-12): migration tests now preload a test-only minimal `navigator.userAgent` shim before importing Pixi's CommonJS bundle. This fixes the five Pixi test-file crashes under the repository's active Node 20 shell without changing renderer or packaged runtime behavior. The full migration suite, design-system checks, accessibility checks, typechecks, and production build protect the boundary.

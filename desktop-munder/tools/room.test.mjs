@@ -34,7 +34,7 @@ test('original atlas has opaque structural surfaces and transparent overlays', (
   for (let tile = 0; tile < 6; tile++) for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++)
     assert.equal(atlas.pixels[(y * atlas.width + tile * 16 + x) * 4 + 3], 255);
   assert.equal(atlas.tileset.firstgid, 1);
-  assert.equal(atlas.tileset.tilecount, 45);
+  assert.equal(atlas.tileset.tilecount, 47);
   assert.deepEqual(atlas, createRoomAtlas());
   const colors = new Set(Array.from({ length: 6 }, (_, i) => atlas.pixels.slice(i * 64, i * 64 + 3).join(',')));
   assert.equal(colors.size, 6);
@@ -67,6 +67,10 @@ test('original atlas has opaque structural surfaces and transparent overlays', (
   }
   for (let tile = 43; tile < 45; tile++)
     assert.ok(alpha(tile).every(value => value === 255), `command floor ${tile} opacity`);
+  for (let tile = 45; tile < 47; tile++) {
+    assert.ok(alpha(tile).some(value => value === 0), `command console ${tile} transparency`);
+    assert.ok(alpha(tile).some(value => value === 255), `command console ${tile} pixels`);
+  }
 });
 
 test('boardroom and café seats have directional chairs without blocking paths', () => {
@@ -180,6 +184,24 @@ test('Orbi Prime desk has a semantic command platform without collision changes'
   assert.equal(collision[(desk.y + 2) * map.width + desk.x + 1], 0, 'command seat stays walkable');
 });
 
+test('Orbi Prime desk has an original command console beside its live monitor', () => {
+  const { map, desks } = createOfficeRoom(entries);
+  const above = map.layers.find(l => l.name === 'furniture-above').data;
+  const collision = map.layers.find(l => l.name === 'collision').data;
+  const desk = desks.find(item => item.name === 'desk-ceo');
+  const at = (x, y) => above[y * map.width + x];
+  assert.deepEqual([at(desk.x, desk.y), at(desk.x, desk.y + 1)], [46, 47]);
+  assert.deepEqual([
+    at(desk.x + 1, desk.y), at(desk.x + 2, desk.y),
+    at(desk.x + 1, desk.y + 1), at(desk.x + 2, desk.y + 1),
+  ], [7, 8, 9, 10]);
+  assert.deepEqual([
+    collision[desk.y * map.width + desk.x],
+    collision[(desk.y + 1) * map.width + desk.x],
+    collision[(desk.y + 2) * map.width + desk.x + 1],
+  ], [1, 1, 0]);
+});
+
 test('workspace, boardroom, café, entrance and doorways have distinct floor treatments', () => {
   const { map } = createOfficeRoom(entries);
   const floor = map.layers.find(l => l.name === 'floor').data;
@@ -210,6 +232,7 @@ test('all desks expose accessories beside procedural monitors', () => {
   const above = map.layers.find(l => l.name === 'furniture-above').data;
   const accessoryImages = new Set();
   for (const desk of desks) {
+    if (desk.name === 'desk-ceo') continue;
     const accessory = above[desk.y * map.width + desk.x];
     const sheet = map.tilesets.find(t => accessory >= t.firstgid && accessory < t.firstgid + t.tilecount);
     assert.ok(sheet, `desk ${desk.name} accessory has a valid tileset`);
