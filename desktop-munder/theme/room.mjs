@@ -3,7 +3,7 @@ import { createOfficeFurniture } from './furniture.mjs';
 // Original procedural surfaces, not derived from the excluded upstream atlas.
 // Six opaque surface tiles plus transparent monitor and shared-chair overlays.
 export function createRoomAtlas() {
-  const width = 720, height = 16;
+  const width = 752, height = 16;
   const pixels = new Uint8Array(width * height * 4);
   const palette = [[66, 78, 87], [160, 153, 134], [112, 82, 61],
     [78, 101, 111], [110, 72, 53], [155, 145, 119]];
@@ -121,9 +121,19 @@ export function createRoomAtlas() {
     ? [172, 139, 65] : (x + y) % 6 === 0 ? [116, 94, 48] : b);
   fillTile(44, [52, 72, 82], (x, y, b) => x === 0 || y === 0
     ? [89, 117, 124] : (x + y) % 8 === 0 ? [64, 88, 97] : b);
+  const console = { frame: [25, 37, 45, 255], panel: [55, 76, 84, 255],
+    glow: [92, 211, 200, 255], gold: [190, 151, 65, 255] };
+  // Original two-tile command console wing. The right side remains the live
+  // DeskScreen, so Orbi Prime keeps the same runtime monitor choreography.
+  rect(45, 2, 1, 13, 15, console.frame); rect(45, 4, 3, 11, 13, console.panel);
+  rect(45, 5, 5, 10, 8, console.glow); rect(45, 5, 10, 6, 11, console.gold);
+  rect(45, 8, 10, 10, 11, console.gold);
+  rect(46, 3, 0, 12, 13, console.frame); rect(46, 5, 1, 10, 10, console.panel);
+  rect(46, 5, 3, 6, 8, console.glow); rect(46, 8, 3, 10, 8, console.gold);
+  rect(46, 4, 14, 11, 15, console.frame);
   return { width, height, pixels, tileset: {
     firstgid: 1, image: 'orbi-original-room', imagewidth: width, imageheight: height,
-    tilewidth: 16, tileheight: 16, columns: 45, tilecount: 45,
+    tilewidth: 16, tileheight: 16, columns: 47, tilecount: 47,
   } };
 }
 
@@ -172,21 +182,26 @@ export function createOfficeRoom(entries) {
   }
   // Every desk gets the original procedural off-monitor block. DeskScreen
   // overlays gids 11..14 while its worker is seated and animates inside it.
+  const atlas = createRoomAtlas();
   const accessories = [
     ['Laptop.png', 0, 0],
     ['Rotary Phones.png', 1, 0],
     ['Coffee Cup.png', 0, 0],
   ];
   for (const [index, desk] of result.desks.entries()) {
-    const [image, sx, sy] = accessories[index % accessories.length];
-    furnitureAbove[desk.y * map.width + desk.x] = accessoryGid(image, sx, sy);
+    if (desk.name === 'desk-ceo') {
+      furnitureAbove[desk.y * map.width + desk.x] = atlas.tileset.firstgid + 45;
+      furnitureAbove[(desk.y + 1) * map.width + desk.x] = atlas.tileset.firstgid + 46;
+    } else {
+      const [image, sx, sy] = accessories[index % accessories.length];
+      furnitureAbove[desk.y * map.width + desk.x] = accessoryGid(image, sx, sy);
+    }
     const x = desk.x + 1, y = desk.y;
     furnitureAbove[y * map.width + x] = 7;
     furnitureAbove[y * map.width + x + 1] = 8;
     furnitureAbove[(y + 1) * map.width + x] = 9;
     furnitureAbove[(y + 1) * map.width + x + 1] = 10;
   }
-  const atlas = createRoomAtlas();
   const spawnObjects = map.layers.find(l => l.name === 'spawn-points').objects;
   const sharedSeatNames = ['warroom-1', 'warroom-2', ...result.cafeSeatNames];
   for (const name of sharedSeatNames) {
