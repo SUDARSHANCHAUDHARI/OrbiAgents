@@ -10,7 +10,7 @@ test('furniture stamps resolve only approved source cells and match blocked foot
   const collision = map.layers.find(l => l.name === 'collision').data;
   const spawns = map.layers.find(l => l.name === 'spawn-points').objects;
   assert.equal(placements.length, 25);
-  assert.equal(data.filter(Boolean).length, 126);
+  assert.equal(data.filter(Boolean).length, 128);
   for (const placement of placements) {
     const sheet = map.tilesets.find(t => t.image === placement.image);
     for (let dy = 0; dy < placement.height; dy++) for (let dx = 0; dx < placement.width; dx++) {
@@ -40,6 +40,9 @@ test('furniture stamps resolve only approved source cells and match blocked foot
   const boardroom = placements.find(p => p.name === 'boardroom-table');
   assert.deepEqual(boardroom.sourceColumns, [0, 1, 1, 1, 2]);
   assert.deepEqual([boardroom.x, boardroom.y, boardroom.width, boardroom.height], [38, 6, 5, 2]);
+  const cafe = placements.find(p => p.name === 'cafe-table');
+  assert.deepEqual(cafe.sourceColumns, [0, 1, 1, 2]);
+  assert.deepEqual([cafe.x, cafe.y, cafe.width, cafe.height], [38, 19, 4, 2]);
   for (const name of ['boardroom-table', 'cafe-table', 'kitchen-sink', 'operations-display', 'team-mailboxes', 'water-cooler', 'copy-machine', 'bin-entry', 'bin-cafe'])
     assert.ok(placements.some(p => p.name === name), name);
 });

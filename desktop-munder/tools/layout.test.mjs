@@ -47,6 +47,15 @@ test('boardroom collision matches the extended table and leaves surrounding floo
     assert.equal(at(x, y), 0, `open boardroom tile ${x},${y}`);
 });
 
+test('café collision matches its complete table and leaves all four seats open', () => {
+  const { map } = createOfficeLayout();
+  const collision = map.layers.find(l => l.name === 'collision').data;
+  const at = (x, y) => collision[y * map.width + x];
+  for (let y = 19; y < 21; y++) for (let x = 38; x < 42; x++) assert.equal(at(x, y), 1);
+  for (const [x, y] of [[37, 19], [42, 19], [38, 21], [41, 21]])
+    assert.equal(at(x, y), 0, `open café seat ${x},${y}`);
+});
+
 test('licensed room props are blocked while their interaction stands stay reachable', () => {
   const { map, props } = createOfficeLayout();
   const collision = map.layers.find(l => l.name === 'collision').data;
