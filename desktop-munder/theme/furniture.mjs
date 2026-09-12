@@ -51,6 +51,7 @@ export function createOfficeFurniture(entries) {
   stampColumns('boardroom-table', 'Card Table.png', [0, 1, 1, 1, 2], 0, 2, 38, 6);
   stampColumns('cafe-table', 'Card Table.png', [0, 1, 1, 2], 2, 2, 38, 19);
   stamp('kitchen-sink', 'Sink.png', 0, 0, 1, 2, 42, 15);
+  stamp('cafe-refreshment-dispenser', 'Water Cooler.png', 1, 0, 1, 2, 44, 15);
   // Wall-mounted details sit on the blocked top perimeter and therefore add
   // visual landmarks without consuming a single walkable tile.
   stamp('operations-display', 'TV, Widescreen.png', 0, 0, 3, 2, 38, 0);

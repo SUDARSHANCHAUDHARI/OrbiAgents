@@ -75,14 +75,28 @@ test('kitchen counter uses connected original surfaces around real appliances', 
   const below = map.layers.find(l => l.name === 'furniture-below').data;
   const collision = map.layers.find(l => l.name === 'collision').data;
   const at = (x, y) => below[y * map.width + x];
-  assert.deepEqual([at(36, 15), at(37, 15), at(43, 15), at(44, 15)], [30, 31, 31, 32]);
-  assert.deepEqual([at(36, 16), at(37, 16), at(43, 16), at(44, 16)], [33, 34, 34, 35]);
+  assert.deepEqual([at(36, 15), at(37, 15), at(43, 15)], [30, 31, 31]);
+  assert.deepEqual([at(36, 16), at(37, 16), at(43, 16)], [33, 34, 34]);
   for (let y = 15; y < 17; y++) for (let x = 36; x < 45; x++) {
     const gid = at(x, y);
     assert.equal(collision[y * map.width + x], 1);
     assert.notEqual(gid, 6, `generic counter fallback at ${x},${y}`);
     assert.ok((gid >= 30 && gid <= 35) || gid >= 257, `counter or appliance GID at ${x},${y}`);
   }
+});
+
+test('café vending stand is backed by a distinct reachable dispenser', () => {
+  const { map } = createOfficeRoom(entries);
+  const below = map.layers.find(l => l.name === 'furniture-below').data;
+  const collision = map.layers.find(l => l.name === 'collision').data;
+  const spawns = map.layers.find(l => l.name === 'spawn-points').objects;
+  const sheet = map.tilesets.find(t => t.image === 'art/lpc-office/Water Cooler.png');
+  assert.deepEqual([below[15 * map.width + 44], below[16 * map.width + 44]],
+    [sheet.firstgid + 1, sheet.firstgid + sheet.columns + 1]);
+  assert.deepEqual([collision[15 * map.width + 44], collision[16 * map.width + 44]], [1, 1]);
+  const stand = spawns.find(point => point.name === 'cafe-stand-vending');
+  assert.deepEqual([stand.x / map.tilewidth, stand.y / map.tileheight], [44, 17]);
+  assert.equal(collision[17 * map.width + 44], 0);
 });
 
 test('workspace, boardroom, café, entrance and doorways have distinct floor treatments', () => {
