@@ -1,9 +1,9 @@
 import { createOfficeFurniture } from './furniture.mjs';
 
 // Original procedural surfaces, not derived from the excluded upstream atlas.
-// Six opaque surface tiles plus transparent 2x2 off/on monitor overlays.
+// Six opaque surface tiles plus transparent monitor and shared-chair overlays.
 export function createRoomAtlas() {
-  const width = 416, height = 16;
+  const width = 464, height = 16;
   const pixels = new Uint8Array(width * height * 4);
   const palette = [[66, 78, 87], [160, 153, 134], [112, 82, 61],
     [78, 101, 111], [110, 72, 53], [155, 145, 119]];
@@ -58,9 +58,27 @@ export function createRoomAtlas() {
   fillTile(23, [45, 62, 74], (x, y, b) => x < 3 ? [79, 101, 113] : x > 12 ? [27, 40, 49] : y % 8 === 0 ? [52, 71, 83] : b);
   fillTile(24, [61, 70, 91], (x, y, b) => x < 2 ? [103, 92, 123] : x > 12 ? [35, 38, 57] : y % 6 === 0 ? [70, 79, 101] : b);
   fillTile(25, [117, 91, 48], (x, y, b) => x < 3 || x > 12 ? [174, 139, 65] : y < 2 ? [150, 119, 57] : y > 12 ? [70, 52, 33] : b);
+
+  const chair = {
+    outline: [28, 38, 47, 255], frame: [65, 83, 94, 255],
+    cushion: [86, 150, 155, 255], highlight: [112, 181, 182, 255],
+  };
+  const rect = (tile, left, top, right, bottom, color) => {
+    for (let y = top; y <= bottom; y++) for (let x = left; x <= right; x++) pixel(tile, x, y, color);
+  };
+  // Transparent original pixel chairs: up-facing, left-facing, right-facing.
+  rect(26, 3, 5, 12, 6, chair.outline); rect(26, 4, 7, 11, 9, chair.cushion);
+  rect(26, 3, 10, 12, 11, chair.frame); rect(26, 4, 12, 11, 13, chair.outline);
+  rect(26, 4, 14, 5, 15, chair.frame); rect(26, 10, 14, 11, 15, chair.frame);
+  rect(27, 8, 4, 10, 11, chair.frame); rect(27, 9, 5, 11, 9, chair.cushion);
+  rect(27, 5, 10, 10, 12, chair.outline); rect(27, 6, 11, 9, 12, chair.highlight);
+  rect(27, 5, 13, 6, 15, chair.frame); rect(27, 9, 13, 10, 15, chair.frame);
+  rect(28, 5, 4, 7, 11, chair.frame); rect(28, 4, 5, 6, 9, chair.cushion);
+  rect(28, 5, 10, 10, 12, chair.outline); rect(28, 6, 11, 9, 12, chair.highlight);
+  rect(28, 5, 13, 6, 15, chair.frame); rect(28, 9, 13, 10, 15, chair.frame);
   return { width, height, pixels, tileset: {
     firstgid: 1, image: 'orbi-original-room', imagewidth: width, imageheight: height,
-    tilewidth: 16, tileheight: 16, columns: 26, tilecount: 26,
+    tilewidth: 16, tileheight: 16, columns: 29, tilecount: 29,
   } };
 }
 
@@ -111,6 +129,17 @@ export function createOfficeRoom(entries) {
     furnitureAbove[(y + 1) * map.width + x + 1] = 10;
   }
   const atlas = createRoomAtlas();
+  const spawnObjects = map.layers.find(l => l.name === 'spawn-points').objects;
+  const sharedSeatNames = ['warroom-1', 'warroom-2', ...result.cafeSeatNames];
+  for (const name of sharedSeatNames) {
+    const spawn = spawnObjects.find(point => point.name === name);
+    if (!spawn) throw new Error(`Missing shared-seat spawn: ${name}`);
+    const x = spawn.x / map.tilewidth, y = spawn.y / map.tileheight;
+    const blocked = (dx, dy) => Boolean(collision[(y + dy) * map.width + x + dx]);
+    const tile = blocked(0, -1) ? 26 : blocked(-1, 0) ? 27 : blocked(1, 0) ? 28 : -1;
+    if (tile < 0) throw new Error(`Shared seat has no supported table-facing direction: ${name}`);
+    furnitureAbove[y * map.width + x] = atlas.tileset.firstgid + tile;
+  }
   return { ...result, atlas, map: { ...map,
     tilesets: [atlas.tileset, ...map.tilesets],
     layers: [

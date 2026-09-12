@@ -34,7 +34,7 @@ test('original atlas has zone surfaces and transparent off/on monitor tiles', ()
   for (let tile = 0; tile < 6; tile++) for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++)
     assert.equal(atlas.pixels[(y * atlas.width + tile * 16 + x) * 4 + 3], 255);
   assert.equal(atlas.tileset.firstgid, 1);
-  assert.equal(atlas.tileset.tilecount, 26);
+  assert.equal(atlas.tileset.tilecount, 29);
   assert.deepEqual(atlas, createRoomAtlas());
   const colors = new Set(Array.from({ length: 6 }, (_, i) => atlas.pixels.slice(i * 64, i * 64 + 3).join(',')));
   assert.equal(colors.size, 6);
@@ -47,6 +47,25 @@ test('original atlas has zone surfaces and transparent off/on monitor tiles', ()
     assert.ok(alpha(tile).every(value => value === 255), `zone tile ${tile} opacity`);
   for (let tile = 22; tile < 26; tile++)
     assert.ok(alpha(tile).every(value => value === 255), `wall tile ${tile} opacity`);
+  for (let tile = 26; tile < 29; tile++) {
+    assert.ok(alpha(tile).some(value => value === 0), `chair tile ${tile} transparency`);
+    assert.ok(alpha(tile).some(value => value === 255), `chair tile ${tile} pixels`);
+  }
+});
+
+test('boardroom and café seats have directional chairs without blocking paths', () => {
+  const { map } = createOfficeRoom(entries);
+  const above = map.layers.find(l => l.name === 'furniture-above').data;
+  const collision = map.layers.find(l => l.name === 'collision').data;
+  const chairs = [
+    [37, 6, 29], [43, 6, 28],
+    [37, 19, 29], [42, 19, 28], [38, 21, 27], [41, 21, 27],
+  ];
+  for (const [x, y, gid] of chairs) {
+    const index = y * map.width + x;
+    assert.equal(above[index], gid, `chair at ${x},${y}`);
+    assert.equal(collision[index], 0, `walkable seat at ${x},${y}`);
+  }
 });
 
 test('workspace, boardroom, café, entrance and doorways have distinct floor treatments', () => {
