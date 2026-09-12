@@ -291,6 +291,8 @@ export function OfficeFloor() {
       const mapRenderer = new TiledMapRenderer(resolveThemeMap(theme), tilesetTextures);
       world.addChild(mapRenderer.getContainer());
       const charLayer = mapRenderer.getCharacterContainer();
+      const ambientTextures: Texture[] = [];
+      (app as any).__ambientTextures = ambientTextures;
       const tileCount = mapRenderer.getContainer().children.reduce(
         (n, c) => n + ((c as Container).children?.length ?? 0), 0);
       console.log(`[OfficeFloor] map ${mapRenderer.width}x${mapRenderer.height}, ${tileCount} tile sprites rendered`);
@@ -318,8 +320,42 @@ export function OfficeFloor() {
           copierLight.animationSpeed = 0.1;
           copierLight.play();
           charLayer.addChild(copierLight);
+          ambientTextures.push(...lightFrames);
         } else {
           for (const frame of lightFrames) frame?.destroy();
+        }
+      }
+
+      // The wall display sheet supplies five complete 3x2 screen states. Find
+      // its placed top-left GID, then animate each of the six cells in lockstep
+      // so the licensed broadcast/static artwork stays crisp at world scale.
+      const displaySheet = theme.tilesets.find(sheet => sheet.image?.endsWith('/TV, Widescreen.png'));
+      if (displaySheet?.firstgid != null && displaySheet.columns === 9 && (displaySheet.tilecount ?? 0) >= 36) {
+        let displayTile: Tile | undefined;
+        for (let y = 0; y < mapRenderer.height && !displayTile; y++) for (let x = 0; x < mapRenderer.width; x++) {
+          if (mapRenderer.gidAt('furniture-below', x, y) === displaySheet.firstgid) {
+            displayTile = { x, y };
+            break;
+          }
+        }
+        const stateOffsets = [0, 3, 18, 21, 24];
+        const displayFrames = Array.from({ length: 2 }, (_, row) =>
+          Array.from({ length: 3 }, (_, column) => stateOffsets.map(offset =>
+            mapRenderer.textureForGid(displaySheet.firstgid! + offset + row * displaySheet.columns! + column))));
+        if (displayTile && displayFrames.flat(2).every((frame): frame is Texture => frame != null)) {
+          ambientTextures.push(...displayFrames.flat(2) as Texture[]);
+          for (let row = 0; row < 2; row++) for (let column = 0; column < 3; column++) {
+            const screenCell = new AnimatedSprite(displayFrames[row][column] as Texture[]);
+            screenCell.eventMode = 'none';
+            screenCell.position.set((displayTile.x + column) * mapRenderer.tileSize,
+              (displayTile.y + row) * mapRenderer.tileSize);
+            screenCell.zIndex = (displayTile.y + 2) * mapRenderer.tileSize - 1;
+            screenCell.animationSpeed = 0.008;
+            screenCell.play();
+            charLayer.addChild(screenCell);
+          }
+        } else {
+          for (const frame of displayFrames.flat(2)) frame?.destroy();
         }
       }
 
@@ -1834,4 +1870,6 @@ function hex(n: number): string { return '#' + n.toString(16).padStart(6, '0'); 
 function safeDestroy(app: Application) {
   try { app.ticker?.stop(); } catch { /* noop */ }
   try { app.destroy(true, { children: true }); } catch { /* noop */ }
+  for (const texture of ((app as any).__ambientTextures ?? []) as Texture[])
+    if (!texture.destroyed) texture.destroy();
 }
