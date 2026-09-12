@@ -3,7 +3,7 @@ import { createOfficeFurniture } from './furniture.mjs';
 // Original procedural surfaces, not derived from the excluded upstream atlas.
 // Six opaque surface tiles plus transparent monitor and shared-chair overlays.
 export function createRoomAtlas() {
-  const width = 560, height = 16;
+  const width = 608, height = 16;
   const pixels = new Uint8Array(width * height * 4);
   const palette = [[66, 78, 87], [160, 153, 134], [112, 82, 61],
     [78, 101, 111], [110, 72, 53], [155, 145, 119]];
@@ -91,9 +91,18 @@ export function createRoomAtlas() {
     if (x === 7 || x === 8) return [61, 76, 81];
     return b;
   });
+
+  const sign = { frame: [29, 42, 51, 255], face: [183, 164, 104, 255], mark: [47, 74, 82, 255] };
+  for (let tile = 35; tile < 38; tile++) {
+    rect(tile, 1, 2, 14, 13, sign.frame); rect(tile, 2, 3, 13, 12, sign.face);
+  }
+  // Workspace grid, boardroom table, and café mug glyphs.
+  for (const [x, y] of [[4, 5], [9, 5], [4, 9], [9, 9]]) rect(35, x, y, x + 2, y + 2, sign.mark);
+  rect(36, 4, 6, 11, 8, sign.mark); rect(36, 3, 9, 4, 11, sign.mark); rect(36, 11, 9, 12, 11, sign.mark);
+  rect(37, 4, 6, 10, 10, sign.mark); rect(37, 10, 7, 12, 9, sign.mark); rect(37, 5, 11, 9, 11, sign.mark);
   return { width, height, pixels, tileset: {
     firstgid: 1, image: 'orbi-original-room', imagewidth: width, imageheight: height,
-    tilewidth: 16, tileheight: 16, columns: 35, tilecount: 35,
+    tilewidth: 16, tileheight: 16, columns: 38, tilecount: 38,
   } };
 }
 
@@ -158,6 +167,18 @@ export function createOfficeRoom(entries) {
     const tile = blocked(0, -1) ? 26 : blocked(-1, 0) ? 27 : blocked(1, 0) ? 28 : -1;
     if (tile < 0) throw new Error(`Shared seat has no supported table-facing direction: ${name}`);
     furnitureAbove[y * map.width + x] = atlas.tileset.firstgid + tile;
+  }
+  const zoneObjects = map.layers.find(l => l.name === 'zones').objects;
+  const zoneSignTiles = { workspace: 35, boardroom: 36, cafeteria: 37 };
+  for (const zone of zoneObjects) {
+    const tile = zoneSignTiles[zone.name];
+    if (tile === undefined) continue;
+    const zoneX = zone.x / map.tilewidth, zoneY = zone.y / map.tileheight;
+    const x = zone.name === 'workspace' ? zoneX + 1 : zoneX - 1;
+    const y = zone.name === 'workspace' ? zoneY - 1 : zoneY + 2;
+    const index = y * map.width + x;
+    if (!walls[index] || furnitureAbove[index]) throw new Error(`Zone sign has no clear wall: ${zone.name}`);
+    furnitureAbove[index] = atlas.tileset.firstgid + tile;
   }
   return { ...result, atlas, map: { ...map,
     tilesets: [atlas.tileset, ...map.tilesets],
