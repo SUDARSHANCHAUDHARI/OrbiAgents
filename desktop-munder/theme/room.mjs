@@ -3,7 +3,7 @@ import { createOfficeFurniture } from './furniture.mjs';
 // Original procedural surfaces, not derived from the excluded upstream atlas.
 // Six opaque surface tiles plus transparent monitor and shared-chair overlays.
 export function createRoomAtlas() {
-  const width = 1072, height = 16;
+  const width = 1088, height = 16;
   const pixels = new Uint8Array(width * height * 4);
   const palette = [[66, 78, 87], [160, 153, 134], [112, 82, 61],
     [78, 101, 111], [110, 72, 53], [155, 145, 119]];
@@ -191,9 +191,14 @@ export function createRoomAtlas() {
   rect(63, 2, 10, 15, 15, humanBoard.cork); rect(64, 0, 10, 11, 15, humanBoard.cork);
   rect(65, 2, 0, 15, 11, humanBoard.cork); rect(66, 0, 0, 11, 11, humanBoard.cork);
   rect(63, 2, 10, 15, 12, humanBoard.edge); rect(64, 0, 10, 11, 12, humanBoard.edge);
+  const rack = { frame: [35, 52, 59, 255], metal: [106, 132, 135, 255],
+    glow: [92, 211, 200, 255], tray: [177, 150, 91, 255] };
+  rect(67, 1, 3, 3, 15, rack.frame); rect(67, 12, 3, 14, 15, rack.frame);
+  rect(67, 2, 4, 13, 5, rack.metal); rect(67, 2, 10, 13, 11, rack.metal);
+  rect(67, 3, 14, 12, 15, rack.tray); rect(67, 7, 1, 8, 3, rack.glow);
   return { width, height, pixels, tileset: {
     firstgid: 1, image: 'orbi-original-room', imagewidth: width, imageheight: height,
-    tilewidth: 16, tileheight: 16, columns: 67, tilecount: 67,
+    tilewidth: 16, tileheight: 16, columns: 68, tilecount: 68,
   } };
 }
 
@@ -327,6 +332,11 @@ export function createOfficeRoom(entries) {
     if (furnitureAbove[index]) throw new Error('Human board overlaps room furniture');
     furnitureAbove[index] = atlas.tileset.firstgid + 63 + row * 2 + col;
   }
+  const mugRack = { ...result.coffee.trayTile, tile: 67 };
+  const mugRackIndex = mugRack.y * map.width + mugRack.x;
+  if (!collision[mugRackIndex] || !furniture[mugRackIndex] || furnitureAbove[mugRackIndex])
+    throw new Error('Mug rack requires a clear blocked counter tile');
+  furnitureAbove[mugRackIndex] = atlas.tileset.firstgid + mugRack.tile;
   const entrance = spawnObjects.find(point => point.name === 'entrance');
   if (!entrance) throw new Error('Missing entrance spawn');
   const entranceX = entrance.x / map.tilewidth;
@@ -349,7 +359,7 @@ export function createOfficeRoom(entries) {
       furnitureAbove[index] = atlas.tileset.firstgid + 42 + offset;
     }
   }
-  return { ...result, viewports, wallControls, taskBoards, atlas, map: { ...map,
+  return { ...result, viewports, wallControls, taskBoards, mugRack, atlas, map: { ...map,
     tilesets: [atlas.tileset, ...map.tilesets],
     layers: [
       { name: 'floor', type: 'tilelayer', data: floor },

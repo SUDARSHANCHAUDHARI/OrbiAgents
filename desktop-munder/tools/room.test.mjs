@@ -34,7 +34,7 @@ test('original atlas has opaque structural surfaces and transparent overlays', (
   for (let tile = 0; tile < 6; tile++) for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++)
     assert.equal(atlas.pixels[(y * atlas.width + tile * 16 + x) * 4 + 3], 255);
   assert.equal(atlas.tileset.firstgid, 1);
-  assert.equal(atlas.tileset.tilecount, 67);
+  assert.equal(atlas.tileset.tilecount, 68);
   assert.deepEqual(atlas, createRoomAtlas());
   const colors = new Set(Array.from({ length: 6 }, (_, i) => atlas.pixels.slice(i * 64, i * 64 + 3).join(',')));
   assert.equal(colors.size, 6);
@@ -98,6 +98,8 @@ test('original atlas has opaque structural surfaces and transparent overlays', (
     assert.ok(alpha(tile).some(value => value === 255), `human-board furniture ${tile} pixels`);
     if (tile > 63) assert.ok(alpha(tile).some(value => value === 0), `human-board furniture ${tile} transparency`);
   }
+  assert.ok(alpha(67).some(value => value === 0), 'orbital mug rack transparency');
+  assert.ok(alpha(67).some(value => value === 255), 'orbital mug rack pixels');
 });
 
 test('boardroom and café seats have directional chairs without blocking paths', () => {
@@ -186,6 +188,19 @@ test('kitchen counter uses connected original surfaces around real appliances', 
     assert.notEqual(gid, 6, `generic counter fallback at ${x},${y}`);
     assert.ok((gid >= 30 && gid <= 35) || gid >= 257, `counter or appliance GID at ${x},${y}`);
   }
+});
+
+test('orbital mug rack shares the semantic tray counter without changing navigation', () => {
+  const { map, coffee, mugRack } = createOfficeRoom(entries);
+  const below = map.layers.find(l => l.name === 'furniture-below').data;
+  const above = map.layers.find(l => l.name === 'furniture-above').data;
+  const collision = map.layers.find(l => l.name === 'collision').data;
+  const index = mugRack.y * map.width + mugRack.x;
+  assert.deepEqual(mugRack, { ...coffee.trayTile, tile: 67 });
+  assert.notEqual(below[index], 0);
+  assert.equal(above[index], 68);
+  assert.equal(collision[index], 1);
+  assert.equal(collision[coffee.trayStand.y * map.width + coffee.trayStand.x], 0);
 });
 
 test('café vending stand is backed by a distinct reachable dispenser', () => {
