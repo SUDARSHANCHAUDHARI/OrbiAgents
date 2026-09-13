@@ -73,6 +73,7 @@ export interface AnchorConfig {
   calendar: Tile;
   boards: Tile;
   briefing: Tile;
+  hire: Tile;
   clock: Tile;
 }
 

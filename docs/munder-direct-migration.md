@@ -344,3 +344,5 @@ Visual-density slice: the cafeteria's empty southeast wall bay now has a second 
 Cafeteria lounge slice: an original low orbital table and two directional chairs fill the lower café bay. Both new spawn points are walkable, automatically join the live café reservation/pairing system, and preserve the east-wing doorway and existing interaction stands.
 
 Boardroom briefing slice: a three-frame original orbital beacon animates from the semantic center of the existing conference table. The theme exposes its anchor, the renderer resolves contiguous atlas frames from the placed GID, and the prop consumes no additional walkable space.
+
+Entrance launch-kiosk slice: an original two-by-two orbital console fills the previously empty arrival platform beside a reachable stand. Its semantic scene hit target opens the same reviewed hire modal as the existing chrome controls, without duplicating spawn logic or bypassing consent.

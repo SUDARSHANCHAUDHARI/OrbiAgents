@@ -15,6 +15,11 @@ export function createOfficeLayout() {
   const spawns = [];
   const spawn = (name, x, y) => spawns.push({ name, x: x * tileSize, y: y * tileSize });
   spawn('entrance', 23, 29);
+  const hireKiosk = {
+    x: 19, y: 28, width: 2, height: 2,
+    stand: { x: 21, y: 29 }, facing: 'left',
+  };
+  block(hireKiosk.x, hireKiosk.y, hireKiosk.width, hireKiosk.height);
   const desks = [];
   for (let row = 0; row < 3; row++) {
     for (let column = 0; column < 5; column++) {
@@ -76,7 +81,7 @@ export function createOfficeLayout() {
   for (const prop of props) block(prop.x, prop.y, prop.width, prop.height);
   const zone = (name, x, y, w, h) => ({ name, x: x * tileSize, y: y * tileSize, width: w * tileSize, height: h * tileSize });
   return {
-    desks, coffee, loungeTable, planter, cafeteriaPlanter, archiveShelf, coldStorage, props, walls,
+    desks, coffee, loungeTable, hireKiosk, planter, cafeteriaPlanter, archiveShelf, coldStorage, props, walls,
     primarySeatNames: desks.map(({ name }) => name),
     warroomSeatNames: warroomSeats.map(([name]) => name),
     cafeSeatNames: [1, 2, 3, 4, 5, 6].map(i => `cafe-seat-${i}`),

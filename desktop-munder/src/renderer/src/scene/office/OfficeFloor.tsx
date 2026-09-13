@@ -384,6 +384,21 @@ export function OfficeFloor() {
       camera.setViewSize(app.screen.width, app.screen.height);
       camera.fitToScreen();
 
+      // The entrance launch kiosk is room artwork with one transparent, semantic
+      // hit target. It opens the same reviewed hire flow as the chrome buttons.
+      const hireTs = mapRenderer.tileSize;
+      const hireG = new Graphics();
+      hireG.eventMode = 'static';
+      hireG.cursor = 'pointer';
+      hireG.position.set(theme.anchors.hire.x * hireTs, theme.anchors.hire.y * hireTs);
+      hireG.hitArea = { contains: (x: number, y: number) => x >= 0 && x <= 32 && y >= 0 && y <= 32 };
+      hireG.zIndex = (theme.anchors.hire.y + 2) * hireTs;
+      hireG.on('pointertap', (ev) => {
+        ev.stopPropagation();
+        useStore.getState().setAddAgentOpen(true);
+      });
+      charLayer.addChild(hireG);
+
       // ─── The boss's wall calendar → TRIGGERS ───────────────────────────────
       // A little tear-off month page hangs on the command-room wall. Its pixel
       // artwork belongs to the room map; this transparent target supplies the
