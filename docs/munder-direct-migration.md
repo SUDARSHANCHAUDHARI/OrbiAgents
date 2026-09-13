@@ -342,3 +342,5 @@ The pinned source import is complete and its integrity checker passes. Launch/bu
 Visual-density slice: the cafeteria's empty southeast wall bay now has a second original orbital planter, with collision-safe semantic placement and a reachable watering stand. The live idle director rotates through both watering destinations. Layout, room-atlas and theme-integration tests cover the duplicated prop without adding external artwork.
 
 Cafeteria lounge slice: an original low orbital table and two directional chairs fill the lower café bay. Both new spawn points are walkable, automatically join the live café reservation/pairing system, and preserve the east-wing doorway and existing interaction stands.
+
+Boardroom briefing slice: a three-frame original orbital beacon animates from the semantic center of the existing conference table. The theme exposes its anchor, the renderer resolves contiguous atlas frames from the placed GID, and the prop consumes no additional walkable space.

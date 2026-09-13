@@ -359,6 +359,26 @@ export function OfficeFloor() {
         }
       }
 
+      // Animate the original boardroom briefing beacon from its semantic theme
+      // anchor. Its three atlas frames are contiguous after the placed base GID.
+      const briefingGid = mapRenderer.gidAt('furniture-above', theme.anchors.briefing.x,
+        theme.anchors.briefing.y);
+      const briefingFrames = Array.from({ length: 3 }, (_, index) =>
+        mapRenderer.textureForGid(briefingGid + index));
+      if (briefingGid > 0 && briefingFrames.every((frame): frame is Texture => frame != null)) {
+        const briefingBeacon = new AnimatedSprite(briefingFrames);
+        briefingBeacon.eventMode = 'none';
+        briefingBeacon.position.set(theme.anchors.briefing.x * mapRenderer.tileSize,
+          theme.anchors.briefing.y * mapRenderer.tileSize);
+        briefingBeacon.zIndex = (theme.anchors.briefing.y + 1) * mapRenderer.tileSize;
+        briefingBeacon.animationSpeed = 0.055;
+        briefingBeacon.play();
+        charLayer.addChild(briefingBeacon);
+        ambientTextures.push(...briefingFrames);
+      } else {
+        for (const frame of briefingFrames) frame?.destroy();
+      }
+
       const camera = new Camera(world);
       camera.setMapSize(mapRenderer.width * mapRenderer.tileSize, mapRenderer.height * mapRenderer.tileSize);
       camera.setViewSize(app.screen.width, app.screen.height);
