@@ -3,7 +3,7 @@ import { createOfficeFurniture } from './furniture.mjs';
 // Original procedural surfaces, not derived from the excluded upstream atlas.
 // Six opaque surface tiles plus transparent monitor and shared-chair overlays.
 export function createRoomAtlas() {
-  const width = 848, height = 16;
+  const width = 880, height = 16;
   const pixels = new Uint8Array(width * height * 4);
   const palette = [[66, 78, 87], [160, 153, 134], [112, 82, 61],
     [78, 101, 111], [110, 72, 53], [155, 145, 119]];
@@ -147,9 +147,17 @@ export function createRoomAtlas() {
     rect(tile, 3, 6, 12, 7, shelf.dark); rect(tile, 3, 11, 12, 12, shelf.dark);
     rect(tile, 5, 4, 6, 5, shelf.cyan); rect(tile, 9, 9, 11, 10, shelf.gold);
   }
+  const cold = { frame: [25, 39, 48, 255], door: [78, 103, 111, 255],
+    light: [168, 221, 211, 255], seam: [39, 59, 67, 255], gold: [185, 146, 62, 255] };
+  rect(53, 2, 1, 13, 15, cold.frame); rect(53, 4, 3, 11, 14, cold.door);
+  rect(53, 5, 4, 10, 6, cold.light); rect(53, 10, 8, 11, 12, cold.gold);
+  rect(54, 2, 0, 13, 13, cold.frame); rect(54, 4, 0, 11, 11, cold.door);
+  rect(54, 4, 1, 11, 2, cold.seam); rect(54, 10, 5, 11, 9, cold.gold);
+  rect(54, 4, 12, 11, 13, cold.seam); rect(54, 5, 14, 6, 15, cold.frame);
+  rect(54, 10, 14, 11, 15, cold.frame);
   return { width, height, pixels, tileset: {
     firstgid: 1, image: 'orbi-original-room', imagewidth: width, imageheight: height,
-    tilewidth: 16, tileheight: 16, columns: 53, tilecount: 53,
+    tilewidth: 16, tileheight: 16, columns: 55, tilecount: 55,
   } };
 }
 
@@ -195,6 +203,9 @@ export function createOfficeRoom(entries) {
     for (let col = 0; col < archiveShelf.width; col++)
       furniture[(archiveShelf.y + row) * map.width + archiveShelf.x + col] = 50 + row * 2 + col;
   }
+  const coldStorage = result.coldStorage;
+  for (let row = 0; row < coldStorage.height; row++)
+    furniture[(coldStorage.y + row) * map.width + coldStorage.x] = 54 + row;
   const commandDesk = result.desks.find(desk => desk.name === 'desk-ceo');
   if (!commandDesk) throw new Error('Missing command desk');
   for (let y = commandDesk.y - 1; y <= commandDesk.y + commandDesk.height + 1; y++) {

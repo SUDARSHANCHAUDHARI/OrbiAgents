@@ -32,6 +32,8 @@ export function createOrbiTheme() {
         fx: boardroomViewport.fx, duration: 3.8 },
       { kind: 'shelf', stand: room.archiveShelf.stand, facing: room.archiveShelf.facing,
         fx: room.archiveShelf.fx, duration: 4.5 },
+      { kind: 'fridge', stand: room.coldStorage.stand, facing: room.coldStorage.facing,
+        fx: room.coldStorage.fx, duration: 3.6 },
       { kind: 'dispenser', stand: { x: 29, y: 28 }, facing: 'right', fx: { x: 30, y: 27 }, duration: 3.5 },
       { kind: 'bin', stand: { x: 3, y: 28 }, facing: 'left', fx: { x: 2, y: 28 }, duration: 2.6 },
       { kind: 'bin', stand: { x: 44, y: 27 }, facing: 'right', fx: { x: 45, y: 27 }, duration: 2.6 },
