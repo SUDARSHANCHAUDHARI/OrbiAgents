@@ -44,6 +44,9 @@ test('actual registry resolves legacy IDs to original room, scaled LPC sheets an
       assert.equal(textures[i].height, sheet.imageheight);
     });
     assert.equal(theme.primarySeatNames.length, 15);
+    const warroomSeats = map.layers.find(layer => layer.name === 'spawn-points').objects
+      .filter(point => point.name.startsWith('warroom-'));
+    assert.equal(warroomSeats.length, 6);
     assert.equal(theme.monitor.offTopLeftGid, 7);
     assert.deepEqual(theme.monitor.onGids, [[11, 0, 0], [12, 1, 0], [13, 0, 1], [14, 1, 1]]);
     assert.deepEqual(theme.errandSpots.map(spot => spot.kind),

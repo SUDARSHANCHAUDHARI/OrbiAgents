@@ -3,7 +3,7 @@ import { createOfficeFurniture } from './furniture.mjs';
 // Original procedural surfaces, not derived from the excluded upstream atlas.
 // Six opaque surface tiles plus transparent monitor and shared-chair overlays.
 export function createRoomAtlas() {
-  const width = 880, height = 16;
+  const width = 896, height = 16;
   const pixels = new Uint8Array(width * height * 4);
   const palette = [[66, 78, 87], [160, 153, 134], [112, 82, 61],
     [78, 101, 111], [110, 72, 53], [155, 145, 119]];
@@ -155,9 +155,14 @@ export function createRoomAtlas() {
   rect(54, 4, 1, 11, 2, cold.seam); rect(54, 10, 5, 11, 9, cold.gold);
   rect(54, 4, 12, 11, 13, cold.seam); rect(54, 5, 14, 6, 15, cold.frame);
   rect(54, 10, 14, 11, 15, cold.frame);
+  // Down-facing chair completes the directional set for north-side table seats.
+  rect(55, 4, 2, 11, 3, chair.frame); rect(55, 3, 4, 12, 5, chair.outline);
+  rect(55, 4, 6, 11, 9, chair.cushion); rect(55, 5, 6, 10, 6, chair.highlight);
+  rect(55, 3, 10, 12, 11, chair.frame); rect(55, 4, 12, 5, 15, chair.frame);
+  rect(55, 10, 12, 11, 15, chair.frame);
   return { width, height, pixels, tileset: {
     firstgid: 1, image: 'orbi-original-room', imagewidth: width, imageheight: height,
-    tilewidth: 16, tileheight: 16, columns: 55, tilecount: 55,
+    tilewidth: 16, tileheight: 16, columns: 56, tilecount: 56,
   } };
 }
 
@@ -238,13 +243,14 @@ export function createOfficeRoom(entries) {
     furnitureAbove[(y + 1) * map.width + x + 1] = 10;
   }
   const spawnObjects = map.layers.find(l => l.name === 'spawn-points').objects;
-  const seatNames = [...result.primarySeatNames, 'warroom-1', 'warroom-2', ...result.cafeSeatNames];
+  const seatNames = [...result.primarySeatNames, ...result.warroomSeatNames, ...result.cafeSeatNames];
   for (const name of seatNames) {
     const spawn = spawnObjects.find(point => point.name === name);
     if (!spawn) throw new Error(`Missing seat spawn: ${name}`);
     const x = spawn.x / map.tilewidth, y = spawn.y / map.tileheight;
     const blocked = (dx, dy) => Boolean(collision[(y + dy) * map.width + x + dx]);
-    const tile = blocked(0, -1) ? 26 : blocked(-1, 0) ? 27 : blocked(1, 0) ? 28 : -1;
+    const tile = blocked(0, -1) ? 26 : blocked(-1, 0) ? 27
+      : blocked(1, 0) ? 28 : blocked(0, 1) ? 55 : -1;
     if (tile < 0) throw new Error(`Seat has no supported furniture-facing direction: ${name}`);
     furnitureAbove[y * map.width + x] = atlas.tileset.firstgid + tile;
   }

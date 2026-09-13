@@ -26,7 +26,12 @@ export function createOfficeLayout() {
     }
   }
   block(38, 6, 5, 2); // Extended meeting table, with seats beside its footprint.
-  spawn('warroom-1', 37, 6); spawn('warroom-2', 43, 6);
+  const warroomSeats = [
+    ['warroom-1', 37, 6], ['warroom-2', 43, 6],
+    ['warroom-3', 39, 5], ['warroom-4', 41, 5],
+    ['warroom-5', 39, 8], ['warroom-6', 41, 8],
+  ];
+  for (const [name, x, y] of warroomSeats) spawn(name, x, y);
   block(38, 19, 4, 2);
   for (const [i, x, y] of [[1, 37, 19], [2, 42, 19], [3, 38, 21], [4, 41, 21]])
     spawn(`cafe-seat-${i}`, x, y);
@@ -65,6 +70,7 @@ export function createOfficeLayout() {
   return {
     desks, coffee, planter, archiveShelf, coldStorage, props, walls,
     primarySeatNames: desks.map(({ name }) => name),
+    warroomSeatNames: warroomSeats.map(([name]) => name),
     cafeSeatNames: [1, 2, 3, 4].map(i => `cafe-seat-${i}`),
     // Collision/spawn contract only. Visual layers and atlas remain separate.
     map: { width, height, tilewidth: tileSize, tileheight: tileSize, tilesets: [], layers: [

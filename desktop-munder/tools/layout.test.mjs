@@ -3,7 +3,8 @@ import test from 'node:test';
 import { createOfficeLayout } from '../theme/layout.mjs';
 
 test('every desk, meeting seat, café seat and interaction stand is reachable', () => {
-  const { map, primarySeatNames, cafeSeatNames, coffee, planter, archiveShelf, coldStorage } = createOfficeLayout();
+  const { map, primarySeatNames, warroomSeatNames, cafeSeatNames,
+    coffee, planter, archiveShelf, coldStorage } = createOfficeLayout();
   const collision = map.layers.find(l => l.name === 'collision').data;
   const spawns = map.layers.find(l => l.name === 'spawn-points').objects;
   const entrance = spawns.find(s => s.name === 'entrance');
@@ -15,13 +16,15 @@ test('every desk, meeting seat, café seat and interaction stand is reachable', 
     queue.push([x-1,y], [x+1,y], [x,y-1], [x,y+1]);
   }
   assert.equal(primarySeatNames.length, 15);
+  assert.equal(warroomSeatNames.length, 6);
   assert.equal(cafeSeatNames.length, 4);
   assert.equal(new Set(spawns.map(s => s.name)).size, spawns.length);
   for (const spawn of spawns) assert.ok(visited.has(`${spawn.x / 16},${spawn.y / 16}`), spawn.name);
   for (const point of [coffee.trayStand, coffee.machineStand, coffee.sinkStand,
     planter.stand, archiveShelf.stand, coldStorage.stand])
     assert.ok(visited.has(`${point.x},${point.y}`), 'interaction stand');
-  for (const name of [...primarySeatNames, ...cafeSeatNames]) assert.ok(spawns.some(s => s.name === name));
+  for (const name of [...primarySeatNames, ...warroomSeatNames, ...cafeSeatNames])
+    assert.ok(spawns.some(s => s.name === name));
 });
 
 test('desk footprints and perimeter are blocked without forced seat overrides', () => {
@@ -46,6 +49,19 @@ test('boardroom collision matches the extended table and leaves surrounding floo
   for (let y = 6; y < 8; y++) for (let x = 38; x < 43; x++) assert.equal(at(x, y), 1);
   for (const [x, y] of [[38, 5], [42, 5], [38, 8], [42, 8], [37, 6], [43, 6]])
     assert.equal(at(x, y), 0, `open boardroom tile ${x},${y}`);
+});
+
+test('boardroom exposes six walkable seats around all four table sides', () => {
+  const { map, warroomSeatNames } = createOfficeLayout();
+  const collision = map.layers.find(l => l.name === 'collision').data;
+  const spawns = map.layers.find(l => l.name === 'spawn-points').objects;
+  const expected = [[37, 6], [43, 6], [39, 5], [41, 5], [39, 8], [41, 8]];
+  assert.deepEqual(warroomSeatNames, [1, 2, 3, 4, 5, 6].map(i => `warroom-${i}`));
+  assert.deepEqual(warroomSeatNames.map(name => {
+    const seat = spawns.find(point => point.name === name);
+    return [seat.x / map.tilewidth, seat.y / map.tileheight];
+  }), expected);
+  for (const [x, y] of expected) assert.equal(collision[y * map.width + x], 0);
 });
 
 test('café collision matches its complete table and leaves all four seats open', () => {

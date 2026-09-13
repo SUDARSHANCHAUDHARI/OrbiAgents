@@ -172,6 +172,8 @@ Sources:
 
 ## Completion boundary
 
+Six-seat boardroom (2026-09-13): the 5×2 boardroom table now has six semantic overflow seats—two side chairs, two north chairs, and two south chairs—instead of only the side pair. A new original transparent down-facing chair completes the directional furniture set, while the existing up/left/right variants are reused. Layout, atlas, room, and integration tests protect seat names, complete placement, orientation, collision, reachability, and runtime spawn discovery; live seated composition remains a human review step.
+
 Orbital cold-storage inspection (2026-09-13): the cafeteria now contains an original two-tile cold-storage unit beside the connected kitchen counter, with a blocked semantic footprint and reachable front stand. The active theme derives its `fridge` errand stand, facing, and open-door light anchor from that layout contract, activating the imported inspection behavior without renderer coordinates. Layout, atlas, room, and integration tests protect artwork transparency, placement, collision, reachability, and runtime wiring; live light-cone timing remains a human review step.
 
 Orbital archive browsing (2026-09-13): the workspace edge now contains an original 2×2 illuminated archive rack with a blocked semantic footprint and reachable browsing stand. The active theme derives its `shelf` errand stand, facing, and glint-effect anchor from that layout contract, activating the imported browsing behavior without renderer coordinates. Layout, atlas, room, and integration tests protect artwork transparency, exact placement, collision, reachability, and runtime wiring; live animation timing remains a human review step.
