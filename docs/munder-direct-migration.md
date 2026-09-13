@@ -340,3 +340,5 @@ Replacement-art progress: 13 unmodified LPC office prop images plus original `Cr
 
 The pinned source import is complete and its integrity checker passes. Launch/build commands deliberately fail pending adaptation; no upstream dependency installation, application tests or launch has occurred. Replacement theme, runtime adaptation, build verification, live provider acceptance and visual acceptance remain incomplete. Source import is not visual parity.
 Visual-density slice: the cafeteria's empty southeast wall bay now has a second original orbital planter, with collision-safe semantic placement and a reachable watering stand. The live idle director rotates through both watering destinations. Layout, room-atlas and theme-integration tests cover the duplicated prop without adding external artwork.
+
+Cafeteria lounge slice: an original low orbital table and two directional chairs fill the lower café bay. Both new spawn points are walkable, automatically join the live café reservation/pairing system, and preserve the east-wing doorway and existing interaction stands.

@@ -35,6 +35,9 @@ export function createOfficeLayout() {
   block(38, 19, 4, 2);
   for (const [i, x, y] of [[1, 37, 19], [2, 42, 19], [3, 38, 21], [4, 41, 21]])
     spawn(`cafe-seat-${i}`, x, y);
+  const loungeTable = { x: 43, y: 25, width: 1, height: 1 };
+  block(loungeTable.x, loungeTable.y, loungeTable.width, loungeTable.height);
+  spawn('cafe-seat-5', 43, 24); spawn('cafe-seat-6', 43, 26);
   block(36, 15, 9, 2); // Kitchen counter.
   spawn('cafe-stand-coffee', 38, 17); spawn('cafe-stand-vending', 44, 17);
   const coffee = {
@@ -73,10 +76,10 @@ export function createOfficeLayout() {
   for (const prop of props) block(prop.x, prop.y, prop.width, prop.height);
   const zone = (name, x, y, w, h) => ({ name, x: x * tileSize, y: y * tileSize, width: w * tileSize, height: h * tileSize });
   return {
-    desks, coffee, planter, cafeteriaPlanter, archiveShelf, coldStorage, props, walls,
+    desks, coffee, loungeTable, planter, cafeteriaPlanter, archiveShelf, coldStorage, props, walls,
     primarySeatNames: desks.map(({ name }) => name),
     warroomSeatNames: warroomSeats.map(([name]) => name),
-    cafeSeatNames: [1, 2, 3, 4].map(i => `cafe-seat-${i}`),
+    cafeSeatNames: [1, 2, 3, 4, 5, 6].map(i => `cafe-seat-${i}`),
     // Collision/spawn contract only. Visual layers and atlas remain separate.
     map: { width, height, tilewidth: tileSize, tileheight: tileSize, tilesets: [], layers: [
       { name: 'collision', type: 'tilelayer', data: collision },

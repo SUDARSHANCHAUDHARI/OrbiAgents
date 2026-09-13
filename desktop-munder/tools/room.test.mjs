@@ -34,7 +34,7 @@ test('original atlas has opaque structural surfaces and transparent overlays', (
   for (let tile = 0; tile < 6; tile++) for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++)
     assert.equal(atlas.pixels[(y * atlas.width + tile * 16 + x) * 4 + 3], 255);
   assert.equal(atlas.tileset.firstgid, 1);
-  assert.equal(atlas.tileset.tilecount, 68);
+  assert.equal(atlas.tileset.tilecount, 69);
   assert.deepEqual(atlas, createRoomAtlas());
   const colors = new Set(Array.from({ length: 6 }, (_, i) => atlas.pixels.slice(i * 64, i * 64 + 3).join(',')));
   assert.equal(colors.size, 6);
@@ -100,6 +100,8 @@ test('original atlas has opaque structural surfaces and transparent overlays', (
   }
   assert.ok(alpha(67).some(value => value === 0), 'orbital mug rack transparency');
   assert.ok(alpha(67).some(value => value === 255), 'orbital mug rack pixels');
+  assert.ok(alpha(68).some(value => value === 0), 'lounge table transparency');
+  assert.ok(alpha(68).some(value => value === 255), 'lounge table pixels');
 });
 
 test('boardroom and café seats have directional chairs without blocking paths', () => {
@@ -109,12 +111,26 @@ test('boardroom and café seats have directional chairs without blocking paths',
   const chairs = [
     [37, 6, 29], [43, 6, 28], [39, 5, 56], [41, 5, 56], [39, 8, 27], [41, 8, 27],
     [37, 19, 29], [42, 19, 28], [38, 21, 27], [41, 21, 27],
+    [43, 24, 56], [43, 26, 27],
   ];
   for (const [x, y, gid] of chairs) {
     const index = y * map.width + x;
     assert.equal(above[index], gid, `chair at ${x},${y}`);
     assert.equal(collision[index], 0, `walkable seat at ${x},${y}`);
   }
+});
+
+test('cafeteria lounge table owns its semantic footprint between paired seats', () => {
+  const { map, loungeTable } = createOfficeRoom(entries);
+  const below = map.layers.find(l => l.name === 'furniture-below').data;
+  const collision = map.layers.find(l => l.name === 'collision').data;
+  const index = loungeTable.y * map.width + loungeTable.x;
+  assert.equal(below[index], 69);
+  assert.equal(collision[index], 1);
+  assert.deepEqual([
+    collision[(loungeTable.y - 1) * map.width + loungeTable.x],
+    collision[(loungeTable.y + 1) * map.width + loungeTable.x],
+  ], [0, 0]);
 });
 
 test('every workstation seat has an up-facing chair and remains walkable', () => {
