@@ -57,6 +57,7 @@ test('actual registry resolves legacy IDs to original room, scaled LPC sheets an
     assert.equal(roomAbove[theme.anchors.clock.y * map.width + theme.anchors.clock.x], 58);
     assert.equal(roomAbove[2 * map.width + 39], 59);
     assert.deepEqual([roomAbove[1 * map.width + 35], roomAbove[1 * map.width + 36]], [64, 65]);
+    assert.equal(roomAbove[theme.coffee.trayTile.y * map.width + theme.coffee.trayTile.x], 68);
     assert.deepEqual(theme.errandSpots.map(spot => spot.kind),
       ['water', 'window', 'window', 'shelf', 'fridge', 'dispenser', 'bin', 'bin']);
     assert.deepEqual(theme.errandSpots[0], {
