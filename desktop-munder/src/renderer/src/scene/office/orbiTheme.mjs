@@ -10,7 +10,8 @@ const names = WORKER_NAMES;
 export function createOrbiTheme() {
   const room = createOfficeRoom(manifest.entries);
   const boardroomViewport = room.viewports.find(viewport => viewport.name === 'boardroom');
-  if (!boardroomViewport) throw new Error('Missing boardroom viewport');
+  const cafeteriaViewport = room.viewports.find(viewport => viewport.name === 'cafeteria');
+  if (!boardroomViewport || !cafeteriaViewport) throw new Error('Missing semantic viewport');
   const owned = [], workers = new Map();
   let disposed = false;
   const dispose = () => {
@@ -34,6 +35,8 @@ export function createOrbiTheme() {
         fx: room.planter.fx, duration: 4.2 },
       { kind: 'window', stand: boardroomViewport.stand, facing: boardroomViewport.facing,
         fx: boardroomViewport.fx, duration: 3.8 },
+      { kind: 'window', stand: cafeteriaViewport.stand, facing: cafeteriaViewport.facing,
+        fx: cafeteriaViewport.fx, duration: 3.8 },
       { kind: 'shelf', stand: room.archiveShelf.stand, facing: room.archiveShelf.facing,
         fx: room.archiveShelf.fx, duration: 4.5 },
       { kind: 'fridge', stand: room.coldStorage.stand, facing: room.coldStorage.facing,
