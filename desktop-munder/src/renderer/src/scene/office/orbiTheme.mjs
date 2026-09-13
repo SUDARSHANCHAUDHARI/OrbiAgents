@@ -33,6 +33,8 @@ export function createOrbiTheme() {
     errandSpots: [
       { kind: 'water', stand: room.planter.stand, facing: room.planter.facing,
         fx: room.planter.fx, duration: 4.2 },
+      { kind: 'water', stand: room.cafeteriaPlanter.stand, facing: room.cafeteriaPlanter.facing,
+        fx: room.cafeteriaPlanter.fx, duration: 4.2 },
       { kind: 'window', stand: boardroomViewport.stand, facing: boardroomViewport.facing,
         fx: boardroomViewport.fx, duration: 3.8 },
       { kind: 'window', stand: cafeteriaViewport.stand, facing: cafeteriaViewport.facing,

@@ -47,6 +47,11 @@ export function createOfficeLayout() {
     stand: { x: 30, y: 4 }, facing: 'right', fx: { x: 31, y: 4 },
   };
   block(planter.x, planter.y, planter.width, planter.height);
+  const cafeteriaPlanter = {
+    x: 46, y: 27, width: 1, height: 2,
+    stand: { x: 45, y: 28 }, facing: 'right', fx: { x: 46, y: 28 },
+  };
+  block(cafeteriaPlanter.x, cafeteriaPlanter.y, cafeteriaPlanter.width, cafeteriaPlanter.height);
   const archiveShelf = {
     x: 31, y: 23, width: 2, height: 2,
     stand: { x: 30, y: 24 }, facing: 'right', fx: { x: 31, y: 23 },
@@ -68,7 +73,7 @@ export function createOfficeLayout() {
   for (const prop of props) block(prop.x, prop.y, prop.width, prop.height);
   const zone = (name, x, y, w, h) => ({ name, x: x * tileSize, y: y * tileSize, width: w * tileSize, height: h * tileSize });
   return {
-    desks, coffee, planter, archiveShelf, coldStorage, props, walls,
+    desks, coffee, planter, cafeteriaPlanter, archiveShelf, coldStorage, props, walls,
     primarySeatNames: desks.map(({ name }) => name),
     warroomSeatNames: warroomSeats.map(([name]) => name),
     cafeSeatNames: [1, 2, 3, 4].map(i => `cafe-seat-${i}`),

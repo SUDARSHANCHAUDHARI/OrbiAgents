@@ -4,7 +4,7 @@ import { createOfficeLayout } from '../theme/layout.mjs';
 
 test('every desk, meeting seat, café seat and interaction stand is reachable', () => {
   const { map, primarySeatNames, warroomSeatNames, cafeSeatNames,
-    coffee, planter, archiveShelf, coldStorage } = createOfficeLayout();
+    coffee, planter, cafeteriaPlanter, archiveShelf, coldStorage } = createOfficeLayout();
   const collision = map.layers.find(l => l.name === 'collision').data;
   const spawns = map.layers.find(l => l.name === 'spawn-points').objects;
   const entrance = spawns.find(s => s.name === 'entrance');
@@ -21,7 +21,7 @@ test('every desk, meeting seat, café seat and interaction stand is reachable', 
   assert.equal(new Set(spawns.map(s => s.name)).size, spawns.length);
   for (const spawn of spawns) assert.ok(visited.has(`${spawn.x / 16},${spawn.y / 16}`), spawn.name);
   for (const point of [coffee.trayStand, coffee.machineStand, coffee.sinkStand,
-    planter.stand, archiveShelf.stand, coldStorage.stand])
+    planter.stand, cafeteriaPlanter.stand, archiveShelf.stand, coldStorage.stand])
     assert.ok(visited.has(`${point.x},${point.y}`), 'interaction stand');
   for (const name of [...primarySeatNames, ...warroomSeatNames, ...cafeSeatNames])
     assert.ok(spawns.some(s => s.name === name));
@@ -83,7 +83,7 @@ test('licensed room props are blocked while their interaction stands stay reacha
 });
 
 test('orbital planter is blocked while its watering stand remains reachable', () => {
-  const { map, planter } = createOfficeLayout();
+  const { map, planter, cafeteriaPlanter } = createOfficeLayout();
   const collision = map.layers.find(l => l.name === 'collision').data;
   const at = (x, y) => collision[y * map.width + x];
   assert.deepEqual(planter, {
@@ -91,6 +91,11 @@ test('orbital planter is blocked while its watering stand remains reachable', ()
     stand: { x: 30, y: 4 }, facing: 'right', fx: { x: 31, y: 4 },
   });
   assert.deepEqual([at(31, 3), at(31, 4), at(30, 4)], [1, 1, 0]);
+  assert.deepEqual(cafeteriaPlanter, {
+    x: 46, y: 27, width: 1, height: 2,
+    stand: { x: 45, y: 28 }, facing: 'right', fx: { x: 46, y: 28 },
+  });
+  assert.deepEqual([at(46, 27), at(46, 28), at(45, 28)], [1, 1, 0]);
 });
 
 test('orbital archive shelf is blocked beside its browsing stand', () => {

@@ -236,9 +236,10 @@ export function createOfficeRoom(entries) {
       } else furniture[i] = 5;
     }
   }
-  const planter = result.planter;
-  for (let row = 0; row < planter.height; row++)
-    furniture[(planter.y + row) * map.width + planter.x] = 48 + row;
+  for (const planter of [result.planter, result.cafeteriaPlanter]) {
+    for (let row = 0; row < planter.height; row++)
+      furniture[(planter.y + row) * map.width + planter.x] = 48 + row;
+  }
   const archiveShelf = result.archiveShelf;
   for (let row = 0; row < archiveShelf.height; row++) {
     for (let col = 0; col < archiveShelf.width; col++)

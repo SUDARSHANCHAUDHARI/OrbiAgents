@@ -59,20 +59,23 @@ test('actual registry resolves legacy IDs to original room, scaled LPC sheets an
     assert.deepEqual([roomAbove[1 * map.width + 35], roomAbove[1 * map.width + 36]], [64, 65]);
     assert.equal(roomAbove[theme.coffee.trayTile.y * map.width + theme.coffee.trayTile.x], 68);
     assert.deepEqual(theme.errandSpots.map(spot => spot.kind),
-      ['water', 'window', 'window', 'shelf', 'fridge', 'dispenser', 'bin', 'bin']);
+      ['water', 'water', 'window', 'window', 'shelf', 'fridge', 'dispenser', 'bin', 'bin']);
     assert.deepEqual(theme.errandSpots[0], {
       kind: 'water', stand: { x: 30, y: 4 }, facing: 'right', fx: { x: 31, y: 4 }, duration: 4.2,
     });
     assert.deepEqual(theme.errandSpots[1], {
-      kind: 'window', stand: { x: 46, y: 8 }, facing: 'right', fx: { x: 47, y: 7 }, duration: 3.8,
+      kind: 'water', stand: { x: 45, y: 28 }, facing: 'right', fx: { x: 46, y: 28 }, duration: 4.2,
     });
     assert.deepEqual(theme.errandSpots[2], {
-      kind: 'window', stand: { x: 46, y: 22 }, facing: 'right', fx: { x: 47, y: 21 }, duration: 3.8,
+      kind: 'window', stand: { x: 46, y: 8 }, facing: 'right', fx: { x: 47, y: 7 }, duration: 3.8,
     });
     assert.deepEqual(theme.errandSpots[3], {
-      kind: 'shelf', stand: { x: 30, y: 24 }, facing: 'right', fx: { x: 31, y: 23 }, duration: 4.5,
+      kind: 'window', stand: { x: 46, y: 22 }, facing: 'right', fx: { x: 47, y: 21 }, duration: 3.8,
     });
     assert.deepEqual(theme.errandSpots[4], {
+      kind: 'shelf', stand: { x: 30, y: 24 }, facing: 'right', fx: { x: 31, y: 23 }, duration: 4.5,
+    });
+    assert.deepEqual(theme.errandSpots[5], {
       kind: 'fridge', stand: { x: 45, y: 17 }, facing: 'up', fx: { x: 45, y: 16 }, duration: 3.6,
     });
     const frames = await theme.cast.getFrames('jim');
