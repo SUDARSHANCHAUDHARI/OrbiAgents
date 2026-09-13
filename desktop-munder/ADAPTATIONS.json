@@ -273,6 +273,21 @@
       "before": "      // ─── The boss's wall calendar → TRIGGERS ───────────────────────────────",
       "after": "      // The entrance launch kiosk is room artwork with one transparent, semantic\n      // hit target. It opens the same reviewed hire flow as the chrome buttons.\n      const hireTs = mapRenderer.tileSize;\n      const hireG = new Graphics();\n      hireG.eventMode = 'static';\n      hireG.cursor = 'pointer';\n      hireG.position.set(theme.anchors.hire.x * hireTs, theme.anchors.hire.y * hireTs);\n      hireG.hitArea = { contains: (x: number, y: number) => x >= 0 && x <= 32 && y >= 0 && y <= 32 };\n      hireG.zIndex = (theme.anchors.hire.y + 2) * hireTs;\n      hireG.on('pointertap', (ev) => {\n        ev.stopPropagation();\n        useStore.getState().setAddAgentOpen(true);\n      });\n      charLayer.addChild(hireG);\n\n      // ─── The boss's wall calendar → TRIGGERS ───────────────────────────────",
       "reason": "Make the semantic entrance kiosk open the existing reviewed hire flow."
+    },
+    {
+      "before": "      const waitTiles: Tile[] = [];",
+      "after": "      const airlockPulse = new Graphics();\n      airlockPulse.eventMode = 'none';\n      airlockPulse.position.set((entrance.x - 1) * mapRenderer.tileSize,\n        (entrance.y + 1) * mapRenderer.tileSize);\n      airlockPulse.zIndex = (entrance.y + 2) * mapRenderer.tileSize;\n      charLayer.addChild(airlockPulse);\n      let airlockPulseRemaining = 0;\n      const triggerAirlockPulse = (): void => { airlockPulseRemaining = 1.4; };\n      const updateAirlockPulse = (dt: number): void => {\n        airlockPulse.clear();\n        if (airlockPulseRemaining <= 0) return;\n        airlockPulseRemaining = Math.max(0, airlockPulseRemaining - dt);\n        const progress = airlockPulseRemaining / 1.4;\n        const alpha = Math.sin(progress * Math.PI * 3) * 0.18 + 0.42 * progress;\n        airlockPulse.rect(1, 1, 46, 13).stroke({ color: 0x5cdbcf, width: 2, alpha: Math.max(0, alpha) });\n        airlockPulse.rect(5, 5, 38, 5).fill({ color: 0xbca13e, alpha: Math.max(0, alpha * 0.45) });\n      };\n      const waitTiles: Tile[] = [];",
+      "reason": "Create a ticker-driven arrival pulse at the semantic entrance airlock."
+    },
+    {
+      "before": "        character.show(charLayer);",
+      "after": "        character.show(charLayer);\n        triggerAirlockPulse();",
+      "reason": "Trigger the airlock pulse when a worker is admitted to the scene."
+    },
+    {
+      "before": "        updateBoardMoves(dt);",
+      "after": "        updateBoardMoves(dt);\n        updateAirlockPulse(dt);",
+      "reason": "Advance the airlock pulse through the pausable scene ticker."
     }
   ],
   "src/renderer/src/scene/office/portraitArt.ts": [

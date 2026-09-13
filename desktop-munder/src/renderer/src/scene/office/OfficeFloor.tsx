@@ -453,6 +453,23 @@ export function OfficeFloor() {
       // it needs the user. Collected as walkable tiles in rings around the door.
       const entrance = mapRenderer.getSpawnPoint('entrance')
         ?? { x: Math.floor(mapRenderer.width / 2), y: mapRenderer.height - 2 };
+      const airlockPulse = new Graphics();
+      airlockPulse.eventMode = 'none';
+      airlockPulse.position.set((entrance.x - 1) * mapRenderer.tileSize,
+        (entrance.y + 1) * mapRenderer.tileSize);
+      airlockPulse.zIndex = (entrance.y + 2) * mapRenderer.tileSize;
+      charLayer.addChild(airlockPulse);
+      let airlockPulseRemaining = 0;
+      const triggerAirlockPulse = (): void => { airlockPulseRemaining = 1.4; };
+      const updateAirlockPulse = (dt: number): void => {
+        airlockPulse.clear();
+        if (airlockPulseRemaining <= 0) return;
+        airlockPulseRemaining = Math.max(0, airlockPulseRemaining - dt);
+        const progress = airlockPulseRemaining / 1.4;
+        const alpha = Math.sin(progress * Math.PI * 3) * 0.18 + 0.42 * progress;
+        airlockPulse.rect(1, 1, 46, 13).stroke({ color: 0x5cdbcf, width: 2, alpha: Math.max(0, alpha) });
+        airlockPulse.rect(5, 5, 38, 5).fill({ color: 0xbca13e, alpha: Math.max(0, alpha * 0.45) });
+      };
       const waitTiles: Tile[] = [];
       const waitSeen = new Set<string>();
       for (let radius = 0; radius <= 6 && waitTiles.length < 16; radius++) {
@@ -1486,6 +1503,7 @@ export function OfficeFloor() {
           onClick: (id) => useStore.getState().select(id),
         });
         character.show(charLayer);
+        triggerAirlockPulse();
         const rt: Runtime = { character, seatIndex, waitTile, charName };
         // Standard desks paint the 2×2 PC monitor two rows above the seat —
         // give those a DeskScreen (lights up while seated) and a cup spot
@@ -1775,6 +1793,7 @@ export function OfficeFloor() {
         updateBossAura(dt);
         updateDeskLife(dt);
         updateBoardMoves(dt);
+        updateAirlockPulse(dt);
         resolveBubbleOverlaps();
         for (let i = envelopes.length - 1; i >= 0; i--) {
           if (envelopes[i].update(dt)) {
