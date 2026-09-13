@@ -26,7 +26,7 @@ export function createOrbiTheme() {
     coffee: room.coffee,
     anchors: {
       calendar: { x: room.wallControls.calendar.x, y: room.wallControls.calendar.y },
-      boards: { x: 38, y: 2 },
+      boards: { x: room.taskBoards.anchor.x, y: room.taskBoards.anchor.y },
       clock: { x: room.wallControls.clock.x, y: room.wallControls.clock.y },
     },
     errandSpots: [
