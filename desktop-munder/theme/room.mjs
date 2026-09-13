@@ -3,7 +3,7 @@ import { createOfficeFurniture } from './furniture.mjs';
 // Original procedural surfaces, not derived from the excluded upstream atlas.
 // Six opaque surface tiles plus transparent monitor and shared-chair overlays.
 export function createRoomAtlas() {
-  const width = 1104, height = 16;
+  const width = 1152, height = 16;
   const pixels = new Uint8Array(width * height * 4);
   const palette = [[66, 78, 87], [160, 153, 134], [112, 82, 61],
     [78, 101, 111], [110, 72, 53], [155, 145, 119]];
@@ -201,9 +201,17 @@ export function createRoomAtlas() {
   rect(68, 2, 5, 13, 12, lounge.frame); rect(68, 3, 4, 12, 10, lounge.top);
   rect(68, 4, 5, 11, 6, lounge.light); rect(68, 2, 11, 13, 12, lounge.edge);
   rect(68, 3, 13, 4, 15, lounge.frame); rect(68, 11, 13, 12, 15, lounge.frame);
+  const beacon = { base: [41, 58, 66, 255], rim: [184, 145, 61, 255],
+    glow: [91, 221, 207, 255], core: [201, 250, 235, 255] };
+  for (let frame = 0; frame < 3; frame++) {
+    const tile = 69 + frame;
+    rect(tile, 3, 11, 12, 13, beacon.base); rect(tile, 5, 9, 10, 11, beacon.rim);
+    rect(tile, 7, 7 - frame, 8, 9, beacon.core);
+    rect(tile, 5 - frame, 6 - frame, 10 + frame, 6 - frame, beacon.glow);
+  }
   return { width, height, pixels, tileset: {
     firstgid: 1, image: 'orbi-original-room', imagewidth: width, imageheight: height,
-    tilewidth: 16, tileheight: 16, columns: 69, tilecount: 69,
+    tilewidth: 16, tileheight: 16, columns: 72, tilecount: 72,
   } };
 }
 
@@ -324,6 +332,11 @@ export function createOfficeRoom(entries) {
     archive: { x: 43, y: 2 },
     human: { x: 35, y: 1, offsetY: 8 },
   };
+  const briefingBeacon = { x: 40, y: 6, tile: 69, frames: 3 };
+  const briefingIndex = briefingBeacon.y * map.width + briefingBeacon.x;
+  if (!collision[briefingIndex] || !furniture[briefingIndex] || furnitureAbove[briefingIndex])
+    throw new Error('Briefing beacon requires a clear blocked boardroom table tile');
+  furnitureAbove[briefingIndex] = atlas.tileset.firstgid + briefingBeacon.tile;
   for (const origin of taskBoards.boards) {
     for (let row = 0; row < 2; row++) for (let col = 0; col < 2; col++) {
       const index = (origin.y + row) * map.width + origin.x + col;
@@ -366,7 +379,7 @@ export function createOfficeRoom(entries) {
       furnitureAbove[index] = atlas.tileset.firstgid + 42 + offset;
     }
   }
-  return { ...result, viewports, wallControls, taskBoards, mugRack, atlas, map: { ...map,
+  return { ...result, viewports, wallControls, taskBoards, briefingBeacon, mugRack, atlas, map: { ...map,
     tilesets: [atlas.tileset, ...map.tilesets],
     layers: [
       { name: 'floor', type: 'tilelayer', data: floor },

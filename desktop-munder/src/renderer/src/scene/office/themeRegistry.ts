@@ -68,11 +68,11 @@ export interface CoffeeConfig {
   maxCups: number;
 }
 
-/** Clickable prop anchors (tile coords). calendar → TRIGGERS, boards → TASKS,
- *  clock → CLOSING TIME. */
+/** Semantic room anchors in tile coordinates. */
 export interface AnchorConfig {
   calendar: Tile;
   boards: Tile;
+  briefing: Tile;
   clock: Tile;
 }
 
