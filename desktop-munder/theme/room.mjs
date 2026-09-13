@@ -3,7 +3,7 @@ import { createOfficeFurniture } from './furniture.mjs';
 // Original procedural surfaces, not derived from the excluded upstream atlas.
 // Six opaque surface tiles plus transparent monitor and shared-chair overlays.
 export function createRoomAtlas() {
-  const width = 752, height = 16;
+  const width = 784, height = 16;
   const pixels = new Uint8Array(width * height * 4);
   const palette = [[66, 78, 87], [160, 153, 134], [112, 82, 61],
     [78, 101, 111], [110, 72, 53], [155, 145, 119]];
@@ -131,9 +131,16 @@ export function createRoomAtlas() {
   rect(46, 3, 0, 12, 13, console.frame); rect(46, 5, 1, 10, 10, console.panel);
   rect(46, 5, 3, 6, 8, console.glow); rect(46, 8, 3, 10, 8, console.gold);
   rect(46, 4, 14, 11, 15, console.frame);
+  const plant = { outline: [25, 42, 43, 255], leaf: [67, 132, 91, 255],
+    light: [98, 167, 111, 255], pot: [154, 104, 61, 255], rim: [201, 151, 81, 255] };
+  // Original two-tile orbital planter: foliage above a compact illuminated pot.
+  rect(47, 7, 1, 8, 14, plant.outline); rect(47, 3, 3, 7, 6, plant.leaf);
+  rect(47, 8, 5, 12, 8, plant.light); rect(47, 5, 8, 9, 11, plant.leaf);
+  rect(48, 3, 0, 12, 3, plant.rim); rect(48, 4, 4, 11, 13, plant.pot);
+  rect(48, 5, 5, 10, 6, plant.rim); rect(48, 6, 14, 9, 15, plant.outline);
   return { width, height, pixels, tileset: {
     firstgid: 1, image: 'orbi-original-room', imagewidth: width, imageheight: height,
-    tilewidth: 16, tileheight: 16, columns: 47, tilecount: 47,
+    tilewidth: 16, tileheight: 16, columns: 49, tilecount: 49,
   } };
 }
 
@@ -171,6 +178,9 @@ export function createOfficeRoom(entries) {
       } else furniture[i] = 5;
     }
   }
+  const planter = result.planter;
+  for (let row = 0; row < planter.height; row++)
+    furniture[(planter.y + row) * map.width + planter.x] = 48 + row;
   const commandDesk = result.desks.find(desk => desk.name === 'desk-ceo');
   if (!commandDesk) throw new Error('Missing command desk');
   for (let y = commandDesk.y - 1; y <= commandDesk.y + commandDesk.height + 1; y++) {

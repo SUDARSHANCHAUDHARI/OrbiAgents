@@ -46,7 +46,10 @@ test('actual registry resolves legacy IDs to original room, scaled LPC sheets an
     assert.equal(theme.primarySeatNames.length, 15);
     assert.equal(theme.monitor.offTopLeftGid, 7);
     assert.deepEqual(theme.monitor.onGids, [[11, 0, 0], [12, 1, 0], [13, 0, 1], [14, 1, 1]]);
-    assert.deepEqual(theme.errandSpots.map(spot => spot.kind), ['dispenser', 'bin', 'bin']);
+    assert.deepEqual(theme.errandSpots.map(spot => spot.kind), ['water', 'dispenser', 'bin', 'bin']);
+    assert.deepEqual(theme.errandSpots[0], {
+      kind: 'water', stand: { x: 30, y: 4 }, facing: 'right', fx: { x: 31, y: 4 }, duration: 4.2,
+    });
     const frames = await theme.cast.getFrames('jim');
     assert.equal(frames.length, 3);
     assert.equal(frames[0][0].width, 18);
