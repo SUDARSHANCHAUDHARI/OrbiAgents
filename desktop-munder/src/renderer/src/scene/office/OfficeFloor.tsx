@@ -531,12 +531,7 @@ export function OfficeFloor() {
       let sinkBusy = 0; // seconds of wash animation left
       const drawSink = (t: number): void => {
         sinkG.clear();
-        // steel basin set into the white counter top + a small faucet
-        sinkG.rect(2, 6, 12, 8).fill(0xb9c2c9);
-        sinkG.rect(3, 7, 10, 6).fill(0x87939d);
-        sinkG.rect(7, 9, 2, 2).fill(0x5d676f);          // drain
-        sinkG.rect(7, 2, 2, 4).fill(0x6b7680);          // faucet riser
-        sinkG.rect(6, 2, 4, 1).fill(0x6b7680);
+        // The approved room tile owns the basin and faucet; this layer is FX only.
         if (sinkBusy > 0) {
           // running water + a couple of suds while someone scrubs
           sinkG.rect(7, 6, 2, 4).fill({ color: 0x9fd6f0, alpha: 0.9 });
