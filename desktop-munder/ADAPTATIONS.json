@@ -101,6 +101,11 @@
       "before": "/** Clickable prop anchors (tile coords). calendar → TRIGGERS, boards → TASKS,\n *  clock → CLOSING TIME. */\nexport interface AnchorConfig {\n  calendar: Tile;\n  boards: Tile;\n  clock: Tile;\n}",
       "after": "/** Semantic room anchors in tile coordinates. */\nexport interface AnchorConfig {\n  calendar: Tile;\n  boards: Tile;\n  briefing: Tile;\n  clock: Tile;\n}",
       "reason": "Expose the original boardroom briefing beacon through the active theme contract."
+    },
+    {
+      "before": "  briefing: Tile;\n  clock: Tile;",
+      "after": "  briefing: Tile;\n  hire: Tile;\n  clock: Tile;",
+      "reason": "Expose the entrance hire kiosk through the active theme contract."
     }
   ],
   "src/renderer/src/scene/office/OfficeFloor.tsx": [
@@ -263,6 +268,11 @@
       "before": "      const camera = new Camera(world);",
       "after": "      // Animate the original boardroom briefing beacon from its semantic theme\n      // anchor. Its three atlas frames are contiguous after the placed base GID.\n      const briefingGid = mapRenderer.gidAt('furniture-above', theme.anchors.briefing.x,\n        theme.anchors.briefing.y);\n      const briefingFrames = Array.from({ length: 3 }, (_, index) =>\n        mapRenderer.textureForGid(briefingGid + index));\n      if (briefingGid > 0 && briefingFrames.every((frame): frame is Texture => frame != null)) {\n        const briefingBeacon = new AnimatedSprite(briefingFrames);\n        briefingBeacon.eventMode = 'none';\n        briefingBeacon.position.set(theme.anchors.briefing.x * mapRenderer.tileSize,\n          theme.anchors.briefing.y * mapRenderer.tileSize);\n        briefingBeacon.zIndex = (theme.anchors.briefing.y + 1) * mapRenderer.tileSize;\n        briefingBeacon.animationSpeed = 0.055;\n        briefingBeacon.play();\n        charLayer.addChild(briefingBeacon);\n        ambientTextures.push(...briefingFrames);\n      } else {\n        for (const frame of briefingFrames) frame?.destroy();\n      }\n\n      const camera = new Camera(world);",
       "reason": "Animate the original boardroom briefing beacon from its semantic theme anchor."
+    },
+    {
+      "before": "      // ─── The boss's wall calendar → TRIGGERS ───────────────────────────────",
+      "after": "      // The entrance launch kiosk is room artwork with one transparent, semantic\n      // hit target. It opens the same reviewed hire flow as the chrome buttons.\n      const hireTs = mapRenderer.tileSize;\n      const hireG = new Graphics();\n      hireG.eventMode = 'static';\n      hireG.cursor = 'pointer';\n      hireG.position.set(theme.anchors.hire.x * hireTs, theme.anchors.hire.y * hireTs);\n      hireG.hitArea = { contains: (x: number, y: number) => x >= 0 && x <= 32 && y >= 0 && y <= 32 };\n      hireG.zIndex = (theme.anchors.hire.y + 2) * hireTs;\n      hireG.on('pointertap', (ev) => {\n        ev.stopPropagation();\n        useStore.getState().setAddAgentOpen(true);\n      });\n      charLayer.addChild(hireG);\n\n      // ─── The boss's wall calendar → TRIGGERS ───────────────────────────────",
+      "reason": "Make the semantic entrance kiosk open the existing reviewed hire flow."
     }
   ],
   "src/renderer/src/scene/office/portraitArt.ts": [

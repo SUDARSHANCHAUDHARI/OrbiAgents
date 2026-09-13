@@ -34,7 +34,7 @@ test('original atlas has opaque structural surfaces and transparent overlays', (
   for (let tile = 0; tile < 6; tile++) for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++)
     assert.equal(atlas.pixels[(y * atlas.width + tile * 16 + x) * 4 + 3], 255);
   assert.equal(atlas.tileset.firstgid, 1);
-  assert.equal(atlas.tileset.tilecount, 72);
+  assert.equal(atlas.tileset.tilecount, 76);
   assert.deepEqual(atlas, createRoomAtlas());
   const colors = new Set(Array.from({ length: 6 }, (_, i) => atlas.pixels.slice(i * 64, i * 64 + 3).join(',')));
   assert.equal(colors.size, 6);
@@ -106,6 +106,17 @@ test('original atlas has opaque structural surfaces and transparent overlays', (
     assert.ok(alpha(tile).some(value => value === 0), `briefing beacon ${tile} transparency`);
     assert.ok(alpha(tile).some(value => value === 255), `briefing beacon ${tile} pixels`);
   }
+  for (let tile = 72; tile < 76; tile++)
+    assert.ok(alpha(tile).some(value => value === 255), `hire kiosk ${tile} pixels`);
+});
+
+test('entrance hire kiosk fills its semantic blocked footprint', () => {
+  const { map, hireKiosk } = createOfficeRoom(entries);
+  const below = map.layers.find(l => l.name === 'furniture-below').data;
+  const collision = map.layers.find(l => l.name === 'collision').data;
+  const at = (x, y) => below[y * map.width + x];
+  assert.deepEqual([at(19, 28), at(20, 28), at(19, 29), at(20, 29)], [73, 74, 75, 76]);
+  assert.equal(collision[hireKiosk.stand.y * map.width + hireKiosk.stand.x], 0);
 });
 
 test('boardroom and café seats have directional chairs without blocking paths', () => {

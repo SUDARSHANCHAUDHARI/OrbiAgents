@@ -4,7 +4,7 @@ import { createOfficeLayout } from '../theme/layout.mjs';
 
 test('every desk, meeting seat, café seat and interaction stand is reachable', () => {
   const { map, primarySeatNames, warroomSeatNames, cafeSeatNames,
-    coffee, planter, cafeteriaPlanter, archiveShelf, coldStorage } = createOfficeLayout();
+    coffee, hireKiosk, planter, cafeteriaPlanter, archiveShelf, coldStorage } = createOfficeLayout();
   const collision = map.layers.find(l => l.name === 'collision').data;
   const spawns = map.layers.find(l => l.name === 'spawn-points').objects;
   const entrance = spawns.find(s => s.name === 'entrance');
@@ -21,10 +21,20 @@ test('every desk, meeting seat, café seat and interaction stand is reachable', 
   assert.equal(new Set(spawns.map(s => s.name)).size, spawns.length);
   for (const spawn of spawns) assert.ok(visited.has(`${spawn.x / 16},${spawn.y / 16}`), spawn.name);
   for (const point of [coffee.trayStand, coffee.machineStand, coffee.sinkStand,
-    planter.stand, cafeteriaPlanter.stand, archiveShelf.stand, coldStorage.stand])
+    hireKiosk.stand, planter.stand, cafeteriaPlanter.stand, archiveShelf.stand, coldStorage.stand])
     assert.ok(visited.has(`${point.x},${point.y}`), 'interaction stand');
   for (const name of [...primarySeatNames, ...warroomSeatNames, ...cafeSeatNames])
     assert.ok(spawns.some(s => s.name === name));
+});
+
+test('entrance hire kiosk is blocked beside a reachable launch stand', () => {
+  const { map, hireKiosk } = createOfficeLayout();
+  const collision = map.layers.find(l => l.name === 'collision').data;
+  const at = (x, y) => collision[y * map.width + x];
+  assert.deepEqual(hireKiosk, {
+    x: 19, y: 28, width: 2, height: 2, stand: { x: 21, y: 29 }, facing: 'left',
+  });
+  assert.deepEqual([at(19, 28), at(20, 28), at(19, 29), at(20, 29), at(21, 29)], [1, 1, 1, 1, 0]);
 });
 
 test('desk footprints and perimeter are blocked without forced seat overrides', () => {

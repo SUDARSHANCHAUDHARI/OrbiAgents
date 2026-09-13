@@ -3,7 +3,7 @@ import { createOfficeFurniture } from './furniture.mjs';
 // Original procedural surfaces, not derived from the excluded upstream atlas.
 // Six opaque surface tiles plus transparent monitor and shared-chair overlays.
 export function createRoomAtlas() {
-  const width = 1152, height = 16;
+  const width = 1216, height = 16;
   const pixels = new Uint8Array(width * height * 4);
   const palette = [[66, 78, 87], [160, 153, 134], [112, 82, 61],
     [78, 101, 111], [110, 72, 53], [155, 145, 119]];
@@ -209,9 +209,16 @@ export function createRoomAtlas() {
     rect(tile, 7, 7 - frame, 8, 9, beacon.core);
     rect(tile, 5 - frame, 6 - frame, 10 + frame, 6 - frame, beacon.glow);
   }
+  const kiosk = { frame: [27, 41, 49, 255], panel: [56, 82, 91, 255],
+    glow: [91, 221, 207, 255], gold: [188, 149, 62, 255] };
+  for (let tile = 72; tile < 76; tile++) rect(tile, 1, 1, 14, 15, kiosk.frame);
+  rect(72, 3, 3, 15, 15, kiosk.panel); rect(73, 0, 3, 12, 15, kiosk.panel);
+  rect(72, 5, 5, 15, 11, kiosk.glow); rect(73, 0, 5, 9, 11, kiosk.glow);
+  rect(74, 3, 0, 15, 10, kiosk.panel); rect(75, 0, 0, 12, 10, kiosk.panel);
+  rect(74, 4, 11, 15, 13, kiosk.gold); rect(75, 0, 11, 11, 13, kiosk.gold);
   return { width, height, pixels, tileset: {
     firstgid: 1, image: 'orbi-original-room', imagewidth: width, imageheight: height,
-    tilewidth: 16, tileheight: 16, columns: 72, tilecount: 72,
+    tilewidth: 16, tileheight: 16, columns: 76, tilecount: 76,
   } };
 }
 
@@ -252,6 +259,10 @@ export function createOfficeRoom(entries) {
   for (const planter of [result.planter, result.cafeteriaPlanter]) {
     for (let row = 0; row < planter.height; row++)
       furniture[(planter.y + row) * map.width + planter.x] = 48 + row;
+  }
+  for (let row = 0; row < result.hireKiosk.height; row++) {
+    for (let col = 0; col < result.hireKiosk.width; col++)
+      furniture[(result.hireKiosk.y + row) * map.width + result.hireKiosk.x + col] = 73 + row * 2 + col;
   }
   furniture[result.loungeTable.y * map.width + result.loungeTable.x] = 69;
   const archiveShelf = result.archiveShelf;
