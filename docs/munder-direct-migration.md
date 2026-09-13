@@ -172,6 +172,8 @@ Sources:
 
 ## Completion boundary
 
+Room-owned sink animation (2026-09-13): washing no longer redraws a generic vector basin and faucet over the approved LPC sink already placed by room composition. The transient Pixi layer now contains only running water and suds while `sinkBusy` is active; cup stock, washing timing, sink coordinates, collision, and reachability remain unchanged. Focused source and room integration checks protect the approved sink GID and FX-only boundary; live washing remains a human review step.
+
 Semantic human-question board (2026-09-13): the live Ask Me surface now has an original lilac 2×2 pixel-art frame and cork base in the room atlas instead of rebuilding stable furniture every redraw. Its theme-relative placement remains beside the task boards, while the scene retains only the empty watermark, live question notes, attention pulse, click action, and human-tab routing. Atlas, room, integration, source, collision, and provenance checks protect the split; live pulse and answer flow remain a human review step.
 
 Semantic task-board furniture (2026-09-13): the two live task boards and archive cabinet now have original pixel-art bases in the room atlas instead of being rebuilt entirely as transient vector shapes. Room composition owns their placement and exports the board anchor to the theme; the scene retains only status headers, live notes, pins, completed-document stacks, click handling, and worker choreography. Atlas, room, integration, and source-provenance checks protect the split; live task transitions remain a human review step.
