@@ -34,7 +34,7 @@ test('original atlas has opaque structural surfaces and transparent overlays', (
   for (let tile = 0; tile < 6; tile++) for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++)
     assert.equal(atlas.pixels[(y * atlas.width + tile * 16 + x) * 4 + 3], 255);
   assert.equal(atlas.tileset.firstgid, 1);
-  assert.equal(atlas.tileset.tilecount, 58);
+  assert.equal(atlas.tileset.tilecount, 63);
   assert.deepEqual(atlas, createRoomAtlas());
   const colors = new Set(Array.from({ length: 6 }, (_, i) => atlas.pixels.slice(i * 64, i * 64 + 3).join(',')));
   assert.equal(colors.size, 6);
@@ -89,6 +89,11 @@ test('original atlas has opaque structural surfaces and transparent overlays', (
     assert.ok(alpha(tile).some(value => value === 0), `wall control ${tile} transparency`);
     assert.ok(alpha(tile).some(value => value === 255), `wall control ${tile} pixels`);
   }
+  for (let tile = 58; tile < 63; tile++) {
+    assert.ok(alpha(tile).some(value => value === 255), `task-board furniture ${tile} pixels`);
+  }
+  for (let tile = 59; tile < 63; tile++)
+    assert.ok(alpha(tile).some(value => value === 0), `task-board furniture ${tile} transparency`);
 });
 
 test('boardroom and café seats have directional chairs without blocking paths', () => {
@@ -225,6 +230,27 @@ test('semantic wall controls carry original artwork without changing collision',
     assert.notEqual(walls[index], 0, `${name} wall`);
     assert.equal(collision[index], 1, `${name} collision remains blocked`);
   }
+});
+
+test('semantic task boards own their room furniture while the floor stays walkable', () => {
+  const { map, taskBoards } = createOfficeRoom(entries);
+  const above = map.layers.find(l => l.name === 'furniture-above').data;
+  const collision = map.layers.find(l => l.name === 'collision').data;
+  assert.deepEqual(taskBoards, {
+    anchor: { x: 38, y: 2 },
+    boards: [{ x: 39, y: 2 }, { x: 41, y: 2 }],
+    archive: { x: 43, y: 2 },
+  });
+  for (const origin of taskBoards.boards) {
+    assert.deepEqual([
+      above[origin.y * map.width + origin.x], above[origin.y * map.width + origin.x + 1],
+      above[(origin.y + 1) * map.width + origin.x], above[(origin.y + 1) * map.width + origin.x + 1],
+    ], [59, 60, 61, 62]);
+    for (let y = origin.y; y < origin.y + 2; y++) for (let x = origin.x; x < origin.x + 2; x++)
+      assert.equal(collision[y * map.width + x], 0, `board floor ${x},${y}`);
+  }
+  assert.equal(above[taskBoards.archive.y * map.width + taskBoards.archive.x], 63);
+  assert.equal(collision[taskBoards.archive.y * map.width + taskBoards.archive.x], 0);
 });
 
 test('entrance spawn aligns with a three-tile airlock and clear interior approach', () => {

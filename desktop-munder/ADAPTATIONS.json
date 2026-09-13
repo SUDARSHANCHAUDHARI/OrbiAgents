@@ -198,6 +198,36 @@
       "before": "      // The wall clock beside Michael's window doubles as the quit entry:",
       "after": "      // The room-rendered orbital clock doubles as the quit entry:",
       "reason": "Document the semantic room clock while retaining the closing-time action."
+    },
+    {
+      "before": "      boardG.position.set(BOARD_TILE.x * tsB + BOARD_CENTER_PAD, BOARD_TILE.y * tsB);",
+      "after": "      boardG.position.set(BOARD_TILE.x * tsB + BOARD_CENTER_PAD, BOARD_TILE.y * tsB);\n      boardG.hitArea = { contains: (x: number, y: number) => x >= 0 && x <= 82 && y >= 0 && y <= 22 };",
+      "reason": "Keep the complete task-board ensemble clickable when its room-owned bases contain no live notes."
+    },
+    {
+      "before": "        boardG.rect(ox, -8, 30, 22).fill(0x6e5639);        // frame\n        boardG.rect(ox + 1, -7, 28, 3).fill(header);       // header strip\n        boardG.rect(ox + 1, -4, 28, 17).fill(0xc9b083);    // cork",
+      "after": "        boardG.rect(ox + 1, 1, 28, 3).fill(header);        // header strip",
+      "reason": "Render stable task-board frames and cork through the room atlas while retaining live status headers."
+    },
+    {
+      "before": "        boardG.rect(68, 6, 14, 4).fill(0xb08d5e);    // table top\n        boardG.rect(68, 10, 14, 4).fill(0x8a6f4d);   // table front\n        boardG.rect(69, 14, 2, 2).fill(0x6e5639);    // legs\n        boardG.rect(79, 14, 2, 2).fill(0x6e5639);\n        const stack = Math.min(done, 6);",
+      "after": "        const stack = Math.min(done, 6);",
+      "reason": "Render the stable archive cabinet through the room atlas while retaining live completed-document stacks."
+    },
+    {
+      "before": "      const BOARD_CENTER_PAD = 15;",
+      "after": "      const BOARD_CENTER_PAD = 16;",
+      "reason": "Align the live task overlay with the room-owned task-board tile origin."
+    },
+    {
+      "before": "          const y = -2 + Math.floor(i / 4) * 5;",
+      "after": "          const y = 6 + Math.floor(i / 4) * 5;",
+      "reason": "Place live task notes inside the room-owned cork surfaces."
+    },
+    {
+      "before": "          boardG.rect(ox + 22, 8, 5, 4).fill(0xe8e0c8);\n          boardG.rect(ox + 23, 7, 5, 4).fill(0xf2eddc);",
+      "after": "          boardG.rect(ox + 22, 16, 5, 4).fill(0xe8e0c8);\n          boardG.rect(ox + 23, 15, 5, 4).fill(0xf2eddc);",
+      "reason": "Place live overflow notes inside the room-owned cork surfaces."
     }
   ],
   "src/renderer/src/scene/office/portraitArt.ts": [

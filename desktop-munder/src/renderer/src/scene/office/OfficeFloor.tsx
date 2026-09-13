@@ -1082,7 +1082,7 @@ export function OfficeFloor() {
       const BOARD_TILE: Tile = theme.anchors.boards;
       // The ensemble (two boards + archive table) is 82px wide; the wall run
       // between the two doorways spans tiles 6..12 (112px) — center it.
-      const BOARD_CENTER_PAD = 15;
+      const BOARD_CENTER_PAD = 16;
       const NOTE_COLORS: Record<string, number> = theme.palette.noteColors;
       interface BoardTask { status: string; assignee?: string }
       const tsB = mapRenderer.tileSize;
@@ -1090,6 +1090,7 @@ export function OfficeFloor() {
       boardG.eventMode = 'static';
       boardG.cursor = 'pointer';
       boardG.position.set(BOARD_TILE.x * tsB + BOARD_CENTER_PAD, BOARD_TILE.y * tsB);
+      boardG.hitArea = { contains: (x: number, y: number) => x >= 0 && x <= 82 && y >= 0 && y <= 22 };
       boardG.zIndex = (BOARD_TILE.y + 1) * tsB;
       boardG.on('pointertap', (ev) => {
         ev.stopPropagation();
@@ -1109,19 +1110,17 @@ export function OfficeFloor() {
       /** One cork board with a colored header at local x `ox`; draws up to 12
        *  of `notes`, overflow as a corner pile. */
       const drawCork = (ox: number, header: number, notes: string[]): void => {
-        boardG.rect(ox, -8, 30, 22).fill(0x6e5639);        // frame
-        boardG.rect(ox + 1, -7, 28, 3).fill(header);       // header strip
-        boardG.rect(ox + 1, -4, 28, 17).fill(0xc9b083);    // cork
+        boardG.rect(ox + 1, 1, 28, 3).fill(header);        // header strip
         const n = Math.min(notes.length, 12);
         for (let i = 0; i < n; i++) {
           const x = ox + 3 + (i % 4) * 7;
-          const y = -2 + Math.floor(i / 4) * 5;
+          const y = 6 + Math.floor(i / 4) * 5;
           boardG.rect(x, y, 5, 4).fill(NOTE_COLORS[notes[i]] ?? 0xf2eddc);
           boardG.rect(x + 2, y, 1, 1).fill(0x4a3b52);      // pin
         }
         if (notes.length > 12) {
-          boardG.rect(ox + 22, 8, 5, 4).fill(0xe8e0c8);
-          boardG.rect(ox + 23, 7, 5, 4).fill(0xf2eddc);
+          boardG.rect(ox + 22, 16, 5, 4).fill(0xe8e0c8);
+          boardG.rect(ox + 23, 15, 5, 4).fill(0xf2eddc);
         }
       };
 
@@ -1159,10 +1158,6 @@ export function OfficeFloor() {
         drawCork(34, NOTE_COLORS.todo, todoNotes);   // right: what's queued
         // The archive table: every finished task adds a green sheet to the
         // pile (visible stack capped at 6 — beyond that it just sits proud).
-        boardG.rect(68, 6, 14, 4).fill(0xb08d5e);    // table top
-        boardG.rect(68, 10, 14, 4).fill(0x8a6f4d);   // table front
-        boardG.rect(69, 14, 2, 2).fill(0x6e5639);    // legs
-        boardG.rect(79, 14, 2, 2).fill(0x6e5639);
         const stack = Math.min(done, 6);
         for (let i = 0; i < stack; i++) {
           boardG.rect(71 + (i % 2), 4 - i * 2, 8, 2)

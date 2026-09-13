@@ -3,7 +3,7 @@ import { createOfficeFurniture } from './furniture.mjs';
 // Original procedural surfaces, not derived from the excluded upstream atlas.
 // Six opaque surface tiles plus transparent monitor and shared-chair overlays.
 export function createRoomAtlas() {
-  const width = 928, height = 16;
+  const width = 1008, height = 16;
   const pixels = new Uint8Array(width * height * 4);
   const palette = [[66, 78, 87], [160, 153, 134], [112, 82, 61],
     [78, 101, 111], [110, 72, 53], [155, 145, 119]];
@@ -173,9 +173,20 @@ export function createRoomAtlas() {
   rect(57, 2, 1, 13, 14, wallControl.frame); rect(57, 4, 3, 11, 12, wallControl.paper);
   rect(57, 7, 5, 8, 8, wallControl.ink); rect(57, 8, 8, 10, 9, wallControl.ink);
   rect(57, 7, 2, 8, 3, wallControl.glow); rect(57, 7, 12, 8, 13, wallControl.glow);
+  const board = { frame: [78, 58, 43, 255], cork: [190, 158, 111, 255],
+    edge: [117, 86, 57, 255], table: [112, 88, 62, 255], front: [79, 61, 47, 255] };
+  // One reusable 2×2 cork-board base plus a one-tile archive cabinet. Live
+  // headers, notes and document stacks remain scene overlays driven by tasks.
+  rect(58, 0, 0, 15, 15, board.frame); rect(59, 0, 0, 13, 15, board.frame);
+  rect(60, 0, 0, 15, 5, board.frame); rect(61, 0, 0, 13, 5, board.frame);
+  rect(58, 2, 2, 15, 15, board.cork); rect(59, 0, 2, 11, 15, board.cork);
+  rect(60, 2, 0, 15, 5, board.cork); rect(61, 0, 0, 13, 5, board.cork);
+  rect(58, 2, 14, 15, 15, board.edge); rect(59, 0, 14, 13, 15, board.edge);
+  rect(62, 1, 5, 14, 8, board.table); rect(62, 1, 9, 14, 13, board.front);
+  rect(62, 2, 14, 4, 15, board.frame); rect(62, 11, 14, 13, 15, board.frame);
   return { width, height, pixels, tileset: {
     firstgid: 1, image: 'orbi-original-room', imagewidth: width, imageheight: height,
-    tilewidth: 16, tileheight: 16, columns: 58, tilecount: 58,
+    tilewidth: 16, tileheight: 16, columns: 63, tilecount: 63,
   } };
 }
 
@@ -288,6 +299,21 @@ export function createOfficeRoom(entries) {
     if (!walls[index] || furnitureAbove[index]) throw new Error(`Wall control has no clear wall: ${name}`);
     furnitureAbove[index] = atlas.tileset.firstgid + control.tile;
   }
+  const taskBoards = {
+    anchor: { x: 38, y: 2 },
+    boards: [{ x: 39, y: 2 }, { x: 41, y: 2 }],
+    archive: { x: 43, y: 2 },
+  };
+  for (const origin of taskBoards.boards) {
+    for (let row = 0; row < 2; row++) for (let col = 0; col < 2; col++) {
+      const index = (origin.y + row) * map.width + origin.x + col;
+      if (furnitureAbove[index]) throw new Error('Task board overlaps room furniture');
+      furnitureAbove[index] = atlas.tileset.firstgid + 58 + row * 2 + col;
+    }
+  }
+  const archiveIndex = taskBoards.archive.y * map.width + taskBoards.archive.x;
+  if (furnitureAbove[archiveIndex]) throw new Error('Task archive overlaps room furniture');
+  furnitureAbove[archiveIndex] = atlas.tileset.firstgid + 62;
   const entrance = spawnObjects.find(point => point.name === 'entrance');
   if (!entrance) throw new Error('Missing entrance spawn');
   const entranceX = entrance.x / map.tilewidth;
@@ -310,7 +336,7 @@ export function createOfficeRoom(entries) {
       furnitureAbove[index] = atlas.tileset.firstgid + 42 + offset;
     }
   }
-  return { ...result, viewports, wallControls, atlas, map: { ...map,
+  return { ...result, viewports, wallControls, taskBoards, atlas, map: { ...map,
     tilesets: [atlas.tileset, ...map.tilesets],
     layers: [
       { name: 'floor', type: 'tilelayer', data: floor },
