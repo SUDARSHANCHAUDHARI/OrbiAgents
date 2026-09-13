@@ -17,7 +17,7 @@ test('every desk, meeting seat, café seat and interaction stand is reachable', 
   }
   assert.equal(primarySeatNames.length, 15);
   assert.equal(warroomSeatNames.length, 6);
-  assert.equal(cafeSeatNames.length, 4);
+  assert.equal(cafeSeatNames.length, 6);
   assert.equal(new Set(spawns.map(s => s.name)).size, spawns.length);
   for (const spawn of spawns) assert.ok(visited.has(`${spawn.x / 16},${spawn.y / 16}`), spawn.name);
   for (const point of [coffee.trayStand, coffee.machineStand, coffee.sinkStand,
@@ -65,12 +65,16 @@ test('boardroom exposes six walkable seats around all four table sides', () => {
 });
 
 test('café collision matches its complete table and leaves all four seats open', () => {
-  const { map } = createOfficeLayout();
+  const { map, loungeTable, cafeSeatNames } = createOfficeLayout();
   const collision = map.layers.find(l => l.name === 'collision').data;
   const at = (x, y) => collision[y * map.width + x];
   for (let y = 19; y < 21; y++) for (let x = 38; x < 42; x++) assert.equal(at(x, y), 1);
   for (const [x, y] of [[37, 19], [42, 19], [38, 21], [41, 21]])
     assert.equal(at(x, y), 0, `open café seat ${x},${y}`);
+  assert.deepEqual(loungeTable, { x: 43, y: 25, width: 1, height: 1 });
+  assert.equal(at(43, 25), 1);
+  assert.deepEqual(cafeSeatNames.slice(-2), ['cafe-seat-5', 'cafe-seat-6']);
+  assert.deepEqual([at(43, 24), at(43, 26)], [0, 0]);
 });
 
 test('licensed room props are blocked while their interaction stands stay reachable', () => {

@@ -3,7 +3,7 @@ import { createOfficeFurniture } from './furniture.mjs';
 // Original procedural surfaces, not derived from the excluded upstream atlas.
 // Six opaque surface tiles plus transparent monitor and shared-chair overlays.
 export function createRoomAtlas() {
-  const width = 1088, height = 16;
+  const width = 1104, height = 16;
   const pixels = new Uint8Array(width * height * 4);
   const palette = [[66, 78, 87], [160, 153, 134], [112, 82, 61],
     [78, 101, 111], [110, 72, 53], [155, 145, 119]];
@@ -196,9 +196,14 @@ export function createRoomAtlas() {
   rect(67, 1, 3, 3, 15, rack.frame); rect(67, 12, 3, 14, 15, rack.frame);
   rect(67, 2, 4, 13, 5, rack.metal); rect(67, 2, 10, 13, 11, rack.metal);
   rect(67, 3, 14, 12, 15, rack.tray); rect(67, 7, 1, 8, 3, rack.glow);
+  const lounge = { frame: [29, 43, 50, 255], top: [108, 156, 151, 255],
+    light: [143, 190, 178, 255], edge: [183, 145, 61, 255] };
+  rect(68, 2, 5, 13, 12, lounge.frame); rect(68, 3, 4, 12, 10, lounge.top);
+  rect(68, 4, 5, 11, 6, lounge.light); rect(68, 2, 11, 13, 12, lounge.edge);
+  rect(68, 3, 13, 4, 15, lounge.frame); rect(68, 11, 13, 12, 15, lounge.frame);
   return { width, height, pixels, tileset: {
     firstgid: 1, image: 'orbi-original-room', imagewidth: width, imageheight: height,
-    tilewidth: 16, tileheight: 16, columns: 68, tilecount: 68,
+    tilewidth: 16, tileheight: 16, columns: 69, tilecount: 69,
   } };
 }
 
@@ -240,6 +245,7 @@ export function createOfficeRoom(entries) {
     for (let row = 0; row < planter.height; row++)
       furniture[(planter.y + row) * map.width + planter.x] = 48 + row;
   }
+  furniture[result.loungeTable.y * map.width + result.loungeTable.x] = 69;
   const archiveShelf = result.archiveShelf;
   for (let row = 0; row < archiveShelf.height; row++) {
     for (let col = 0; col < archiveShelf.width; col++)
