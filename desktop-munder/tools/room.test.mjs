@@ -34,7 +34,7 @@ test('original atlas has opaque structural surfaces and transparent overlays', (
   for (let tile = 0; tile < 6; tile++) for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++)
     assert.equal(atlas.pixels[(y * atlas.width + tile * 16 + x) * 4 + 3], 255);
   assert.equal(atlas.tileset.firstgid, 1);
-  assert.equal(atlas.tileset.tilecount, 56);
+  assert.equal(atlas.tileset.tilecount, 58);
   assert.deepEqual(atlas, createRoomAtlas());
   const colors = new Set(Array.from({ length: 6 }, (_, i) => atlas.pixels.slice(i * 64, i * 64 + 3).join(',')));
   assert.equal(colors.size, 6);
@@ -85,6 +85,10 @@ test('original atlas has opaque structural surfaces and transparent overlays', (
   }
   assert.ok(alpha(55).some(value => value === 0), 'down-facing chair transparency');
   assert.ok(alpha(55).some(value => value === 255), 'down-facing chair pixels');
+  for (let tile = 56; tile < 58; tile++) {
+    assert.ok(alpha(tile).some(value => value === 0), `wall control ${tile} transparency`);
+    assert.ok(alpha(tile).some(value => value === 255), `wall control ${tile} pixels`);
+  }
 });
 
 test('boardroom and café seats have directional chairs without blocking paths', () => {
@@ -199,6 +203,25 @@ test('semantic zones place distinct signs on existing blocked walls', () => {
   ]) {
     const index = y * map.width + x;
     assert.equal(above[index], gid, `${name} sign`);
+    assert.notEqual(walls[index], 0, `${name} wall`);
+    assert.equal(collision[index], 1, `${name} collision remains blocked`);
+  }
+});
+
+test('semantic wall controls carry original artwork without changing collision', () => {
+  const { map, wallControls } = createOfficeRoom(entries);
+  const above = map.layers.find(l => l.name === 'furniture-above').data;
+  const walls = map.layers.find(l => l.name === 'walls').data;
+  const collision = map.layers.find(l => l.name === 'collision').data;
+  assert.deepEqual(wallControls, {
+    calendar: { x: 4, y: 1, tile: 56 },
+    clock: { x: 24, y: 1, tile: 57 },
+  });
+  for (const [name, control, gid] of [
+    ['calendar', wallControls.calendar, 57], ['clock', wallControls.clock, 58],
+  ]) {
+    const index = control.y * map.width + control.x;
+    assert.equal(above[index], gid, `${name} artwork`);
     assert.notEqual(walls[index], 0, `${name} wall`);
     assert.equal(collision[index], 1, `${name} collision remains blocked`);
   }
