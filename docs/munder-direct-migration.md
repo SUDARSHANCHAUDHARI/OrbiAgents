@@ -346,3 +346,5 @@ Cafeteria lounge slice: an original low orbital table and two directional chairs
 Boardroom briefing slice: a three-frame original orbital beacon animates from the semantic center of the existing conference table. The theme exposes its anchor, the renderer resolves contiguous atlas frames from the placed GID, and the prop consumes no additional walkable space.
 
 Entrance launch-kiosk slice: an original two-by-two orbital console fills the previously empty arrival platform beside a reachable stand. Its semantic scene hit target opens the same reviewed hire modal as the existing chrome controls, without duplicating spawn logic or bypassing consent.
+
+Airlock arrival slice: every admitted worker now triggers a short cyan/gold pulse across the semantic entrance airlock before walking to its assigned seat. The effect is scene-owned, ticker-driven, pause-safe, and consumes no timers or new artwork.
