@@ -178,6 +178,26 @@
       "before": "  try { app.destroy(true, { children: true }); } catch { /* noop */ }\n}",
       "after": "  try { app.destroy(true, { children: true }); } catch { /* noop */ }\n  for (const texture of ((app as any).__ambientTextures ?? []) as Texture[])\n    if (!texture.destroyed) texture.destroy();\n}",
       "reason": "Release caller-owned ambient subtextures after their scene sprites are destroyed."
+    },
+    {
+      "before": "      // A little tear-off month page hangs on the CEO office wall. Clicking it\n      // selects Michael (the god) and opens the Command Center's TRIGGERS tab —",
+      "after": "      // A little tear-off month page hangs on the command-room wall. Its pixel\n      // artwork belongs to the room map; this transparent target supplies the\n      // interaction. Clicking it\n      // selects Michael (the god) and opens the Command Center's TRIGGERS tab —",
+      "reason": "Describe the room-owned calendar artwork while retaining its interaction."
+    },
+    {
+      "before": "      calG.position.set(theme.anchors.calendar.x * calTs + 8, theme.anchors.calendar.y * calTs + 5);",
+      "after": "      calG.position.set(theme.anchors.calendar.x * calTs, theme.anchors.calendar.y * calTs);\n      calG.hitArea = { contains: (x: number, y: number) => x >= 0 && x <= 16 && y >= 0 && y <= 16 };",
+      "reason": "Align the calendar hit target with its semantic room tile."
+    },
+    {
+      "before": "      // nail + ring binding above a white page with a red month header\n      calG.rect(7, -2, 2, 2).fill(0x4a3b52);                  // nail\n      calG.rect(0, 0, 16, 20).fill(0x4a3b52);                 // frame/shadow\n      calG.rect(1, 1, 14, 18).fill(0xf2ead8);                 // the page\n      calG.rect(1, 1, 14, 4).fill(0xc94f4f);                  // month banner\n      calG.rect(4, 0, 1, 2).fill(0xd8d3c4);                   // binding rings\n      calG.rect(11, 0, 1, 2).fill(0xd8d3c4);\n      for (let r = 0; r < 3; r++) {\n        for (let c = 0; c < 5; c++) {\n          calG.rect(2 + c * 3, 7 + r * 4, 2, 2).fill(0xb8ab90); // day grid\n        }\n      }\n      calG.rect(8, 11, 2, 2).fill(0xc94f4f);                  // today, circled red",
+      "after": "      // Pixel artwork is supplied by the semantic furniture-above room layer.",
+      "reason": "Render calendar pixels through the room atlas instead of transient vector decoration."
+    },
+    {
+      "before": "      // The wall clock beside Michael's window doubles as the quit entry:",
+      "after": "      // The room-rendered orbital clock doubles as the quit entry:",
+      "reason": "Document the semantic room clock while retaining the closing-time action."
     }
   ],
   "src/renderer/src/scene/office/portraitArt.ts": [

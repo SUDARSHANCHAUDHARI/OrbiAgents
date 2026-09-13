@@ -3,7 +3,7 @@ import { createOfficeFurniture } from './furniture.mjs';
 // Original procedural surfaces, not derived from the excluded upstream atlas.
 // Six opaque surface tiles plus transparent monitor and shared-chair overlays.
 export function createRoomAtlas() {
-  const width = 896, height = 16;
+  const width = 928, height = 16;
   const pixels = new Uint8Array(width * height * 4);
   const palette = [[66, 78, 87], [160, 153, 134], [112, 82, 61],
     [78, 101, 111], [110, 72, 53], [155, 145, 119]];
@@ -160,9 +160,22 @@ export function createRoomAtlas() {
   rect(55, 4, 6, 11, 9, chair.cushion); rect(55, 5, 6, 10, 6, chair.highlight);
   rect(55, 3, 10, 12, 11, chair.frame); rect(55, 4, 12, 5, 15, chair.frame);
   rect(55, 10, 12, 11, 15, chair.frame);
+  const wallControl = { frame: [29, 42, 51, 255], paper: [231, 224, 202, 255],
+    red: [190, 74, 72, 255], ink: [74, 80, 83, 255], glow: [102, 202, 192, 255] };
+  // Original wall calendar and orbital clock. Runtime keeps their hit targets,
+  // while the durable pixel artwork now belongs to the room composition.
+  rect(56, 2, 1, 13, 14, wallControl.frame); rect(56, 3, 3, 12, 13, wallControl.paper);
+  rect(56, 3, 3, 12, 5, wallControl.red); rect(56, 5, 1, 5, 3, wallControl.ink);
+  rect(56, 10, 1, 10, 3, wallControl.ink);
+  for (const [x, y] of [[5, 7], [8, 7], [11, 7], [5, 10], [8, 10], [11, 10]])
+    rect(56, x, y, x + 1, y + 1, wallControl.ink);
+  rect(56, 8, 10, 9, 11, wallControl.red);
+  rect(57, 2, 1, 13, 14, wallControl.frame); rect(57, 4, 3, 11, 12, wallControl.paper);
+  rect(57, 7, 5, 8, 8, wallControl.ink); rect(57, 8, 8, 10, 9, wallControl.ink);
+  rect(57, 7, 2, 8, 3, wallControl.glow); rect(57, 7, 12, 8, 13, wallControl.glow);
   return { width, height, pixels, tileset: {
     firstgid: 1, image: 'orbi-original-room', imagewidth: width, imageheight: height,
-    tilewidth: 16, tileheight: 16, columns: 56, tilecount: 56,
+    tilewidth: 16, tileheight: 16, columns: 58, tilecount: 58,
   } };
 }
 
@@ -266,6 +279,15 @@ export function createOfficeRoom(entries) {
     if (!walls[index] || furnitureAbove[index]) throw new Error(`Zone sign has no clear wall: ${zone.name}`);
     furnitureAbove[index] = atlas.tileset.firstgid + tile;
   }
+  const wallControls = {
+    calendar: { x: 4, y: 1, tile: 56 },
+    clock: { x: 24, y: 1, tile: 57 },
+  };
+  for (const [name, control] of Object.entries(wallControls)) {
+    const index = control.y * map.width + control.x;
+    if (!walls[index] || furnitureAbove[index]) throw new Error(`Wall control has no clear wall: ${name}`);
+    furnitureAbove[index] = atlas.tileset.firstgid + control.tile;
+  }
   const entrance = spawnObjects.find(point => point.name === 'entrance');
   if (!entrance) throw new Error('Missing entrance spawn');
   const entranceX = entrance.x / map.tilewidth;
@@ -288,7 +310,7 @@ export function createOfficeRoom(entries) {
       furnitureAbove[index] = atlas.tileset.firstgid + 42 + offset;
     }
   }
-  return { ...result, viewports, atlas, map: { ...map,
+  return { ...result, viewports, wallControls, atlas, map: { ...map,
     tilesets: [atlas.tileset, ...map.tilesets],
     layers: [
       { name: 'floor', type: 'tilelayer', data: floor },

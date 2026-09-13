@@ -365,14 +365,17 @@ export function OfficeFloor() {
       camera.fitToScreen();
 
       // ─── The boss's wall calendar → TRIGGERS ───────────────────────────────
-      // A little tear-off month page hangs on the CEO office wall. Clicking it
+      // A little tear-off month page hangs on the command-room wall. Its pixel
+      // artwork belongs to the room map; this transparent target supplies the
+      // interaction. Clicking it
       // selects Michael (the god) and opens the Command Center's TRIGGERS tab —
       // everything that wakes the hive without you, schedules first among them.
       const calTs = mapRenderer.tileSize;
       const calG = new Graphics();
       calG.eventMode = 'static';
       calG.cursor = 'pointer';
-      calG.position.set(theme.anchors.calendar.x * calTs + 8, theme.anchors.calendar.y * calTs + 5);
+      calG.position.set(theme.anchors.calendar.x * calTs, theme.anchors.calendar.y * calTs);
+      calG.hitArea = { contains: (x: number, y: number) => x >= 0 && x <= 16 && y >= 0 && y <= 16 };
       calG.zIndex = 3 * calTs;
       calG.on('pointertap', (ev) => {
         ev.stopPropagation();
@@ -381,19 +384,7 @@ export function OfficeFloor() {
         if (god) st.select(god.id);
         st.requestCommandCenterTab('triggers');
       });
-      // nail + ring binding above a white page with a red month header
-      calG.rect(7, -2, 2, 2).fill(0x4a3b52);                  // nail
-      calG.rect(0, 0, 16, 20).fill(0x4a3b52);                 // frame/shadow
-      calG.rect(1, 1, 14, 18).fill(0xf2ead8);                 // the page
-      calG.rect(1, 1, 14, 4).fill(0xc94f4f);                  // month banner
-      calG.rect(4, 0, 1, 2).fill(0xd8d3c4);                   // binding rings
-      calG.rect(11, 0, 1, 2).fill(0xd8d3c4);
-      for (let r = 0; r < 3; r++) {
-        for (let c = 0; c < 5; c++) {
-          calG.rect(2 + c * 3, 7 + r * 4, 2, 2).fill(0xb8ab90); // day grid
-        }
-      }
-      calG.rect(8, 11, 2, 2).fill(0xc94f4f);                  // today, circled red
+      // Pixel artwork is supplied by the semantic furniture-above room layer.
       charLayer.addChild(calG);
 
       // Build the ordered seat list once: PC desks + named desks first, then
@@ -1182,7 +1173,7 @@ export function OfficeFloor() {
       drawTaskBoard([]);
 
       // ─── The office clock: clicking it is CLOCKING OUT ─────────────────────
-      // The wall clock beside Michael's window doubles as the quit entry:
+      // The room-rendered orbital clock doubles as the quit entry:
       // a click runs the real close flow (window.close() → the main process
       // intercepts while agents run → the "Quitting now?" dialog with its
       // closing-time option). The office clock literally opens quitting time.

@@ -24,7 +24,11 @@ export function createOrbiTheme() {
     primarySeatNames: room.primarySeatNames, cafeSeatNames: room.cafeSeatNames,
     cafeStands: [['cafe-stand-coffee', 'coffee'], ['cafe-stand-vending', 'vending']],
     coffee: room.coffee,
-    anchors: { calendar: { x: 4, y: 1 }, boards: { x: 38, y: 2 }, clock: { x: 24, y: 1 } },
+    anchors: {
+      calendar: { x: room.wallControls.calendar.x, y: room.wallControls.calendar.y },
+      boards: { x: 38, y: 2 },
+      clock: { x: room.wallControls.clock.x, y: room.wallControls.clock.y },
+    },
     errandSpots: [
       { kind: 'water', stand: room.planter.stand, facing: room.planter.facing,
         fx: room.planter.fx, duration: 4.2 },
