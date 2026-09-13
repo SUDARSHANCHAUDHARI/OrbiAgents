@@ -24,6 +24,8 @@ export function createOrbiTheme() {
     coffee: room.coffee,
     anchors: { calendar: { x: 4, y: 1 }, boards: { x: 38, y: 2 }, clock: { x: 24, y: 1 } },
     errandSpots: [
+      { kind: 'water', stand: room.planter.stand, facing: room.planter.facing,
+        fx: room.planter.fx, duration: 4.2 },
       { kind: 'dispenser', stand: { x: 29, y: 28 }, facing: 'right', fx: { x: 30, y: 27 }, duration: 3.5 },
       { kind: 'bin', stand: { x: 3, y: 28 }, facing: 'left', fx: { x: 2, y: 28 }, duration: 2.6 },
       { kind: 'bin', stand: { x: 44, y: 27 }, facing: 'right', fx: { x: 45, y: 27 }, duration: 2.6 },

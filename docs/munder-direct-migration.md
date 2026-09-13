@@ -172,6 +172,8 @@ Sources:
 
 ## Completion boundary
 
+Orbital planter watering (2026-09-12): the workspace edge now contains an original two-tile orbital planter with a collision-safe semantic footprint and reachable watering stand. The active theme derives its `water` errand stand, facing, and effect anchor from that layout contract, activating the imported character watering animation without renderer coordinates. Layout, atlas, room, and integration tests protect artwork transparency, exact placement, collision, stand access, and live theme wiring; animation timing remains a human review step.
+
 Original workstation chairs (2026-09-12): all 15 semantic workstation seats now render the existing original up-facing pixel chair beneath seated or absent workers. Placement comes from each named desk spawn and its adjacent blocked desk, rather than duplicated room coordinates; all chair cells remain walkable and pathfinding is unchanged. Room tests protect the complete desk-to-seat mapping, chair orientation, and collision state; live seated composition remains a human review step.
 
 Orbi Prime command console (2026-09-12): the focal `desk-ceo` workstation now replaces its ordinary left-side accessory with an original two-tile illuminated command-console wing while retaining the approved ornate desk and the existing four-tile animated monitor. Both console cells remain inside the desk's established collision footprint, and the semantic seat remains walkable. Atlas and room tests protect transparency, exact desk-relative placement, live-monitor coexistence, collision, and reachability; live visual acceptance remains a human review step.

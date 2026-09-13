@@ -34,7 +34,7 @@ test('original atlas has opaque structural surfaces and transparent overlays', (
   for (let tile = 0; tile < 6; tile++) for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++)
     assert.equal(atlas.pixels[(y * atlas.width + tile * 16 + x) * 4 + 3], 255);
   assert.equal(atlas.tileset.firstgid, 1);
-  assert.equal(atlas.tileset.tilecount, 47);
+  assert.equal(atlas.tileset.tilecount, 49);
   assert.deepEqual(atlas, createRoomAtlas());
   const colors = new Set(Array.from({ length: 6 }, (_, i) => atlas.pixels.slice(i * 64, i * 64 + 3).join(',')));
   assert.equal(colors.size, 6);
@@ -71,6 +71,10 @@ test('original atlas has opaque structural surfaces and transparent overlays', (
     assert.ok(alpha(tile).some(value => value === 0), `command console ${tile} transparency`);
     assert.ok(alpha(tile).some(value => value === 255), `command console ${tile} pixels`);
   }
+  for (let tile = 47; tile < 49; tile++) {
+    assert.ok(alpha(tile).some(value => value === 0), `orbital planter ${tile} transparency`);
+    assert.ok(alpha(tile).some(value => value === 255), `orbital planter ${tile} pixels`);
+  }
 });
 
 test('boardroom and café seats have directional chairs without blocking paths', () => {
@@ -103,6 +107,19 @@ test('every workstation seat has an up-facing chair and remains walkable', () =>
     assert.equal(above[index], 27, `up-facing chair for ${desk.name}`);
     assert.equal(collision[index], 0, `walkable chair for ${desk.name}`);
   }
+});
+
+test('orbital planter occupies its semantic footprint beside a clear watering stand', () => {
+  const { map, planter } = createOfficeRoom(entries);
+  const below = map.layers.find(l => l.name === 'furniture-below').data;
+  const collision = map.layers.find(l => l.name === 'collision').data;
+  const at = (x, y) => below[y * map.width + x];
+  assert.deepEqual([at(planter.x, planter.y), at(planter.x, planter.y + 1)], [48, 49]);
+  assert.deepEqual([
+    collision[planter.y * map.width + planter.x],
+    collision[(planter.y + 1) * map.width + planter.x],
+    collision[planter.stand.y * map.width + planter.stand.x],
+  ], [1, 1, 0]);
 });
 
 test('kitchen counter uses connected original surfaces around real appliances', () => {
