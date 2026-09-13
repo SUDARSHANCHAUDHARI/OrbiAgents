@@ -1193,8 +1193,9 @@ export function OfficeFloor() {
       const askG = new Graphics();
       askG.eventMode = 'static';
       askG.cursor = 'pointer';
-      const askBoardTile: Tile = { x: BOARD_TILE.x - 3, y: BOARD_TILE.y };
-      askG.position.set(askBoardTile.x * tsB, askBoardTile.y * tsB);
+      const askBoardTile: Tile = { x: BOARD_TILE.x - 3, y: BOARD_TILE.y - 1 };
+      askG.position.set(askBoardTile.x * tsB, askBoardTile.y * tsB + 8);
+      askG.hitArea = { contains: (x: number, y: number) => x >= 0 && x <= 30 && y >= 0 && y <= 22 };
       askG.zIndex = (askBoardTile.y + 1) * tsB;
       askG.on('pointertap', (ev) => {
         ev.stopPropagation();
@@ -1208,26 +1209,23 @@ export function OfficeFloor() {
       let askPulse = 0;
       const drawAskBoard = (pulse: number): void => {
         askG.clear();
-        // lilac-framed board with a big "?" identity
-        askG.rect(0, -8, 30, 22).fill(0x5b4a6b);
-        askG.rect(1, -7, 28, 3).fill(0xcdb4e8);
-        askG.rect(1, -4, 28, 17).fill(0xc9b083);
+        // The room owns the lilac frame/cork; live identity and notes overlay it.
         if (askCount === 0) {
           // quiet: a faint "?" watermark
-          askG.rect(13, -1, 4, 2).fill({ color: 0x8a755f, alpha: 0.8 });
-          askG.rect(15, 1, 2, 4).fill({ color: 0x8a755f, alpha: 0.8 });
-          askG.rect(15, 7, 2, 2).fill({ color: 0x8a755f, alpha: 0.8 });
+          askG.rect(13, 7, 4, 2).fill({ color: 0x8a755f, alpha: 0.8 });
+          askG.rect(15, 9, 2, 4).fill({ color: 0x8a755f, alpha: 0.8 });
+          askG.rect(15, 15, 2, 2).fill({ color: 0x8a755f, alpha: 0.8 });
         } else {
           const n = Math.min(askCount, 8);
           for (let i = 0; i < n; i++) {
             const x = 3 + (i % 4) * 7;
-            const y = -2 + Math.floor(i / 4) * 6;
+            const y = 6 + Math.floor(i / 4) * 6;
             askG.rect(x, y, 5, 4).fill(0xcdb4e8);
             askG.rect(x + 2, y, 1, 1).fill(0x4a3b52);
           }
           // attention pulse around the frame while questions wait
           const a = 0.35 + 0.3 * Math.sin(pulse * 4);
-          askG.rect(-2, -10, 34, 26).stroke({ color: 0xcdb4e8, width: 2, alpha: a });
+          askG.rect(-2, -2, 34, 26).stroke({ color: 0xcdb4e8, width: 2, alpha: a });
         }
       };
       drawAskBoard(0);

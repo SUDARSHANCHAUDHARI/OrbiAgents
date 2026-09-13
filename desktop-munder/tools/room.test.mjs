@@ -34,7 +34,7 @@ test('original atlas has opaque structural surfaces and transparent overlays', (
   for (let tile = 0; tile < 6; tile++) for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++)
     assert.equal(atlas.pixels[(y * atlas.width + tile * 16 + x) * 4 + 3], 255);
   assert.equal(atlas.tileset.firstgid, 1);
-  assert.equal(atlas.tileset.tilecount, 63);
+  assert.equal(atlas.tileset.tilecount, 67);
   assert.deepEqual(atlas, createRoomAtlas());
   const colors = new Set(Array.from({ length: 6 }, (_, i) => atlas.pixels.slice(i * 64, i * 64 + 3).join(',')));
   assert.equal(colors.size, 6);
@@ -94,6 +94,10 @@ test('original atlas has opaque structural surfaces and transparent overlays', (
   }
   for (let tile = 59; tile < 63; tile++)
     assert.ok(alpha(tile).some(value => value === 0), `task-board furniture ${tile} transparency`);
+  for (let tile = 63; tile < 67; tile++) {
+    assert.ok(alpha(tile).some(value => value === 255), `human-board furniture ${tile} pixels`);
+    if (tile > 63) assert.ok(alpha(tile).some(value => value === 0), `human-board furniture ${tile} transparency`);
+  }
 });
 
 test('boardroom and café seats have directional chairs without blocking paths', () => {
@@ -240,6 +244,7 @@ test('semantic task boards own their room furniture while the floor stays walkab
     anchor: { x: 38, y: 2 },
     boards: [{ x: 39, y: 2 }, { x: 41, y: 2 }],
     archive: { x: 43, y: 2 },
+    human: { x: 35, y: 1, offsetY: 8 },
   });
   for (const origin of taskBoards.boards) {
     assert.deepEqual([
@@ -251,6 +256,15 @@ test('semantic task boards own their room furniture while the floor stays walkab
   }
   assert.equal(above[taskBoards.archive.y * map.width + taskBoards.archive.x], 63);
   assert.equal(collision[taskBoards.archive.y * map.width + taskBoards.archive.x], 0);
+  assert.deepEqual([
+    above[1 * map.width + 35], above[1 * map.width + 36],
+    above[2 * map.width + 35], above[2 * map.width + 36],
+  ], [64, 65, 66, 67]);
+  for (const x of [35, 36]) {
+    assert.equal(collision[1 * map.width + x], 1, `human board wall ${x},1`);
+    assert.equal(collision[2 * map.width + x], 0, `human board floor ${x},2`);
+    assert.equal(above[3 * map.width + x], 0, `copier row stays clear above ${x},3`);
+  }
 });
 
 test('entrance spawn aligns with a three-tile airlock and clear interior approach', () => {
