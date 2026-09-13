@@ -134,8 +134,8 @@ test('every workstation seat has an up-facing chair and remains walkable', () =>
   }
 });
 
-test('orbital planter occupies its semantic footprint beside a clear watering stand', () => {
-  const { map, planter } = createOfficeRoom(entries);
+test('orbital planters occupy their semantic footprints beside clear watering stands', () => {
+  const { map, planter, cafeteriaPlanter } = createOfficeRoom(entries);
   const below = map.layers.find(l => l.name === 'furniture-below').data;
   const collision = map.layers.find(l => l.name === 'collision').data;
   const at = (x, y) => below[y * map.width + x];
@@ -144,6 +144,15 @@ test('orbital planter occupies its semantic footprint beside a clear watering st
     collision[planter.y * map.width + planter.x],
     collision[(planter.y + 1) * map.width + planter.x],
     collision[planter.stand.y * map.width + planter.stand.x],
+  ], [1, 1, 0]);
+  assert.deepEqual(
+    [at(cafeteriaPlanter.x, cafeteriaPlanter.y), at(cafeteriaPlanter.x, cafeteriaPlanter.y + 1)],
+    [48, 49],
+  );
+  assert.deepEqual([
+    collision[cafeteriaPlanter.y * map.width + cafeteriaPlanter.x],
+    collision[(cafeteriaPlanter.y + 1) * map.width + cafeteriaPlanter.x],
+    collision[cafeteriaPlanter.stand.y * map.width + cafeteriaPlanter.stand.x],
   ], [1, 1, 0]);
 });
 
