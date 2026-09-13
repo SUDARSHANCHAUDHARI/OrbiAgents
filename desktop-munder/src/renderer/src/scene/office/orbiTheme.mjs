@@ -9,6 +9,8 @@ const urls = import.meta.glob('../../../../../art/lpc-office/*.png', { eager: tr
 const names = WORKER_NAMES;
 export function createOrbiTheme() {
   const room = createOfficeRoom(manifest.entries);
+  const boardroomViewport = room.viewports.find(viewport => viewport.name === 'boardroom');
+  if (!boardroomViewport) throw new Error('Missing boardroom viewport');
   const owned = [], workers = new Map();
   let disposed = false;
   const dispose = () => {
@@ -26,6 +28,8 @@ export function createOrbiTheme() {
     errandSpots: [
       { kind: 'water', stand: room.planter.stand, facing: room.planter.facing,
         fx: room.planter.fx, duration: 4.2 },
+      { kind: 'window', stand: boardroomViewport.stand, facing: boardroomViewport.facing,
+        fx: boardroomViewport.fx, duration: 3.8 },
       { kind: 'dispenser', stand: { x: 29, y: 28 }, facing: 'right', fx: { x: 30, y: 27 }, duration: 3.5 },
       { kind: 'bin', stand: { x: 3, y: 28 }, facing: 'left', fx: { x: 2, y: 28 }, duration: 2.6 },
       { kind: 'bin', stand: { x: 44, y: 27 }, facing: 'right', fx: { x: 45, y: 27 }, duration: 2.6 },

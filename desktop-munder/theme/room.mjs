@@ -244,9 +244,12 @@ export function createOfficeRoom(entries) {
     if (!walls[index] || furnitureAbove[index]) throw new Error('Entrance airlock has no clear wall');
     furnitureAbove[index] = atlas.tileset.firstgid + 39 + offset;
   }
+  const viewports = [];
   for (const zone of zoneObjects.filter(({ name }) => name === 'boardroom' || name === 'cafeteria')) {
     const x = (zone.x + zone.width) / map.tilewidth;
     const centerY = (zone.y + zone.height / 2) / map.tileheight;
+    viewports.push({ name: zone.name, x, topY: centerY - 1,
+      stand: { x: x - 1, y: centerY }, facing: 'right', fx: { x, y: centerY - 1 } });
     for (let offset = -1; offset <= 0; offset++) {
       const y = centerY + offset;
       const index = y * map.width + x;
@@ -254,7 +257,7 @@ export function createOfficeRoom(entries) {
       furnitureAbove[index] = atlas.tileset.firstgid + 42 + offset;
     }
   }
-  return { ...result, atlas, map: { ...map,
+  return { ...result, viewports, atlas, map: { ...map,
     tilesets: [atlas.tileset, ...map.tilesets],
     layers: [
       { name: 'floor', type: 'tilelayer', data: floor },

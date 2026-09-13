@@ -172,6 +172,8 @@ Sources:
 
 ## Completion boundary
 
+Viewport breeze errand (2026-09-13): the active theme now connects the boardroom's existing original orbital viewport to the imported `window` idle errand. Room composition exposes each semantic viewport's wall position, interior stand, facing, and effect anchor; the theme consumes that contract instead of duplicating map coordinates. Room and integration tests protect both viewport artworks, clear and reachable stands, and exact runtime wiring; live breeze timing remains a human review step.
+
 Orbital planter watering (2026-09-12): the workspace edge now contains an original two-tile orbital planter with a collision-safe semantic footprint and reachable watering stand. The active theme derives its `water` errand stand, facing, and effect anchor from that layout contract, activating the imported character watering animation without renderer coordinates. Layout, atlas, room, and integration tests protect artwork transparency, exact placement, collision, stand access, and live theme wiring; animation timing remains a human review step.
 
 Original workstation chairs (2026-09-12): all 15 semantic workstation seats now render the existing original up-facing pixel chair beneath seated or absent workers. Placement comes from each named desk spawn and its adjacent blocked desk, rather than duplicated room coordinates; all chair cells remain walkable and pathfinding is unchanged. Room tests protect the complete desk-to-seat mapping, chair orientation, and collision state; live seated composition remains a human review step.
