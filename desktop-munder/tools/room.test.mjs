@@ -185,7 +185,7 @@ test('entrance spawn aligns with a three-tile airlock and clear interior approac
 });
 
 test('east-wing zones place two-tile viewports on the exterior wall', () => {
-  const { map } = createOfficeRoom(entries);
+  const { map, viewports } = createOfficeRoom(entries);
   const above = map.layers.find(l => l.name === 'furniture-above').data;
   const walls = map.layers.find(l => l.name === 'walls').data;
   const collision = map.layers.find(l => l.name === 'collision').data;
@@ -196,7 +196,23 @@ test('east-wing zones place two-tile viewports on the exterior wall', () => {
       assert.notEqual(walls[index], 0);
       assert.equal(collision[index], 1);
     }
+    const viewport = viewports.find(item => item.name === name);
+    assert.deepEqual(viewport, {
+      name, x: 47, topY: top, stand: { x: 46, y: top + 1 },
+      facing: 'right', fx: { x: 47, y: top },
+    });
+    assert.equal(collision[viewport.stand.y * map.width + viewport.stand.x], 0, `${name} stand`);
   }
+  const entrance = map.layers.find(l => l.name === 'spawn-points').objects.find(point => point.name === 'entrance');
+  const queue = [[entrance.x / map.tilewidth, entrance.y / map.tileheight]], visited = new Set();
+  for (let i = 0; i < queue.length; i++) {
+    const [x, y] = queue[i], key = `${x},${y}`;
+    if (x < 0 || y < 0 || x >= map.width || y >= map.height || visited.has(key)
+      || collision[y * map.width + x]) continue;
+    visited.add(key); queue.push([x - 1, y], [x + 1, y], [x, y - 1], [x, y + 1]);
+  }
+  for (const viewport of viewports)
+    assert.ok(visited.has(`${viewport.stand.x},${viewport.stand.y}`), `${viewport.name} stand reachable`);
 });
 
 test('Orbi Prime desk has a semantic command platform without collision changes', () => {
