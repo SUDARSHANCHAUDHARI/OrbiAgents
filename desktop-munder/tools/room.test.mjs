@@ -34,7 +34,7 @@ test('original atlas has opaque structural surfaces and transparent overlays', (
   for (let tile = 0; tile < 6; tile++) for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++)
     assert.equal(atlas.pixels[(y * atlas.width + tile * 16 + x) * 4 + 3], 255);
   assert.equal(atlas.tileset.firstgid, 1);
-  assert.equal(atlas.tileset.tilecount, 49);
+  assert.equal(atlas.tileset.tilecount, 53);
   assert.deepEqual(atlas, createRoomAtlas());
   const colors = new Set(Array.from({ length: 6 }, (_, i) => atlas.pixels.slice(i * 64, i * 64 + 3).join(',')));
   assert.equal(colors.size, 6);
@@ -74,6 +74,10 @@ test('original atlas has opaque structural surfaces and transparent overlays', (
   for (let tile = 47; tile < 49; tile++) {
     assert.ok(alpha(tile).some(value => value === 0), `orbital planter ${tile} transparency`);
     assert.ok(alpha(tile).some(value => value === 255), `orbital planter ${tile} pixels`);
+  }
+  for (let tile = 49; tile < 53; tile++) {
+    assert.ok(alpha(tile).some(value => value === 0), `orbital archive ${tile} transparency`);
+    assert.ok(alpha(tile).some(value => value === 255), `orbital archive ${tile} pixels`);
   }
 });
 
@@ -120,6 +124,21 @@ test('orbital planter occupies its semantic footprint beside a clear watering st
     collision[(planter.y + 1) * map.width + planter.x],
     collision[planter.stand.y * map.width + planter.stand.x],
   ], [1, 1, 0]);
+});
+
+test('orbital archive shelf fills its semantic footprint beside a clear browsing stand', () => {
+  const { map, archiveShelf } = createOfficeRoom(entries);
+  const below = map.layers.find(l => l.name === 'furniture-below').data;
+  const collision = map.layers.find(l => l.name === 'collision').data;
+  const at = (x, y) => below[y * map.width + x];
+  assert.deepEqual([
+    at(archiveShelf.x, archiveShelf.y), at(archiveShelf.x + 1, archiveShelf.y),
+    at(archiveShelf.x, archiveShelf.y + 1), at(archiveShelf.x + 1, archiveShelf.y + 1),
+  ], [50, 51, 52, 53]);
+  for (let y = archiveShelf.y; y < archiveShelf.y + archiveShelf.height; y++)
+    for (let x = archiveShelf.x; x < archiveShelf.x + archiveShelf.width; x++)
+      assert.equal(collision[y * map.width + x], 1);
+  assert.equal(collision[archiveShelf.stand.y * map.width + archiveShelf.stand.x], 0);
 });
 
 test('kitchen counter uses connected original surfaces around real appliances', () => {

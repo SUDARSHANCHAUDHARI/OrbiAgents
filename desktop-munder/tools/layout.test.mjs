@@ -3,7 +3,7 @@ import test from 'node:test';
 import { createOfficeLayout } from '../theme/layout.mjs';
 
 test('every desk, meeting seat, café seat and interaction stand is reachable', () => {
-  const { map, primarySeatNames, cafeSeatNames, coffee, planter } = createOfficeLayout();
+  const { map, primarySeatNames, cafeSeatNames, coffee, planter, archiveShelf } = createOfficeLayout();
   const collision = map.layers.find(l => l.name === 'collision').data;
   const spawns = map.layers.find(l => l.name === 'spawn-points').objects;
   const entrance = spawns.find(s => s.name === 'entrance');
@@ -18,7 +18,7 @@ test('every desk, meeting seat, café seat and interaction stand is reachable', 
   assert.equal(cafeSeatNames.length, 4);
   assert.equal(new Set(spawns.map(s => s.name)).size, spawns.length);
   for (const spawn of spawns) assert.ok(visited.has(`${spawn.x / 16},${spawn.y / 16}`), spawn.name);
-  for (const point of [coffee.trayStand, coffee.machineStand, coffee.sinkStand, planter.stand])
+  for (const point of [coffee.trayStand, coffee.machineStand, coffee.sinkStand, planter.stand, archiveShelf.stand])
     assert.ok(visited.has(`${point.x},${point.y}`), 'interaction stand');
   for (const name of [...primarySeatNames, ...cafeSeatNames]) assert.ok(spawns.some(s => s.name === name));
 });
@@ -74,4 +74,15 @@ test('orbital planter is blocked while its watering stand remains reachable', ()
     stand: { x: 30, y: 4 }, facing: 'right', fx: { x: 31, y: 4 },
   });
   assert.deepEqual([at(31, 3), at(31, 4), at(30, 4)], [1, 1, 0]);
+});
+
+test('orbital archive shelf is blocked beside its browsing stand', () => {
+  const { map, archiveShelf } = createOfficeLayout();
+  const collision = map.layers.find(l => l.name === 'collision').data;
+  const at = (x, y) => collision[y * map.width + x];
+  assert.deepEqual(archiveShelf, {
+    x: 31, y: 23, width: 2, height: 2,
+    stand: { x: 30, y: 24 }, facing: 'right', fx: { x: 31, y: 23 },
+  });
+  assert.deepEqual([at(31, 23), at(32, 23), at(31, 24), at(32, 24), at(30, 24)], [1, 1, 1, 1, 0]);
 });
