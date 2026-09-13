@@ -3,7 +3,7 @@ import { createOfficeFurniture } from './furniture.mjs';
 // Original procedural surfaces, not derived from the excluded upstream atlas.
 // Six opaque surface tiles plus transparent monitor and shared-chair overlays.
 export function createRoomAtlas() {
-  const width = 1008, height = 16;
+  const width = 1072, height = 16;
   const pixels = new Uint8Array(width * height * 4);
   const palette = [[66, 78, 87], [160, 153, 134], [112, 82, 61],
     [78, 101, 111], [110, 72, 53], [155, 145, 119]];
@@ -184,9 +184,16 @@ export function createRoomAtlas() {
   rect(58, 2, 14, 15, 15, board.edge); rect(59, 0, 14, 13, 15, board.edge);
   rect(62, 1, 5, 14, 8, board.table); rect(62, 1, 9, 14, 13, board.front);
   rect(62, 2, 14, 4, 15, board.frame); rect(62, 11, 14, 13, 15, board.frame);
+  const humanBoard = { frame: [77, 59, 89, 255], cork: [190, 158, 111, 255],
+    edge: [132, 105, 145, 255] };
+  rect(63, 0, 8, 15, 15, humanBoard.frame); rect(64, 0, 8, 13, 15, humanBoard.frame);
+  rect(65, 0, 0, 15, 13, humanBoard.frame); rect(66, 0, 0, 13, 13, humanBoard.frame);
+  rect(63, 2, 10, 15, 15, humanBoard.cork); rect(64, 0, 10, 11, 15, humanBoard.cork);
+  rect(65, 2, 0, 15, 11, humanBoard.cork); rect(66, 0, 0, 11, 11, humanBoard.cork);
+  rect(63, 2, 10, 15, 12, humanBoard.edge); rect(64, 0, 10, 11, 12, humanBoard.edge);
   return { width, height, pixels, tileset: {
     firstgid: 1, image: 'orbi-original-room', imagewidth: width, imageheight: height,
-    tilewidth: 16, tileheight: 16, columns: 63, tilecount: 63,
+    tilewidth: 16, tileheight: 16, columns: 67, tilecount: 67,
   } };
 }
 
@@ -303,6 +310,7 @@ export function createOfficeRoom(entries) {
     anchor: { x: 38, y: 2 },
     boards: [{ x: 39, y: 2 }, { x: 41, y: 2 }],
     archive: { x: 43, y: 2 },
+    human: { x: 35, y: 1, offsetY: 8 },
   };
   for (const origin of taskBoards.boards) {
     for (let row = 0; row < 2; row++) for (let col = 0; col < 2; col++) {
@@ -314,6 +322,11 @@ export function createOfficeRoom(entries) {
   const archiveIndex = taskBoards.archive.y * map.width + taskBoards.archive.x;
   if (furnitureAbove[archiveIndex]) throw new Error('Task archive overlaps room furniture');
   furnitureAbove[archiveIndex] = atlas.tileset.firstgid + 62;
+  for (let row = 0; row < 2; row++) for (let col = 0; col < 2; col++) {
+    const index = (taskBoards.human.y + row) * map.width + taskBoards.human.x + col;
+    if (furnitureAbove[index]) throw new Error('Human board overlaps room furniture');
+    furnitureAbove[index] = atlas.tileset.firstgid + 63 + row * 2 + col;
+  }
   const entrance = spawnObjects.find(point => point.name === 'entrance');
   if (!entrance) throw new Error('Missing entrance spawn');
   const entranceX = entrance.x / map.tilewidth;

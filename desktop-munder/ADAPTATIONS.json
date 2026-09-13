@@ -146,8 +146,8 @@
     },
     {
       "before": "      askG.position.set(14 * tsB + 25, 10 * tsB);\n      askG.zIndex = 11 * tsB;",
-      "after": "      const askBoardTile: Tile = { x: BOARD_TILE.x - 3, y: BOARD_TILE.y };\n      askG.position.set(askBoardTile.x * tsB, askBoardTile.y * tsB);\n      askG.zIndex = (askBoardTile.y + 1) * tsB;",
-      "reason": "Place the human-question board on the active theme's board band instead of a stale upstream workspace coordinate."
+      "after": "      const askBoardTile: Tile = { x: BOARD_TILE.x - 3, y: BOARD_TILE.y - 1 };\n      askG.position.set(askBoardTile.x * tsB, askBoardTile.y * tsB + 8);\n      askG.hitArea = { contains: (x: number, y: number) => x >= 0 && x <= 30 && y >= 0 && y <= 22 };\n      askG.zIndex = (askBoardTile.y + 1) * tsB;",
+      "reason": "Place the room-owned human board above the copier and keep its complete empty surface clickable."
     },
     {
       "before": "      const camera = new Camera(world);",
@@ -228,6 +228,26 @@
       "before": "          boardG.rect(ox + 22, 8, 5, 4).fill(0xe8e0c8);\n          boardG.rect(ox + 23, 7, 5, 4).fill(0xf2eddc);",
       "after": "          boardG.rect(ox + 22, 16, 5, 4).fill(0xe8e0c8);\n          boardG.rect(ox + 23, 15, 5, 4).fill(0xf2eddc);",
       "reason": "Place live overflow notes inside the room-owned cork surfaces."
+    },
+    {
+      "before": "        // lilac-framed board with a big \"?\" identity\n        askG.rect(0, -8, 30, 22).fill(0x5b4a6b);\n        askG.rect(1, -7, 28, 3).fill(0xcdb4e8);\n        askG.rect(1, -4, 28, 17).fill(0xc9b083);",
+      "after": "        // The room owns the lilac frame/cork; live identity and notes overlay it.",
+      "reason": "Render stable human-board furniture through the room atlas."
+    },
+    {
+      "before": "          askG.rect(13, -1, 4, 2).fill({ color: 0x8a755f, alpha: 0.8 });\n          askG.rect(15, 1, 2, 4).fill({ color: 0x8a755f, alpha: 0.8 });\n          askG.rect(15, 7, 2, 2).fill({ color: 0x8a755f, alpha: 0.8 });",
+      "after": "          askG.rect(13, 7, 4, 2).fill({ color: 0x8a755f, alpha: 0.8 });\n          askG.rect(15, 9, 2, 4).fill({ color: 0x8a755f, alpha: 0.8 });\n          askG.rect(15, 15, 2, 2).fill({ color: 0x8a755f, alpha: 0.8 });",
+      "reason": "Align the empty human-board watermark with its room-owned cork."
+    },
+    {
+      "before": "            const y = -2 + Math.floor(i / 4) * 6;",
+      "after": "            const y = 6 + Math.floor(i / 4) * 6;",
+      "reason": "Align live human-question notes with the room-owned cork."
+    },
+    {
+      "before": "          askG.rect(-2, -10, 34, 26).stroke({ color: 0xcdb4e8, width: 2, alpha: a });",
+      "after": "          askG.rect(-2, -2, 34, 26).stroke({ color: 0xcdb4e8, width: 2, alpha: a });",
+      "reason": "Align the human-question attention pulse with the room-owned board frame."
     }
   ],
   "src/renderer/src/scene/office/portraitArt.ts": [
