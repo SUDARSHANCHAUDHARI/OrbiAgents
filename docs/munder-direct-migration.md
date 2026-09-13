@@ -172,6 +172,8 @@ Sources:
 
 ## Completion boundary
 
+Orbital cold-storage inspection (2026-09-13): the cafeteria now contains an original two-tile cold-storage unit beside the connected kitchen counter, with a blocked semantic footprint and reachable front stand. The active theme derives its `fridge` errand stand, facing, and open-door light anchor from that layout contract, activating the imported inspection behavior without renderer coordinates. Layout, atlas, room, and integration tests protect artwork transparency, placement, collision, reachability, and runtime wiring; live light-cone timing remains a human review step.
+
 Orbital archive browsing (2026-09-13): the workspace edge now contains an original 2×2 illuminated archive rack with a blocked semantic footprint and reachable browsing stand. The active theme derives its `shelf` errand stand, facing, and glint-effect anchor from that layout contract, activating the imported browsing behavior without renderer coordinates. Layout, atlas, room, and integration tests protect artwork transparency, exact placement, collision, reachability, and runtime wiring; live animation timing remains a human review step.
 
 Viewport breeze errand (2026-09-13): the active theme now connects the boardroom's existing original orbital viewport to the imported `window` idle errand. Room composition exposes each semantic viewport's wall position, interior stand, facing, and effect anchor; the theme consumes that contract instead of duplicating map coordinates. Room and integration tests protect both viewport artworks, clear and reachable stands, and exact runtime wiring; live breeze timing remains a human review step.

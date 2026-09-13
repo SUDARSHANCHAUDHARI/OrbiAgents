@@ -34,7 +34,7 @@ test('original atlas has opaque structural surfaces and transparent overlays', (
   for (let tile = 0; tile < 6; tile++) for (let y = 0; y < 16; y++) for (let x = 0; x < 16; x++)
     assert.equal(atlas.pixels[(y * atlas.width + tile * 16 + x) * 4 + 3], 255);
   assert.equal(atlas.tileset.firstgid, 1);
-  assert.equal(atlas.tileset.tilecount, 53);
+  assert.equal(atlas.tileset.tilecount, 55);
   assert.deepEqual(atlas, createRoomAtlas());
   const colors = new Set(Array.from({ length: 6 }, (_, i) => atlas.pixels.slice(i * 64, i * 64 + 3).join(',')));
   assert.equal(colors.size, 6);
@@ -78,6 +78,10 @@ test('original atlas has opaque structural surfaces and transparent overlays', (
   for (let tile = 49; tile < 53; tile++) {
     assert.ok(alpha(tile).some(value => value === 0), `orbital archive ${tile} transparency`);
     assert.ok(alpha(tile).some(value => value === 255), `orbital archive ${tile} pixels`);
+  }
+  for (let tile = 53; tile < 55; tile++) {
+    assert.ok(alpha(tile).some(value => value === 0), `orbital cold storage ${tile} transparency`);
+    assert.ok(alpha(tile).some(value => value === 255), `orbital cold storage ${tile} pixels`);
   }
 });
 
@@ -139,6 +143,19 @@ test('orbital archive shelf fills its semantic footprint beside a clear browsing
     for (let x = archiveShelf.x; x < archiveShelf.x + archiveShelf.width; x++)
       assert.equal(collision[y * map.width + x], 1);
   assert.equal(collision[archiveShelf.stand.y * map.width + archiveShelf.stand.x], 0);
+});
+
+test('orbital cold storage fills its semantic footprint beside a clear inspection stand', () => {
+  const { map, coldStorage } = createOfficeRoom(entries);
+  const below = map.layers.find(l => l.name === 'furniture-below').data;
+  const collision = map.layers.find(l => l.name === 'collision').data;
+  const at = (x, y) => below[y * map.width + x];
+  assert.deepEqual([at(coldStorage.x, coldStorage.y), at(coldStorage.x, coldStorage.y + 1)], [54, 55]);
+  assert.deepEqual([
+    collision[coldStorage.y * map.width + coldStorage.x],
+    collision[(coldStorage.y + 1) * map.width + coldStorage.x],
+    collision[coldStorage.stand.y * map.width + coldStorage.stand.x],
+  ], [1, 1, 0]);
 });
 
 test('kitchen counter uses connected original surfaces around real appliances', () => {
