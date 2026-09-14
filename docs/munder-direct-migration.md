@@ -360,3 +360,5 @@ Calendar trigger-affordance slice: hovering the semantic wall calendar now draws
 Task-board affordance slice: hovering the live cork-board ensemble now draws a gold frame and reveals a localized `TASKS` placard. Its dedicated child overlay survives note redraws without intercepting input or changing task-tab navigation.
 
 Office-clock affordance slice: hovering the semantic wall clock now draws a coral frame and reveals a localized close placard, distinguishing the exit entry point from gold navigation controls. The existing renderer close request and guarded main-process quit flow remain unchanged.
+
+Ask-me board affordance slice: hovering the human-question board now draws a lilac frame and reveals a localized `ASK ME` placard. Its dedicated child overlay survives pending-question pulse redraws without intercepting input or changing human-tab navigation.
