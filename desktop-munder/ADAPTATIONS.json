@@ -348,6 +348,16 @@
       "before": "        st.requestCommandCenterTab('triggers');\n      });\n      // Pixel artwork is supplied by the semantic furniture-above room layer.",
       "after": "        st.requestCommandCenterTab('triggers');\n      });\n      calG.on('pointerover', () => {\n        calendarPlacard.visible = true;\n        drawCalendarAffordance(true);\n      });\n      calG.on('pointerout', () => {\n        calendarPlacard.visible = false;\n        drawCalendarAffordance(false);\n      });\n      // Pixel artwork is supplied by the semantic furniture-above room layer.",
       "reason": "Reveal the calendar action affordance only while its existing hit target is hovered."
+    },
+    {
+      "before": "      boardG.zIndex = (BOARD_TILE.y + 1) * tsB;\n      boardG.on('pointertap', (ev) => {",
+      "after": "      boardG.zIndex = (BOARD_TILE.y + 1) * tsB;\n      const boardAffordance = new Graphics();\n      boardAffordance.eventMode = 'none';\n      const boardPlacard = new Container();\n      boardPlacard.eventMode = 'none';\n      boardPlacard.visible = false;\n      const boardPlacardText = new Text({\n        text: t('commandCenter.tabs.tasks').toUpperCase(),\n        style: { fontFamily: 'monospace', fontSize: 6, fontWeight: 'bold', fill: 0xffe7a3 },\n      });\n      const boardPlacardWidth = Math.ceil(boardPlacardText.width) + 10;\n      boardPlacard.position.set((82 - boardPlacardWidth) / 2, -12);\n      const boardPlacardBg = new Graphics()\n        .rect(0, 0, boardPlacardWidth, 10)\n        .fill({ color: 0x101827, alpha: 0.96 })\n        .stroke({ color: 0xffd166, width: 1 });\n      boardPlacardText.position.set(5, 1);\n      boardPlacard.addChild(boardPlacardBg, boardPlacardText);\n      boardG.addChild(boardAffordance, boardPlacard);\n      boardG.on('pointertap', (ev) => {",
+      "reason": "Give the live task-board ensemble a redraw-safe, localized hover overlay."
+    },
+    {
+      "before": "        st.requestCommandCenterTab('tasks');\n      });\n      charLayer.addChild(boardG);",
+      "after": "        st.requestCommandCenterTab('tasks');\n      });\n      boardG.on('pointerover', () => {\n        boardPlacard.visible = true;\n        boardAffordance.clear();\n        boardAffordance.rect(1, 1, 80, 20).stroke({ color: 0xffd166, width: 1, alpha: 0.9 });\n      });\n      boardG.on('pointerout', () => {\n        boardPlacard.visible = false;\n        boardAffordance.clear();\n      });\n      charLayer.addChild(boardG);",
+      "reason": "Show the task-board action label and frame only while its existing hit target is hovered."
     }
   ],
   "src/renderer/src/scene/office/portraitArt.ts": [
