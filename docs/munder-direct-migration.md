@@ -356,3 +356,5 @@ Hire-kiosk affordance slice: the in-world launch console now carries a subtle ti
 Hire-kiosk placard slice: hovering the launch console now reveals an original pixel-styled, localized add-agent placard above the kiosk. It names the interaction before activation, ignores pointer events itself, and leaves the existing reviewed hire-modal action unchanged.
 
 Calendar trigger-affordance slice: hovering the semantic wall calendar now draws a gold focus frame and reveals a localized `TRIGGERS` placard. The overlay does not intercept input and preserves the existing orchestrator selection and Command Center navigation.
+
+Task-board affordance slice: hovering the live cork-board ensemble now draws a gold frame and reveals a localized `TASKS` placard. Its dedicated child overlay survives note redraws without intercepting input or changing task-tab navigation.

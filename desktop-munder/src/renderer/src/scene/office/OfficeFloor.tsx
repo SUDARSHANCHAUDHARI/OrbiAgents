@@ -1203,12 +1203,39 @@ export function OfficeFloor() {
       boardG.position.set(BOARD_TILE.x * tsB + BOARD_CENTER_PAD, BOARD_TILE.y * tsB);
       boardG.hitArea = { contains: (x: number, y: number) => x >= 0 && x <= 82 && y >= 0 && y <= 22 };
       boardG.zIndex = (BOARD_TILE.y + 1) * tsB;
+      const boardAffordance = new Graphics();
+      boardAffordance.eventMode = 'none';
+      const boardPlacard = new Container();
+      boardPlacard.eventMode = 'none';
+      boardPlacard.visible = false;
+      const boardPlacardText = new Text({
+        text: t('commandCenter.tabs.tasks').toUpperCase(),
+        style: { fontFamily: 'monospace', fontSize: 6, fontWeight: 'bold', fill: 0xffe7a3 },
+      });
+      const boardPlacardWidth = Math.ceil(boardPlacardText.width) + 10;
+      boardPlacard.position.set((82 - boardPlacardWidth) / 2, -12);
+      const boardPlacardBg = new Graphics()
+        .rect(0, 0, boardPlacardWidth, 10)
+        .fill({ color: 0x101827, alpha: 0.96 })
+        .stroke({ color: 0xffd166, width: 1 });
+      boardPlacardText.position.set(5, 1);
+      boardPlacard.addChild(boardPlacardBg, boardPlacardText);
+      boardG.addChild(boardAffordance, boardPlacard);
       boardG.on('pointertap', (ev) => {
         ev.stopPropagation();
         const st = useStore.getState();
         const god = st.agents.find((a) => a.isGod);
         if (god) st.select(god.id);
         st.requestCommandCenterTab('tasks');
+      });
+      boardG.on('pointerover', () => {
+        boardPlacard.visible = true;
+        boardAffordance.clear();
+        boardAffordance.rect(1, 1, 80, 20).stroke({ color: 0xffd166, width: 1, alpha: 0.9 });
+      });
+      boardG.on('pointerout', () => {
+        boardPlacard.visible = false;
+        boardAffordance.clear();
       });
       charLayer.addChild(boardG);
       // One small Graphics per desk currently holding a taken note.
