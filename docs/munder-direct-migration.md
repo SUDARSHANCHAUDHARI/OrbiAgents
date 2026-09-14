@@ -352,3 +352,5 @@ Airlock arrival slice: every admitted worker now triggers a short cyan/gold puls
 Airlock departure slice: removed workers release their seat and office resources, then remain in a dedicated ticked departure collection while walking to the semantic entrance. Arrival pulses the airlock before a fade/destroy sequence; an eight-second watchdog handles unreachable routes, and teardown clears all departure timers.
 
 Hire-kiosk affordance slice: the in-world launch console now carries a subtle ticker-driven cyan breathing outline and brightens gold on pointer hover. The visual signal shares the existing semantic hit target and preserves the reviewed hire-modal action.
+
+Hire-kiosk placard slice: hovering the launch console now reveals an original pixel-styled, localized add-agent placard above the kiosk. It names the interaction before activation, ignores pointer events itself, and leaves the existing reviewed hire-modal action unchanged.
