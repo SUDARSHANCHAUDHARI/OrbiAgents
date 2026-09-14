@@ -188,6 +188,21 @@
       "before": "  setBubbleZoom(z: number): void {\n    this.thoughtBubble.setZoom(z);\n  }",
       "after": "  setBubbleZoom(z: number): void {\n    this.thoughtBubble.setZoom(z);\n    this.identityNameplate.scale.set(1 / Math.min(Math.max(z, 0.01), 1));\n  }",
       "reason": "Keep worker identity readable when the fitted room renders below one-to-one scale."
+    },
+    {
+      "before": "  private identityNameplate: Container;\n  private selected = false;",
+      "after": "  private identityNameplate: Container;\n  private identityNameText: Text;\n  private identityNameBg: Graphics;\n  private visibleIdentityName = '';\n  private selected = false;",
+      "reason": "Retain nameplate primitives so live agent renames can redraw them in place."
+    },
+    {
+      "before": "    const displayName = options.displayName?.trim() || options.agentId;\n    const visibleName = displayName.length > 18 ? `${displayName.slice(0, 17)}…` : displayName;\n    const nameText = new Text({\n      text: visibleName,\n      style: { fontFamily: 'monospace', fontSize: 6, fontWeight: 'bold', fill: 0xd9fffb },\n    });\n    const nameWidth = visibleName.length * 4 + 10;\n    const nameBg = new Graphics()\n      .rect(0, 0, nameWidth, 10)\n      .fill({ color: 0x101827, alpha: 0.94 })\n      .stroke({ color: 0x5cdbcf, width: 1 });\n    nameText.position.set(5, 1);\n    this.identityNameplate.pivot.set(nameWidth / 2, 10);\n    this.identityNameplate.position.set(0, -29);\n    this.identityNameplate.addChild(nameBg, nameText);\n    this.sprite.container.addChild(this.identityNameplate);",
+      "after": "    this.identityNameText = new Text({\n      text: '',\n      style: { fontFamily: 'monospace', fontSize: 6, fontWeight: 'bold', fill: 0xd9fffb },\n    });\n    this.identityNameBg = new Graphics();\n    this.identityNameText.position.set(5, 1);\n    this.identityNameplate.position.set(0, -29);\n    this.identityNameplate.addChild(this.identityNameBg, this.identityNameText);\n    this.sprite.container.addChild(this.identityNameplate);\n    this.setDisplayName(options.displayName);",
+      "reason": "Initialize retained nameplate primitives through the shared live-update path."
+    },
+    {
+      "before": "  private drawSelectionRing(): void {",
+      "after": "  setDisplayName(name?: string): void {\n    const displayName = name?.trim() || this.agentId;\n    const visibleName = displayName.length > 18 ? `${displayName.slice(0, 17)}…` : displayName;\n    if (visibleName === this.visibleIdentityName) return;\n    this.visibleIdentityName = visibleName;\n    this.identityNameText.text = visibleName;\n    const width = visibleName.length * 4 + 10;\n    this.identityNameBg.clear()\n      .rect(0, 0, width, 10)\n      .fill({ color: 0x101827, alpha: 0.94 })\n      .stroke({ color: 0x5cdbcf, width: 1 });\n    this.identityNameplate.pivot.set(width / 2, 10);\n  }\n\n  private drawSelectionRing(): void {",
+      "reason": "Redraw bounded worker identity only when its visible label changes."
     }
   ],
   "src/renderer/src/scene/office/OfficeFloor.tsx": [
@@ -475,6 +490,11 @@
       "before": "        const character = new Character({\n          agentId: agent.id,",
       "after": "        const character = new Character({\n          agentId: agent.id,\n          displayName: agent.name,",
       "reason": "Pass the operator-facing worker name into its scene character."
+    },
+    {
+      "before": "      const applyState = (agent: Agent, rt: Runtime, force = false) => {\n        const changed = force",
+      "after": "      const applyState = (agent: Agent, rt: Runtime, force = false) => {\n        rt.character.setDisplayName(agent.name);\n        const changed = force",
+      "reason": "Synchronize live name changes before activity-state equality can short-circuit."
     }
   ],
   "src/renderer/src/scene/office/portraitArt.ts": [

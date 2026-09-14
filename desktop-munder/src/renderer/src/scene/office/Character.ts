@@ -103,6 +103,9 @@ export class Character {
   private workGlow: Graphics;
   private selectionRing: Graphics;
   private identityNameplate: Container;
+  private identityNameText: Text;
+  private identityNameBg: Graphics;
+  private visibleIdentityName = '';
   private selected = false;
   private hovered = false;
   private workGlowElapsed = 0;
@@ -167,22 +170,16 @@ export class Character {
     this.identityNameplate = new Container();
     this.identityNameplate.eventMode = 'none';
     this.identityNameplate.visible = false;
-    const displayName = options.displayName?.trim() || options.agentId;
-    const visibleName = displayName.length > 18 ? `${displayName.slice(0, 17)}…` : displayName;
-    const nameText = new Text({
-      text: visibleName,
+    this.identityNameText = new Text({
+      text: '',
       style: { fontFamily: 'monospace', fontSize: 6, fontWeight: 'bold', fill: 0xd9fffb },
     });
-    const nameWidth = visibleName.length * 4 + 10;
-    const nameBg = new Graphics()
-      .rect(0, 0, nameWidth, 10)
-      .fill({ color: 0x101827, alpha: 0.94 })
-      .stroke({ color: 0x5cdbcf, width: 1 });
-    nameText.position.set(5, 1);
-    this.identityNameplate.pivot.set(nameWidth / 2, 10);
+    this.identityNameBg = new Graphics();
+    this.identityNameText.position.set(5, 1);
     this.identityNameplate.position.set(0, -29);
-    this.identityNameplate.addChild(nameBg, nameText);
+    this.identityNameplate.addChild(this.identityNameBg, this.identityNameText);
     this.sprite.container.addChild(this.identityNameplate);
+    this.setDisplayName(options.displayName);
 
     this.overlay = new Graphics();
     this.overlay.eventMode = 'none';
@@ -519,6 +516,20 @@ export class Character {
   setSelected(selected: boolean): void {
     this.selected = selected;
     this.drawSelectionRing();
+  }
+
+  setDisplayName(name?: string): void {
+    const displayName = name?.trim() || this.agentId;
+    const visibleName = displayName.length > 18 ? `${displayName.slice(0, 17)}…` : displayName;
+    if (visibleName === this.visibleIdentityName) return;
+    this.visibleIdentityName = visibleName;
+    this.identityNameText.text = visibleName;
+    const width = visibleName.length * 4 + 10;
+    this.identityNameBg.clear()
+      .rect(0, 0, width, 10)
+      .fill({ color: 0x101827, alpha: 0.94 })
+      .stroke({ color: 0x5cdbcf, width: 1 });
+    this.identityNameplate.pivot.set(width / 2, 10);
   }
 
   private drawSelectionRing(): void {

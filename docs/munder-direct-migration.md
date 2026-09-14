@@ -368,3 +368,5 @@ Agent selection-feedback slice: worker sprites now show a light cyan ground ring
 Agent identity-nameplate slice: hovering or selecting a worker now reveals a compact cyan nameplate above the sprite using the agent's human-readable name. Blank names fall back to the stable agent ID, long labels are ellipsized, and activity remains in the separate thought-bubble layer.
 
 Nameplate zoom-readability slice: worker identity labels now share the activity bubble's below-1× counter-scaling rule. A bottom-center pivot keeps each label centered above its worker as it compensates for a fitted, zoomed-out room, while 1× and enlarged views remain unchanged.
+
+Live nameplate-sync slice: renaming a running agent now redraws its existing floor nameplate in place, including stable-ID fallback, ellipsis, background width, and centered pivot. The idempotent update runs before activity-state short-circuiting and does not recreate or reposition the worker.
