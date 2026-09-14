@@ -1709,6 +1709,7 @@ export function OfficeFloor() {
 
       // Map an agent's store state onto its on-floor character.
       const applyState = (agent: Agent, rt: Runtime, force = false) => {
+        rt.character.setDisplayName(agent.name);
         const changed = force
           || rt.prevStatus !== agent.status
           || rt.prevAction !== agent.action
