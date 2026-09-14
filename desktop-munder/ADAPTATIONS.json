@@ -338,6 +338,16 @@
       "before": "      hireG.on('pointerover', () => { hireHovered = true; drawHireAffordance(); });\n      hireG.on('pointerout', () => { hireHovered = false; drawHireAffordance(); });",
       "after": "      hireG.on('pointerover', () => {\n        hireHovered = true;\n        hirePlacard.visible = true;\n        drawHireAffordance();\n      });\n      hireG.on('pointerout', () => {\n        hireHovered = false;\n        hirePlacard.visible = false;\n        drawHireAffordance();\n      });",
       "reason": "Show the hire action label only while the semantic kiosk is hovered."
+    },
+    {
+      "before": "      calG.zIndex = 3 * calTs;\n      calG.on('pointertap', (ev) => {",
+      "after": "      calG.zIndex = 3 * calTs;\n      const calendarPlacard = new Container();\n      calendarPlacard.eventMode = 'none';\n      calendarPlacard.visible = false;\n      const calendarPlacardText = new Text({\n        text: t('commandCenter.tabs.triggers').toUpperCase(),\n        style: { fontFamily: 'monospace', fontSize: 6, fontWeight: 'bold', fill: 0xffe7a3 },\n      });\n      const calendarPlacardWidth = Math.ceil(calendarPlacardText.width) + 10;\n      calendarPlacard.position.set((16 - calendarPlacardWidth) / 2, -12);\n      const calendarPlacardBg = new Graphics()\n        .rect(0, 0, calendarPlacardWidth, 10)\n        .fill({ color: 0x101827, alpha: 0.96 })\n        .stroke({ color: 0xffd166, width: 1 });\n      calendarPlacardText.position.set(5, 1);\n      calendarPlacard.addChild(calendarPlacardBg, calendarPlacardText);\n      calG.addChild(calendarPlacard);\n      const drawCalendarAffordance = (hovered: boolean): void => {\n        calG.clear();\n        if (hovered) calG.rect(1, 1, 14, 14).stroke({ color: 0xffd166, width: 1, alpha: 0.9 });\n      };\n      calG.on('pointertap', (ev) => {",
+      "reason": "Give the semantic calendar a localized, non-interactive triggers placard and hover frame."
+    },
+    {
+      "before": "        st.requestCommandCenterTab('triggers');\n      });\n      // Pixel artwork is supplied by the semantic furniture-above room layer.",
+      "after": "        st.requestCommandCenterTab('triggers');\n      });\n      calG.on('pointerover', () => {\n        calendarPlacard.visible = true;\n        drawCalendarAffordance(true);\n      });\n      calG.on('pointerout', () => {\n        calendarPlacard.visible = false;\n        drawCalendarAffordance(false);\n      });\n      // Pixel artwork is supplied by the semantic furniture-above room layer.",
+      "reason": "Reveal the calendar action affordance only while its existing hit target is hovered."
     }
   ],
   "src/renderer/src/scene/office/portraitArt.ts": [

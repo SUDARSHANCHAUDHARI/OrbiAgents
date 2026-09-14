@@ -354,3 +354,5 @@ Airlock departure slice: removed workers release their seat and office resources
 Hire-kiosk affordance slice: the in-world launch console now carries a subtle ticker-driven cyan breathing outline and brightens gold on pointer hover. The visual signal shares the existing semantic hit target and preserves the reviewed hire-modal action.
 
 Hire-kiosk placard slice: hovering the launch console now reveals an original pixel-styled, localized add-agent placard above the kiosk. It names the interaction before activation, ignores pointer events itself, and leaves the existing reviewed hire-modal action unchanged.
+
+Calendar trigger-affordance slice: hovering the semantic wall calendar now draws a gold focus frame and reveals a localized `TRIGGERS` placard. The overlay does not intercept input and preserves the existing orchestrator selection and Command Center navigation.

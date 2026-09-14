@@ -448,12 +448,40 @@ export function OfficeFloor() {
       calG.position.set(theme.anchors.calendar.x * calTs, theme.anchors.calendar.y * calTs);
       calG.hitArea = { contains: (x: number, y: number) => x >= 0 && x <= 16 && y >= 0 && y <= 16 };
       calG.zIndex = 3 * calTs;
+      const calendarPlacard = new Container();
+      calendarPlacard.eventMode = 'none';
+      calendarPlacard.visible = false;
+      const calendarPlacardText = new Text({
+        text: t('commandCenter.tabs.triggers').toUpperCase(),
+        style: { fontFamily: 'monospace', fontSize: 6, fontWeight: 'bold', fill: 0xffe7a3 },
+      });
+      const calendarPlacardWidth = Math.ceil(calendarPlacardText.width) + 10;
+      calendarPlacard.position.set((16 - calendarPlacardWidth) / 2, -12);
+      const calendarPlacardBg = new Graphics()
+        .rect(0, 0, calendarPlacardWidth, 10)
+        .fill({ color: 0x101827, alpha: 0.96 })
+        .stroke({ color: 0xffd166, width: 1 });
+      calendarPlacardText.position.set(5, 1);
+      calendarPlacard.addChild(calendarPlacardBg, calendarPlacardText);
+      calG.addChild(calendarPlacard);
+      const drawCalendarAffordance = (hovered: boolean): void => {
+        calG.clear();
+        if (hovered) calG.rect(1, 1, 14, 14).stroke({ color: 0xffd166, width: 1, alpha: 0.9 });
+      };
       calG.on('pointertap', (ev) => {
         ev.stopPropagation();
         const st = useStore.getState();
         const god = st.agents.find((a) => a.isGod);
         if (god) st.select(god.id);
         st.requestCommandCenterTab('triggers');
+      });
+      calG.on('pointerover', () => {
+        calendarPlacard.visible = true;
+        drawCalendarAffordance(true);
+      });
+      calG.on('pointerout', () => {
+        calendarPlacard.visible = false;
+        drawCalendarAffordance(false);
       });
       // Pixel artwork is supplied by the semantic furniture-above room layer.
       charLayer.addChild(calG);
