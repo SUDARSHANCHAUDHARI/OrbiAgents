@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AnimatedSprite, Application, Container, Graphics, Ticker, Texture } from 'pixi.js';
+import { AnimatedSprite, Application, Container, Graphics, Text, Ticker, Texture } from 'pixi.js';
 // PixiJS uses new Function() internally, blocked by Electron CSP — this patches it.
 import 'pixi.js/unsafe-eval';
 import { useStore, type Agent } from '@/store/store';
@@ -401,14 +401,38 @@ export function OfficeFloor() {
         hireG.clear();
         hireG.rect(1, 1, 30, 30).stroke({ color: hireHovered ? 0xffd166 : 0x5cdbcf, width: 1, alpha });
       };
+      const hirePlacard = new Container();
+      hirePlacard.eventMode = 'none';
+      hirePlacard.visible = false;
+      const hirePlacardText = new Text({
+        text: t('agentStrip.addAgent').toUpperCase(),
+        style: { fontFamily: 'monospace', fontSize: 6, fontWeight: 'bold', fill: 0xffe7a3 },
+      });
+      const hirePlacardWidth = Math.ceil(hirePlacardText.width) + 10;
+      hirePlacard.position.set((32 - hirePlacardWidth) / 2, -12);
+      const hirePlacardBg = new Graphics()
+        .rect(0, 0, hirePlacardWidth, 10)
+        .fill({ color: 0x101827, alpha: 0.96 })
+        .stroke({ color: 0xffd166, width: 1 });
+      hirePlacardText.position.set(5, 1);
+      hirePlacard.addChild(hirePlacardBg, hirePlacardText);
+      hireG.addChild(hirePlacard);
       drawHireAffordance();
       hireG.zIndex = (theme.anchors.hire.y + 2) * hireTs;
       hireG.on('pointertap', (ev) => {
         ev.stopPropagation();
         useStore.getState().setAddAgentOpen(true);
       });
-      hireG.on('pointerover', () => { hireHovered = true; drawHireAffordance(); });
-      hireG.on('pointerout', () => { hireHovered = false; drawHireAffordance(); });
+      hireG.on('pointerover', () => {
+        hireHovered = true;
+        hirePlacard.visible = true;
+        drawHireAffordance();
+      });
+      hireG.on('pointerout', () => {
+        hireHovered = false;
+        hirePlacard.visible = false;
+        drawHireAffordance();
+      });
       charLayer.addChild(hireG);
 
       // ─── The boss's wall calendar → TRIGGERS ───────────────────────────────

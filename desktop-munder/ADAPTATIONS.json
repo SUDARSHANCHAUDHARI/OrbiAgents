@@ -323,6 +323,21 @@
       "before": "        const dt = ticker.deltaMS / 1000;",
       "after": "        const dt = ticker.deltaMS / 1000;\n        hirePulsePhase += dt * 2.4;\n        if (!hireHovered) drawHireAffordance();",
       "reason": "Advance the hire kiosk breathing outline through the pausable scene ticker."
+    },
+    {
+      "before": "import { AnimatedSprite, Application, Container, Graphics, Ticker, Texture } from 'pixi.js';",
+      "after": "import { AnimatedSprite, Application, Container, Graphics, Text, Ticker, Texture } from 'pixi.js';",
+      "reason": "Render the in-world hire kiosk action placard with Pixi text."
+    },
+    {
+      "before": "      drawHireAffordance();\n      hireG.zIndex = (theme.anchors.hire.y + 2) * hireTs;",
+      "after": "      const hirePlacard = new Container();\n      hirePlacard.eventMode = 'none';\n      hirePlacard.visible = false;\n      const hirePlacardText = new Text({\n        text: t('agentStrip.addAgent').toUpperCase(),\n        style: { fontFamily: 'monospace', fontSize: 6, fontWeight: 'bold', fill: 0xffe7a3 },\n      });\n      const hirePlacardWidth = Math.ceil(hirePlacardText.width) + 10;\n      hirePlacard.position.set((32 - hirePlacardWidth) / 2, -12);\n      const hirePlacardBg = new Graphics()\n        .rect(0, 0, hirePlacardWidth, 10)\n        .fill({ color: 0x101827, alpha: 0.96 })\n        .stroke({ color: 0xffd166, width: 1 });\n      hirePlacardText.position.set(5, 1);\n      hirePlacard.addChild(hirePlacardBg, hirePlacardText);\n      hireG.addChild(hirePlacard);\n      drawHireAffordance();\n      hireG.zIndex = (theme.anchors.hire.y + 2) * hireTs;",
+      "reason": "Name the launch-console action with a localized, non-interactive pixel placard."
+    },
+    {
+      "before": "      hireG.on('pointerover', () => { hireHovered = true; drawHireAffordance(); });\n      hireG.on('pointerout', () => { hireHovered = false; drawHireAffordance(); });",
+      "after": "      hireG.on('pointerover', () => {\n        hireHovered = true;\n        hirePlacard.visible = true;\n        drawHireAffordance();\n      });\n      hireG.on('pointerout', () => {\n        hireHovered = false;\n        hirePlacard.visible = false;\n        drawHireAffordance();\n      });",
+      "reason": "Show the hire action label only while the semantic kiosk is hovered."
     }
   ],
   "src/renderer/src/scene/office/portraitArt.ts": [

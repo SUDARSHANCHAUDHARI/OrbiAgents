@@ -12,3 +12,13 @@ test('hire kiosk signals interactivity through ticker and pointer states', () =>
   assert.match(source, /if \(!hireHovered\) drawHireAffordance\(\)/);
   assert.match(source, /useStore\.getState\(\)\.setAddAgentOpen\(true\)/);
 });
+
+test('hire kiosk names its action on hover', () => {
+  assert.match(source, /const hirePlacard = new Container\(\)/);
+  assert.match(source, /text: t\('agentStrip\.addAgent'\)\.toUpperCase\(\)/);
+  assert.match(source, /const hirePlacardWidth = Math\.ceil\(hirePlacardText\.width\) \+ 10/);
+  assert.match(source, /hirePlacard\.position\.set\(\(32 - hirePlacardWidth\) \/ 2, -12\)/);
+  assert.match(source, /hirePlacard\.visible = false/);
+  assert.match(source, /pointerover[\s\S]*?hirePlacard\.visible = true/);
+  assert.match(source, /pointerout[\s\S]*?hirePlacard\.visible = false/);
+});
