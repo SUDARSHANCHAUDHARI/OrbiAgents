@@ -364,3 +364,5 @@ Office-clock affordance slice: hovering the semantic wall clock now draws a cora
 Ask-me board affordance slice: hovering the human-question board now draws a lilac frame and reveals a localized `ASK ME` placard. Its dedicated child overlay survives pending-question pulse redraws without intercepting input or changing human-tab navigation.
 
 Agent selection-feedback slice: worker sprites now show a light cyan ground ring on hover and retain a stronger ring while selected. Selection synchronizes for existing and newly arriving workers while preserving click selection, movement, activity glow, and camera nudging.
+
+Agent identity-nameplate slice: hovering or selecting a worker now reveals a compact cyan nameplate above the sprite using the agent's human-readable name. Blank names fall back to the stable agent ID, long labels are ellipsized, and activity remains in the separate thought-bubble layer.

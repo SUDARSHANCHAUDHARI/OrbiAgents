@@ -148,6 +148,36 @@
       "before": "    this.workGlow.destroy();\n    this.overlay.destroy();",
       "after": "    this.workGlow.destroy();\n    this.selectionRing.destroy();\n    this.overlay.destroy();",
       "reason": "Release selection graphics with the character scene resources."
+    },
+    {
+      "before": "import { Container, Graphics, Texture } from 'pixi.js';",
+      "after": "import { Container, Graphics, Text, Texture } from 'pixi.js';",
+      "reason": "Render a compact identity nameplate with the worker sprite."
+    },
+    {
+      "before": "interface CharacterOptions {\n  agentId: string;",
+      "after": "interface CharacterOptions {\n  agentId: string;\n  displayName?: string;",
+      "reason": "Accept the human-readable worker name separately from its stable ID."
+    },
+    {
+      "before": "  private selectionRing: Graphics;\n  private selected = false;",
+      "after": "  private selectionRing: Graphics;\n  private identityNameplate: Container;\n  private selected = false;",
+      "reason": "Own the hover and selection nameplate through the character lifecycle."
+    },
+    {
+      "before": "    this.selectionRing.eventMode = 'none';\n\n    this.overlay = new Graphics();",
+      "after": "    this.selectionRing.eventMode = 'none';\n\n    this.identityNameplate = new Container();\n    this.identityNameplate.eventMode = 'none';\n    this.identityNameplate.visible = false;\n    const displayName = options.displayName?.trim() || options.agentId;\n    const visibleName = displayName.length > 18 ? `${displayName.slice(0, 17)}…` : displayName;\n    const nameText = new Text({\n      text: visibleName,\n      style: { fontFamily: 'monospace', fontSize: 6, fontWeight: 'bold', fill: 0xd9fffb },\n    });\n    const nameWidth = Math.ceil(nameText.width) + 10;\n    const nameBg = new Graphics()\n      .rect(0, 0, nameWidth, 10)\n      .fill({ color: 0x101827, alpha: 0.94 })\n      .stroke({ color: 0x5cdbcf, width: 1 });\n    nameText.position.set(5, 1);\n    this.identityNameplate.position.set(-nameWidth / 2, -39);\n    this.identityNameplate.addChild(nameBg, nameText);\n    this.sprite.container.addChild(this.identityNameplate);\n\n    this.overlay = new Graphics();",
+      "reason": "Build a non-interactive, bounded nameplate above the worker sprite."
+    },
+    {
+      "before": "    const nameWidth = Math.ceil(nameText.width) + 10;",
+      "after": "    const nameWidth = visibleName.length * 4 + 10;",
+      "reason": "Size the monospace nameplate without requiring browser-only text measurement."
+    },
+    {
+      "before": "    this.selectionRing.clear();\n    if (!this.selected && !this.hovered) return;",
+      "after": "    this.selectionRing.clear();\n    this.identityNameplate.visible = this.selected || this.hovered;\n    if (!this.selected && !this.hovered) return;",
+      "reason": "Show worker identity whenever hover or persistent selection feedback is active."
     }
   ],
   "src/renderer/src/scene/office/OfficeFloor.tsx": [
@@ -430,6 +460,11 @@
       "before": "          lastSelected = s.selectedId;\n          const rt = s.selectedId ? runtimes.get(s.selectedId) : undefined;",
       "after": "          lastSelected = s.selectedId;\n          for (const [id, runtime] of runtimes) runtime.character.setSelected(id === s.selectedId);\n          const rt = s.selectedId ? runtimes.get(s.selectedId) : undefined;",
       "reason": "Synchronize persistent worker selection feedback from the existing store subscription."
+    },
+    {
+      "before": "        const character = new Character({\n          agentId: agent.id,",
+      "after": "        const character = new Character({\n          agentId: agent.id,\n          displayName: agent.name,",
+      "reason": "Pass the operator-facing worker name into its scene character."
     }
   ],
   "src/renderer/src/scene/office/portraitArt.ts": [

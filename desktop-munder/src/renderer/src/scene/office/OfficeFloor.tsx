@@ -1637,6 +1637,7 @@ export function OfficeFloor() {
         }
         const character = new Character({
           agentId: agent.id,
+          displayName: agent.name,
           mapRenderer,
           frames,
           seatTile,

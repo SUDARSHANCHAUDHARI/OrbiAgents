@@ -1,4 +1,4 @@
-import { Container, Graphics, Texture } from 'pixi.js';
+import { Container, Graphics, Text, Texture } from 'pixi.js';
 import { CharacterSprite, type Direction, type AnimState } from './CharacterSprite';
 import { findPath } from './pathfinding';
 import type { TiledMapRenderer } from './TiledMapRenderer';
@@ -57,6 +57,7 @@ const DESK_REST_SECONDS = 30;
 
 interface CharacterOptions {
   agentId: string;
+  displayName?: string;
   mapRenderer: TiledMapRenderer;
   frames: Texture[][];
   seatTile: { x: number; y: number };
@@ -101,6 +102,7 @@ export class Character {
   private thoughtBubble: ThoughtBubble;
   private workGlow: Graphics;
   private selectionRing: Graphics;
+  private identityNameplate: Container;
   private selected = false;
   private hovered = false;
   private workGlowElapsed = 0;
@@ -161,6 +163,25 @@ export class Character {
 
     this.selectionRing = new Graphics();
     this.selectionRing.eventMode = 'none';
+
+    this.identityNameplate = new Container();
+    this.identityNameplate.eventMode = 'none';
+    this.identityNameplate.visible = false;
+    const displayName = options.displayName?.trim() || options.agentId;
+    const visibleName = displayName.length > 18 ? `${displayName.slice(0, 17)}…` : displayName;
+    const nameText = new Text({
+      text: visibleName,
+      style: { fontFamily: 'monospace', fontSize: 6, fontWeight: 'bold', fill: 0xd9fffb },
+    });
+    const nameWidth = visibleName.length * 4 + 10;
+    const nameBg = new Graphics()
+      .rect(0, 0, nameWidth, 10)
+      .fill({ color: 0x101827, alpha: 0.94 })
+      .stroke({ color: 0x5cdbcf, width: 1 });
+    nameText.position.set(5, 1);
+    this.identityNameplate.position.set(-nameWidth / 2, -39);
+    this.identityNameplate.addChild(nameBg, nameText);
+    this.sprite.container.addChild(this.identityNameplate);
 
     this.overlay = new Graphics();
     this.overlay.eventMode = 'none';
@@ -500,6 +521,7 @@ export class Character {
 
   private drawSelectionRing(): void {
     this.selectionRing.clear();
+    this.identityNameplate.visible = this.selected || this.hovered;
     if (!this.selected && !this.hovered) return;
     this.selectionRing.ellipse(0, 0, 12, 5).stroke({
       color: this.selected ? 0x5cdbcf : 0x9ce9e2,
