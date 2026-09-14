@@ -288,6 +288,26 @@
       "before": "        updateBoardMoves(dt);",
       "after": "        updateBoardMoves(dt);\n        updateAirlockPulse(dt);",
       "reason": "Advance the airlock pulse through the pausable scene ticker."
+    },
+    {
+      "before": "    const runtimes = new Map<string, Runtime>();",
+      "after": "    const runtimes = new Map<string, Runtime>();\n    const departing = new Map<string, Character>();\n    const departureTimers = new Set<ReturnType<typeof setTimeout>>();",
+      "reason": "Keep departing workers ticked and own their watchdog/fade timers."
+    },
+    {
+      "before": "        rt.screen?.destroy();\n        rt.character.hide(0);\n        // give the fade-out a moment, then destroy\n        setTimeout(() => rt.character.destroy(), 700);\n        runtimes.delete(id);",
+      "after": "        rt.screen?.destroy();\n        const character = rt.character;\n        runtimes.delete(id);\n        departing.set(id, character);\n        let finishing = false;\n        let watchdog: ReturnType<typeof setTimeout> | undefined;\n        const finishDeparture = () => {\n          if (finishing) return;\n          finishing = true;\n          if (watchdog) { clearTimeout(watchdog); departureTimers.delete(watchdog); }\n          triggerAirlockPulse();\n          character.hide(0);\n          const destroyTimer = setTimeout(() => {\n            departureTimers.delete(destroyTimer);\n            departing.delete(id);\n            character.destroy();\n          }, 700);\n          departureTimers.add(destroyTimer);\n        };\n        watchdog = setTimeout(finishDeparture, 8000);\n        departureTimers.add(watchdog);\n        character.walkToAndThen(entrance, finishDeparture);",
+      "reason": "Walk removed workers through the semantic airlock before fading and destroying them."
+    },
+    {
+      "before": "        updateCafeteria(dt);",
+      "after": "        for (const character of departing.values()) character.update(dt);\n        updateCafeteria(dt);",
+      "reason": "Advance departing characters until their exit completes."
+    },
+    {
+      "before": "        safeDestroy(a);",
+      "after": "        for (const timer of departureTimers) clearTimeout(timer);\n        departureTimers.clear();\n        safeDestroy(a);",
+      "reason": "Cancel scene-owned departure timers during teardown."
     }
   ],
   "src/renderer/src/scene/office/portraitArt.ts": [

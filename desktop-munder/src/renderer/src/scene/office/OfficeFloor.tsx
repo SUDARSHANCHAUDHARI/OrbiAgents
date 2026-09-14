@@ -236,6 +236,8 @@ export function OfficeFloor() {
     appRef.current = app;
 
     const runtimes = new Map<string, Runtime>();
+    const departing = new Map<string, Character>();
+    const departureTimers = new Set<ReturnType<typeof setTimeout>>();
     const seatClaims = new Set<number>();
     // In-flight message envelopes (sender desk → recipient desk). Capped so a
     // broadcast doesn't bury the floor in paper.
@@ -1539,10 +1541,27 @@ export function OfficeFloor() {
         }
         if (rt.seatIndex != null) seatClaims.delete(rt.seatIndex);
         rt.screen?.destroy();
-        rt.character.hide(0);
-        // give the fade-out a moment, then destroy
-        setTimeout(() => rt.character.destroy(), 700);
+        const character = rt.character;
         runtimes.delete(id);
+        departing.set(id, character);
+        let finishing = false;
+        let watchdog: ReturnType<typeof setTimeout> | undefined;
+        const finishDeparture = () => {
+          if (finishing) return;
+          finishing = true;
+          if (watchdog) { clearTimeout(watchdog); departureTimers.delete(watchdog); }
+          triggerAirlockPulse();
+          character.hide(0);
+          const destroyTimer = setTimeout(() => {
+            departureTimers.delete(destroyTimer);
+            departing.delete(id);
+            character.destroy();
+          }, 700);
+          departureTimers.add(destroyTimer);
+        };
+        watchdog = setTimeout(finishDeparture, 8000);
+        departureTimers.add(watchdog);
+        character.walkToAndThen(entrance, finishDeparture);
       };
 
       // Map an agent's store state onto its on-floor character.
@@ -1787,6 +1806,7 @@ export function OfficeFloor() {
           rt.character.setBubbleZoom(zoom);
           rt.character.update(dt);
         }
+        for (const character of departing.values()) character.update(dt);
         updateCafeteria(dt);
         updateCoffeeRuns(dt);
         updateErrands(dt);
@@ -1866,6 +1886,8 @@ export function OfficeFloor() {
         try { (a as any).__unsub?.(); } catch { /* noop */ }
         try { (a as any).__offMessage?.(); } catch { /* noop */ }
         try { clearInterval((a as any).__taskBoardPoll); } catch { /* noop */ }
+        for (const timer of departureTimers) clearTimeout(timer);
+        departureTimers.clear();
         safeDestroy(a);
         disposeTheme?.();
       }
