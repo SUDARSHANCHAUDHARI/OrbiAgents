@@ -368,6 +368,16 @@
       "before": "        window.close(); // intercepted by the main process while PTYs are alive\n      });\n      charLayer.addChild(clockG);",
       "after": "        window.close(); // intercepted by the main process while PTYs are alive\n      });\n      clockG.on('pointerover', () => {\n        clockPlacard.visible = true;\n        clockG.clear();\n        clockG.rect(1, 1, 14, 30).stroke({ color: 0xf0a3a3, width: 1, alpha: 0.9 });\n      });\n      clockG.on('pointerout', () => {\n        clockPlacard.visible = false;\n        clockG.clear();\n      });\n      charLayer.addChild(clockG);",
       "reason": "Show the clock close affordance only while its existing hit target is hovered."
+    },
+    {
+      "before": "      askG.zIndex = (askBoardTile.y + 1) * tsB;\n      askG.on('pointertap', (ev) => {",
+      "after": "      askG.zIndex = (askBoardTile.y + 1) * tsB;\n      const askAffordance = new Graphics();\n      askAffordance.eventMode = 'none';\n      const askPlacard = new Container();\n      askPlacard.eventMode = 'none';\n      askPlacard.visible = false;\n      const askPlacardText = new Text({\n        text: t('commandCenter.tabs.human').toUpperCase(),\n        style: { fontFamily: 'monospace', fontSize: 6, fontWeight: 'bold', fill: 0xead7ff },\n      });\n      const askPlacardWidth = Math.ceil(askPlacardText.width) + 10;\n      askPlacard.position.set((30 - askPlacardWidth) / 2, -12);\n      const askPlacardBg = new Graphics()\n        .rect(0, 0, askPlacardWidth, 10)\n        .fill({ color: 0x101827, alpha: 0.96 })\n        .stroke({ color: 0xcdb4e8, width: 1 });\n      askPlacardText.position.set(5, 1);\n      askPlacard.addChild(askPlacardBg, askPlacardText);\n      askG.addChild(askAffordance, askPlacard);\n      askG.on('pointertap', (ev) => {",
+      "reason": "Give the human-question board a redraw-safe localized hover overlay."
+    },
+    {
+      "before": "        st.requestCommandCenterTab('human');\n      });\n      charLayer.addChild(askG);",
+      "after": "        st.requestCommandCenterTab('human');\n      });\n      askG.on('pointerover', () => {\n        askPlacard.visible = true;\n        askAffordance.clear();\n        askAffordance.rect(1, 1, 28, 20).stroke({ color: 0xcdb4e8, width: 1, alpha: 0.95 });\n      });\n      askG.on('pointerout', () => {\n        askPlacard.visible = false;\n        askAffordance.clear();\n      });\n      charLayer.addChild(askG);",
+      "reason": "Show the ask-me action label and frame only while its existing hit target is hovered."
     }
   ],
   "src/renderer/src/scene/office/portraitArt.ts": [

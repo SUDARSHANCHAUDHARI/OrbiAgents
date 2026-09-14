@@ -1360,12 +1360,39 @@ export function OfficeFloor() {
       askG.position.set(askBoardTile.x * tsB, askBoardTile.y * tsB + 8);
       askG.hitArea = { contains: (x: number, y: number) => x >= 0 && x <= 30 && y >= 0 && y <= 22 };
       askG.zIndex = (askBoardTile.y + 1) * tsB;
+      const askAffordance = new Graphics();
+      askAffordance.eventMode = 'none';
+      const askPlacard = new Container();
+      askPlacard.eventMode = 'none';
+      askPlacard.visible = false;
+      const askPlacardText = new Text({
+        text: t('commandCenter.tabs.human').toUpperCase(),
+        style: { fontFamily: 'monospace', fontSize: 6, fontWeight: 'bold', fill: 0xead7ff },
+      });
+      const askPlacardWidth = Math.ceil(askPlacardText.width) + 10;
+      askPlacard.position.set((30 - askPlacardWidth) / 2, -12);
+      const askPlacardBg = new Graphics()
+        .rect(0, 0, askPlacardWidth, 10)
+        .fill({ color: 0x101827, alpha: 0.96 })
+        .stroke({ color: 0xcdb4e8, width: 1 });
+      askPlacardText.position.set(5, 1);
+      askPlacard.addChild(askPlacardBg, askPlacardText);
+      askG.addChild(askAffordance, askPlacard);
       askG.on('pointertap', (ev) => {
         ev.stopPropagation();
         const st = useStore.getState();
         const god = st.agents.find((a) => a.isGod);
         if (god) st.select(god.id);
         st.requestCommandCenterTab('human');
+      });
+      askG.on('pointerover', () => {
+        askPlacard.visible = true;
+        askAffordance.clear();
+        askAffordance.rect(1, 1, 28, 20).stroke({ color: 0xcdb4e8, width: 1, alpha: 0.95 });
+      });
+      askG.on('pointerout', () => {
+        askPlacard.visible = false;
+        askAffordance.clear();
       });
       charLayer.addChild(askG);
       let askCount = 0;
