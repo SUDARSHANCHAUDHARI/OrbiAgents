@@ -358,3 +358,5 @@ Hire-kiosk placard slice: hovering the launch console now reveals an original pi
 Calendar trigger-affordance slice: hovering the semantic wall calendar now draws a gold focus frame and reveals a localized `TRIGGERS` placard. The overlay does not intercept input and preserves the existing orchestrator selection and Command Center navigation.
 
 Task-board affordance slice: hovering the live cork-board ensemble now draws a gold frame and reveals a localized `TASKS` placard. Its dedicated child overlay survives note redraws without intercepting input or changing task-tab navigation.
+
+Office-clock affordance slice: hovering the semantic wall clock now draws a coral frame and reveals a localized close placard, distinguishing the exit entry point from gold navigation controls. The existing renderer close request and guarded main-process quit flow remain unchanged.

@@ -1316,9 +1316,34 @@ export function OfficeFloor() {
       clockG.position.set(theme.anchors.clock.x * ts0, theme.anchors.clock.y * ts0);
       clockG.hitArea = { contains: (x: number, y: number) => x >= 0 && x <= 16 && y >= 0 && y <= 32 };
       clockG.zIndex = 3 * ts0;
+      const clockPlacard = new Container();
+      clockPlacard.eventMode = 'none';
+      clockPlacard.visible = false;
+      const clockPlacardText = new Text({
+        text: t('common.close').toUpperCase(),
+        style: { fontFamily: 'monospace', fontSize: 6, fontWeight: 'bold', fill: 0xffc4c4 },
+      });
+      const clockPlacardWidth = Math.ceil(clockPlacardText.width) + 10;
+      clockPlacard.position.set((16 - clockPlacardWidth) / 2, -12);
+      const clockPlacardBg = new Graphics()
+        .rect(0, 0, clockPlacardWidth, 10)
+        .fill({ color: 0x101827, alpha: 0.96 })
+        .stroke({ color: 0xf0a3a3, width: 1 });
+      clockPlacardText.position.set(5, 1);
+      clockPlacard.addChild(clockPlacardBg, clockPlacardText);
+      clockG.addChild(clockPlacard);
       clockG.on('pointertap', (ev) => {
         ev.stopPropagation();
         window.close(); // intercepted by the main process while PTYs are alive
+      });
+      clockG.on('pointerover', () => {
+        clockPlacard.visible = true;
+        clockG.clear();
+        clockG.rect(1, 1, 14, 30).stroke({ color: 0xf0a3a3, width: 1, alpha: 0.9 });
+      });
+      clockG.on('pointerout', () => {
+        clockPlacard.visible = false;
+        clockG.clear();
       });
       charLayer.addChild(clockG);
 
