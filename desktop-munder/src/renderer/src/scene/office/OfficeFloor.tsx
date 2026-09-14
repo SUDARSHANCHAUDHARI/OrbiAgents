@@ -394,11 +394,21 @@ export function OfficeFloor() {
       hireG.cursor = 'pointer';
       hireG.position.set(theme.anchors.hire.x * hireTs, theme.anchors.hire.y * hireTs);
       hireG.hitArea = { contains: (x: number, y: number) => x >= 0 && x <= 32 && y >= 0 && y <= 32 };
+      let hireHovered = false;
+      let hirePulsePhase = 0;
+      const drawHireAffordance = (): void => {
+        const alpha = hireHovered ? 0.9 : 0.22 + (Math.sin(hirePulsePhase) + 1) * 0.08;
+        hireG.clear();
+        hireG.rect(1, 1, 30, 30).stroke({ color: hireHovered ? 0xffd166 : 0x5cdbcf, width: 1, alpha });
+      };
+      drawHireAffordance();
       hireG.zIndex = (theme.anchors.hire.y + 2) * hireTs;
       hireG.on('pointertap', (ev) => {
         ev.stopPropagation();
         useStore.getState().setAddAgentOpen(true);
       });
+      hireG.on('pointerover', () => { hireHovered = true; drawHireAffordance(); });
+      hireG.on('pointerout', () => { hireHovered = false; drawHireAffordance(); });
       charLayer.addChild(hireG);
 
       // ─── The boss's wall calendar → TRIGGERS ───────────────────────────────
@@ -1798,6 +1808,8 @@ export function OfficeFloor() {
 
       const onTick = (ticker: Ticker) => {
         const dt = ticker.deltaMS / 1000;
+        hirePulsePhase += dt * 2.4;
+        if (!hireHovered) drawHireAffordance();
         camera.update(dt);
         // Thought clouds counter-scale against the camera so their text never
         // renders below 1:1 screen size when the window/world shrinks.
