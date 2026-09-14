@@ -108,6 +108,48 @@
       "reason": "Expose the entrance hire kiosk through the active theme contract."
     }
   ],
+  "src/renderer/src/scene/office/Character.ts": [
+    {
+      "before": "  private workGlow: Graphics;\n  private workGlowElapsed = 0;",
+      "after": "  private workGlow: Graphics;\n  private selectionRing: Graphics;\n  private selected = false;\n  private hovered = false;\n  private workGlowElapsed = 0;",
+      "reason": "Track a scene-owned hover and persistent selection indicator per worker."
+    },
+    {
+      "before": "    this.workGlow.eventMode = 'none';\n\n    this.overlay = new Graphics();",
+      "after": "    this.workGlow.eventMode = 'none';\n\n    this.selectionRing = new Graphics();\n    this.selectionRing.eventMode = 'none';\n\n    this.overlay = new Graphics();",
+      "reason": "Create a non-interactive graphics layer for worker selection feedback."
+    },
+    {
+      "before": "  private targetAlpha = 1;\n\n  private enableClick(): void {",
+      "after": "  private targetAlpha = 1;\n\n  setSelected(selected: boolean): void {\n    this.selected = selected;\n    this.drawSelectionRing();\n  }\n\n  private drawSelectionRing(): void {\n    this.selectionRing.clear();\n    if (!this.selected && !this.hovered) return;\n    this.selectionRing.ellipse(0, 0, 12, 5).stroke({\n      color: this.selected ? 0x5cdbcf : 0x9ce9e2,\n      width: this.selected ? 2 : 1,\n      alpha: this.selected ? 0.9 : 0.55,\n    });\n  }\n\n  private enableClick(): void {",
+      "reason": "Render bounded hover and selected rings without changing worker sprites."
+    },
+    {
+      "before": "      this.onClick?.(this.agentId);\n    });\n  }",
+      "after": "      this.onClick?.(this.agentId);\n    });\n    this.sprite.container.on('pointerover', () => {\n      this.hovered = true;\n      this.drawSelectionRing();\n    });\n    this.sprite.container.on('pointerout', () => {\n      this.hovered = false;\n      this.drawSelectionRing();\n    });\n  }",
+      "reason": "Update the worker ring from the existing sprite hit target."
+    },
+    {
+      "before": "    parent.addChild(this.workGlow);\n    parent.addChild(this.sprite.container);",
+      "after": "    parent.addChild(this.workGlow);\n    parent.addChild(this.selectionRing);\n    parent.addChild(this.sprite.container);",
+      "reason": "Mount selection feedback behind the worker sprite."
+    },
+    {
+      "before": "          this.workGlow.parent?.removeChild(this.workGlow);\n          this.deskCup.parent?.removeChild(this.deskCup);",
+      "after": "          this.workGlow.parent?.removeChild(this.workGlow);\n          this.selectionRing.parent?.removeChild(this.selectionRing);\n          this.deskCup.parent?.removeChild(this.deskCup);",
+      "reason": "Remove the selection ring when a worker finishes fading out."
+    },
+    {
+      "before": "    this.workGlow.zIndex = this.py - 1;\n    if (this.glowOn) {",
+      "after": "    this.workGlow.zIndex = this.py - 1;\n    this.selectionRing.position.set(this.px, this.py - 2);\n    this.selectionRing.zIndex = this.py - 1;\n    this.selectionRing.alpha = this.sprite.container.alpha;\n    if (this.glowOn) {",
+      "reason": "Keep selection feedback aligned with moving and fading workers."
+    },
+    {
+      "before": "    this.workGlow.destroy();\n    this.overlay.destroy();",
+      "after": "    this.workGlow.destroy();\n    this.selectionRing.destroy();\n    this.overlay.destroy();",
+      "reason": "Release selection graphics with the character scene resources."
+    }
+  ],
   "src/renderer/src/scene/office/OfficeFloor.tsx": [
     {
       "before": "import { Application, Container, Graphics, Ticker, Texture } from 'pixi.js';",
@@ -378,6 +420,16 @@
       "before": "        st.requestCommandCenterTab('human');\n      });\n      charLayer.addChild(askG);",
       "after": "        st.requestCommandCenterTab('human');\n      });\n      askG.on('pointerover', () => {\n        askPlacard.visible = true;\n        askAffordance.clear();\n        askAffordance.rect(1, 1, 28, 20).stroke({ color: 0xcdb4e8, width: 1, alpha: 0.95 });\n      });\n      askG.on('pointerout', () => {\n        askPlacard.visible = false;\n        askAffordance.clear();\n      });\n      charLayer.addChild(askG);",
       "reason": "Show the ask-me action label and frame only while its existing hit target is hovered."
+    },
+    {
+      "before": "        character.show(charLayer);\n        triggerAirlockPulse();",
+      "after": "        character.show(charLayer);\n        character.setSelected(useStore.getState().selectedId === agent.id);\n        triggerAirlockPulse();",
+      "reason": "Apply current selection state when an asynchronously loaded worker reaches the floor."
+    },
+    {
+      "before": "          lastSelected = s.selectedId;\n          const rt = s.selectedId ? runtimes.get(s.selectedId) : undefined;",
+      "after": "          lastSelected = s.selectedId;\n          for (const [id, runtime] of runtimes) runtime.character.setSelected(id === s.selectedId);\n          const rt = s.selectedId ? runtimes.get(s.selectedId) : undefined;",
+      "reason": "Synchronize persistent worker selection feedback from the existing store subscription."
     }
   ],
   "src/renderer/src/scene/office/portraitArt.ts": [

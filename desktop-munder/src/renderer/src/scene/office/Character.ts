@@ -100,6 +100,9 @@ export class Character {
 
   private thoughtBubble: ThoughtBubble;
   private workGlow: Graphics;
+  private selectionRing: Graphics;
+  private selected = false;
+  private hovered = false;
   private workGlowElapsed = 0;
   private glowOn = false;
 
@@ -155,6 +158,9 @@ export class Character {
     this.workGlow.fill({ color: options.glowColor, alpha: 1 });
     this.workGlow.alpha = 0;
     this.workGlow.eventMode = 'none';
+
+    this.selectionRing = new Graphics();
+    this.selectionRing.eventMode = 'none';
 
     this.overlay = new Graphics();
     this.overlay.eventMode = 'none';
@@ -487,12 +493,35 @@ export class Character {
   }
   private targetAlpha = 1;
 
+  setSelected(selected: boolean): void {
+    this.selected = selected;
+    this.drawSelectionRing();
+  }
+
+  private drawSelectionRing(): void {
+    this.selectionRing.clear();
+    if (!this.selected && !this.hovered) return;
+    this.selectionRing.ellipse(0, 0, 12, 5).stroke({
+      color: this.selected ? 0x5cdbcf : 0x9ce9e2,
+      width: this.selected ? 2 : 1,
+      alpha: this.selected ? 0.9 : 0.55,
+    });
+  }
+
   private enableClick(): void {
     this.sprite.container.eventMode = 'static';
     this.sprite.container.cursor = 'pointer';
     this.sprite.container.on('pointertap', (e) => {
       e.stopPropagation();
       this.onClick?.(this.agentId);
+    });
+    this.sprite.container.on('pointerover', () => {
+      this.hovered = true;
+      this.drawSelectionRing();
+    });
+    this.sprite.container.on('pointerout', () => {
+      this.hovered = false;
+      this.drawSelectionRing();
     });
   }
 
@@ -501,6 +530,7 @@ export class Character {
     this.isVisible = true;
     this.sprite.setAlpha(0);
     parent.addChild(this.workGlow);
+    parent.addChild(this.selectionRing);
     parent.addChild(this.sprite.container);
     this.sprite.container.addChild(this.overlay);
     this.sprite.container.addChild(this.fx);
@@ -539,6 +569,7 @@ export class Character {
           this.thoughtBubble.hide();
           this.thoughtBubble.container.parent?.removeChild(this.thoughtBubble.container);
           this.workGlow.parent?.removeChild(this.workGlow);
+          this.selectionRing.parent?.removeChild(this.selectionRing);
           this.deskCup.parent?.removeChild(this.deskCup);
         }
       }
@@ -568,6 +599,9 @@ export class Character {
     this.workGlow.x = this.px;
     this.workGlow.y = this.py - ts / 2;
     this.workGlow.zIndex = this.py - 1;
+    this.selectionRing.position.set(this.px, this.py - 2);
+    this.selectionRing.zIndex = this.py - 1;
+    this.selectionRing.alpha = this.sprite.container.alpha;
     if (this.glowOn) {
       this.workGlowElapsed += dt;
       const phase = (Math.sin((this.workGlowElapsed * Math.PI) / 0.6) + 1) / 2;
@@ -875,6 +909,7 @@ export class Character {
     this.thoughtBubble.destroy();
     this.sprite.destroy();
     this.workGlow.destroy();
+    this.selectionRing.destroy();
     this.overlay.destroy();
     this.fx.destroy();
     this.deskCup.parent?.removeChild(this.deskCup);

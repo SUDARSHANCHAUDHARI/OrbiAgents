@@ -362,3 +362,5 @@ Task-board affordance slice: hovering the live cork-board ensemble now draws a g
 Office-clock affordance slice: hovering the semantic wall clock now draws a coral frame and reveals a localized close placard, distinguishing the exit entry point from gold navigation controls. The existing renderer close request and guarded main-process quit flow remain unchanged.
 
 Ask-me board affordance slice: hovering the human-question board now draws a lilac frame and reveals a localized `ASK ME` placard. Its dedicated child overlay survives pending-question pulse redraws without intercepting input or changing human-tab navigation.
+
+Agent selection-feedback slice: worker sprites now show a light cyan ground ring on hover and retain a stronger ring while selected. Selection synchronizes for existing and newly arriving workers while preserving click selection, movement, activity glow, and camera nudging.
