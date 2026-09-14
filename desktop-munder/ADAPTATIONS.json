@@ -358,6 +358,16 @@
       "before": "        st.requestCommandCenterTab('tasks');\n      });\n      charLayer.addChild(boardG);",
       "after": "        st.requestCommandCenterTab('tasks');\n      });\n      boardG.on('pointerover', () => {\n        boardPlacard.visible = true;\n        boardAffordance.clear();\n        boardAffordance.rect(1, 1, 80, 20).stroke({ color: 0xffd166, width: 1, alpha: 0.9 });\n      });\n      boardG.on('pointerout', () => {\n        boardPlacard.visible = false;\n        boardAffordance.clear();\n      });\n      charLayer.addChild(boardG);",
       "reason": "Show the task-board action label and frame only while its existing hit target is hovered."
+    },
+    {
+      "before": "      clockG.zIndex = 3 * ts0;\n      clockG.on('pointertap', (ev) => {",
+      "after": "      clockG.zIndex = 3 * ts0;\n      const clockPlacard = new Container();\n      clockPlacard.eventMode = 'none';\n      clockPlacard.visible = false;\n      const clockPlacardText = new Text({\n        text: t('common.close').toUpperCase(),\n        style: { fontFamily: 'monospace', fontSize: 6, fontWeight: 'bold', fill: 0xffc4c4 },\n      });\n      const clockPlacardWidth = Math.ceil(clockPlacardText.width) + 10;\n      clockPlacard.position.set((16 - clockPlacardWidth) / 2, -12);\n      const clockPlacardBg = new Graphics()\n        .rect(0, 0, clockPlacardWidth, 10)\n        .fill({ color: 0x101827, alpha: 0.96 })\n        .stroke({ color: 0xf0a3a3, width: 1 });\n      clockPlacardText.position.set(5, 1);\n      clockPlacard.addChild(clockPlacardBg, clockPlacardText);\n      clockG.addChild(clockPlacard);\n      clockG.on('pointertap', (ev) => {",
+      "reason": "Give the semantic office clock a localized close placard with exit-specific color."
+    },
+    {
+      "before": "        window.close(); // intercepted by the main process while PTYs are alive\n      });\n      charLayer.addChild(clockG);",
+      "after": "        window.close(); // intercepted by the main process while PTYs are alive\n      });\n      clockG.on('pointerover', () => {\n        clockPlacard.visible = true;\n        clockG.clear();\n        clockG.rect(1, 1, 14, 30).stroke({ color: 0xf0a3a3, width: 1, alpha: 0.9 });\n      });\n      clockG.on('pointerout', () => {\n        clockPlacard.visible = false;\n        clockG.clear();\n      });\n      charLayer.addChild(clockG);",
+      "reason": "Show the clock close affordance only while its existing hit target is hovered."
     }
   ],
   "src/renderer/src/scene/office/portraitArt.ts": [
