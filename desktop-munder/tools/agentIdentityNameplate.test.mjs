@@ -13,6 +13,8 @@ test('worker identity nameplate is bounded and follows hover or selection', () =
   assert.match(character, /const nameWidth = visibleName\.length \* 4 \+ 10/);
   assert.match(character, /this\.identityNameplate\.visible = this\.selected \|\| this\.hovered/);
   assert.match(character, /this\.identityNameplate\.eventMode = 'none'/);
+  assert.match(character, /this\.identityNameplate\.pivot\.set\(nameWidth \/ 2, 10\)/);
+  assert.match(character, /this\.identityNameplate\.scale\.set\(1 \/ Math\.min\(Math\.max\(z, 0\.01\), 1\)\)/);
 });
 
 test('floor passes the human-readable agent name without changing click selection', () => {

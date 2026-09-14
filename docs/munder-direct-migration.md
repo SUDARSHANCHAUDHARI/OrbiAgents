@@ -366,3 +366,5 @@ Ask-me board affordance slice: hovering the human-question board now draws a lil
 Agent selection-feedback slice: worker sprites now show a light cyan ground ring on hover and retain a stronger ring while selected. Selection synchronizes for existing and newly arriving workers while preserving click selection, movement, activity glow, and camera nudging.
 
 Agent identity-nameplate slice: hovering or selecting a worker now reveals a compact cyan nameplate above the sprite using the agent's human-readable name. Blank names fall back to the stable agent ID, long labels are ellipsized, and activity remains in the separate thought-bubble layer.
+
+Nameplate zoom-readability slice: worker identity labels now share the activity bubble's below-1× counter-scaling rule. A bottom-center pivot keeps each label centered above its worker as it compensates for a fitted, zoomed-out room, while 1× and enlarged views remain unchanged.

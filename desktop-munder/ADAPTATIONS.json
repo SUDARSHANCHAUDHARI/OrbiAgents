@@ -178,6 +178,16 @@
       "before": "    this.selectionRing.clear();\n    if (!this.selected && !this.hovered) return;",
       "after": "    this.selectionRing.clear();\n    this.identityNameplate.visible = this.selected || this.hovered;\n    if (!this.selected && !this.hovered) return;",
       "reason": "Show worker identity whenever hover or persistent selection feedback is active."
+    },
+    {
+      "before": "    this.identityNameplate.position.set(-nameWidth / 2, -39);",
+      "after": "    this.identityNameplate.pivot.set(nameWidth / 2, 10);\n    this.identityNameplate.position.set(0, -29);",
+      "reason": "Anchor the worker nameplate at its bottom-center for stable zoom compensation."
+    },
+    {
+      "before": "  setBubbleZoom(z: number): void {\n    this.thoughtBubble.setZoom(z);\n  }",
+      "after": "  setBubbleZoom(z: number): void {\n    this.thoughtBubble.setZoom(z);\n    this.identityNameplate.scale.set(1 / Math.min(Math.max(z, 0.01), 1));\n  }",
+      "reason": "Keep worker identity readable when the fitted room renders below one-to-one scale."
     }
   ],
   "src/renderer/src/scene/office/OfficeFloor.tsx": [

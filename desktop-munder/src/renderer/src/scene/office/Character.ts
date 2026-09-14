@@ -179,7 +179,8 @@ export class Character {
       .fill({ color: 0x101827, alpha: 0.94 })
       .stroke({ color: 0x5cdbcf, width: 1 });
     nameText.position.set(5, 1);
-    this.identityNameplate.position.set(-nameWidth / 2, -39);
+    this.identityNameplate.pivot.set(nameWidth / 2, 10);
+    this.identityNameplate.position.set(0, -29);
     this.identityNameplate.addChild(nameBg, nameText);
     this.sprite.container.addChild(this.identityNameplate);
 
@@ -393,6 +394,7 @@ export class Character {
    *  its on-screen text size when the window (and thus the world) shrinks. */
   setBubbleZoom(z: number): void {
     this.thoughtBubble.setZoom(z);
+    this.identityNameplate.scale.set(1 / Math.min(Math.max(z, 0.01), 1));
   }
 
   setStatusGlyph(glyph: StatusGlyph): void {
