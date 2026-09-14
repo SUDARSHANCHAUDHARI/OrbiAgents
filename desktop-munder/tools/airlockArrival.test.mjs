@@ -6,7 +6,7 @@ const source = readFileSync(new URL('../src/renderer/src/scene/office/OfficeFloo
 
 test('worker admission pulses the semantic entrance airlock through the scene ticker', () => {
   assert.match(source, /airlockPulse\.position\.set\(\(entrance\.x - 1\)/);
-  assert.match(source, /character\.show\(charLayer\);\n        triggerAirlockPulse\(\);/);
+  assert.match(source, /character\.show\(charLayer\);\n        character\.setSelected\(.*\);\n        triggerAirlockPulse\(\);/);
   assert.match(source, /updateAirlockPulse\(dt\);/);
   assert.doesNotMatch(source, /setInterval\([^\n]*airlock|setTimeout\([^\n]*airlock/);
 });

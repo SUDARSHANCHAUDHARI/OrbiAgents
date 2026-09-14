@@ -1646,6 +1646,7 @@ export function OfficeFloor() {
           onClick: (id) => useStore.getState().select(id),
         });
         character.show(charLayer);
+        character.setSelected(useStore.getState().selectedId === agent.id);
         triggerAirlockPulse();
         const rt: Runtime = { character, seatIndex, waitTile, charName };
         // Standard desks paint the 2×2 PC monitor two rows above the seat —
@@ -1852,6 +1853,7 @@ export function OfficeFloor() {
         if (s.agents !== prev.agents) syncAgents();
         if (s.selectedId !== lastSelected) {
           lastSelected = s.selectedId;
+          for (const [id, runtime] of runtimes) runtime.character.setSelected(id === s.selectedId);
           const rt = s.selectedId ? runtimes.get(s.selectedId) : undefined;
           if (rt) {
             const p = rt.character.getPixelPosition();
