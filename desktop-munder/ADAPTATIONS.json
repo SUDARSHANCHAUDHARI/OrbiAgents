@@ -308,6 +308,21 @@
       "before": "        safeDestroy(a);",
       "after": "        for (const timer of departureTimers) clearTimeout(timer);\n        departureTimers.clear();\n        safeDestroy(a);",
       "reason": "Cancel scene-owned departure timers during teardown."
+    },
+    {
+      "before": "      hireG.hitArea = { contains: (x: number, y: number) => x >= 0 && x <= 32 && y >= 0 && y <= 32 };",
+      "after": "      hireG.hitArea = { contains: (x: number, y: number) => x >= 0 && x <= 32 && y >= 0 && y <= 32 };\n      let hireHovered = false;\n      let hirePulsePhase = 0;\n      const drawHireAffordance = (): void => {\n        const alpha = hireHovered ? 0.9 : 0.22 + (Math.sin(hirePulsePhase) + 1) * 0.08;\n        hireG.clear();\n        hireG.rect(1, 1, 30, 30).stroke({ color: hireHovered ? 0xffd166 : 0x5cdbcf, width: 1, alpha });\n      };\n      drawHireAffordance();",
+      "reason": "Draw an idle and hover affordance over the semantic hire kiosk."
+    },
+    {
+      "before": "      charLayer.addChild(hireG);",
+      "after": "      hireG.on('pointerover', () => { hireHovered = true; drawHireAffordance(); });\n      hireG.on('pointerout', () => { hireHovered = false; drawHireAffordance(); });\n      charLayer.addChild(hireG);",
+      "reason": "Brighten the hire kiosk while the pointer is over its existing hit target."
+    },
+    {
+      "before": "        const dt = ticker.deltaMS / 1000;",
+      "after": "        const dt = ticker.deltaMS / 1000;\n        hirePulsePhase += dt * 2.4;\n        if (!hireHovered) drawHireAffordance();",
+      "reason": "Advance the hire kiosk breathing outline through the pausable scene ticker."
     }
   ],
   "src/renderer/src/scene/office/portraitArt.ts": [

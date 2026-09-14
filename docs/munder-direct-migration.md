@@ -350,3 +350,5 @@ Entrance launch-kiosk slice: an original two-by-two orbital console fills the pr
 Airlock arrival slice: every admitted worker now triggers a short cyan/gold pulse across the semantic entrance airlock before walking to its assigned seat. The effect is scene-owned, ticker-driven, pause-safe, and consumes no timers or new artwork.
 
 Airlock departure slice: removed workers release their seat and office resources, then remain in a dedicated ticked departure collection while walking to the semantic entrance. Arrival pulses the airlock before a fade/destroy sequence; an eight-second watchdog handles unreachable routes, and teardown clears all departure timers.
+
+Hire-kiosk affordance slice: the in-world launch console now carries a subtle ticker-driven cyan breathing outline and brightens gold on pointer hover. The visual signal shares the existing semantic hit target and preserves the reviewed hire-modal action.
