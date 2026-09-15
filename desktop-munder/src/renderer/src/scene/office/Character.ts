@@ -831,7 +831,8 @@ export class Character {
     this.glyphElapsed += dt;
     const g = this.overlay;
     g.clear();
-    const yTop = -34; // just above the 32px sprite
+    // Clear the identity plate, whose counter-scaled world band starts at -39.
+    const yTop = -48;
     if (this.statusGlyph === 'blocked') {
       // pulsing "!" — blink ~2.5Hz
       if (Math.floor(this.glyphElapsed / 0.4) % 2 === 0) {

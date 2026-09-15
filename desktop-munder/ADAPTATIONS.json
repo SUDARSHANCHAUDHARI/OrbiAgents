@@ -243,6 +243,11 @@
       "before": "    this.identityNameplate.visible = this.selected || this.hovered;",
       "after": "    this.identityNameplate.visible = this.selected || this.hovered || this.statusKeepsIdentityVisible;",
       "reason": "Show active worker identity independently from hover and selection while preserving ring semantics."
+    },
+    {
+      "before": "    const yTop = -34; // just above the 32px sprite",
+      "after": "    // Clear the identity plate, whose counter-scaled world band starts at -39.\n    const yTop = -48;",
+      "reason": "Keep transient blocked, success, compacting, and looping glyphs above the worker identity plate."
     }
   ],
   "src/renderer/src/scene/office/OfficeFloor.tsx": [
