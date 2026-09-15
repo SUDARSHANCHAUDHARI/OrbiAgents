@@ -43,10 +43,18 @@ test('live status changes recolor a retained pixel lamp before state short-circu
   assert.match(floor, /rt\.character\.setDisplayName\(agent\.name\);\n\s*rt\.character\.setAgentStatus\(agent\.status\);\n\s*const changed/);
 });
 
+test('nameplate frame shares the lamp status color', () => {
+  assert.match(character, /const NAMEPLATE_STATUS_COLOR: Record<string, number>/);
+  assert.match(character, /this\.identityStatusColor = NAMEPLATE_STATUS_COLOR\[status\] \?\? NAMEPLATE_STATUS_COLOR\.idle/);
+  assert.match(character, /\.fill\(this\.identityStatusColor\)/);
+  assert.match(character, /\.stroke\(\{ color: this\.identityStatusColor, width: 1 \}\)/);
+  assert.match(character, /this\.identityNameplateWidth = width;\n\s*this\.redrawIdentityFrame\(\)/);
+});
+
 test('active statuses keep worker identity visible without drawing a selection ring', () => {
   assert.match(character, /this\.statusKeepsIdentityVisible = status !== 'idle' && status !== 'ghost'/);
   assert.match(character, /this\.identityNameplate\.visible = this\.selected \|\| this\.hovered \|\| this\.statusKeepsIdentityVisible/);
-  assert.match(character, /\.fill\(colorByStatus\[status\] \?\? colorByStatus\.idle\);\n\s*this\.drawSelectionRing\(\)/);
+  assert.match(character, /\.fill\(this\.identityStatusColor\);\n\s*this\.redrawIdentityFrame\(\);\n\s*this\.drawSelectionRing\(\)/);
   assert.match(character, /if \(!this\.selected && !this\.hovered\) return/);
 });
 

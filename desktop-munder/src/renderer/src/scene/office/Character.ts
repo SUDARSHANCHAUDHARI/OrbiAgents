@@ -13,6 +13,19 @@ import { ThoughtBubble } from './ThoughtBubble';
 export type CharacterAnimation = 'idle' | 'walk' | 'type' | 'read';
 export type StatusGlyph = 'none' | 'blocked' | 'success' | 'compacting' | 'looping';
 
+const NAMEPLATE_STATUS_COLOR: Record<string, number> = {
+  idle: 0x7f8fa6,
+  thinking: 0xc6a0f6,
+  working: 0x5cdbcf,
+  waiting: 0xf4c95d,
+  blocked: 0xff6b6b,
+  success: 0x74d680,
+  ghost: 0x687386,
+  compacting: 0x9b7ede,
+  looping: 0xff9f43,
+  typing: 0x66b3ff,
+};
+
 function lerp(a: number, b: number, t: number): number {
   const tt = Math.min(Math.max(t, 0), 1);
   return a + (b - a) * tt;
@@ -109,6 +122,8 @@ export class Character {
   private visibleIdentityName = '';
   private visibleIdentityStatus = '';
   private statusKeepsIdentityVisible = false;
+  private identityNameplateWidth = 0;
+  private identityStatusColor = NAMEPLATE_STATUS_COLOR.idle;
   private selected = false;
   private hovered = false;
   private workGlowElapsed = 0;
@@ -530,10 +545,8 @@ export class Character {
     this.visibleIdentityName = visibleName;
     this.identityNameText.text = visibleName;
     const width = visibleName.length * 4 + 14;
-    this.identityNameBg.clear()
-      .rect(0, 0, width, 10)
-      .fill({ color: 0x101827, alpha: 0.94 })
-      .stroke({ color: 0x5cdbcf, width: 1 });
+    this.identityNameplateWidth = width;
+    this.redrawIdentityFrame();
     this.identityNameplate.pivot.set(width / 2, 10);
   }
 
@@ -541,22 +554,19 @@ export class Character {
     if (status === this.visibleIdentityStatus) return;
     this.visibleIdentityStatus = status;
     this.statusKeepsIdentityVisible = status !== 'idle' && status !== 'ghost';
-    const colorByStatus: Record<string, number> = {
-      idle: 0x7f8fa6,
-      thinking: 0xc6a0f6,
-      working: 0x5cdbcf,
-      waiting: 0xf4c95d,
-      blocked: 0xff6b6b,
-      success: 0x74d680,
-      ghost: 0x687386,
-      compacting: 0x9b7ede,
-      looping: 0xff9f43,
-      typing: 0x66b3ff,
-    };
+    this.identityStatusColor = NAMEPLATE_STATUS_COLOR[status] ?? NAMEPLATE_STATUS_COLOR.idle;
     this.identityStatusLamp.clear()
       .rect(4, 4, 3, 3)
-      .fill(colorByStatus[status] ?? colorByStatus.idle);
+      .fill(this.identityStatusColor);
+    this.redrawIdentityFrame();
     this.drawSelectionRing();
+  }
+
+  private redrawIdentityFrame(): void {
+    this.identityNameBg.clear()
+      .rect(0, 0, this.identityNameplateWidth, 10)
+      .fill({ color: 0x101827, alpha: 0.94 })
+      .stroke({ color: this.identityStatusColor, width: 1 });
   }
 
   private drawSelectionRing(): void {

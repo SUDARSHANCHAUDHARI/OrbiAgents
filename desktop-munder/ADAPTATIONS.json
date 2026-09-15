@@ -255,6 +255,31 @@
       "before": "    const yTop = -34; // just above the 32px sprite",
       "after": "    // Clear the identity plate, whose counter-scaled world band starts at -39.\n    const yTop = -48;",
       "reason": "Keep transient blocked, success, compacting, and looping glyphs above the worker identity plate."
+    },
+    {
+      "before": "export type StatusGlyph = 'none' | 'blocked' | 'success' | 'compacting' | 'looping';",
+      "after": "export type StatusGlyph = 'none' | 'blocked' | 'success' | 'compacting' | 'looping';\n\nconst NAMEPLATE_STATUS_COLOR: Record<string, number> = {\n  idle: 0x7f8fa6,\n  thinking: 0xc6a0f6,\n  working: 0x5cdbcf,\n  waiting: 0xf4c95d,\n  blocked: 0xff6b6b,\n  success: 0x74d680,\n  ghost: 0x687386,\n  compacting: 0x9b7ede,\n  looping: 0xff9f43,\n  typing: 0x66b3ff,\n};",
+      "reason": "Share one operational status palette between the identity lamp and its stronger frame."
+    },
+    {
+      "before": "  private statusKeepsIdentityVisible = false;\n  private selected = false;",
+      "after": "  private statusKeepsIdentityVisible = false;\n  private identityNameplateWidth = 0;\n  private identityStatusColor = NAMEPLATE_STATUS_COLOR.idle;\n  private selected = false;",
+      "reason": "Retain the current frame dimensions and status color for in-place redraws."
+    },
+    {
+      "before": "    const width = visibleName.length * 4 + 14;\n    this.identityNameBg.clear()\n      .rect(0, 0, width, 10)\n      .fill({ color: 0x101827, alpha: 0.94 })\n      .stroke({ color: 0x5cdbcf, width: 1 });\n    this.identityNameplate.pivot.set(width / 2, 10);",
+      "after": "    const width = visibleName.length * 4 + 14;\n    this.identityNameplateWidth = width;\n    this.redrawIdentityFrame();\n    this.identityNameplate.pivot.set(width / 2, 10);",
+      "reason": "Resize the retained frame without resetting its live status color."
+    },
+    {
+      "before": "    const colorByStatus: Record<string, number> = {\n      idle: 0x7f8fa6,\n      thinking: 0xc6a0f6,\n      working: 0x5cdbcf,\n      waiting: 0xf4c95d,\n      blocked: 0xff6b6b,\n      success: 0x74d680,\n      ghost: 0x687386,\n      compacting: 0x9b7ede,\n      looping: 0xff9f43,\n      typing: 0x66b3ff,\n    };\n    this.identityStatusLamp.clear()\n      .rect(4, 4, 3, 3)\n      .fill(colorByStatus[status] ?? colorByStatus.idle);\n    this.drawSelectionRing();",
+      "after": "    this.identityStatusColor = NAMEPLATE_STATUS_COLOR[status] ?? NAMEPLATE_STATUS_COLOR.idle;\n    this.identityStatusLamp.clear()\n      .rect(4, 4, 3, 3)\n      .fill(this.identityStatusColor);\n    this.redrawIdentityFrame();\n    this.drawSelectionRing();",
+      "reason": "Apply the same live status color to the retained lamp and identity frame."
+    },
+    {
+      "before": "  private drawSelectionRing(): void {",
+      "after": "  private redrawIdentityFrame(): void {\n    this.identityNameBg.clear()\n      .rect(0, 0, this.identityNameplateWidth, 10)\n      .fill({ color: 0x101827, alpha: 0.94 })\n      .stroke({ color: this.identityStatusColor, width: 1 });\n  }\n\n  private drawSelectionRing(): void {",
+      "reason": "Redraw the existing nameplate frame from retained width and live status color."
     }
   ],
   "src/renderer/src/scene/office/OfficeFloor.tsx": [
