@@ -172,6 +172,8 @@ Sources:
 
 ## Completion boundary
 
+Live worker status lamps (2026-09-15): hover and selected worker nameplates now include a compact pixel lamp driven by the agent's current status. All stored runtime states have distinct operational colors, unknown values fall back to idle, and updates occur before the activity-state short circuit without recreating or moving the worker. Focused tests protect the complete status palette, retained graphics path, and live floor wiring; subjective color acceptance remains a human review step.
+
 Orbital mug rack (2026-09-13): the finite clean-cup stock now sits on an original transparent orbital rack instead of floating over a generic counter cell. Room composition derives the rack from `coffee.trayTile`, requires the existing blocked connected-counter surface beneath it, and leaves the adjacent tray stand reachable; the live cup sprites and stock transitions remain unchanged above the rack. Atlas, room, and integration tests protect artwork, semantic placement, counter coexistence, collision, and runtime map wiring; live cup pickup/return remains a human review step.
 
 Dual viewport breeze errands (2026-09-13): both original east-wing viewports now participate in idle worker choreography. The active theme resolves the boardroom and cafeteria viewport contracts independently, registers one breeze errand for each reachable stand, and fails closed if either semantic prop is missing; the shared errand director continues to reserve each spot independently. Room and integration tests protect both placements and their exact stand/facing/effect wiring; live selection cadence remains a human review step.
