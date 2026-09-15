@@ -280,6 +280,31 @@
       "before": "  private drawSelectionRing(): void {",
       "after": "  private redrawIdentityFrame(): void {\n    this.identityNameBg.clear()\n      .rect(0, 0, this.identityNameplateWidth, 10)\n      .fill({ color: 0x101827, alpha: 0.94 })\n      .stroke({ color: this.identityStatusColor, width: 1 });\n  }\n\n  private drawSelectionRing(): void {",
       "reason": "Redraw the existing nameplate frame from retained width and live status color."
+    },
+    {
+      "before": "  private identityStatusColor = NAMEPLATE_STATUS_COLOR.idle;\n  private selected = false;",
+      "after": "  private identityStatusColor = NAMEPLATE_STATUS_COLOR.idle;\n  private identityNameplateScale = 1;\n  private selected = false;",
+      "reason": "Retain live counter-scale for horizontal map-edge clamping."
+    },
+    {
+      "before": "    this.identityNameplate.scale.set(1 / Math.min(Math.max(z, 0.01), 1));",
+      "after": "    this.identityNameplateScale = 1 / Math.min(Math.max(z, 0.01), 1);\n    this.identityNameplate.scale.set(this.identityNameplateScale);\n    this.updateIdentityPosition();",
+      "reason": "Re-clamp the nameplate whenever responsive zoom compensation changes."
+    },
+    {
+      "before": "    this.identityNameplate.pivot.set(width / 2, 10);\n  }",
+      "after": "    this.identityNameplate.pivot.set(width / 2, 10);\n    this.updateIdentityPosition();\n  }",
+      "reason": "Re-clamp the nameplate whenever a live rename changes its width."
+    },
+    {
+      "before": "  private drawSelectionRing(): void {",
+      "after": "  private updateIdentityPosition(): void {\n    const mapWidth = this.mapRenderer.width * this.mapRenderer.tileSize;\n    const halfWidth = this.identityNameplateWidth * this.identityNameplateScale / 2;\n    const minCenter = halfWidth + 1;\n    const maxCenter = mapWidth - halfWidth - 1;\n    const center = minCenter > maxCenter\n      ? mapWidth / 2\n      : Math.min(Math.max(this.px, minCenter), maxCenter);\n    this.identityNameplate.position.set(Math.round(center - this.px), -29);\n  }\n\n  private drawSelectionRing(): void {",
+      "reason": "Slide the retained identity plate horizontally inside the active room bounds without moving its worker."
+    },
+    {
+      "before": "    this.sprite.container.zIndex = this.py;\n    this.thoughtBubble.setPosition(this.px, this.py);",
+      "after": "    this.sprite.container.zIndex = this.py;\n    this.thoughtBubble.setPosition(this.px, this.py);\n    this.updateIdentityPosition();",
+      "reason": "Keep edge clamping current while workers move through the room."
     }
   ],
   "src/renderer/src/scene/office/OfficeFloor.tsx": [

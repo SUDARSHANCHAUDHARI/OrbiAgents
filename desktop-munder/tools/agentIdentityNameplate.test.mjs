@@ -16,7 +16,8 @@ test('worker identity nameplate is bounded and follows hover or selection', () =
   assert.match(character, /this\.identityNameplate\.visible = this\.selected \|\| this\.hovered/);
   assert.match(character, /this\.identityNameplate\.eventMode = 'none'/);
   assert.match(character, /this\.identityNameplate\.pivot\.set\(width \/ 2, 10\)/);
-  assert.match(character, /this\.identityNameplate\.scale\.set\(1 \/ Math\.min\(Math\.max\(z, 0\.01\), 1\)\)/);
+  assert.match(character, /this\.identityNameplateScale = 1 \/ Math\.min\(Math\.max\(z, 0\.01\), 1\)/);
+  assert.match(character, /this\.identityNameplate\.scale\.set\(this\.identityNameplateScale\)/);
 });
 
 test('floor passes the human-readable agent name without changing click selection', () => {
@@ -49,6 +50,14 @@ test('nameplate frame shares the lamp status color', () => {
   assert.match(character, /\.fill\(this\.identityStatusColor\)/);
   assert.match(character, /\.stroke\(\{ color: this\.identityStatusColor, width: 1 \}\)/);
   assert.match(character, /this\.identityNameplateWidth = width;\n\s*this\.redrawIdentityFrame\(\)/);
+});
+
+test('nameplate center clamps inside map bounds after name, zoom, and movement changes', () => {
+  assert.match(character, /const mapWidth = this\.mapRenderer\.width \* this\.mapRenderer\.tileSize/);
+  assert.match(character, /const halfWidth = this\.identityNameplateWidth \* this\.identityNameplateScale \/ 2/);
+  assert.match(character, /Math\.min\(Math\.max\(this\.px, minCenter\), maxCenter\)/);
+  assert.match(character, /this\.identityNameplate\.position\.set\(Math\.round\(center - this\.px\), -29\)/);
+  assert.equal((character.match(/this\.updateIdentityPosition\(\)/g) ?? []).length, 3);
 });
 
 test('active statuses keep worker identity visible without drawing a selection ring', () => {

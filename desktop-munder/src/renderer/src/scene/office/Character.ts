@@ -124,6 +124,7 @@ export class Character {
   private statusKeepsIdentityVisible = false;
   private identityNameplateWidth = 0;
   private identityStatusColor = NAMEPLATE_STATUS_COLOR.idle;
+  private identityNameplateScale = 1;
   private selected = false;
   private hovered = false;
   private workGlowElapsed = 0;
@@ -411,7 +412,9 @@ export class Character {
    *  its on-screen text size when the window (and thus the world) shrinks. */
   setBubbleZoom(z: number): void {
     this.thoughtBubble.setZoom(z);
-    this.identityNameplate.scale.set(1 / Math.min(Math.max(z, 0.01), 1));
+    this.identityNameplateScale = 1 / Math.min(Math.max(z, 0.01), 1);
+    this.identityNameplate.scale.set(this.identityNameplateScale);
+    this.updateIdentityPosition();
   }
 
   setStatusGlyph(glyph: StatusGlyph): void {
@@ -548,6 +551,7 @@ export class Character {
     this.identityNameplateWidth = width;
     this.redrawIdentityFrame();
     this.identityNameplate.pivot.set(width / 2, 10);
+    this.updateIdentityPosition();
   }
 
   setAgentStatus(status: string): void {
@@ -567,6 +571,17 @@ export class Character {
       .rect(0, 0, this.identityNameplateWidth, 10)
       .fill({ color: 0x101827, alpha: 0.94 })
       .stroke({ color: this.identityStatusColor, width: 1 });
+  }
+
+  private updateIdentityPosition(): void {
+    const mapWidth = this.mapRenderer.width * this.mapRenderer.tileSize;
+    const halfWidth = this.identityNameplateWidth * this.identityNameplateScale / 2;
+    const minCenter = halfWidth + 1;
+    const maxCenter = mapWidth - halfWidth - 1;
+    const center = minCenter > maxCenter
+      ? mapWidth / 2
+      : Math.min(Math.max(this.px, minCenter), maxCenter);
+    this.identityNameplate.position.set(Math.round(center - this.px), -29);
   }
 
   private drawSelectionRing(): void {
@@ -665,6 +680,7 @@ export class Character {
 
     this.sprite.container.zIndex = this.py;
     this.thoughtBubble.setPosition(this.px, this.py);
+    this.updateIdentityPosition();
 
     // work glow
     const ts = this.mapRenderer.tileSize;
