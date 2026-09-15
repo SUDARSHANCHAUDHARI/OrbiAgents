@@ -172,6 +172,8 @@ Sources:
 
 ## Completion boundary
 
+Nameplate/glyph clearance (2026-09-15): blocked, success, compacting, and looping glyphs now render above the worker identity plate rather than through its y = −39…−29 band. The glyph anchor moves from −34 to −48 while nameplate, sprite, selection, status semantics, and animation remain unchanged. A focused geometry regression protects the clearance; live bubble-density acceptance remains a human review step.
+
 Active worker identity visibility (2026-09-15): workers in thinking, working, waiting, blocked, success, compacting, or looping states now keep their nameplate and status lamp visible without requiring pointer hover. Idle and ghost workers remain visually quiet unless hovered or selected, and activity visibility does not draw a false selection ring. Focused tests protect state-driven visibility, immediate redraw, and selection independence; density at large live fleet sizes remains a human review step.
 
 Live worker status lamps (2026-09-15): hover and selected worker nameplates now include a compact pixel lamp driven by the agent's current status. All stored runtime states have distinct operational colors, unknown values fall back to idle, and updates occur before the activity-state short circuit without recreating or moving the worker. Focused tests protect the complete status palette, retained graphics path, and live floor wiring; subjective color acceptance remains a human review step.

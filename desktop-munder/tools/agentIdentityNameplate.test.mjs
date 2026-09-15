@@ -48,3 +48,10 @@ test('active statuses keep worker identity visible without drawing a selection r
   assert.match(character, /\.fill\(colorByStatus\[status\] \?\? colorByStatus\.idle\);\n\s*this\.drawSelectionRing\(\)/);
   assert.match(character, /if \(!this\.selected && !this\.hovered\) return/);
 });
+
+test('transient status glyphs clear the identity nameplate band', () => {
+  assert.match(character, /identityNameplate\.position\.set\(0, -29\)/);
+  assert.match(character, /identityNameplate\.pivot\.set\(width \/ 2, 10\)/);
+  assert.match(character, /const yTop = -48/);
+  assert.doesNotMatch(character, /const yTop = -34/);
+});
