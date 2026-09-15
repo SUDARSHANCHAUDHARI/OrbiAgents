@@ -41,3 +41,10 @@ test('live status changes recolor a retained pixel lamp before state short-circu
   assert.match(character, /\.rect\(4, 4, 3, 3\)/);
   assert.match(floor, /rt\.character\.setDisplayName\(agent\.name\);\n\s*rt\.character\.setAgentStatus\(agent\.status\);\n\s*const changed/);
 });
+
+test('active statuses keep worker identity visible without drawing a selection ring', () => {
+  assert.match(character, /this\.statusKeepsIdentityVisible = status !== 'idle' && status !== 'ghost'/);
+  assert.match(character, /this\.identityNameplate\.visible = this\.selected \|\| this\.hovered \|\| this\.statusKeepsIdentityVisible/);
+  assert.match(character, /\.fill\(colorByStatus\[status\] \?\? colorByStatus\.idle\);\n\s*this\.drawSelectionRing\(\)/);
+  assert.match(character, /if \(!this\.selected && !this\.hovered\) return/);
+});

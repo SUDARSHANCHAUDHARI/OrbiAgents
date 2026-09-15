@@ -223,6 +223,26 @@
       "before": "  private drawSelectionRing(): void {",
       "after": "  setAgentStatus(status: string): void {\n    if (status === this.visibleIdentityStatus) return;\n    this.visibleIdentityStatus = status;\n    const colorByStatus: Record<string, number> = {\n      idle: 0x7f8fa6,\n      thinking: 0xc6a0f6,\n      working: 0x5cdbcf,\n      waiting: 0xf4c95d,\n      blocked: 0xff6b6b,\n      success: 0x74d680,\n      ghost: 0x687386,\n      compacting: 0x9b7ede,\n      looping: 0xff9f43,\n      typing: 0x66b3ff,\n    };\n    this.identityStatusLamp.clear()\n      .rect(4, 4, 3, 3)\n      .fill(colorByStatus[status] ?? colorByStatus.idle);\n  }\n\n  private drawSelectionRing(): void {",
       "reason": "Recolor a retained pixel lamp for every known live agent status without rebuilding the worker."
+    },
+    {
+      "before": "  private visibleIdentityStatus = '';\n  private selected = false;",
+      "after": "  private visibleIdentityStatus = '';\n  private statusKeepsIdentityVisible = false;\n  private selected = false;",
+      "reason": "Track whether live activity should keep the worker identity visible without pointer focus."
+    },
+    {
+      "before": "    this.visibleIdentityStatus = status;\n    const colorByStatus",
+      "after": "    this.visibleIdentityStatus = status;\n    this.statusKeepsIdentityVisible = status !== 'idle' && status !== 'ghost';\n    const colorByStatus",
+      "reason": "Keep operational states visible while leaving idle and ghost workers visually quiet."
+    },
+    {
+      "before": "      .fill(colorByStatus[status] ?? colorByStatus.idle);\n  }",
+      "after": "      .fill(colorByStatus[status] ?? colorByStatus.idle);\n    this.drawSelectionRing();\n  }",
+      "reason": "Refresh identity visibility immediately whenever the live status changes."
+    },
+    {
+      "before": "    this.identityNameplate.visible = this.selected || this.hovered;",
+      "after": "    this.identityNameplate.visible = this.selected || this.hovered || this.statusKeepsIdentityVisible;",
+      "reason": "Show active worker identity independently from hover and selection while preserving ring semantics."
     }
   ],
   "src/renderer/src/scene/office/OfficeFloor.tsx": [
