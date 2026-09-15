@@ -172,6 +172,8 @@ Sources:
 
 ## Completion boundary
 
+Status-colored identity frames (2026-09-15): active worker nameplate borders now share the retained lamp's live status color instead of remaining cyan for every state. Name changes preserve the current status color, status changes redraw the existing frame in place, and unknown values retain the idle fallback; plate dimensions, visibility, and worker motion are unchanged. Focused tests protect the shared palette and retained redraw path; subjective palette acceptance remains a human review step.
+
 Worker overlay stack (2026-09-15): live thought clouds now sit above transient status glyphs and identity nameplates instead of letting their two-puff tail paint through both overlays. The cloud anchor moves from −38 to −60, preserving text wrapping, edge clamping, counter-scaling, overlap resolution, and worker coordinates. A focused source regression protects the cloud-tail geometry; dense live-cloud acceptance remains a human review step.
 
 Nameplate/glyph clearance (2026-09-15): blocked, success, compacting, and looping glyphs now render above the worker identity plate rather than through its y = −39…−29 band. The glyph anchor moves from −34 to −48 while nameplate, sprite, selection, status semantics, and animation remain unchanged. A focused geometry regression protects the clearance; live bubble-density acceptance remains a human review step.
