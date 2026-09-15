@@ -105,7 +105,9 @@ export class Character {
   private identityNameplate: Container;
   private identityNameText: Text;
   private identityNameBg: Graphics;
+  private identityStatusLamp: Graphics;
   private visibleIdentityName = '';
+  private visibleIdentityStatus = '';
   private selected = false;
   private hovered = false;
   private workGlowElapsed = 0;
@@ -175,11 +177,13 @@ export class Character {
       style: { fontFamily: 'monospace', fontSize: 6, fontWeight: 'bold', fill: 0xd9fffb },
     });
     this.identityNameBg = new Graphics();
-    this.identityNameText.position.set(5, 1);
+    this.identityStatusLamp = new Graphics();
+    this.identityNameText.position.set(9, 1);
     this.identityNameplate.position.set(0, -29);
-    this.identityNameplate.addChild(this.identityNameBg, this.identityNameText);
+    this.identityNameplate.addChild(this.identityNameBg, this.identityStatusLamp, this.identityNameText);
     this.sprite.container.addChild(this.identityNameplate);
     this.setDisplayName(options.displayName);
+    this.setAgentStatus('idle');
 
     this.overlay = new Graphics();
     this.overlay.eventMode = 'none';
@@ -524,12 +528,32 @@ export class Character {
     if (visibleName === this.visibleIdentityName) return;
     this.visibleIdentityName = visibleName;
     this.identityNameText.text = visibleName;
-    const width = visibleName.length * 4 + 10;
+    const width = visibleName.length * 4 + 14;
     this.identityNameBg.clear()
       .rect(0, 0, width, 10)
       .fill({ color: 0x101827, alpha: 0.94 })
       .stroke({ color: 0x5cdbcf, width: 1 });
     this.identityNameplate.pivot.set(width / 2, 10);
+  }
+
+  setAgentStatus(status: string): void {
+    if (status === this.visibleIdentityStatus) return;
+    this.visibleIdentityStatus = status;
+    const colorByStatus: Record<string, number> = {
+      idle: 0x7f8fa6,
+      thinking: 0xc6a0f6,
+      working: 0x5cdbcf,
+      waiting: 0xf4c95d,
+      blocked: 0xff6b6b,
+      success: 0x74d680,
+      ghost: 0x687386,
+      compacting: 0x9b7ede,
+      looping: 0xff9f43,
+      typing: 0x66b3ff,
+    };
+    this.identityStatusLamp.clear()
+      .rect(4, 4, 3, 3)
+      .fill(colorByStatus[status] ?? colorByStatus.idle);
   }
 
   private drawSelectionRing(): void {

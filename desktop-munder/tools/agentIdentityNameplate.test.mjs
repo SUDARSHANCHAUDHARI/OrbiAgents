@@ -11,7 +11,7 @@ test('worker identity nameplate is bounded and follows hover or selection', () =
   assert.match(character, /name\?\.trim\(\) \|\| this\.agentId/);
   assert.match(character, /const visibleName = displayName\.length > 18/);
   assert.match(character, /this\.identityNameText\.text = visibleName/);
-  assert.match(character, /const width = visibleName\.length \* 4 \+ 10/);
+  assert.match(character, /const width = visibleName\.length \* 4 \+ 14/);
   assert.match(character, /this\.identityNameplate\.visible = this\.selected \|\| this\.hovered/);
   assert.match(character, /this\.identityNameplate\.eventMode = 'none'/);
   assert.match(character, /this\.identityNameplate\.pivot\.set\(width \/ 2, 10\)/);
@@ -29,4 +29,15 @@ test('live renames redraw the existing nameplate without rebuilding the worker',
   assert.match(character, /if \(visibleName === this\.visibleIdentityName\) return/);
   assert.match(character, /this\.identityNameBg\.clear\(\)/);
   assert.match(character, /this\.identityNameplate\.pivot\.set\(width \/ 2, 10\)/);
+});
+
+test('live status changes recolor a retained pixel lamp before state short-circuiting', () => {
+  assert.match(character, /private identityStatusLamp: Graphics/);
+  assert.match(character, /setAgentStatus\(status: string\): void/);
+  assert.match(character, /if \(status === this\.visibleIdentityStatus\) return/);
+  for (const status of ['idle', 'thinking', 'working', 'waiting', 'blocked', 'success', 'ghost', 'compacting', 'looping', 'typing']) {
+    assert.match(character, new RegExp(`${status}: 0x[0-9a-f]+`));
+  }
+  assert.match(character, /\.rect\(4, 4, 3, 3\)/);
+  assert.match(floor, /rt\.character\.setDisplayName\(agent\.name\);\n\s*rt\.character\.setAgentStatus\(agent\.status\);\n\s*const changed/);
 });
