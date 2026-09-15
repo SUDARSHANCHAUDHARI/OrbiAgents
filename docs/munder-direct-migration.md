@@ -172,6 +172,8 @@ Sources:
 
 ## Completion boundary
 
+Worker overlay stack (2026-09-15): live thought clouds now sit above transient status glyphs and identity nameplates instead of letting their two-puff tail paint through both overlays. The cloud anchor moves from −38 to −60, preserving text wrapping, edge clamping, counter-scaling, overlap resolution, and worker coordinates. A focused source regression protects the cloud-tail geometry; dense live-cloud acceptance remains a human review step.
+
 Nameplate/glyph clearance (2026-09-15): blocked, success, compacting, and looping glyphs now render above the worker identity plate rather than through its y = −39…−29 band. The glyph anchor moves from −34 to −48 while nameplate, sprite, selection, status semantics, and animation remain unchanged. A focused geometry regression protects the clearance; live bubble-density acceptance remains a human review step.
 
 Active worker identity visibility (2026-09-15): workers in thinking, working, waiting, blocked, success, compacting, or looping states now keep their nameplate and status lamp visible without requiring pointer hover. Idle and ghost workers remain visually quiet unless hovered or selected, and activity visibility does not draw a false selection ring. Focused tests protect state-driven visibility, immediate redraw, and selection independence; density at large live fleet sizes remains a human review step.

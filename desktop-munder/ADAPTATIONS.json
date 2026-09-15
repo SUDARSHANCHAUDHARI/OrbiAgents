@@ -108,6 +108,13 @@
       "reason": "Expose the entrance hire kiosk through the active theme contract."
     }
   ],
+  "src/renderer/src/scene/office/ThoughtBubble.ts": [
+    {
+      "before": "const OFFSET_Y = -38;                   // a touch higher than the tool bubble",
+      "after": "const OFFSET_Y = -60;                   // clear glyph + identity overlays below",
+      "reason": "Stack thought-cloud tails above transient glyphs and worker identity nameplates."
+    }
+  ],
   "src/renderer/src/scene/office/Character.ts": [
     {
       "before": "  private workGlow: Graphics;\n  private workGlowElapsed = 0;",

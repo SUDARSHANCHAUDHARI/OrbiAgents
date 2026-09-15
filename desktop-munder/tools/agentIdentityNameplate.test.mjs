@@ -4,6 +4,7 @@ import test from 'node:test';
 
 const character = readFileSync(new URL('../src/renderer/src/scene/office/Character.ts', import.meta.url), 'utf8');
 const floor = readFileSync(new URL('../src/renderer/src/scene/office/OfficeFloor.tsx', import.meta.url), 'utf8');
+const thoughtBubble = readFileSync(new URL('../src/renderer/src/scene/office/ThoughtBubble.ts', import.meta.url), 'utf8');
 
 test('worker identity nameplate is bounded and follows hover or selection', () => {
   assert.match(character, /displayName\?: string/);
@@ -54,4 +55,11 @@ test('transient status glyphs clear the identity nameplate band', () => {
   assert.match(character, /identityNameplate\.pivot\.set\(width \/ 2, 10\)/);
   assert.match(character, /const yTop = -48/);
   assert.doesNotMatch(character, /const yTop = -34/);
+});
+
+test('thought cloud tail clears glyph and identity overlays', () => {
+  assert.match(thoughtBubble, /const OFFSET_Y = -60/);
+  assert.match(thoughtBubble, /puff\(baseX, this\.bgH \+ 4, 3\)/);
+  assert.match(thoughtBubble, /puff\(baseX - 5, this\.bgH \+ 9, 2\)/);
+  assert.doesNotMatch(thoughtBubble, /const OFFSET_Y = -38/);
 });
