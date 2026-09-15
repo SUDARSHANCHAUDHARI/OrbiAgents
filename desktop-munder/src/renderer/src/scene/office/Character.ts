@@ -108,6 +108,7 @@ export class Character {
   private identityStatusLamp: Graphics;
   private visibleIdentityName = '';
   private visibleIdentityStatus = '';
+  private statusKeepsIdentityVisible = false;
   private selected = false;
   private hovered = false;
   private workGlowElapsed = 0;
@@ -539,6 +540,7 @@ export class Character {
   setAgentStatus(status: string): void {
     if (status === this.visibleIdentityStatus) return;
     this.visibleIdentityStatus = status;
+    this.statusKeepsIdentityVisible = status !== 'idle' && status !== 'ghost';
     const colorByStatus: Record<string, number> = {
       idle: 0x7f8fa6,
       thinking: 0xc6a0f6,
@@ -554,11 +556,12 @@ export class Character {
     this.identityStatusLamp.clear()
       .rect(4, 4, 3, 3)
       .fill(colorByStatus[status] ?? colorByStatus.idle);
+    this.drawSelectionRing();
   }
 
   private drawSelectionRing(): void {
     this.selectionRing.clear();
-    this.identityNameplate.visible = this.selected || this.hovered;
+    this.identityNameplate.visible = this.selected || this.hovered || this.statusKeepsIdentityVisible;
     if (!this.selected && !this.hovered) return;
     this.selectionRing.ellipse(0, 0, 12, 5).stroke({
       color: this.selected ? 0x5cdbcf : 0x9ce9e2,
