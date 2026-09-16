@@ -34,16 +34,18 @@ export class CharacterSprite {
   private frameW: number;
   private frameH: number;
   private cropMask: Graphics | null = null;
+  private reducedMotion: boolean;
 
-  constructor(frames: Texture[][]) {
+  constructor(frames: Texture[][], reducedMotion = false) {
     this.frames = frames;
+    this.reducedMotion = reducedMotion;
     this.container = new Container();
 
     const initialFrames = this.getFrames('down', 'idle');
     this.sprite = new AnimatedSprite(initialFrames);
     this.sprite.anchor.set(0.5, 1);
     this.sprite.animationSpeed = this.frameSpeed;
-    this.sprite.play();
+    this.syncPlayback();
     // Anchor is (0.5, 1): in container space the sprite spans x∈[-w/2, w/2],
     // y∈[-h, 0] (feet at the origin). Used by the seated leg-crop mask.
     this.frameW = this.sprite.texture.frame.width || this.sprite.width || 16;
@@ -88,6 +90,17 @@ export class CharacterSprite {
     return ANIM_FRAMES[anim].map((col) => this.frames[row][col]);
   }
 
+  private syncPlayback(): void {
+    if (this.reducedMotion && this.currentAnim !== 'walk') this.sprite.gotoAndStop(0);
+    else this.sprite.play();
+  }
+
+  setReducedMotion(reducedMotion: boolean): void {
+    if (reducedMotion === this.reducedMotion) return;
+    this.reducedMotion = reducedMotion;
+    this.syncPlayback();
+  }
+
   setAnimation(anim: AnimState, direction: Direction): void {
     if (anim === this.currentAnim && direction === this.currentDirection) return;
 
@@ -97,7 +110,7 @@ export class CharacterSprite {
     this.sprite.textures = this.getFrames(direction, anim);
     this.sprite.scale.x = direction === 'left' ? -1 : 1;
     this.sprite.animationSpeed = anim === 'walk' ? 0.15 : anim === 'idle' ? 0.08 : 0.06;
-    this.sprite.play();
+    this.syncPlayback();
   }
 
   setPosition(x: number, y: number): void {

@@ -370,6 +370,38 @@
       "before": "      const idx = Math.floor(this.glyphElapsed * 8) % 4;\n      const pts: [number, number][] = [[-3, yTop - 3], [3, yTop - 3], [3, yTop + 3], [-3, yTop + 3]];\n      for (let i = 0; i < 4; i++) {\n        const [x, y] = pts[i];\n        g.rect(x - 1, y - 1, 2, 2).fill(i === idx ? 0xff9f43 : 0x6b5878);",
       "after": "      const reducedMotion = this.prefersReducedMotion();\n      const idx = Math.floor(this.glyphElapsed * 8) % 4;\n      const pts: [number, number][] = [[-3, yTop - 3], [3, yTop - 3], [3, yTop + 3], [-3, yTop + 3]];\n      for (let i = 0; i < 4; i++) {\n        const [x, y] = pts[i];\n        g.rect(x - 1, y - 1, 2, 2).fill(reducedMotion || i === idx ? 0xff9f43 : 0x6b5878);",
       "reason": "Replace the spinning loop warning with a stable fully-lit orange ring under reduced motion."
+    },
+    {
+      "before": "    this.mapRenderer = options.mapRenderer;\n    this.sprite = new CharacterSprite(options.frames);\n    this.deskTile = options.seatTile;\n    this.seatDirection = options.seatDirection ?? 'down';\n    this.onClick = options.onClick;\n    this.prefersReducedMotion = options.prefersReducedMotion ?? (() => false);",
+      "after": "    this.mapRenderer = options.mapRenderer;\n    this.prefersReducedMotion = options.prefersReducedMotion ?? (() => false);\n    this.sprite = new CharacterSprite(options.frames, this.prefersReducedMotion());\n    this.deskTile = options.seatTile;\n    this.seatDirection = options.seatDirection ?? 'down';\n    this.onClick = options.onClick;",
+      "reason": "Supply the initial OS motion preference before the worker sprite makes its first playback decision."
+    },
+    {
+      "before": "    this.thoughtBubble.update(dt);\n    if (!this.isVisible) return;",
+      "after": "    this.thoughtBubble.update(dt);\n    this.sprite.setReducedMotion(this.prefersReducedMotion());\n    if (!this.isVisible) return;",
+      "reason": "Synchronize live motion-preference changes into existing worker sprites."
+    }
+  ],
+  "src/renderer/src/scene/office/CharacterSprite.ts": [
+    {
+      "before": "  private frameH: number;\n  private cropMask: Graphics | null = null;\n\n  constructor(frames: Texture[][]) {\n    this.frames = frames;\n    this.container = new Container();",
+      "after": "  private frameH: number;\n  private cropMask: Graphics | null = null;\n  private reducedMotion: boolean;\n\n  constructor(frames: Texture[][], reducedMotion = false) {\n    this.frames = frames;\n    this.reducedMotion = reducedMotion;\n    this.container = new Container();",
+      "reason": "Retain the initial reduced-motion state inside the sprite playback owner."
+    },
+    {
+      "before": "    this.sprite.animationSpeed = this.frameSpeed;\n    this.sprite.play();",
+      "after": "    this.sprite.animationSpeed = this.frameSpeed;\n    this.syncPlayback();",
+      "reason": "Apply the initial motion preference before the first sprite playback decision."
+    },
+    {
+      "before": "  setAnimation(anim: AnimState, direction: Direction): void {",
+      "after": "  private syncPlayback(): void {\n    if (this.reducedMotion && this.currentAnim !== 'walk') this.sprite.gotoAndStop(0);\n    else this.sprite.play();\n  }\n\n  setReducedMotion(reducedMotion: boolean): void {\n    if (reducedMotion === this.reducedMotion) return;\n    this.reducedMotion = reducedMotion;\n    this.syncPlayback();\n  }\n\n  setAnimation(anim: AnimState, direction: Direction): void {",
+      "reason": "Freeze non-walking loops under reduced motion while preserving live walking and preference changes."
+    },
+    {
+      "before": "    this.sprite.animationSpeed = anim === 'walk' ? 0.15 : anim === 'idle' ? 0.08 : 0.06;\n    this.sprite.play();",
+      "after": "    this.sprite.animationSpeed = anim === 'walk' ? 0.15 : anim === 'idle' ? 0.08 : 0.06;\n    this.syncPlayback();",
+      "reason": "Reapply reduced-motion playback whenever worker activity or facing changes."
     }
   ],
   "src/renderer/src/scene/office/OfficeFloor.tsx": [
