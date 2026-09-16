@@ -667,6 +667,31 @@
       "before": "        if (!hireHovered) drawHireAffordance();\n        camera.update(dt);",
       "after": "        if (!hireHovered) drawHireAffordance();\n        if (cameraSpotlightId) {\n          cameraSpotlightRemaining = Math.max(0, cameraSpotlightRemaining - dt);\n          const focused = runtimes.get(cameraSpotlightId);\n          if (focused && cameraSpotlightRemaining > 0) {\n            const p = focused.character.getPixelPosition();\n            camera.focusOn(p.x, p.y);\n          } else if (cameraSpotlightRemaining === 0) {\n            cameraSpotlightId = null;\n            camera.fitToScreen();\n          }\n        }\n        camera.update(dt);",
       "reason": "Track the moving selected worker during the bounded spotlight, then restore the responsive whole-office fit."
+    },
+    {
+      "before": "      camera.fitToScreen(true);\n\n      // The entrance launch kiosk",
+      "after": "      camera.fitToScreen(true);\n      let cameraSpotlightId: string | null = null;\n      let cameraSpotlightRemaining = 0;\n      const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');\n      let prefersReducedMotion = reducedMotionQuery.matches;\n      const onReducedMotionChange = (event: MediaQueryListEvent): void => {\n        prefersReducedMotion = event.matches;\n        if (!event.matches) return;\n        cameraSpotlightId = null;\n        cameraSpotlightRemaining = 0;\n        camera.fitToScreen(true);\n      };\n      reducedMotionQuery.addEventListener('change', onReducedMotionChange);\n      (app as any).__offReducedMotion = () =>\n        reducedMotionQuery.removeEventListener('change', onReducedMotionChange);\n\n      // The entrance launch kiosk",
+      "reason": "Honor the live OS reduced-motion preference and cancel active camera motion immediately when requested."
+    },
+    {
+      "before": "      let lastSelected: string | null = useStore.getState().selectedId;\n      let cameraSpotlightId: string | null = null;\n      let cameraSpotlightRemaining = 0;\n      const unsubscribe = useStore.subscribe((s, prev) => {",
+      "after": "      let lastSelected: string | null = useStore.getState().selectedId;\n      const unsubscribe = useStore.subscribe((s, prev) => {",
+      "reason": "Place spotlight state beside the camera so the reduced-motion listener and selection subscription share it."
+    },
+    {
+      "before": "          cameraSpotlightId = s.selectedId;\n          cameraSpotlightRemaining = s.selectedId ? 1.8 : 0;\n          if (!s.selectedId) camera.fitToScreen();",
+      "after": "          cameraSpotlightId = prefersReducedMotion ? null : s.selectedId;\n          cameraSpotlightRemaining = cameraSpotlightId ? 1.8 : 0;\n          if (!s.selectedId || prefersReducedMotion) camera.fitToScreen(prefersReducedMotion);",
+      "reason": "Retain worker selection while suppressing its camera spotlight under reduced motion."
+    },
+    {
+      "before": "        try { (a as any).__unsub?.(); } catch { /* noop */ }\n        try { (a as any).__offMessage?.(); } catch { /* noop */ }",
+      "after": "        try { (a as any).__unsub?.(); } catch { /* noop */ }\n        try { (a as any).__offReducedMotion?.(); } catch { /* noop */ }\n        try { (a as any).__offMessage?.(); } catch { /* noop */ }",
+      "reason": "Release the office reduced-motion listener with the rest of the scene resources."
+    },
+    {
+      "before": "function safeDestroy(app: Application) {\n  try { app.ticker?.stop(); } catch { /* noop */ }",
+      "after": "function safeDestroy(app: Application) {\n  try { (app as any).__offReducedMotion?.(); } catch { /* noop */ }\n  try { app.ticker?.stop(); } catch { /* noop */ }",
+      "reason": "Release the reduced-motion listener when partial scene initialization fails as well as during normal teardown."
     }
   ],
   "src/renderer/src/scene/office/portraitArt.ts": [

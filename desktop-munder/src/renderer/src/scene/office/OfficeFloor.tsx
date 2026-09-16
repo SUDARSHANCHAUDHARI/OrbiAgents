@@ -387,6 +387,20 @@ export function OfficeFloor() {
       // Snap the first composed frame into place. Later ResizeObserver fits keep
       // Camera's normal easing, but startup must not reveal the world origin.
       camera.fitToScreen(true);
+      let cameraSpotlightId: string | null = null;
+      let cameraSpotlightRemaining = 0;
+      const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+      let prefersReducedMotion = reducedMotionQuery.matches;
+      const onReducedMotionChange = (event: MediaQueryListEvent): void => {
+        prefersReducedMotion = event.matches;
+        if (!event.matches) return;
+        cameraSpotlightId = null;
+        cameraSpotlightRemaining = 0;
+        camera.fitToScreen(true);
+      };
+      reducedMotionQuery.addEventListener('change', onReducedMotionChange);
+      (app as any).__offReducedMotion = () =>
+        reducedMotionQuery.removeEventListener('change', onReducedMotionChange);
 
       // The entrance launch kiosk is room artwork with one transparent, semantic
       // hit target. It opens the same reviewed hire flow as the chrome buttons.
@@ -1883,16 +1897,14 @@ export function OfficeFloor() {
       syncAgents();
 
       let lastSelected: string | null = useStore.getState().selectedId;
-      let cameraSpotlightId: string | null = null;
-      let cameraSpotlightRemaining = 0;
       const unsubscribe = useStore.subscribe((s, prev) => {
         if (s.agents !== prev.agents) syncAgents();
         if (s.selectedId !== lastSelected) {
           lastSelected = s.selectedId;
           for (const [id, runtime] of runtimes) runtime.character.setSelected(id === s.selectedId);
-          cameraSpotlightId = s.selectedId;
-          cameraSpotlightRemaining = s.selectedId ? 1.8 : 0;
-          if (!s.selectedId) camera.fitToScreen();
+          cameraSpotlightId = prefersReducedMotion ? null : s.selectedId;
+          cameraSpotlightRemaining = cameraSpotlightId ? 1.8 : 0;
+          if (!s.selectedId || prefersReducedMotion) camera.fitToScreen(prefersReducedMotion);
         }
       });
       (app as any).__unsub = unsubscribe;
@@ -2074,6 +2086,7 @@ export function OfficeFloor() {
         (a as any).__glRecovery?.();
         (a as any).__resize?.disconnect?.();
         try { (a as any).__unsub?.(); } catch { /* noop */ }
+        try { (a as any).__offReducedMotion?.(); } catch { /* noop */ }
         try { (a as any).__offMessage?.(); } catch { /* noop */ }
         try { clearInterval((a as any).__taskBoardPoll); } catch { /* noop */ }
         for (const timer of departureTimers) clearTimeout(timer);
@@ -2116,6 +2129,7 @@ function floorNote(text: string): HTMLDivElement {
 function hexNum(n: number): number { return n; }
 function hex(n: number): string { return '#' + n.toString(16).padStart(6, '0'); }
 function safeDestroy(app: Application) {
+  try { (app as any).__offReducedMotion?.(); } catch { /* noop */ }
   try { app.ticker?.stop(); } catch { /* noop */ }
   try { app.destroy(true, { children: true }); } catch { /* noop */ }
   for (const texture of ((app as any).__ambientTextures ?? []) as Texture[])
