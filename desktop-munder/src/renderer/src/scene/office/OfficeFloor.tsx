@@ -2051,6 +2051,7 @@ export function OfficeFloor() {
       ref={hostRef}
       style={{
         width: '100%', height: '100%',
+        position: 'relative',
         boxShadow: 'var(--cth-panel-border)',
         overflow: 'hidden',
         imageRendering: 'pixelated',
@@ -2064,6 +2065,8 @@ export function OfficeFloor() {
  *  scene cannot run, so all three failure paths share one look. */
 function floorNote(text: string): HTMLDivElement {
   const note = document.createElement('div');
+  note.setAttribute('role', 'status');
+  note.setAttribute('aria-live', 'polite');
   note.style.cssText =
     'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;' +
     'padding:24px;color:#ffd0b5;font-family:monospace;font-size:13px;text-align:center;white-space:pre-wrap;';

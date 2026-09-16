@@ -607,6 +607,16 @@
       "before": "      camera.fitToScreen();",
       "after": "      // Snap the first composed frame into place. Later ResizeObserver fits keep\n      // Camera's normal easing, but startup must not reveal the world origin.\n      camera.fitToScreen(true);",
       "reason": "Request the immediate camera fit only during initial scene composition."
+    },
+    {
+      "before": "        width: '100%', height: '100%',\n        boxShadow: 'var(--cth-panel-border)',",
+      "after": "        width: '100%', height: '100%',\n        position: 'relative',\n        boxShadow: 'var(--cth-panel-border)',",
+      "reason": "Contain absolutely positioned floor failure messages inside the office panel."
+    },
+    {
+      "before": "function floorNote(text: string): HTMLDivElement {\n  const note = document.createElement('div');\n  note.style.cssText =",
+      "after": "function floorNote(text: string): HTMLDivElement {\n  const note = document.createElement('div');\n  note.setAttribute('role', 'status');\n  note.setAttribute('aria-live', 'polite');\n  note.style.cssText =",
+      "reason": "Expose actionable floor initialization failures as a polite accessibility status region."
     }
   ],
   "src/renderer/src/scene/office/portraitArt.ts": [

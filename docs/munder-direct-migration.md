@@ -172,6 +172,8 @@ Sources:
 
 ## Completion boundary
 
+Contained floor failure state (2026-09-16): GPU and initialization failures now remain positioned inside the office panel instead of allowing their absolute fallback message to escape across unrelated application chrome. The shared fallback is also exposed as a polite status region while preserving its actionable text and normal canvas layout. Focused tests protect containment and accessible announcement; live GPU-loss acceptance remains a human review step.
+
 Immediate initial camera fit (2026-09-16): the first composed office frame now snaps directly to the centered fit instead of easing in from the camera's default world origin. Resize and worker-focus transitions retain their existing smooth motion; only initial scene presentation changes. Focused tests protect the explicit startup snap and the unchanged responsive refit path; live first-paint acceptance remains a human review step.
 
 Responsive nameplate edge clamp (2026-09-15): counter-scaled worker identity plates now slide horizontally inside the 768 px room instead of clipping at east/west edges. The center clamp uses the retained plate width and live zoom compensation, refreshes after rename, zoom, and movement, and leaves the worker, vertical overlay stack, and camera unchanged. Focused tests protect the map-bound calculation and all refresh paths; live narrow-window acceptance remains a human review step.
