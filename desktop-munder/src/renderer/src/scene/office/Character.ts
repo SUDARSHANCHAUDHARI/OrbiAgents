@@ -77,6 +77,8 @@ interface CharacterOptions {
   /** Where the avatar first appears (the office door). Defaults to seatTile. */
   spawnTile?: { x: number; y: number };
   glowColor: number;
+  /** Live OS motion preference supplied by the owning scene. */
+  prefersReducedMotion?: () => boolean;
   /** Direction faced while seated. Default 'down' so the face is toward the user. */
   seatDirection?: Direction;
   onClick?: (agentId: string) => void;
@@ -129,6 +131,7 @@ export class Character {
   private hovered = false;
   private workGlowElapsed = 0;
   private glowOn = false;
+  private prefersReducedMotion: () => boolean;
 
   private overlay: Graphics;
   private statusGlyph: StatusGlyph = 'none';
@@ -161,6 +164,7 @@ export class Character {
     this.deskTile = options.seatTile;
     this.seatDirection = options.seatDirection ?? 'down';
     this.onClick = options.onClick;
+    this.prefersReducedMotion = options.prefersReducedMotion ?? (() => false);
 
     // Appear at the spawn tile (the door) and walk in from there.
     const start = options.spawnTile ?? this.deskTile;
@@ -741,16 +745,19 @@ export class Character {
 
   private updateFx(dt: number): void {
     this.steamT += dt;
+    const reducedMotion = this.prefersReducedMotion();
 
     // ── Desk cup (world-anchored, persists while the agent roams) ───────────
     if (this.deskCupOn && this.cupSpot) {
       this.deskCup.clear();
       this.drawCup(this.deskCup, 0, 0);
-      // two staggered steam pixels drifting up and fading
-      for (let i = 0; i < 2; i++) {
-        const ph = (this.steamT * 0.7 + i * 0.5) % 1;
-        this.deskCup.rect(1 + i * 2, -5 - Math.round(ph * 5), 1, 1)
-          .fill({ color: 0xffffff, alpha: 0.5 * (1 - ph) });
+      if (!reducedMotion) {
+        // two staggered steam pixels drifting up and fading
+        for (let i = 0; i < 2; i++) {
+          const ph = (this.steamT * 0.7 + i * 0.5) % 1;
+          this.deskCup.rect(1 + i * 2, -5 - Math.round(ph * 5), 1, 1)
+            .fill({ color: 0xffffff, alpha: 0.5 * (1 - ph) });
+        }
       }
     }
 
@@ -789,9 +796,11 @@ export class Character {
     if (this.carryingCup) {
       const o = this.carryOffset();
       this.drawCup(this.fx, o.x, o.y);
-      const ph = (this.steamT * 0.9) % 1;
-      this.fx.rect(o.x + 2, o.y - 5 - Math.round(ph * 4), 1, 1)
-        .fill({ color: 0xffffff, alpha: 0.5 * (1 - ph) });
+      if (!reducedMotion) {
+        const ph = (this.steamT * 0.9) % 1;
+        this.fx.rect(o.x + 2, o.y - 5 - Math.round(ph * 4), 1, 1)
+          .fill({ color: 0xffffff, alpha: 0.5 * (1 - ph) });
+      }
     }
 
     // The cigar: a stub in hand with a glowing ember, smoke puffs rising and
@@ -810,10 +819,10 @@ export class Character {
         // cigar body + band + pulsing ember at the tip
         this.fx.rect(Math.min(h.x, tipX), h.y - 1, 4, 1).fill(0x6b4a33);
         this.fx.rect(h.x + (dirX >= 0 ? 1 : -2), h.y - 1, 1, 1).fill(0xd9a04a);
-        const ember = 0.5 + 0.5 * Math.sin(this.smokeT * 5);
+        const ember = reducedMotion ? 0.75 : 0.5 + 0.5 * Math.sin(this.smokeT * 5);
         this.fx.rect(tipX, h.y - 1, 1, 1).fill({ color: 0xff7a3c, alpha: 0.55 + 0.45 * ember });
         // three staggered puffs rising from the tip, drifting and fading
-        for (let i = 0; i < 3; i++) {
+        for (let i = 0; !reducedMotion && i < 3; i++) {
           const ph = (this.smokeT * 0.45 + i / 3) % 1;
           const px2 = tipX + Math.sin((this.smokeT + i * 2) * 1.7) * 2 + ph * 2 * (dirX || 1);
           const py2 = h.y - 3 - ph * 12;
@@ -839,7 +848,7 @@ export class Character {
         // can body + spout toward the plant
         this.fx.rect(h.x - 2, h.y - 2, 5, 3).fill(0x9aa7b0);
         this.fx.rect(h.x + (dirX >= 0 ? 3 : -4), h.y - 2, 2, 1).fill(0x9aa7b0);
-        for (let i = 0; i < 4; i++) {
+        for (let i = 0; !reducedMotion && i < 4; i++) {
           const ph = (this.waterT * 1.3 + i / 4) % 1;
           const reach = 4 + ph * 7;
           const dx = dirX !== 0 ? reach * dirX : (i - 1.5) * 1.5;

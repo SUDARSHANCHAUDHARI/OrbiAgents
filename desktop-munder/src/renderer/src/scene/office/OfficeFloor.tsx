@@ -392,6 +392,7 @@ export function OfficeFloor() {
       const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
       let prefersReducedMotion = reducedMotionQuery.matches;
       let syncReducedMotionIndicators: (() => void) | undefined;
+      let syncReducedMotionActivityFx: (() => void) | undefined;
       const onReducedMotionChange = (event: MediaQueryListEvent): void => {
         prefersReducedMotion = event.matches;
         if (event.matches) {
@@ -400,6 +401,7 @@ export function OfficeFloor() {
           camera.fitToScreen(true);
         }
         syncReducedMotionIndicators?.();
+        syncReducedMotionActivityFx?.();
       };
       reducedMotionQuery.addEventListener('change', onReducedMotionChange);
       (app as any).__offReducedMotion = () =>
@@ -556,7 +558,9 @@ export function OfficeFloor() {
         if (airlockPulseRemaining <= 0) return;
         airlockPulseRemaining = Math.max(0, airlockPulseRemaining - dt);
         const progress = airlockPulseRemaining / 1.4;
-        const alpha = Math.sin(progress * Math.PI * 3) * 0.18 + 0.42 * progress;
+        const alpha = prefersReducedMotion
+          ? 0.36
+          : Math.sin(progress * Math.PI * 3) * 0.18 + 0.42 * progress;
         airlockPulse.rect(1, 1, 46, 13).stroke({ color: 0x5cdbcf, width: 2, alpha: Math.max(0, alpha) });
         airlockPulse.rect(5, 5, 38, 5).fill({ color: 0xbca13e, alpha: Math.max(0, alpha * 0.45) });
       };
@@ -677,6 +681,7 @@ export function OfficeFloor() {
         if (sinkBusy > 0) {
           // running water + a couple of suds while someone scrubs
           sinkG.rect(7, 6, 2, 4).fill({ color: 0x9fd6f0, alpha: 0.9 });
+          if (prefersReducedMotion) return;
           for (let i = 0; i < 3; i++) {
             const ph = (t * 1.2 + i / 3) % 1;
             sinkG.circle(4 + i * 4, 7 - ph * 4, 1).fill({ color: 0xffffff, alpha: 0.7 * (1 - ph) });
@@ -693,7 +698,7 @@ export function OfficeFloor() {
       let machineBusy = 0;
       const drawMachine = (t: number): void => {
         machineG.clear();
-        if (machineBusy <= 0) return;
+        if (machineBusy <= 0 || prefersReducedMotion) return;
         for (let i = 0; i < 2; i++) {
           const ph = (t * 0.9 + i * 0.5) % 1;
           machineG.rect(6 + i * 3, 2 - Math.round(ph * 5), 1, 1)
@@ -1014,6 +1019,7 @@ export function OfficeFloor() {
       /** Draw one errand's ambient animation frame (local coords on its fx tile). */
       const drawErrandFx = (kind: ErrandKind, g: Graphics, t: number): void => {
         g.clear();
+        if (prefersReducedMotion) return;
         if (kind === 'window' || kind === 'smoke') {
           // wind streaks slipping in under the sash and drifting down-room —
           // for 'smoke' the boss cracked HIS window open for the cigar.
@@ -1473,6 +1479,14 @@ export function OfficeFloor() {
         if (!hireHovered) drawHireAffordance();
         if (askCount > 0) drawAskBoard(askPulse);
       };
+      syncReducedMotionActivityFx = () => {
+        updateAirlockPulse(0);
+        drawSink(fxClock);
+        drawMachine(fxClock);
+        if (prefersReducedMotion) {
+          for (const effect of errandFx.values()) effect.clear();
+        }
+      };
 
       // ─── Board choreography: every ledger move is ACTED on the floor ───────
       // Michael walks over and pins fresh cards; an assigned worker walks to
@@ -1700,6 +1714,7 @@ export function OfficeFloor() {
           seatDirection: facingForSeat(seatTile),
           spawnTile: entrance, // walk in from the office door
           glowColor: hexNum(colors.accent[agent.accent]) ?? hexToNumber(member.shirt),
+          prefersReducedMotion: () => prefersReducedMotion,
           onClick: (id) => useStore.getState().select(id),
         });
         character.show(charLayer);
