@@ -692,6 +692,36 @@
       "before": "function safeDestroy(app: Application) {\n  try { app.ticker?.stop(); } catch { /* noop */ }",
       "after": "function safeDestroy(app: Application) {\n  try { (app as any).__offReducedMotion?.(); } catch { /* noop */ }\n  try { app.ticker?.stop(); } catch { /* noop */ }",
       "reason": "Release the reduced-motion listener when partial scene initialization fails as well as during normal teardown."
+    },
+    {
+      "before": "      let prefersReducedMotion = reducedMotionQuery.matches;\n      const onReducedMotionChange = (event: MediaQueryListEvent): void => {\n        prefersReducedMotion = event.matches;\n        if (!event.matches) return;\n        cameraSpotlightId = null;\n        cameraSpotlightRemaining = 0;\n        camera.fitToScreen(true);\n      };",
+      "after": "      let prefersReducedMotion = reducedMotionQuery.matches;\n      let syncReducedMotionIndicators: (() => void) | undefined;\n      const onReducedMotionChange = (event: MediaQueryListEvent): void => {\n        prefersReducedMotion = event.matches;\n        if (event.matches) {\n          cameraSpotlightId = null;\n          cameraSpotlightRemaining = 0;\n          camera.fitToScreen(true);\n        }\n        syncReducedMotionIndicators?.();\n      };",
+      "reason": "Redraw static attention indicators on either live reduced-motion preference transition."
+    },
+    {
+      "before": "        const alpha = hireHovered ? 0.9 : 0.22 + (Math.sin(hirePulsePhase) + 1) * 0.08;",
+      "after": "        const alpha = hireHovered\n          ? 0.9\n          : prefersReducedMotion ? 0.3 : 0.22 + (Math.sin(hirePulsePhase) + 1) * 0.08;",
+      "reason": "Replace the Hire kiosk's continuous breathing with a stable visible outline under reduced motion."
+    },
+    {
+      "before": "          const a = 0.35 + 0.3 * Math.sin(pulse * 4);",
+      "after": "          const a = prefersReducedMotion ? 0.5 : 0.35 + 0.3 * Math.sin(pulse * 4);",
+      "reason": "Replace the Ask Me board's continuous attention oscillation with a stable visible frame under reduced motion."
+    },
+    {
+      "before": "      drawAskBoard(0);\n\n      // ─── Board choreography",
+      "after": "      drawAskBoard(0);\n      syncReducedMotionIndicators = () => {\n        if (!hireHovered) drawHireAffordance();\n        if (askCount > 0) drawAskBoard(askPulse);\n      };\n\n      // ─── Board choreography",
+      "reason": "Synchronize both attention indicators immediately after a live motion-preference change."
+    },
+    {
+      "before": "        askPulse += dt;\n        if (askCount > 0) drawAskBoard(askPulse);",
+      "after": "        if (!prefersReducedMotion) {\n          askPulse += dt;\n          if (askCount > 0) drawAskBoard(askPulse);\n        }",
+      "reason": "Stop advancing and repainting the Ask Me attention pulse under reduced motion."
+    },
+    {
+      "before": "        hirePulsePhase += dt * 2.4;\n        if (!hireHovered) drawHireAffordance();",
+      "after": "        if (!prefersReducedMotion) {\n          hirePulsePhase += dt * 2.4;\n          if (!hireHovered) drawHireAffordance();\n        }",
+      "reason": "Stop advancing and repainting the Hire kiosk breathing pulse under reduced motion."
     }
   ],
   "src/renderer/src/scene/office/portraitArt.ts": [
