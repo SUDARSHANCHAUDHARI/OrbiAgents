@@ -695,8 +695,11 @@ export class Character {
     this.selectionRing.zIndex = this.py - 1;
     this.selectionRing.alpha = this.sprite.container.alpha;
     if (this.glowOn) {
-      this.workGlowElapsed += dt;
-      const phase = (Math.sin((this.workGlowElapsed * Math.PI) / 0.6) + 1) / 2;
+      const reducedMotion = this.prefersReducedMotion();
+      if (!reducedMotion) this.workGlowElapsed += dt;
+      const phase = reducedMotion
+        ? 0.5
+        : (Math.sin((this.workGlowElapsed * Math.PI) / 0.6) + 1) / 2;
       this.workGlow.alpha = (0.18 + 0.27 * phase) * this.sprite.container.alpha;
       this.workGlow.scale.set(0.95 + 0.15 * phase);
     } else {
@@ -870,7 +873,7 @@ export class Character {
     const yTop = -48;
     if (this.statusGlyph === 'blocked') {
       // pulsing "!" — blink ~2.5Hz
-      if (Math.floor(this.glyphElapsed / 0.4) % 2 === 0) {
+      if (this.prefersReducedMotion() || Math.floor(this.glyphElapsed / 0.4) % 2 === 0) {
         g.rect(-1, yTop, 2, 5).fill(0xff6b6b);
         g.rect(-1, yTop + 6, 2, 2).fill(0xff6b6b);
       }
@@ -883,16 +886,19 @@ export class Character {
       if (this.glyphElapsed > 0.9) this.setStatusGlyph('none');
     } else if (this.statusGlyph === 'compacting') {
       // #5C — violet box that rhythmically "packs down" (boxing up context).
-      const p = (Math.sin(this.glyphElapsed * 6) + 1) / 2; // 0..1
+      const p = this.prefersReducedMotion()
+        ? 0.5
+        : (Math.sin(this.glyphElapsed * 6) + 1) / 2; // 0..1
       const s = 2 + p * 3;
       g.rect(-s, yTop - s, s * 2, s * 2).fill(0x9b7ede);
     } else if (this.statusGlyph === 'looping') {
       // #5C — orange 4-dot warning ring with one lit dot spinning around it.
+      const reducedMotion = this.prefersReducedMotion();
       const idx = Math.floor(this.glyphElapsed * 8) % 4;
       const pts: [number, number][] = [[-3, yTop - 3], [3, yTop - 3], [3, yTop + 3], [-3, yTop + 3]];
       for (let i = 0; i < 4; i++) {
         const [x, y] = pts[i];
-        g.rect(x - 1, y - 1, 2, 2).fill(i === idx ? 0xff9f43 : 0x6b5878);
+        g.rect(x - 1, y - 1, 2, 2).fill(reducedMotion || i === idx ? 0xff9f43 : 0x6b5878);
       }
     }
   }
