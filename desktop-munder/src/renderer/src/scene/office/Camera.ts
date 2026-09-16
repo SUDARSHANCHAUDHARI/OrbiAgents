@@ -47,12 +47,19 @@ export class Camera {
     return Math.min(this.viewWidth / this.mapWidth, this.viewHeight / this.mapHeight);
   }
 
-  /** Fit the whole map to the viewport, centered. */
-  fitToScreen(): void {
+  /** Fit the whole map to the viewport, centered. The first scene fit can snap
+   *  immediately so the room never paints from the camera's default origin. */
+  fitToScreen(immediate = false): void {
     this.manualOverride = false;
     this.targetX = this.mapWidth / 2;
     this.targetY = this.mapHeight / 2;
     this.targetZoom = this.getMinZoom();
+    if (immediate) {
+      this.currentX = this.targetX;
+      this.currentY = this.targetY;
+      this.currentZoom = this.targetZoom;
+      this.update(0);
+    }
   }
 
   /** Pan/zoom toward a world point (used when an agent is selected). */

@@ -384,7 +384,9 @@ export function OfficeFloor() {
       const camera = new Camera(world);
       camera.setMapSize(mapRenderer.width * mapRenderer.tileSize, mapRenderer.height * mapRenderer.tileSize);
       camera.setViewSize(app.screen.width, app.screen.height);
-      camera.fitToScreen();
+      // Snap the first composed frame into place. Later ResizeObserver fits keep
+      // Camera's normal easing, but startup must not reveal the world origin.
+      camera.fitToScreen(true);
 
       // The entrance launch kiosk is room artwork with one transparent, semantic
       // hit target. It opens the same reviewed hire flow as the chrome buttons.
