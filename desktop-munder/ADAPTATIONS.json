@@ -827,6 +827,41 @@
       "before": "          glowColor: hexNum(colors.accent[agent.accent]) ?? hexToNumber(member.shirt),\n          onClick: (id) => useStore.getState().select(id),",
       "after": "          glowColor: hexNum(colors.accent[agent.accent]) ?? hexToNumber(member.shirt),\n          prefersReducedMotion: () => prefersReducedMotion,\n          onClick: (id) => useStore.getState().select(id),",
       "reason": "Pass the live scene preference into each character's decorative effect renderer."
+    },
+    {
+      "before": "      const ambientTextures: Texture[] = [];\n      (app as any).__ambientTextures = ambientTextures;",
+      "after": "      const ambientTextures: Texture[] = [];\n      (app as any).__ambientTextures = ambientTextures;\n      const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');\n      let prefersReducedMotion = reducedMotionQuery.matches;\n      const ambientDisplays: AnimatedSprite[] = [];\n      const syncAmbientDisplayMotion = (): void => {\n        for (const display of ambientDisplays) {\n          if (prefersReducedMotion) display.gotoAndStop(0);\n          else display.play();\n        }\n      };\n      const registerAmbientDisplay = (display: AnimatedSprite): void => {\n        ambientDisplays.push(display);\n        if (prefersReducedMotion) display.gotoAndStop(0);\n        else display.play();\n      };",
+      "reason": "Register continuous room displays behind one live reduced-motion controller."
+    },
+    {
+      "before": "          copierLight.play();",
+      "after": "          registerAmbientDisplay(copierLight);",
+      "reason": "Freeze or play the copier scanner strip from the shared motion preference."
+    },
+    {
+      "before": "            screenCell.play();",
+      "after": "            registerAmbientDisplay(screenCell);",
+      "reason": "Freeze or play every operations-display cell from the shared motion preference."
+    },
+    {
+      "before": "        briefingBeacon.play();",
+      "after": "        registerAmbientDisplay(briefingBeacon);",
+      "reason": "Freeze or play the briefing beacon from the shared motion preference."
+    },
+    {
+      "before": "      const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');\n      let prefersReducedMotion = reducedMotionQuery.matches;\n      let syncReducedMotionIndicators: (() => void) | undefined;",
+      "after": "      let syncReducedMotionIndicators: (() => void) | undefined;",
+      "reason": "Resolve the motion preference before continuous displays are constructed."
+    },
+    {
+      "before": "        syncReducedMotionIndicators?.();",
+      "after": "        syncAmbientDisplayMotion();\n        syncReducedMotionIndicators?.();",
+      "reason": "Freeze or resume every registered ambient display immediately after a live preference change."
+    },
+    {
+      "before": "      reducedMotionQuery.addEventListener('change', onReducedMotionChange);",
+      "after": "      prefersReducedMotion = reducedMotionQuery.matches;\n      syncAmbientDisplayMotion();\n      reducedMotionQuery.addEventListener('change', onReducedMotionChange);",
+      "reason": "Reconcile any OS preference change that occurred during asynchronous scene loading before attaching the live listener."
     }
   ],
   "src/renderer/src/scene/office/portraitArt.ts": [

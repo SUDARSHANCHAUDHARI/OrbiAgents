@@ -295,6 +295,20 @@ export function OfficeFloor() {
       const charLayer = mapRenderer.getCharacterContainer();
       const ambientTextures: Texture[] = [];
       (app as any).__ambientTextures = ambientTextures;
+      const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+      let prefersReducedMotion = reducedMotionQuery.matches;
+      const ambientDisplays: AnimatedSprite[] = [];
+      const syncAmbientDisplayMotion = (): void => {
+        for (const display of ambientDisplays) {
+          if (prefersReducedMotion) display.gotoAndStop(0);
+          else display.play();
+        }
+      };
+      const registerAmbientDisplay = (display: AnimatedSprite): void => {
+        ambientDisplays.push(display);
+        if (prefersReducedMotion) display.gotoAndStop(0);
+        else display.play();
+      };
       const tileCount = mapRenderer.getContainer().children.reduce(
         (n, c) => n + ((c as Container).children?.length ?? 0), 0);
       console.log(`[OfficeFloor] map ${mapRenderer.width}x${mapRenderer.height}, ${tileCount} tile sprites rendered`);
@@ -320,7 +334,7 @@ export function OfficeFloor() {
           copierLight.position.set((copierTile.x + 1) * mapRenderer.tileSize, copierTile.y * mapRenderer.tileSize);
           copierLight.zIndex = (copierTile.y + 1) * mapRenderer.tileSize - 1;
           copierLight.animationSpeed = 0.1;
-          copierLight.play();
+          registerAmbientDisplay(copierLight);
           charLayer.addChild(copierLight);
           ambientTextures.push(...lightFrames);
         } else {
@@ -353,7 +367,7 @@ export function OfficeFloor() {
               (displayTile.y + row) * mapRenderer.tileSize);
             screenCell.zIndex = (displayTile.y + 2) * mapRenderer.tileSize - 1;
             screenCell.animationSpeed = 0.008;
-            screenCell.play();
+            registerAmbientDisplay(screenCell);
             charLayer.addChild(screenCell);
           }
         } else {
@@ -374,7 +388,7 @@ export function OfficeFloor() {
           theme.anchors.briefing.y * mapRenderer.tileSize);
         briefingBeacon.zIndex = (theme.anchors.briefing.y + 1) * mapRenderer.tileSize;
         briefingBeacon.animationSpeed = 0.055;
-        briefingBeacon.play();
+        registerAmbientDisplay(briefingBeacon);
         charLayer.addChild(briefingBeacon);
         ambientTextures.push(...briefingFrames);
       } else {
@@ -389,8 +403,6 @@ export function OfficeFloor() {
       camera.fitToScreen(true);
       let cameraSpotlightId: string | null = null;
       let cameraSpotlightRemaining = 0;
-      const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-      let prefersReducedMotion = reducedMotionQuery.matches;
       let syncReducedMotionIndicators: (() => void) | undefined;
       let syncReducedMotionActivityFx: (() => void) | undefined;
       const onReducedMotionChange = (event: MediaQueryListEvent): void => {
@@ -400,9 +412,12 @@ export function OfficeFloor() {
           cameraSpotlightRemaining = 0;
           camera.fitToScreen(true);
         }
+        syncAmbientDisplayMotion();
         syncReducedMotionIndicators?.();
         syncReducedMotionActivityFx?.();
       };
+      prefersReducedMotion = reducedMotionQuery.matches;
+      syncAmbientDisplayMotion();
       reducedMotionQuery.addEventListener('change', onReducedMotionChange);
       (app as any).__offReducedMotion = () =>
         reducedMotionQuery.removeEventListener('change', onReducedMotionChange);
