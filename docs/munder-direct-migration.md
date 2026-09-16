@@ -172,6 +172,8 @@ Sources:
 
 ## Completion boundary
 
+Reduced-motion-safe worker focus (2026-09-16): the Pixi office now honors the live `prefers-reduced-motion` setting for worker selection. Selection rings and command-panel state remain intact, while camera spotlights are skipped when reduction is already enabled; enabling it mid-spotlight cancels the motion and snaps back to the fitted office immediately. The media-query listener is removed with scene teardown. Focused tests protect initial preference, live changes, retained selection, immediate reset, and cleanup; assistive-technology acceptance remains a human review step.
+
 Selected-worker camera spotlight (2026-09-16): choosing a worker now gives the existing selection ring a short, responsive camera spotlight that tracks the worker's live position at 1.35x fitted zoom, then eases back to the whole-office view. A cleared selection restores the fit immediately. The durable selected-agent state, command panels, worker movement, and initial camera snap remain unchanged. Focused tests protect live tracking, bounded duration, zoom, and release behavior; subjective motion acceptance remains a human review step.
 
 Persistent floor-control affordances (2026-09-16): the semantic Triggers calendar, Tasks boards, Ask Me board, and Close clock now retain quiet pixel outlines before hover instead of becoming discoverable only by pointer accident. Hover strengthens the same outline and reveals the existing localized placard; click targets, navigation, close behavior, room artwork, and the separately pulsing Hire kiosk remain unchanged. Focused tests protect idle/hover states and reviewed actions; subjective outline contrast remains a human review step.
