@@ -391,12 +391,15 @@ export function OfficeFloor() {
       let cameraSpotlightRemaining = 0;
       const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
       let prefersReducedMotion = reducedMotionQuery.matches;
+      let syncReducedMotionIndicators: (() => void) | undefined;
       const onReducedMotionChange = (event: MediaQueryListEvent): void => {
         prefersReducedMotion = event.matches;
-        if (!event.matches) return;
-        cameraSpotlightId = null;
-        cameraSpotlightRemaining = 0;
-        camera.fitToScreen(true);
+        if (event.matches) {
+          cameraSpotlightId = null;
+          cameraSpotlightRemaining = 0;
+          camera.fitToScreen(true);
+        }
+        syncReducedMotionIndicators?.();
       };
       reducedMotionQuery.addEventListener('change', onReducedMotionChange);
       (app as any).__offReducedMotion = () =>
@@ -413,7 +416,9 @@ export function OfficeFloor() {
       let hireHovered = false;
       let hirePulsePhase = 0;
       const drawHireAffordance = (): void => {
-        const alpha = hireHovered ? 0.9 : 0.22 + (Math.sin(hirePulsePhase) + 1) * 0.08;
+        const alpha = hireHovered
+          ? 0.9
+          : prefersReducedMotion ? 0.3 : 0.22 + (Math.sin(hirePulsePhase) + 1) * 0.08;
         hireG.clear();
         hireG.rect(1, 1, 30, 30).stroke({ color: hireHovered ? 0xffd166 : 0x5cdbcf, width: 1, alpha });
       };
@@ -1459,11 +1464,15 @@ export function OfficeFloor() {
             askG.rect(x + 2, y, 1, 1).fill(0x4a3b52);
           }
           // attention pulse around the frame while questions wait
-          const a = 0.35 + 0.3 * Math.sin(pulse * 4);
+          const a = prefersReducedMotion ? 0.5 : 0.35 + 0.3 * Math.sin(pulse * 4);
           askG.rect(-2, -2, 34, 26).stroke({ color: 0xcdb4e8, width: 2, alpha: a });
         }
       };
       drawAskBoard(0);
+      syncReducedMotionIndicators = () => {
+        if (!hireHovered) drawHireAffordance();
+        if (askCount > 0) drawAskBoard(askPulse);
+      };
 
       // ─── Board choreography: every ledger move is ACTED on the floor ───────
       // Michael walks over and pins fresh cards; an assigned worker walks to
@@ -1571,8 +1580,10 @@ export function OfficeFloor() {
           }
         }
         // the ASK ME board pulses for attention while questions wait
-        askPulse += dt;
-        if (askCount > 0) drawAskBoard(askPulse);
+        if (!prefersReducedMotion) {
+          askPulse += dt;
+          if (askCount > 0) drawAskBoard(askPulse);
+        }
         // global watchdog: if anything has been in flight too long, hard-sync
         moveWatchdog += dt;
         if (moveWatchdog > 30 && busyActors.size > 0) {
@@ -1987,8 +1998,10 @@ export function OfficeFloor() {
 
       const onTick = (ticker: Ticker) => {
         const dt = ticker.deltaMS / 1000;
-        hirePulsePhase += dt * 2.4;
-        if (!hireHovered) drawHireAffordance();
+        if (!prefersReducedMotion) {
+          hirePulsePhase += dt * 2.4;
+          if (!hireHovered) drawHireAffordance();
+        }
         if (cameraSpotlightId) {
           cameraSpotlightRemaining = Math.max(0, cameraSpotlightRemaining - dt);
           const focused = runtimes.get(cameraSpotlightId);
