@@ -16,5 +16,6 @@ test('characters show bounded hover and persistent selection rings', () => {
 test('floor synchronizes selection for loaded and newly arriving workers', () => {
   assert.match(floor, /character\.setSelected\(useStore\.getState\(\)\.selectedId === agent\.id\)/);
   assert.match(floor, /for \(const \[id, runtime\] of runtimes\) runtime\.character\.setSelected\(id === s\.selectedId\)/);
-  assert.match(floor, /camera\.nudgeToward\(p\.x, p\.y\)/);
+  assert.match(floor, /cameraSpotlightId = s\.selectedId/);
+  assert.match(floor, /camera\.focusOn\(p\.x, p\.y\)/);
 });

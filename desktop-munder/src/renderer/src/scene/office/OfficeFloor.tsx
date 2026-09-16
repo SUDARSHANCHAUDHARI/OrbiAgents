@@ -1883,16 +1883,16 @@ export function OfficeFloor() {
       syncAgents();
 
       let lastSelected: string | null = useStore.getState().selectedId;
+      let cameraSpotlightId: string | null = null;
+      let cameraSpotlightRemaining = 0;
       const unsubscribe = useStore.subscribe((s, prev) => {
         if (s.agents !== prev.agents) syncAgents();
         if (s.selectedId !== lastSelected) {
           lastSelected = s.selectedId;
           for (const [id, runtime] of runtimes) runtime.character.setSelected(id === s.selectedId);
-          const rt = s.selectedId ? runtimes.get(s.selectedId) : undefined;
-          if (rt) {
-            const p = rt.character.getPixelPosition();
-            camera.nudgeToward(p.x, p.y);
-          }
+          cameraSpotlightId = s.selectedId;
+          cameraSpotlightRemaining = s.selectedId ? 1.8 : 0;
+          if (!s.selectedId) camera.fitToScreen();
         }
       });
       (app as any).__unsub = unsubscribe;
@@ -1977,6 +1977,17 @@ export function OfficeFloor() {
         const dt = ticker.deltaMS / 1000;
         hirePulsePhase += dt * 2.4;
         if (!hireHovered) drawHireAffordance();
+        if (cameraSpotlightId) {
+          cameraSpotlightRemaining = Math.max(0, cameraSpotlightRemaining - dt);
+          const focused = runtimes.get(cameraSpotlightId);
+          if (focused && cameraSpotlightRemaining > 0) {
+            const p = focused.character.getPixelPosition();
+            camera.focusOn(p.x, p.y);
+          } else if (cameraSpotlightRemaining === 0) {
+            cameraSpotlightId = null;
+            camera.fitToScreen();
+          }
+        }
         camera.update(dt);
         // Thought clouds counter-scale against the camera so their text never
         // renders below 1:1 screen size when the window/world shrinks.

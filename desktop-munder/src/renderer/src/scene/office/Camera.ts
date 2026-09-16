@@ -67,7 +67,7 @@ export class Camera {
     this.manualOverride = true;
     this.targetX = worldX;
     this.targetY = worldY;
-    this.targetZoom = Math.max(this.getMinZoom(), Math.min(4, zoom ?? this.currentZoom));
+    this.targetZoom = Math.max(this.getMinZoom(), Math.min(4, zoom ?? this.getMinZoom() * 1.35));
   }
 
   /** A gentle, decaying pan toward a world point without taking manual control. */

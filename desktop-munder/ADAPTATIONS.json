@@ -652,6 +652,21 @@
       "before": "      askG.on('pointerover', () => {\n        askPlacard.visible = true;\n        askAffordance.clear();\n        askAffordance.rect(1, 1, 28, 20).stroke({ color: 0xcdb4e8, width: 1, alpha: 0.95 });\n      });\n      askG.on('pointerout', () => {\n        askPlacard.visible = false;\n        askAffordance.clear();\n      });",
       "after": "      askG.on('pointerover', () => {\n        askPlacard.visible = true;\n        drawAskAffordance(true);\n      });\n      askG.on('pointerout', () => {\n        askPlacard.visible = false;\n        drawAskAffordance(false);\n      });",
       "reason": "Strengthen the Ask Me outline on hover and restore its quiet state on pointer exit."
+    },
+    {
+      "before": "      let lastSelected: string | null = useStore.getState().selectedId;\n      const unsubscribe = useStore.subscribe((s, prev) => {",
+      "after": "      let lastSelected: string | null = useStore.getState().selectedId;\n      let cameraSpotlightId: string | null = null;\n      let cameraSpotlightRemaining = 0;\n      const unsubscribe = useStore.subscribe((s, prev) => {",
+      "reason": "Track a bounded camera spotlight independently from durable worker selection."
+    },
+    {
+      "before": "          for (const [id, runtime] of runtimes) runtime.character.setSelected(id === s.selectedId);\n          const rt = s.selectedId ? runtimes.get(s.selectedId) : undefined;\n          if (rt) {\n            const p = rt.character.getPixelPosition();\n            camera.nudgeToward(p.x, p.y);\n          }",
+      "after": "          for (const [id, runtime] of runtimes) runtime.character.setSelected(id === s.selectedId);\n          cameraSpotlightId = s.selectedId;\n          cameraSpotlightRemaining = s.selectedId ? 1.8 : 0;\n          if (!s.selectedId) camera.fitToScreen();",
+      "reason": "Start a short selection spotlight without coupling camera lifetime to persistent panel selection."
+    },
+    {
+      "before": "        if (!hireHovered) drawHireAffordance();\n        camera.update(dt);",
+      "after": "        if (!hireHovered) drawHireAffordance();\n        if (cameraSpotlightId) {\n          cameraSpotlightRemaining = Math.max(0, cameraSpotlightRemaining - dt);\n          const focused = runtimes.get(cameraSpotlightId);\n          if (focused && cameraSpotlightRemaining > 0) {\n            const p = focused.character.getPixelPosition();\n            camera.focusOn(p.x, p.y);\n          } else if (cameraSpotlightRemaining === 0) {\n            cameraSpotlightId = null;\n            camera.fitToScreen();\n          }\n        }\n        camera.update(dt);",
+      "reason": "Track the moving selected worker during the bounded spotlight, then restore the responsive whole-office fit."
     }
   ],
   "src/renderer/src/scene/office/portraitArt.ts": [
@@ -1088,6 +1103,11 @@
       "before": "  /** Fit the whole map to the viewport, centered. */\n  fitToScreen(): void {\n    this.manualOverride = false;\n    this.targetX = this.mapWidth / 2;\n    this.targetY = this.mapHeight / 2;\n    this.targetZoom = this.getMinZoom();\n  }",
       "after": "  /** Fit the whole map to the viewport, centered. The first scene fit can snap\n   *  immediately so the room never paints from the camera's default origin. */\n  fitToScreen(immediate = false): void {\n    this.manualOverride = false;\n    this.targetX = this.mapWidth / 2;\n    this.targetY = this.mapHeight / 2;\n    this.targetZoom = this.getMinZoom();\n    if (immediate) {\n      this.currentX = this.targetX;\n      this.currentY = this.targetY;\n      this.currentZoom = this.targetZoom;\n      this.update(0);\n    }\n  }",
       "reason": "Snap the initial office camera to its fitted state while retaining eased resize and focus transitions."
+    },
+    {
+      "before": "    this.targetZoom = Math.max(this.getMinZoom(), Math.min(4, zoom ?? this.currentZoom));",
+      "after": "    this.targetZoom = Math.max(this.getMinZoom(), Math.min(4, zoom ?? this.getMinZoom() * 1.35));",
+      "reason": "Give the existing worker-focus path a responsive zoom above the fitted whole-office scale."
     }
   ],
   "src/renderer/index.html": [
