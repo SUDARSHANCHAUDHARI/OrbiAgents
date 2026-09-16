@@ -160,11 +160,11 @@ export class Character {
   constructor(options: CharacterOptions) {
     this.agentId = options.agentId;
     this.mapRenderer = options.mapRenderer;
-    this.sprite = new CharacterSprite(options.frames);
+    this.prefersReducedMotion = options.prefersReducedMotion ?? (() => false);
+    this.sprite = new CharacterSprite(options.frames, this.prefersReducedMotion());
     this.deskTile = options.seatTile;
     this.seatDirection = options.seatDirection ?? 'down';
     this.onClick = options.onClick;
-    this.prefersReducedMotion = options.prefersReducedMotion ?? (() => false);
 
     // Appear at the spawn tile (the door) and walk in from there.
     const start = options.spawnTile ?? this.deskTile;
@@ -673,6 +673,7 @@ export class Character {
     }
 
     this.thoughtBubble.update(dt);
+    this.sprite.setReducedMotion(this.prefersReducedMotion());
     if (!this.isVisible) return;
 
     // Working agents stay seated; between tasks they wander the office.
