@@ -305,6 +305,51 @@
       "before": "    this.sprite.container.zIndex = this.py;\n    this.thoughtBubble.setPosition(this.px, this.py);",
       "after": "    this.sprite.container.zIndex = this.py;\n    this.thoughtBubble.setPosition(this.px, this.py);\n    this.updateIdentityPosition();",
       "reason": "Keep edge clamping current while workers move through the room."
+    },
+    {
+      "before": "  glowColor: number;\n  /** Direction faced while seated. Default 'down' so the face is toward the user. */",
+      "after": "  glowColor: number;\n  /** Live OS motion preference supplied by the owning scene. */\n  prefersReducedMotion?: () => boolean;\n  /** Direction faced while seated. Default 'down' so the face is toward the user. */",
+      "reason": "Let scene-owned characters read the live reduced-motion preference without rebuilding the floor."
+    },
+    {
+      "before": "  private glowOn = false;\n\n  private overlay: Graphics;",
+      "after": "  private glowOn = false;\n  private prefersReducedMotion: () => boolean;\n\n  private overlay: Graphics;",
+      "reason": "Retain the live motion-preference reader for character effect rendering."
+    },
+    {
+      "before": "    this.onClick = options.onClick;\n\n    // Appear at the spawn tile",
+      "after": "    this.onClick = options.onClick;\n    this.prefersReducedMotion = options.prefersReducedMotion ?? (() => false);\n\n    // Appear at the spawn tile",
+      "reason": "Default standalone characters to normal motion while honoring the scene callback when supplied."
+    },
+    {
+      "before": "  private updateFx(dt: number): void {\n    this.steamT += dt;",
+      "after": "  private updateFx(dt: number): void {\n    this.steamT += dt;\n    const reducedMotion = this.prefersReducedMotion();",
+      "reason": "Resolve the current OS motion preference once per character effect frame."
+    },
+    {
+      "before": "      // two staggered steam pixels drifting up and fading\n      for (let i = 0; i < 2; i++) {\n        const ph = (this.steamT * 0.7 + i * 0.5) % 1;\n        this.deskCup.rect(1 + i * 2, -5 - Math.round(ph * 5), 1, 1)\n          .fill({ color: 0xffffff, alpha: 0.5 * (1 - ph) });\n      }",
+      "after": "      if (!reducedMotion) {\n        // two staggered steam pixels drifting up and fading\n        for (let i = 0; i < 2; i++) {\n          const ph = (this.steamT * 0.7 + i * 0.5) % 1;\n          this.deskCup.rect(1 + i * 2, -5 - Math.round(ph * 5), 1, 1)\n            .fill({ color: 0xffffff, alpha: 0.5 * (1 - ph) });\n        }\n      }",
+      "reason": "Keep the desk cup visible while suppressing its decorative steam under reduced motion."
+    },
+    {
+      "before": "      const ph = (this.steamT * 0.9) % 1;\n      this.fx.rect(o.x + 2, o.y - 5 - Math.round(ph * 4), 1, 1)\n        .fill({ color: 0xffffff, alpha: 0.5 * (1 - ph) });",
+      "after": "      if (!reducedMotion) {\n        const ph = (this.steamT * 0.9) % 1;\n        this.fx.rect(o.x + 2, o.y - 5 - Math.round(ph * 4), 1, 1)\n          .fill({ color: 0xffffff, alpha: 0.5 * (1 - ph) });\n      }",
+      "reason": "Keep the carried cup visible while suppressing its decorative steam under reduced motion."
+    },
+    {
+      "before": "        const ember = 0.5 + 0.5 * Math.sin(this.smokeT * 5);",
+      "after": "        const ember = reducedMotion ? 0.75 : 0.5 + 0.5 * Math.sin(this.smokeT * 5);",
+      "reason": "Replace the cigar ember pulse with a stable visible ember under reduced motion."
+    },
+    {
+      "before": "        for (let i = 0; i < 3; i++) {",
+      "after": "        for (let i = 0; !reducedMotion && i < 3; i++) {",
+      "reason": "Suppress drifting cigar smoke particles under reduced motion."
+    },
+    {
+      "before": "        for (let i = 0; i < 4; i++) {",
+      "after": "        for (let i = 0; !reducedMotion && i < 4; i++) {",
+      "reason": "Keep the watering can visible while suppressing its moving droplets under reduced motion."
     }
   ],
   "src/renderer/src/scene/office/OfficeFloor.tsx": [
@@ -722,6 +767,46 @@
       "before": "        hirePulsePhase += dt * 2.4;\n        if (!hireHovered) drawHireAffordance();",
       "after": "        if (!prefersReducedMotion) {\n          hirePulsePhase += dt * 2.4;\n          if (!hireHovered) drawHireAffordance();\n        }",
       "reason": "Stop advancing and repainting the Hire kiosk breathing pulse under reduced motion."
+    },
+    {
+      "before": "      let syncReducedMotionIndicators: (() => void) | undefined;",
+      "after": "      let syncReducedMotionIndicators: (() => void) | undefined;\n      let syncReducedMotionActivityFx: (() => void) | undefined;",
+      "reason": "Expose one scene-local redraw hook for active decorative effects."
+    },
+    {
+      "before": "        syncReducedMotionIndicators?.();",
+      "after": "        syncReducedMotionIndicators?.();\n        syncReducedMotionActivityFx?.();",
+      "reason": "Clear or stabilize active activity effects immediately after a live preference change."
+    },
+    {
+      "before": "        const alpha = Math.sin(progress * Math.PI * 3) * 0.18 + 0.42 * progress;",
+      "after": "        const alpha = prefersReducedMotion\n          ? 0.36\n          : Math.sin(progress * Math.PI * 3) * 0.18 + 0.42 * progress;",
+      "reason": "Replace the entrance flash with a stable operational outline under reduced motion."
+    },
+    {
+      "before": "          sinkG.rect(7, 6, 2, 4).fill({ color: 0x9fd6f0, alpha: 0.9 });\n          for (let i = 0; i < 3; i++) {",
+      "after": "          sinkG.rect(7, 6, 2, 4).fill({ color: 0x9fd6f0, alpha: 0.9 });\n          if (prefersReducedMotion) return;\n          for (let i = 0; i < 3; i++) {",
+      "reason": "Retain the running-water mark while suppressing animated sink suds under reduced motion."
+    },
+    {
+      "before": "        if (machineBusy <= 0) return;",
+      "after": "        if (machineBusy <= 0 || prefersReducedMotion) return;",
+      "reason": "Suppress animated coffee-machine steam under reduced motion."
+    },
+    {
+      "before": "      const drawErrandFx = (kind: ErrandKind, g: Graphics, t: number): void => {\n        g.clear();",
+      "after": "      const drawErrandFx = (kind: ErrandKind, g: Graphics, t: number): void => {\n        g.clear();\n        if (prefersReducedMotion) return;",
+      "reason": "Suppress nonessential room-level errand particles while preserving the worker activity."
+    },
+    {
+      "before": "      syncReducedMotionIndicators = () => {\n        if (!hireHovered) drawHireAffordance();\n        if (askCount > 0) drawAskBoard(askPulse);\n      };",
+      "after": "      syncReducedMotionIndicators = () => {\n        if (!hireHovered) drawHireAffordance();\n        if (askCount > 0) drawAskBoard(askPulse);\n      };\n      syncReducedMotionActivityFx = () => {\n        updateAirlockPulse(0);\n        drawSink(fxClock);\n        drawMachine(fxClock);\n        if (prefersReducedMotion) {\n          for (const effect of errandFx.values()) effect.clear();\n        }\n      };",
+      "reason": "Synchronize the entrance and active fixture or errand effects on live preference changes."
+    },
+    {
+      "before": "          glowColor: hexNum(colors.accent[agent.accent]) ?? hexToNumber(member.shirt),\n          onClick: (id) => useStore.getState().select(id),",
+      "after": "          glowColor: hexNum(colors.accent[agent.accent]) ?? hexToNumber(member.shirt),\n          prefersReducedMotion: () => prefersReducedMotion,\n          onClick: (id) => useStore.getState().select(id),",
+      "reason": "Pass the live scene preference into each character's decorative effect renderer."
     }
   ],
   "src/renderer/src/scene/office/portraitArt.ts": [
