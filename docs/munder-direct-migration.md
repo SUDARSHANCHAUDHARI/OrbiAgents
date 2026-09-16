@@ -172,6 +172,8 @@ Sources:
 
 ## Completion boundary
 
+Responsive nameplate edge clamp (2026-09-15): counter-scaled worker identity plates now slide horizontally inside the 768 px room instead of clipping at east/west edges. The center clamp uses the retained plate width and live zoom compensation, refreshes after rename, zoom, and movement, and leaves the worker, vertical overlay stack, and camera unchanged. Focused tests protect the map-bound calculation and all refresh paths; live narrow-window acceptance remains a human review step.
+
 Status-colored identity frames (2026-09-15): active worker nameplate borders now share the retained lamp's live status color instead of remaining cyan for every state. Name changes preserve the current status color, status changes redraw the existing frame in place, and unknown values retain the idle fallback; plate dimensions, visibility, and worker motion are unchanged. Focused tests protect the shared palette and retained redraw path; subjective palette acceptance remains a human review step.
 
 Worker overlay stack (2026-09-15): live thought clouds now sit above transient status glyphs and identity nameplates instead of letting their two-puff tail paint through both overlays. The cloud anchor moves from −38 to −60, preserving text wrapping, edge clamping, counter-scaling, overlap resolution, and worker coordinates. A focused source regression protects the cloud-tail geometry; dense live-cloud acceptance remains a human review step.
