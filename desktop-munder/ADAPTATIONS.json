@@ -350,6 +350,26 @@
       "before": "        for (let i = 0; i < 4; i++) {",
       "after": "        for (let i = 0; !reducedMotion && i < 4; i++) {",
       "reason": "Keep the watering can visible while suppressing its moving droplets under reduced motion."
+    },
+    {
+      "before": "      this.workGlowElapsed += dt;\n      const phase = (Math.sin((this.workGlowElapsed * Math.PI) / 0.6) + 1) / 2;",
+      "after": "      const reducedMotion = this.prefersReducedMotion();\n      if (!reducedMotion) this.workGlowElapsed += dt;\n      const phase = reducedMotion\n        ? 0.5\n        : (Math.sin((this.workGlowElapsed * Math.PI) / 0.6) + 1) / 2;",
+      "reason": "Hold the working halo at its existing midpoint instead of breathing under reduced motion."
+    },
+    {
+      "before": "      if (Math.floor(this.glyphElapsed / 0.4) % 2 === 0) {",
+      "after": "      if (this.prefersReducedMotion() || Math.floor(this.glyphElapsed / 0.4) % 2 === 0) {",
+      "reason": "Keep the blocked exclamation continuously visible under reduced motion."
+    },
+    {
+      "before": "      const p = (Math.sin(this.glyphElapsed * 6) + 1) / 2; // 0..1",
+      "after": "      const p = this.prefersReducedMotion()\n        ? 0.5\n        : (Math.sin(this.glyphElapsed * 6) + 1) / 2; // 0..1",
+      "reason": "Hold the compacting box at its existing midpoint size under reduced motion."
+    },
+    {
+      "before": "      const idx = Math.floor(this.glyphElapsed * 8) % 4;\n      const pts: [number, number][] = [[-3, yTop - 3], [3, yTop - 3], [3, yTop + 3], [-3, yTop + 3]];\n      for (let i = 0; i < 4; i++) {\n        const [x, y] = pts[i];\n        g.rect(x - 1, y - 1, 2, 2).fill(i === idx ? 0xff9f43 : 0x6b5878);",
+      "after": "      const reducedMotion = this.prefersReducedMotion();\n      const idx = Math.floor(this.glyphElapsed * 8) % 4;\n      const pts: [number, number][] = [[-3, yTop - 3], [3, yTop - 3], [3, yTop + 3], [-3, yTop + 3]];\n      for (let i = 0; i < 4; i++) {\n        const [x, y] = pts[i];\n        g.rect(x - 1, y - 1, 2, 2).fill(reducedMotion || i === idx ? 0xff9f43 : 0x6b5878);",
+      "reason": "Replace the spinning loop warning with a stable fully-lit orange ring under reduced motion."
     }
   ],
   "src/renderer/src/scene/office/OfficeFloor.tsx": [
