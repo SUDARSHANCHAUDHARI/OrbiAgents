@@ -468,8 +468,13 @@ export function OfficeFloor() {
       calG.addChild(calendarPlacard);
       const drawCalendarAffordance = (hovered: boolean): void => {
         calG.clear();
-        if (hovered) calG.rect(1, 1, 14, 14).stroke({ color: 0xffd166, width: 1, alpha: 0.9 });
+        calG.rect(1, 1, 14, 14).stroke({
+          color: hovered ? 0xffd166 : 0x5cdbcf,
+          width: 1,
+          alpha: hovered ? 0.9 : 0.24,
+        });
       };
+      drawCalendarAffordance(false);
       calG.on('pointertap', (ev) => {
         ev.stopPropagation();
         const st = useStore.getState();
@@ -1223,6 +1228,15 @@ export function OfficeFloor() {
       boardPlacardText.position.set(5, 1);
       boardPlacard.addChild(boardPlacardBg, boardPlacardText);
       boardG.addChild(boardAffordance, boardPlacard);
+      const drawBoardAffordance = (hovered: boolean): void => {
+        boardAffordance.clear();
+        boardAffordance.rect(1, 1, 80, 20).stroke({
+          color: hovered ? 0xffd166 : 0x5cdbcf,
+          width: 1,
+          alpha: hovered ? 0.9 : 0.2,
+        });
+      };
+      drawBoardAffordance(false);
       boardG.on('pointertap', (ev) => {
         ev.stopPropagation();
         const st = useStore.getState();
@@ -1232,12 +1246,11 @@ export function OfficeFloor() {
       });
       boardG.on('pointerover', () => {
         boardPlacard.visible = true;
-        boardAffordance.clear();
-        boardAffordance.rect(1, 1, 80, 20).stroke({ color: 0xffd166, width: 1, alpha: 0.9 });
+        drawBoardAffordance(true);
       });
       boardG.on('pointerout', () => {
         boardPlacard.visible = false;
-        boardAffordance.clear();
+        drawBoardAffordance(false);
       });
       charLayer.addChild(boardG);
       // One small Graphics per desk currently holding a taken note.
@@ -1334,18 +1347,26 @@ export function OfficeFloor() {
       clockPlacardText.position.set(5, 1);
       clockPlacard.addChild(clockPlacardBg, clockPlacardText);
       clockG.addChild(clockPlacard);
+      const drawClockAffordance = (hovered: boolean): void => {
+        clockG.clear();
+        clockG.rect(1, 1, 14, 30).stroke({
+          color: 0xf0a3a3,
+          width: 1,
+          alpha: hovered ? 0.9 : 0.2,
+        });
+      };
+      drawClockAffordance(false);
       clockG.on('pointertap', (ev) => {
         ev.stopPropagation();
         window.close(); // intercepted by the main process while PTYs are alive
       });
       clockG.on('pointerover', () => {
         clockPlacard.visible = true;
-        clockG.clear();
-        clockG.rect(1, 1, 14, 30).stroke({ color: 0xf0a3a3, width: 1, alpha: 0.9 });
+        drawClockAffordance(true);
       });
       clockG.on('pointerout', () => {
         clockPlacard.visible = false;
-        clockG.clear();
+        drawClockAffordance(false);
       });
       charLayer.addChild(clockG);
 
@@ -1380,6 +1401,15 @@ export function OfficeFloor() {
       askPlacardText.position.set(5, 1);
       askPlacard.addChild(askPlacardBg, askPlacardText);
       askG.addChild(askAffordance, askPlacard);
+      const drawAskAffordance = (hovered: boolean): void => {
+        askAffordance.clear();
+        askAffordance.rect(1, 1, 28, 20).stroke({
+          color: 0xcdb4e8,
+          width: 1,
+          alpha: hovered ? 0.95 : 0.22,
+        });
+      };
+      drawAskAffordance(false);
       askG.on('pointertap', (ev) => {
         ev.stopPropagation();
         const st = useStore.getState();
@@ -1389,12 +1419,11 @@ export function OfficeFloor() {
       });
       askG.on('pointerover', () => {
         askPlacard.visible = true;
-        askAffordance.clear();
-        askAffordance.rect(1, 1, 28, 20).stroke({ color: 0xcdb4e8, width: 1, alpha: 0.95 });
+        drawAskAffordance(true);
       });
       askG.on('pointerout', () => {
         askPlacard.visible = false;
-        askAffordance.clear();
+        drawAskAffordance(false);
       });
       charLayer.addChild(askG);
       let askCount = 0;

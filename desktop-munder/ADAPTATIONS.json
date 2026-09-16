@@ -617,6 +617,41 @@
       "before": "function floorNote(text: string): HTMLDivElement {\n  const note = document.createElement('div');\n  note.style.cssText =",
       "after": "function floorNote(text: string): HTMLDivElement {\n  const note = document.createElement('div');\n  note.setAttribute('role', 'status');\n  note.setAttribute('aria-live', 'polite');\n  note.style.cssText =",
       "reason": "Expose actionable floor initialization failures as a polite accessibility status region."
+    },
+    {
+      "before": "      const drawCalendarAffordance = (hovered: boolean): void => {\n        calG.clear();\n        if (hovered) calG.rect(1, 1, 14, 14).stroke({ color: 0xffd166, width: 1, alpha: 0.9 });\n      };",
+      "after": "      const drawCalendarAffordance = (hovered: boolean): void => {\n        calG.clear();\n        calG.rect(1, 1, 14, 14).stroke({\n          color: hovered ? 0xffd166 : 0x5cdbcf,\n          width: 1,\n          alpha: hovered ? 0.9 : 0.24,\n        });\n      };\n      drawCalendarAffordance(false);",
+      "reason": "Keep the semantic Triggers calendar quietly discoverable before hover."
+    },
+    {
+      "before": "      boardG.addChild(boardAffordance, boardPlacard);",
+      "after": "      boardG.addChild(boardAffordance, boardPlacard);\n      const drawBoardAffordance = (hovered: boolean): void => {\n        boardAffordance.clear();\n        boardAffordance.rect(1, 1, 80, 20).stroke({\n          color: hovered ? 0xffd166 : 0x5cdbcf,\n          width: 1,\n          alpha: hovered ? 0.9 : 0.2,\n        });\n      };\n      drawBoardAffordance(false);",
+      "reason": "Keep the semantic Tasks boards quietly discoverable before hover."
+    },
+    {
+      "before": "      clockG.addChild(clockPlacard);",
+      "after": "      clockG.addChild(clockPlacard);\n      const drawClockAffordance = (hovered: boolean): void => {\n        clockG.clear();\n        clockG.rect(1, 1, 14, 30).stroke({\n          color: 0xf0a3a3,\n          width: 1,\n          alpha: hovered ? 0.9 : 0.2,\n        });\n      };\n      drawClockAffordance(false);",
+      "reason": "Keep the semantic Close clock quietly discoverable before hover."
+    },
+    {
+      "before": "      askG.addChild(askAffordance, askPlacard);",
+      "after": "      askG.addChild(askAffordance, askPlacard);\n      const drawAskAffordance = (hovered: boolean): void => {\n        askAffordance.clear();\n        askAffordance.rect(1, 1, 28, 20).stroke({\n          color: 0xcdb4e8,\n          width: 1,\n          alpha: hovered ? 0.95 : 0.22,\n        });\n      };\n      drawAskAffordance(false);",
+      "reason": "Keep the semantic Ask Me board quietly discoverable before hover."
+    },
+    {
+      "before": "      boardG.on('pointerover', () => {\n        boardPlacard.visible = true;\n        boardAffordance.clear();\n        boardAffordance.rect(1, 1, 80, 20).stroke({ color: 0xffd166, width: 1, alpha: 0.9 });\n      });\n      boardG.on('pointerout', () => {\n        boardPlacard.visible = false;\n        boardAffordance.clear();\n      });",
+      "after": "      boardG.on('pointerover', () => {\n        boardPlacard.visible = true;\n        drawBoardAffordance(true);\n      });\n      boardG.on('pointerout', () => {\n        boardPlacard.visible = false;\n        drawBoardAffordance(false);\n      });",
+      "reason": "Strengthen the Tasks outline on hover and restore its quiet state on pointer exit."
+    },
+    {
+      "before": "      clockG.on('pointerover', () => {\n        clockPlacard.visible = true;\n        clockG.clear();\n        clockG.rect(1, 1, 14, 30).stroke({ color: 0xf0a3a3, width: 1, alpha: 0.9 });\n      });\n      clockG.on('pointerout', () => {\n        clockPlacard.visible = false;\n        clockG.clear();\n      });",
+      "after": "      clockG.on('pointerover', () => {\n        clockPlacard.visible = true;\n        drawClockAffordance(true);\n      });\n      clockG.on('pointerout', () => {\n        clockPlacard.visible = false;\n        drawClockAffordance(false);\n      });",
+      "reason": "Strengthen the Close outline on hover and restore its quiet state on pointer exit."
+    },
+    {
+      "before": "      askG.on('pointerover', () => {\n        askPlacard.visible = true;\n        askAffordance.clear();\n        askAffordance.rect(1, 1, 28, 20).stroke({ color: 0xcdb4e8, width: 1, alpha: 0.95 });\n      });\n      askG.on('pointerout', () => {\n        askPlacard.visible = false;\n        askAffordance.clear();\n      });",
+      "after": "      askG.on('pointerover', () => {\n        askPlacard.visible = true;\n        drawAskAffordance(true);\n      });\n      askG.on('pointerout', () => {\n        askPlacard.visible = false;\n        drawAskAffordance(false);\n      });",
+      "reason": "Strengthen the Ask Me outline on hover and restore its quiet state on pointer exit."
     }
   ],
   "src/renderer/src/scene/office/portraitArt.ts": [

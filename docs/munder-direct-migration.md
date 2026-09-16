@@ -172,6 +172,8 @@ Sources:
 
 ## Completion boundary
 
+Persistent floor-control affordances (2026-09-16): the semantic Triggers calendar, Tasks boards, Ask Me board, and Close clock now retain quiet pixel outlines before hover instead of becoming discoverable only by pointer accident. Hover strengthens the same outline and reveals the existing localized placard; click targets, navigation, close behavior, room artwork, and the separately pulsing Hire kiosk remain unchanged. Focused tests protect idle/hover states and reviewed actions; subjective outline contrast remains a human review step.
+
 Contained floor failure state (2026-09-16): GPU and initialization failures now remain positioned inside the office panel instead of allowing their absolute fallback message to escape across unrelated application chrome. The shared fallback is also exposed as a polite status region while preserving its actionable text and normal canvas layout. Focused tests protect containment and accessible announcement; live GPU-loss acceptance remains a human review step.
 
 Immediate initial camera fit (2026-09-16): the first composed office frame now snaps directly to the centered fit instead of easing in from the camera's default world origin. Resize and worker-focus transitions retain their existing smooth motion; only initial scene presentation changes. Focused tests protect the explicit startup snap and the unchanged responsive refit path; live first-paint acceptance remains a human review step.
