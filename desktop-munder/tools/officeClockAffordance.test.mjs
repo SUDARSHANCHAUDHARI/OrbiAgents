@@ -9,7 +9,9 @@ test('office clock names and distinguishes its close action on hover', () => {
   assert.match(source, /text: t\('common\.close'\)\.toUpperCase\(\)/);
   assert.match(source, /const clockPlacardWidth = Math\.ceil\(clockPlacardText\.width\) \+ 10/);
   assert.match(source, /pointerover[\s\S]*?clockPlacard\.visible = true/);
-  assert.match(source, /clockG\.rect\(1, 1, 14, 30\)\.stroke\(\{ color: 0xf0a3a3/);
+  assert.match(source, /const drawClockAffordance = \(hovered: boolean\): void/);
+  assert.match(source, /clockG\.rect\(1, 1, 14, 30\)\.stroke\(\{\s*color: 0xf0a3a3/);
+  assert.match(source, /drawClockAffordance\(true\)/);
   assert.match(source, /pointerout[\s\S]*?clockPlacard\.visible = false/);
 });
 
