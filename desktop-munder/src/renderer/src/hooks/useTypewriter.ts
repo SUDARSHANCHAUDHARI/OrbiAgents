@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 /**
  * Reveal `text` character by character.
@@ -15,11 +15,34 @@ export function useTypewriter(text: string, seed: unknown, cps = 90): {
 } {
   const [shown, setShown] = useState('');
   const [done, setDone] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(() =>
+    typeof window !== 'undefined'
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  );
+  const previousReducedMotion = useRef(reducedMotion);
+  const previousText = useRef(text);
 
   useEffect(() => {
+    const query = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const onChange = (event: MediaQueryListEvent) => setReducedMotion(event.matches);
+    setReducedMotion(query.matches);
+    query.addEventListener('change', onChange);
+    return () => query.removeEventListener('change', onChange);
+  }, []);
+
+  useEffect(() => {
+    const wasReduced = previousReducedMotion.current;
+    const sameText = previousText.current === text;
+    previousReducedMotion.current = reducedMotion;
+    previousText.current = text;
+    if (!text) { setShown(''); setDone(true); return; }
+    if (reducedMotion || (wasReduced && sameText)) {
+      setShown(text);
+      setDone(true);
+      return;
+    }
     setShown('');
     setDone(false);
-    if (!text) { setDone(true); return; }
     let i = 0;
     const intervalMs = Math.max(8, Math.floor(1000 / cps));
     const id = window.setInterval(() => {
@@ -31,7 +54,7 @@ export function useTypewriter(text: string, seed: unknown, cps = 90): {
       }
     }, intervalMs);
     return () => window.clearInterval(id);
-  }, [text, seed, cps]);
+  }, [text, seed, cps, reducedMotion]);
 
   return { shown, done };
 }
