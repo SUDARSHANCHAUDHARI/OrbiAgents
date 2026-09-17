@@ -1967,7 +1967,7 @@ export function OfficeFloor() {
         const from = posFor(fromId);
         const to = posFor(toId);
         if (!from || !to) return; // sender or recipient not on the floor
-        const env = new MessageEnvelope(from, to, act, needsHuman);
+        const env = new MessageEnvelope(from, to, act, needsHuman, () => prefersReducedMotion);
         charLayer.addChild(env.container);
         envelopes.push(env);
       };

@@ -35,6 +35,7 @@ const MAX_DURATION = 2.0;
 const FADE_IN = 0.14;
 const FADE_OUT = 0.22;
 const BURST_DURATION = 0.34; // arrival sparkle ring
+const STEADY_DURATION = 0.6;
 
 function easeInOut(t: number): number {
   return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
@@ -52,14 +53,19 @@ export class MessageEnvelope {
   private bursting = false;
   private burstElapsed = 0;
   private finished = false;
+  private steadyArrival = false;
+  private steadyElapsed = 0;
+  private prefersReducedMotion: () => boolean;
 
   /** start/end are world-pixel feet anchors of sender & recipient. */
   constructor(
     start: { x: number; y: number },
     end: { x: number; y: number },
     act: MessageAct,
-    needsHuman: boolean
+    needsHuman: boolean,
+    prefersReducedMotion: () => boolean = () => false
   ) {
+    this.prefersReducedMotion = prefersReducedMotion;
     this.sx = start.x; this.sy = start.y - FLY_HEIGHT;
     this.ex = end.x;   this.ey = end.y - FLY_HEIGHT;
     const dist = Math.hypot(this.ex - this.sx, this.ey - this.sy);
@@ -87,6 +93,7 @@ export class MessageEnvelope {
     this.container.addChild(this.burst);
 
     this.setPos(this.sx, this.sy);
+    if (this.prefersReducedMotion()) this.enterSteadyArrival();
   }
 
   private setPos(x: number, y: number): void {
@@ -94,9 +101,25 @@ export class MessageEnvelope {
     this.container.y = Math.round(y);
   }
 
+  private enterSteadyArrival(): void {
+    this.steadyArrival = true;
+    this.steadyElapsed = 0;
+    this.body.visible = true;
+    this.body.rotation = 0;
+    this.burst.visible = false;
+    this.container.alpha = 1;
+    this.setPos(this.ex, this.ey);
+  }
+
   /** Advance the animation. Returns true once it has fully played out. */
   update(dt: number): boolean {
     if (this.finished) return true;
+    if (!this.steadyArrival && this.prefersReducedMotion()) this.enterSteadyArrival();
+    if (this.steadyArrival) {
+      this.steadyElapsed += dt;
+      if (this.steadyElapsed >= STEADY_DURATION) this.finished = true;
+      return this.finished;
+    }
 
     if (!this.bursting) {
       this.elapsed += dt;
