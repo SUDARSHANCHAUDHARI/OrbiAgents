@@ -511,6 +511,31 @@
       "before": "    this.thoughtBubble = new ThoughtBubble();",
       "after": "    this.thoughtBubble = new ThoughtBubble(this.prefersReducedMotion);",
       "reason": "Share the live scene motion preference with each worker's existing thought bubble."
+    },
+    {
+      "before": "  show(parent: Container): void {",
+      "after": "  private finishFade(reachedZero: boolean): void {\n    this.fadeDirection = null;\n    if (!reachedZero) return;\n    this.isVisible = false;\n    this.sprite.container.parent?.removeChild(this.sprite.container);\n    this.thoughtBubble.hide();\n    this.thoughtBubble.container.parent?.removeChild(this.thoughtBubble.container);\n    this.workGlow.parent?.removeChild(this.workGlow);\n    this.selectionRing.parent?.removeChild(this.selectionRing);\n    this.deskCup.parent?.removeChild(this.deskCup);\n  }\n\n  show(parent: Container): void {",
+      "reason": "Share one atomic scene-detachment path between animated and immediate worker departures."
+    },
+    {
+      "before": "    this.isVisible = true;\n    this.sprite.setAlpha(0);",
+      "after": "    this.isVisible = true;\n    const reducedMotion = this.prefersReducedMotion();\n    this.sprite.setAlpha(reducedMotion ? this.targetAlpha : 0);",
+      "reason": "Show workers at their target opacity immediately when reduced motion is active."
+    },
+    {
+      "before": "    this.fadeDirection = 'in';",
+      "after": "    this.fadeDirection = reducedMotion ? null : 'in';",
+      "reason": "Skip the worker entrance fade only under reduced motion."
+    },
+    {
+      "before": "    const begin = () => {\n      this.hideTimer = null;\n      this.fadeDirection = 'out';",
+      "after": "    const begin = () => {\n      this.hideTimer = null;\n      if (this.prefersReducedMotion()) {\n        this.sprite.setAlpha(0);\n        this.finishFade(true);\n        return;\n      }\n      this.fadeDirection = 'out';",
+      "reason": "Preserve delayed departure timing, then remove the worker without an opacity fade under reduced motion."
+    },
+    {
+      "before": "  update(dt: number): void {\n    if (this.fadeDirection) {\n      this.fadeElapsed += dt;\n      const t = Math.min(this.fadeElapsed / this.fadeDuration, 1);\n      const alpha = (this.fadeDirection === 'in' ? t : 1 - t) * this.targetAlpha;\n      this.sprite.setAlpha(alpha);\n      if (t >= 1) {\n        const reachedZero = this.fadeDirection === 'out';\n        this.fadeDirection = null;\n        if (reachedZero) {\n          this.isVisible = false;\n          this.sprite.container.parent?.removeChild(this.sprite.container);\n          this.thoughtBubble.hide();\n          this.thoughtBubble.container.parent?.removeChild(this.thoughtBubble.container);\n          this.workGlow.parent?.removeChild(this.workGlow);\n          this.selectionRing.parent?.removeChild(this.selectionRing);\n          this.deskCup.parent?.removeChild(this.deskCup);\n        }\n      }\n    } else if (this.isVisible) {\n      // ease sprite alpha toward target (for ghost dimming)\n      const a = this.sprite.container.alpha;\n      if (Math.abs(a - this.targetAlpha) > 0.01) {\n        this.sprite.setAlpha(lerp(a, this.targetAlpha, Math.min(1, dt / 0.2)));\n      }\n    }",
+      "after": "  update(dt: number): void {\n    const reducedMotion = this.prefersReducedMotion();\n    if (this.fadeDirection) {\n      if (reducedMotion) {\n        const reachedZero = this.fadeDirection === 'out';\n        this.sprite.setAlpha(reachedZero ? 0 : this.targetAlpha);\n        this.finishFade(reachedZero);\n      } else {\n        this.fadeElapsed += dt;\n        const t = Math.min(this.fadeElapsed / this.fadeDuration, 1);\n        const alpha = (this.fadeDirection === 'in' ? t : 1 - t) * this.targetAlpha;\n        this.sprite.setAlpha(alpha);\n        if (t >= 1) this.finishFade(this.fadeDirection === 'out');\n      }\n    } else if (this.isVisible) {\n      const a = this.sprite.container.alpha;\n      if (reducedMotion) {\n        if (a !== this.targetAlpha) this.sprite.setAlpha(this.targetAlpha);\n      } else if (Math.abs(a - this.targetAlpha) > 0.01) {\n        // ease sprite alpha toward target (for ghost dimming)\n        this.sprite.setAlpha(lerp(a, this.targetAlpha, Math.min(1, dt / 0.2)));\n      }\n    }",
+      "reason": "Settle active fades and ghost opacity immediately on live reduced-motion changes while retaining normal easing."
     }
   ],
   "src/renderer/src/scene/office/CharacterSprite.ts": [
