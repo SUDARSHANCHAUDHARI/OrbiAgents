@@ -616,10 +616,23 @@ export class Character {
     });
   }
 
+  private finishFade(reachedZero: boolean): void {
+    this.fadeDirection = null;
+    if (!reachedZero) return;
+    this.isVisible = false;
+    this.sprite.container.parent?.removeChild(this.sprite.container);
+    this.thoughtBubble.hide();
+    this.thoughtBubble.container.parent?.removeChild(this.thoughtBubble.container);
+    this.workGlow.parent?.removeChild(this.workGlow);
+    this.selectionRing.parent?.removeChild(this.selectionRing);
+    this.deskCup.parent?.removeChild(this.deskCup);
+  }
+
   show(parent: Container): void {
     if (this.hideTimer) { clearTimeout(this.hideTimer); this.hideTimer = null; }
     this.isVisible = true;
-    this.sprite.setAlpha(0);
+    const reducedMotion = this.prefersReducedMotion();
+    this.sprite.setAlpha(reducedMotion ? this.targetAlpha : 0);
     parent.addChild(this.workGlow);
     parent.addChild(this.selectionRing);
     parent.addChild(this.sprite.container);
@@ -628,7 +641,7 @@ export class Character {
     parent.addChild(this.deskCup);
     parent.addChild(this.thoughtBubble.container);
     this.enableClick();
-    this.fadeDirection = 'in';
+    this.fadeDirection = reducedMotion ? null : 'in';
     this.fadeDuration = 0.5;
     this.fadeElapsed = 0;
   }
@@ -637,6 +650,11 @@ export class Character {
     if (this.hideTimer) { clearTimeout(this.hideTimer); this.hideTimer = null; }
     const begin = () => {
       this.hideTimer = null;
+      if (this.prefersReducedMotion()) {
+        this.sprite.setAlpha(0);
+        this.finishFade(true);
+        return;
+      }
       this.fadeDirection = 'out';
       this.fadeDuration = 0.6;
       this.fadeElapsed = 0;
@@ -646,28 +664,25 @@ export class Character {
   }
 
   update(dt: number): void {
+    const reducedMotion = this.prefersReducedMotion();
     if (this.fadeDirection) {
-      this.fadeElapsed += dt;
-      const t = Math.min(this.fadeElapsed / this.fadeDuration, 1);
-      const alpha = (this.fadeDirection === 'in' ? t : 1 - t) * this.targetAlpha;
-      this.sprite.setAlpha(alpha);
-      if (t >= 1) {
+      if (reducedMotion) {
         const reachedZero = this.fadeDirection === 'out';
-        this.fadeDirection = null;
-        if (reachedZero) {
-          this.isVisible = false;
-          this.sprite.container.parent?.removeChild(this.sprite.container);
-          this.thoughtBubble.hide();
-          this.thoughtBubble.container.parent?.removeChild(this.thoughtBubble.container);
-          this.workGlow.parent?.removeChild(this.workGlow);
-          this.selectionRing.parent?.removeChild(this.selectionRing);
-          this.deskCup.parent?.removeChild(this.deskCup);
-        }
+        this.sprite.setAlpha(reachedZero ? 0 : this.targetAlpha);
+        this.finishFade(reachedZero);
+      } else {
+        this.fadeElapsed += dt;
+        const t = Math.min(this.fadeElapsed / this.fadeDuration, 1);
+        const alpha = (this.fadeDirection === 'in' ? t : 1 - t) * this.targetAlpha;
+        this.sprite.setAlpha(alpha);
+        if (t >= 1) this.finishFade(this.fadeDirection === 'out');
       }
     } else if (this.isVisible) {
-      // ease sprite alpha toward target (for ghost dimming)
       const a = this.sprite.container.alpha;
-      if (Math.abs(a - this.targetAlpha) > 0.01) {
+      if (reducedMotion) {
+        if (a !== this.targetAlpha) this.sprite.setAlpha(this.targetAlpha);
+      } else if (Math.abs(a - this.targetAlpha) > 0.01) {
+        // ease sprite alpha toward target (for ghost dimming)
         this.sprite.setAlpha(lerp(a, this.targetAlpha, Math.min(1, dt / 0.2)));
       }
     }
