@@ -59,8 +59,10 @@ export class ToolBubble {
   private isThinking = false;
   private dotsElapsed = 0;
   private dotsPhase = 0;
+  private prefersReducedMotion: () => boolean;
 
-  constructor() {
+  constructor(prefersReducedMotion: () => boolean = () => false) {
+    this.prefersReducedMotion = prefersReducedMotion;
     this.container = new Container();
     this.container.zIndex = 100000;
     this.container.eventMode = 'none';
@@ -99,7 +101,7 @@ export class ToolBubble {
     if (this.isThinking) {
       this.dotsElapsed = 0;
       this.dotsPhase = 0;
-      this.label.text = '.';
+      this.label.text = this.prefersReducedMotion() ? '...' : '.';
     } else {
       const displayText = target ? `${icon} ${target}` : icon;
       // Word-wrap (style.wordWrap) handles the horizontal fit, so the bubble can no
@@ -127,6 +129,14 @@ export class ToolBubble {
   }
 
   private reveal(): void {
+    if (this.prefersReducedMotion()) {
+      this.state = 'visible';
+      this.fadeElapsed = 0;
+      this.lingerElapsed = 0;
+      this.container.alpha = 1;
+      this.container.visible = true;
+      return;
+    }
     if (this.state === 'hidden' || this.state === 'fading-out') {
       this.state = 'fading-in';
       this.fadeElapsed = 0;
@@ -166,7 +176,11 @@ export class ToolBubble {
   }
 
   update(dt: number): void {
-    if (this.isThinking && (this.state === 'visible' || this.state === 'fading-in')) {
+    const reducedMotion = this.prefersReducedMotion();
+    if (reducedMotion && this.isThinking && this.label.text !== '...') {
+      this.label.text = '...';
+      this.redrawBg();
+    } else if (!reducedMotion && this.isThinking && (this.state === 'visible' || this.state === 'fading-in')) {
       this.dotsElapsed += dt;
       const newPhase = Math.floor(this.dotsElapsed / DOTS_CYCLE_SPEED) % 3;
       if (newPhase !== this.dotsPhase) {
@@ -178,6 +192,11 @@ export class ToolBubble {
 
     switch (this.state) {
       case 'fading-in': {
+        if (reducedMotion) {
+          this.state = 'visible';
+          this.container.alpha = 1;
+          break;
+        }
         this.fadeElapsed += dt;
         const t = Math.min(this.fadeElapsed / FADE_IN_DURATION, 1);
         this.container.alpha = t;
@@ -187,12 +206,20 @@ export class ToolBubble {
       case 'lingering': {
         this.lingerElapsed += dt;
         if (this.lingerElapsed >= LINGER_DURATION) {
+          if (reducedMotion) {
+            this.hide();
+            break;
+          }
           this.state = 'fading-out';
           this.fadeElapsed = 0;
         }
         break;
       }
       case 'fading-out': {
+        if (reducedMotion) {
+          this.hide();
+          break;
+        }
         this.fadeElapsed += dt;
         const t = Math.min(this.fadeElapsed / FADE_OUT_DURATION, 1);
         this.container.alpha = 1 - t;
