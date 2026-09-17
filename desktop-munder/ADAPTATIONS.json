@@ -113,6 +113,78 @@
       "before": "const OFFSET_Y = -38;                   // a touch higher than the tool bubble",
       "after": "const OFFSET_Y = -60;                   // clear glyph + identity overlays below",
       "reason": "Stack thought-cloud tails above transient glyphs and worker identity nameplates."
+    },
+    {
+      "before": "  private boundsW = 0;\n  private boundsH = 0;\n\n  constructor() {",
+      "after": "  private boundsW = 0;\n  private boundsH = 0;\n  private prefersReducedMotion: () => boolean;\n\n  constructor(prefersReducedMotion: () => boolean = () => false) {\n    this.prefersReducedMotion = prefersReducedMotion;",
+      "reason": "Give thought bubbles live access to the scene-owned motion preference."
+    },
+    {
+      "before": "      this.label.text = '.';",
+      "after": "      this.label.text = this.prefersReducedMotion() ? '...' : '.';",
+      "reason": "Start thinking bubbles on a stable complete ellipsis under reduced motion."
+    },
+    {
+      "before": "  private reveal(): void {\n    if (this.state === 'hidden' || this.state === 'fading-out') {",
+      "after": "  private reveal(): void {\n    if (this.prefersReducedMotion()) {\n      this.state = 'visible';\n      this.fadeElapsed = 0;\n      this.lingerElapsed = 0;\n      this.container.alpha = 1;\n      this.container.visible = true;\n      return;\n    }\n    if (this.state === 'hidden' || this.state === 'fading-out') {",
+      "reason": "Reveal thought bubbles immediately when reduced motion is active."
+    },
+    {
+      "before": "  update(dt: number): void {\n    if (this.isThinking && (this.state === 'visible' || this.state === 'fading-in')) {",
+      "after": "  update(dt: number): void {\n    const reducedMotion = this.prefersReducedMotion();\n    if (reducedMotion && this.isThinking && this.label.text !== '...') {\n      this.label.text = '...';\n      this.redraw();\n    } else if (!reducedMotion && this.isThinking && (this.state === 'visible' || this.state === 'fading-in')) {",
+      "reason": "Freeze existing thought-dot loops immediately when the live preference changes."
+    },
+    {
+      "before": "      case 'fading-in': {\n        this.fadeElapsed += dt;",
+      "after": "      case 'fading-in': {\n        if (reducedMotion) {\n          this.state = 'visible';\n          this.container.alpha = 1;\n          break;\n        }\n        this.fadeElapsed += dt;",
+      "reason": "Complete an in-progress thought-bubble fade immediately after reduced motion is enabled."
+    },
+    {
+      "before": "        if (this.lingerElapsed >= LINGER_DURATION) {\n          this.state = 'fading-out';",
+      "after": "        if (this.lingerElapsed >= LINGER_DURATION) {\n          if (reducedMotion) {\n            this.hide();\n            break;\n          }\n          this.state = 'fading-out';",
+      "reason": "Preserve thought-bubble linger timing while skipping its exit fade under reduced motion."
+    },
+    {
+      "before": "      case 'fading-out': {\n        this.fadeElapsed += dt;",
+      "after": "      case 'fading-out': {\n        if (reducedMotion) {\n          this.hide();\n          break;\n        }\n        this.fadeElapsed += dt;",
+      "reason": "Hide an already fading thought bubble immediately after reduced motion is enabled."
+    }
+  ],
+  "src/renderer/src/scene/office/ToolBubble.ts": [
+    {
+      "before": "  private dotsElapsed = 0;\n  private dotsPhase = 0;\n\n  constructor() {",
+      "after": "  private dotsElapsed = 0;\n  private dotsPhase = 0;\n  private prefersReducedMotion: () => boolean;\n\n  constructor(prefersReducedMotion: () => boolean = () => false) {\n    this.prefersReducedMotion = prefersReducedMotion;",
+      "reason": "Give tool bubbles live access to their owning scene's motion preference."
+    },
+    {
+      "before": "      this.label.text = '.';",
+      "after": "      this.label.text = this.prefersReducedMotion() ? '...' : '.';",
+      "reason": "Start tool thinking bubbles on a stable complete ellipsis under reduced motion."
+    },
+    {
+      "before": "  private reveal(): void {\n    if (this.state === 'hidden' || this.state === 'fading-out') {",
+      "after": "  private reveal(): void {\n    if (this.prefersReducedMotion()) {\n      this.state = 'visible';\n      this.fadeElapsed = 0;\n      this.lingerElapsed = 0;\n      this.container.alpha = 1;\n      this.container.visible = true;\n      return;\n    }\n    if (this.state === 'hidden' || this.state === 'fading-out') {",
+      "reason": "Reveal tool bubbles immediately when reduced motion is active."
+    },
+    {
+      "before": "  update(dt: number): void {\n    if (this.isThinking && (this.state === 'visible' || this.state === 'fading-in')) {",
+      "after": "  update(dt: number): void {\n    const reducedMotion = this.prefersReducedMotion();\n    if (reducedMotion && this.isThinking && this.label.text !== '...') {\n      this.label.text = '...';\n      this.redrawBg();\n    } else if (!reducedMotion && this.isThinking && (this.state === 'visible' || this.state === 'fading-in')) {",
+      "reason": "Freeze existing tool-dot loops immediately when the live preference changes."
+    },
+    {
+      "before": "      case 'fading-in': {\n        this.fadeElapsed += dt;",
+      "after": "      case 'fading-in': {\n        if (reducedMotion) {\n          this.state = 'visible';\n          this.container.alpha = 1;\n          break;\n        }\n        this.fadeElapsed += dt;",
+      "reason": "Complete an in-progress tool-bubble fade immediately after reduced motion is enabled."
+    },
+    {
+      "before": "        if (this.lingerElapsed >= LINGER_DURATION) {\n          this.state = 'fading-out';",
+      "after": "        if (this.lingerElapsed >= LINGER_DURATION) {\n          if (reducedMotion) {\n            this.hide();\n            break;\n          }\n          this.state = 'fading-out';",
+      "reason": "Preserve tool-bubble linger timing while skipping its exit fade under reduced motion."
+    },
+    {
+      "before": "      case 'fading-out': {\n        this.fadeElapsed += dt;",
+      "after": "      case 'fading-out': {\n        if (reducedMotion) {\n          this.hide();\n          break;\n        }\n        this.fadeElapsed += dt;",
+      "reason": "Hide an already fading tool bubble immediately after reduced motion is enabled."
     }
   ],
   "src/renderer/src/scene/office/Character.ts": [
@@ -380,6 +452,11 @@
       "before": "    this.thoughtBubble.update(dt);\n    if (!this.isVisible) return;",
       "after": "    this.thoughtBubble.update(dt);\n    this.sprite.setReducedMotion(this.prefersReducedMotion());\n    if (!this.isVisible) return;",
       "reason": "Synchronize live motion-preference changes into existing worker sprites."
+    },
+    {
+      "before": "    this.thoughtBubble = new ThoughtBubble();",
+      "after": "    this.thoughtBubble = new ThoughtBubble(this.prefersReducedMotion);",
+      "reason": "Share the live scene motion preference with each worker's existing thought bubble."
     }
   ],
   "src/renderer/src/scene/office/CharacterSprite.ts": [

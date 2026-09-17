@@ -402,3 +402,5 @@ Agent identity-nameplate slice: hovering or selecting a worker now reveals a com
 Nameplate zoom-readability slice: worker identity labels now share the activity bubble's below-1× counter-scaling rule. A bottom-center pivot keeps each label centered above its worker as it compensates for a fitted, zoomed-out room, while 1× and enlarged views remain unchanged.
 
 Live nameplate-sync slice: renaming a running agent now redraws its existing floor nameplate in place, including stable-ID fallback, ellipsis, background width, and centered pivot. The idempotent update runs before activity-state short-circuiting and does not recreate or reposition the worker.
+
+Reduced-motion worker-bubble slice (2026-09-17): worker thought and tool bubbles now skip entrance and exit fades when reduced motion is active, while keeping their existing linger timing and content lifecycle. Animated thinking dots become a stable full ellipsis, and live preference changes settle bubbles already fading or thinking without rebuilding the worker.

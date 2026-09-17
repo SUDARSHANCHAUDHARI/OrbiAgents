@@ -173,7 +173,7 @@ export class Character {
     this.py = pos.y + this.mapRenderer.tileSize;
     this.sprite.setPosition(this.px, this.py);
 
-    this.thoughtBubble = new ThoughtBubble();
+    this.thoughtBubble = new ThoughtBubble(this.prefersReducedMotion);
     // Keep the cloud inside the world — Michael's corner office would
     // otherwise push his bubble off the top/left map edge.
     this.thoughtBubble.setBounds(
