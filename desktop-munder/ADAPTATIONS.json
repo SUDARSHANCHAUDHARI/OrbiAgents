@@ -209,6 +209,38 @@
       "reason": "Hide an already fading tool bubble immediately after reduced motion is enabled."
     }
   ],
+  "src/renderer/src/scene/office/MessageEnvelope.ts": [
+    {
+      "before": "const BURST_DURATION = 0.34; // arrival sparkle ring",
+      "after": "const BURST_DURATION = 0.34; // arrival sparkle ring\nconst STEADY_DURATION = 0.6;",
+      "reason": "Keep the nonmoving arrival cue visible for a short ticker-owned interval."
+    },
+    {
+      "before": "  private burstElapsed = 0;\n  private finished = false;",
+      "after": "  private burstElapsed = 0;\n  private finished = false;\n  private steadyArrival = false;\n  private steadyElapsed = 0;\n  private prefersReducedMotion: () => boolean;",
+      "reason": "Retain the live motion reader and bounded steady-arrival lifecycle."
+    },
+    {
+      "before": "    end: { x: number; y: number },\n    act: MessageAct,\n    needsHuman: boolean\n  ) {\n    this.sx = start.x;",
+      "after": "    end: { x: number; y: number },\n    act: MessageAct,\n    needsHuman: boolean,\n    prefersReducedMotion: () => boolean = () => false\n  ) {\n    this.prefersReducedMotion = prefersReducedMotion;\n    this.sx = start.x;",
+      "reason": "Accept a live reduced-motion reader without changing standalone callers."
+    },
+    {
+      "before": "    this.setPos(this.sx, this.sy);",
+      "after": "    this.setPos(this.sx, this.sy);\n    if (this.prefersReducedMotion()) this.enterSteadyArrival();",
+      "reason": "Avoid painting the envelope at its travel origin when reduced motion is active initially."
+    },
+    {
+      "before": "  private setPos(x: number, y: number): void {\n    this.container.x = Math.round(x);\n    this.container.y = Math.round(y);\n  }",
+      "after": "  private setPos(x: number, y: number): void {\n    this.container.x = Math.round(x);\n    this.container.y = Math.round(y);\n  }\n\n  private enterSteadyArrival(): void {\n    this.steadyArrival = true;\n    this.steadyElapsed = 0;\n    this.body.visible = true;\n    this.body.rotation = 0;\n    this.burst.visible = false;\n    this.container.alpha = 1;\n    this.setPos(this.ex, this.ey);\n  }",
+      "reason": "Represent delivery with a fixed visible envelope at the recipient and no travel or burst motion."
+    },
+    {
+      "before": "  update(dt: number): boolean {\n    if (this.finished) return true;\n\n    if (!this.bursting) {",
+      "after": "  update(dt: number): boolean {\n    if (this.finished) return true;\n    if (!this.steadyArrival && this.prefersReducedMotion()) this.enterSteadyArrival();\n    if (this.steadyArrival) {\n      this.steadyElapsed += dt;\n      if (this.steadyElapsed >= STEADY_DURATION) this.finished = true;\n      return this.finished;\n    }\n\n    if (!this.bursting) {",
+      "reason": "Snap an in-flight envelope to the steady arrival cue and retire it through the existing ticker."
+    }
+  ],
   "src/renderer/src/scene/office/Character.ts": [
     {
       "before": "  private workGlow: Graphics;\n  private workGlowElapsed = 0;",
@@ -993,6 +1025,11 @@
       "before": "      reducedMotionQuery.addEventListener('change', onReducedMotionChange);",
       "after": "      prefersReducedMotion = reducedMotionQuery.matches;\n      syncAmbientDisplayMotion();\n      reducedMotionQuery.addEventListener('change', onReducedMotionChange);",
       "reason": "Reconcile any OS preference change that occurred during asynchronous scene loading before attaching the live listener."
+    },
+    {
+      "before": "        const env = new MessageEnvelope(from, to, act, needsHuman);",
+      "after": "        const env = new MessageEnvelope(from, to, act, needsHuman, () => prefersReducedMotion);",
+      "reason": "Pass the live scene motion preference into every message-delivery cue."
     }
   ],
   "src/renderer/src/scene/office/portraitArt.ts": [
