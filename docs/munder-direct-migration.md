@@ -404,3 +404,5 @@ Nameplate zoom-readability slice: worker identity labels now share the activity 
 Live nameplate-sync slice: renaming a running agent now redraws its existing floor nameplate in place, including stable-ID fallback, ellipsis, background width, and centered pivot. The idempotent update runs before activity-state short-circuiting and does not recreate or reposition the worker.
 
 Reduced-motion worker-bubble slice (2026-09-17): worker thought and tool bubbles now skip entrance and exit fades when reduced motion is active, while keeping their existing linger timing and content lifecycle. Animated thinking dots become a stable full ellipsis, and live preference changes settle bubbles already fading or thinking without rebuilding the worker.
+
+Reduced-motion recent-message slice (2026-09-17): the worker detail typewriter now reveals the complete recent response immediately when reduced motion is active. Enabling the preference mid-stream completes the current response, disabling it does not replay unchanged text, later response seeds retain normal animation, and the media-query listener is released with the hook.
