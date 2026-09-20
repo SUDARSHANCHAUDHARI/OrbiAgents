@@ -117,34 +117,46 @@ export function FileTree({ root, activeRel, onOpenFile, onCopyPath }: FileTreePr
     return (
       <div key={node.rel}>
         <div
-          onClick={() => toggle(node)}
           style={{
             display: 'flex', alignItems: 'center', gap: 4,
-            padding: '2px 6px',
-            paddingLeft: 6 + depth * 14,
+            paddingRight: 6,
             background: isActive ? 'var(--cth-lemon-light)' : 'transparent',
-            cursor: 'pointer',
             fontFamily: 'var(--cth-font-ui)',
             fontSize: 12,
             color: 'var(--cth-ink-900)',
             userSelect: 'none'
           }}
         >
-          {node.isDir ? (
-            <span style={{
-              width: 10, display: 'inline-block', textAlign: 'center',
-              fontFamily: 'var(--cth-font-mono)', color: 'var(--cth-ink-700)'
-            }}>
-              {node.expanded ? '▾' : '▸'}
-            </span>
-          ) : (
-            <span style={{ width: 10, display: 'inline-block' }} />
-          )}
-          <Icon name={node.isDir ? 'folder' : 'code'} />
-          <span style={{
-            flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
-          }}>{node.name}</span>
           <button
+            type="button"
+            onClick={() => { void toggle(node); }}
+            aria-expanded={node.isDir ? node.expanded : undefined}
+            aria-current={isActive ? 'page' : undefined}
+            style={{
+              flex: 1, minWidth: 0,
+              display: 'flex', alignItems: 'center', gap: 4,
+              padding: '2px 0', paddingLeft: 6 + depth * 14,
+              border: 'none', background: 'transparent', cursor: 'pointer',
+              textAlign: 'left'
+            }}
+          >
+            {node.isDir ? (
+              <span aria-hidden style={{
+                width: 10, display: 'inline-block', textAlign: 'center',
+                fontFamily: 'var(--cth-font-mono)', color: 'var(--cth-ink-700)'
+              }}>
+                {node.expanded ? '▾' : '▸'}
+              </span>
+            ) : (
+              <span aria-hidden style={{ width: 10, display: 'inline-block' }} />
+            )}
+            <Icon name={node.isDir ? 'folder' : 'code'} />
+            <span style={{
+              flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'
+            }}>{node.name}</span>
+          </button>
+          <button
+            type="button"
             onClick={(e) => { e.stopPropagation(); onCopyPath(node.rel); }}
             title={t('fileTree.copyPathTitle')}
             style={{

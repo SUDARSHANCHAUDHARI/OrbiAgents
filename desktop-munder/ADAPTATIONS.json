@@ -560,6 +560,48 @@
       "reason": "Reapply reduced-motion playback whenever worker activity or facing changes."
     }
   ],
+  "src/renderer/src/components/FileTree.tsx": [
+    {
+      "before": "        <div\n          onClick={() => toggle(node)}\n          style={{",
+      "after": "        <div\n          style={{",
+      "reason": "Move file and folder activation from a mouse-only wrapper onto a native row button."
+    },
+    {
+      "before": "            padding: '2px 6px',\n            paddingLeft: 6 + depth * 14,",
+      "after": "            paddingRight: 6,",
+      "reason": "Leave the row wrapper responsible only for shared background and trailing action spacing."
+    },
+    {
+      "before": "            background: isActive ? 'var(--cth-lemon-light)' : 'transparent',\n            cursor: 'pointer',",
+      "after": "            background: isActive ? 'var(--cth-lemon-light)' : 'transparent',",
+      "reason": "Put the pointer affordance on the native row action instead of its inert wrapper."
+    },
+    {
+      "before": "          {node.isDir ? (",
+      "after": "          <button\n            type=\"button\"\n            onClick={() => { void toggle(node); }}\n            aria-expanded={node.isDir ? node.expanded : undefined}\n            aria-current={isActive ? 'page' : undefined}\n            style={{\n              flex: 1, minWidth: 0,\n              display: 'flex', alignItems: 'center', gap: 4,\n              padding: '2px 0', paddingLeft: 6 + depth * 14,\n              border: 'none', background: 'transparent', cursor: 'pointer',\n              textAlign: 'left'\n            }}\n          >\n            {node.isDir ? (",
+      "reason": "Expose file opening and folder expansion through a native keyboard-operable button with state."
+    },
+    {
+      "before": "            <span style={{\n              width: 10, display: 'inline-block', textAlign: 'center',",
+      "after": "              <span aria-hidden style={{\n                width: 10, display: 'inline-block', textAlign: 'center',",
+      "reason": "Hide the expanded-folder disclosure glyph from assistive technology."
+    },
+    {
+      "before": "              fontFamily: 'var(--cth-font-mono)', color: 'var(--cth-ink-700)'\n            }}>\n              {node.expanded ? '▾' : '▸'}\n            </span>\n          ) : (\n            <span style={{ width: 10, display: 'inline-block' }} />\n          )}",
+      "after": "                fontFamily: 'var(--cth-font-mono)', color: 'var(--cth-ink-700)'\n              }}>\n                {node.expanded ? '▾' : '▸'}\n              </span>\n            ) : (\n              <span aria-hidden style={{ width: 10, display: 'inline-block' }} />\n            )}",
+      "reason": "Keep disclosure layout inside the native row button and hide the empty file spacer."
+    },
+    {
+      "before": "          <Icon name={node.isDir ? 'folder' : 'code'} />\n          <span style={{\n            flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'\n          }}>{node.name}</span>",
+      "after": "            <Icon name={node.isDir ? 'folder' : 'code'} />\n            <span style={{\n              flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap'\n            }}>{node.name}</span>\n          </button>",
+      "reason": "Keep the existing icon and file name as the native row button's accessible content."
+    },
+    {
+      "before": "          <button\n            onClick={(e) => { e.stopPropagation(); onCopyPath(node.rel); }}",
+      "after": "          <button\n            type=\"button\"\n            onClick={(e) => { e.stopPropagation(); onCopyPath(node.rel); }}",
+      "reason": "Make the independent Copy Path control explicit and safe inside surrounding form contexts."
+    }
+  ],
   "src/renderer/src/components/AgentCard.tsx": [
     {
       "before": "        <span\n          title={doingCount === 1",
