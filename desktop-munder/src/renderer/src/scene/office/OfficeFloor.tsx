@@ -55,6 +55,15 @@ interface CoffeeRun {
   timer: number;
 }
 
+type FloorCommandTab = 'triggers' | 'tasks' | 'human';
+
+function openFloorCommandTab(tab: FloorCommandTab): void {
+  const state = useStore.getState();
+  const orchestrator = state.agents.find((agent) => agent.isGod);
+  if (orchestrator) state.select(orchestrator.id);
+  state.requestCommandCenterTab(tab);
+}
+
 
 interface Runtime {
   character: Character;
@@ -513,10 +522,7 @@ export function OfficeFloor() {
       drawCalendarAffordance(false);
       calG.on('pointertap', (ev) => {
         ev.stopPropagation();
-        const st = useStore.getState();
-        const god = st.agents.find((a) => a.isGod);
-        if (god) st.select(god.id);
-        st.requestCommandCenterTab('triggers');
+        openFloorCommandTab('triggers');
       });
       calG.on('pointerover', () => {
         calendarPlacard.visible = true;
@@ -1279,10 +1285,7 @@ export function OfficeFloor() {
       drawBoardAffordance(false);
       boardG.on('pointertap', (ev) => {
         ev.stopPropagation();
-        const st = useStore.getState();
-        const god = st.agents.find((a) => a.isGod);
-        if (god) st.select(god.id);
-        st.requestCommandCenterTab('tasks');
+        openFloorCommandTab('tasks');
       });
       boardG.on('pointerover', () => {
         boardPlacard.visible = true;
@@ -1452,10 +1455,7 @@ export function OfficeFloor() {
       drawAskAffordance(false);
       askG.on('pointertap', (ev) => {
         ev.stopPropagation();
-        const st = useStore.getState();
-        const god = st.agents.find((a) => a.isGod);
-        if (god) st.select(god.id);
-        st.requestCommandCenterTab('human');
+        openFloorCommandTab('human');
       });
       askG.on('pointerover', () => {
         askPlacard.visible = true;
@@ -2144,16 +2144,33 @@ export function OfficeFloor() {
 
   return (
     <div
-      ref={hostRef}
       style={{
         width: '100%', height: '100%',
         position: 'relative',
         boxShadow: 'var(--cth-panel-border)',
         overflow: 'hidden',
-        imageRendering: 'pixelated',
         background: hex(colors.ink[900]),
       }}
-    />
+    >
+      <div ref={hostRef} style={{ width: '100%', height: '100%', imageRendering: 'pixelated' }} />
+      <div className="cth-floor-action-dock" role="toolbar" aria-label={t('office.floorActions')}>
+        <button type="button" onClick={() => useStore.getState().setAddAgentOpen(true)}>
+          {t('agentStrip.addAgent')}
+        </button>
+        <button type="button" onClick={() => openFloorCommandTab('triggers')}>
+          {t('commandCenter.tabs.triggers')}
+        </button>
+        <button type="button" onClick={() => openFloorCommandTab('tasks')}>
+          {t('commandCenter.tabs.tasks')}
+        </button>
+        <button type="button" onClick={() => openFloorCommandTab('human')}>
+          {t('commandCenter.tabs.human')}
+        </button>
+        <button type="button" className="cth-floor-action-dock__close" onClick={() => window.close()}>
+          {t('office.closeApplication')}
+        </button>
+      </div>
+    </div>
   );
 }
 

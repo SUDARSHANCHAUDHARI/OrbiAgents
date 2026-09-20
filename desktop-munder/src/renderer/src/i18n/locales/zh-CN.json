@@ -704,6 +704,8 @@
   },
   "office": {
     "gpuError": "办公楼层丢失了 GPU 上下文。\n\n同时使用 GPU 的终端太多了。\n关闭几个智能体终端，或重启应用，即可恢复。",
+    "floorActions": "办公楼层操作",
+    "closeApplication": "关闭应用",
     "errand": {
       "water": [
         "给植物浇水 🌿",

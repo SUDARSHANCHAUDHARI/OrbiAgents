@@ -1055,6 +1055,41 @@
       "before": "        const env = new MessageEnvelope(from, to, act, needsHuman);",
       "after": "        const env = new MessageEnvelope(from, to, act, needsHuman, () => prefersReducedMotion);",
       "reason": "Pass the live scene motion preference into every message-delivery cue."
+    },
+    {
+      "before": "interface CoffeeRun {\n  phase: 'toTray' | 'taking' | 'toMachine' | 'brewing' | 'toSink' | 'washing' | 'toTrayBack' | 'placing';\n  timer: number;\n}\n",
+      "after": "interface CoffeeRun {\n  phase: 'toTray' | 'taking' | 'toMachine' | 'brewing' | 'toSink' | 'washing' | 'toTrayBack' | 'placing';\n  timer: number;\n}\n\ntype FloorCommandTab = 'triggers' | 'tasks' | 'human';\n\nfunction openFloorCommandTab(tab: FloorCommandTab): void {\n  const state = useStore.getState();\n  const orchestrator = state.agents.find((agent) => agent.isGod);\n  if (orchestrator) state.select(orchestrator.id);\n  state.requestCommandCenterTab(tab);\n}\n",
+      "reason": "Share one reviewed command-center navigation path between pointer and keyboard floor controls."
+    },
+    {
+      "before": "        const st = useStore.getState();\n        const god = st.agents.find((a) => a.isGod);\n        if (god) st.select(god.id);\n        st.requestCommandCenterTab('triggers');",
+      "after": "        openFloorCommandTab('triggers');",
+      "reason": "Route the calendar pointer action through the shared floor command helper."
+    },
+    {
+      "before": "        const st = useStore.getState();\n        const god = st.agents.find((a) => a.isGod);\n        if (god) st.select(god.id);\n        st.requestCommandCenterTab('tasks');",
+      "after": "        openFloorCommandTab('tasks');",
+      "reason": "Route the task-board pointer action through the shared floor command helper."
+    },
+    {
+      "before": "        const st = useStore.getState();\n        const god = st.agents.find((a) => a.isGod);\n        if (god) st.select(god.id);\n        st.requestCommandCenterTab('human');",
+      "after": "        openFloorCommandTab('human');",
+      "reason": "Route the human-board pointer action through the shared floor command helper."
+    },
+    {
+      "before": "    <div\n      ref={hostRef}\n      style={{",
+      "after": "    <div\n      style={{",
+      "reason": "Keep the React action dock outside the Pixi-owned host node."
+    },
+    {
+      "before": "        overflow: 'hidden',\n        imageRendering: 'pixelated',\n        background: hex(colors.ink[900]),",
+      "after": "        overflow: 'hidden',\n        background: hex(colors.ink[900]),",
+      "reason": "Move pixel rendering onto the nested canvas host without changing the floor container."
+    },
+    {
+      "before": "    />\n  );",
+      "after": "    >\n      <div ref={hostRef} style={{ width: '100%', height: '100%', imageRendering: 'pixelated' }} />\n      <div className=\"cth-floor-action-dock\" role=\"toolbar\" aria-label={t('office.floorActions')}>\n        <button type=\"button\" onClick={() => useStore.getState().setAddAgentOpen(true)}>\n          {t('agentStrip.addAgent')}\n        </button>\n        <button type=\"button\" onClick={() => openFloorCommandTab('triggers')}>\n          {t('commandCenter.tabs.triggers')}\n        </button>\n        <button type=\"button\" onClick={() => openFloorCommandTab('tasks')}>\n          {t('commandCenter.tabs.tasks')}\n        </button>\n        <button type=\"button\" onClick={() => openFloorCommandTab('human')}>\n          {t('commandCenter.tabs.human')}\n        </button>\n        <button type=\"button\" className=\"cth-floor-action-dock__close\" onClick={() => window.close()}>\n          {t('office.closeApplication')}\n        </button>\n      </div>\n    </div>\n  );",
+      "reason": "Expose every pointer-only floor fixture through a compact native keyboard toolbar."
     }
   ],
   "src/renderer/src/scene/office/portraitArt.ts": [
@@ -1347,6 +1382,11 @@
   ],
   "src/renderer/src/i18n/locales/en.json": [
     {
+      "before": "    \"gpuError\": \"The office floor lost its GPU context.\\n\\nToo many terminals are using the GPU at once.\\nClose a few agent terminals, or restart the app, to bring it back.\",",
+      "after": "    \"gpuError\": \"The office floor lost its GPU context.\\n\\nToo many terminals are using the GPU at once.\\nClose a few agent terminals, or restart the app, to bring it back.\",\n    \"floorActions\": \"Office floor actions\",\n    \"closeApplication\": \"Close app\",",
+      "reason": "Label the native office-floor toolbar and its application close action for English assistive technology."
+    },
+    {
       "before": "      \"persona\": \"WELCOME TO MUNDER DIFFLIN\",",
       "after": "      \"persona\": \"WELCOME TO ORBIAGENTS\",",
       "reason": "Replace the upstream product identity on the English first-run onboarding screen."
@@ -1394,6 +1434,11 @@
   ],
   "src/renderer/src/i18n/locales/zh-CN.json": [
     {
+      "before": "    \"gpuError\": \"办公楼层丢失了 GPU 上下文。\\n\\n同时使用 GPU 的终端太多了。\\n关闭几个智能体终端，或重启应用，即可恢复。\",",
+      "after": "    \"gpuError\": \"办公楼层丢失了 GPU 上下文。\\n\\n同时使用 GPU 的终端太多了。\\n关闭几个智能体终端，或重启应用，即可恢复。\",\n    \"floorActions\": \"办公楼层操作\",\n    \"closeApplication\": \"关闭应用\",",
+      "reason": "Label the native office-floor toolbar and its application close action in Simplified Chinese."
+    },
+    {
       "before": "  \"settingsHero\": {\n    \"sponsoredBy\": \"赞助方\",\n    \"visit\": \"访问\",\n    \"whatsNew\": \"新功能\",",
       "after": "  \"settingsHero\": {\n    \"whatsNew\": \"新功能\",",
       "reason": "Use OrbiAgents product language and remove retired promotional translations in this locale."
@@ -1440,6 +1485,11 @@
     }
   ],
   "src/renderer/src/i18n/locales/ar.json": [
+    {
+      "before": "    \"gpuError\": \"فقدت أرضية المكتب سياق معالج الرسوميات.\\n\\nعدد كبير جدًا من الطرفيات يستخدم المعالج الرسومي في آنٍ واحد.\\nأغلق بعض طرفيات الوكلاء، أو أعِد تشغيل التطبيق، لاستعادتها.\",",
+      "after": "    \"gpuError\": \"فقدت أرضية المكتب سياق معالج الرسوميات.\\n\\nعدد كبير جدًا من الطرفيات يستخدم المعالج الرسومي في آنٍ واحد.\\nأغلق بعض طرفيات الوكلاء، أو أعِد تشغيل التطبيق، لاستعادتها.\",\n    \"floorActions\": \"إجراءات أرضية المكتب\",\n    \"closeApplication\": \"إغلاق التطبيق\",",
+      "reason": "Label the native office-floor toolbar and its application close action in Arabic."
+    },
     {
       "before": "  \"settingsHero\": {\n    \"sponsoredBy\": \"برعاية\",\n    \"visit\": \"زيارة\",\n    \"whatsNew\": \"ما الجديد\",",
       "after": "  \"settingsHero\": {\n    \"whatsNew\": \"ما الجديد\",",
@@ -1503,6 +1553,11 @@
       "before": "@media (prefers-reduced-motion: reduce) {\n  * { animation-duration: 0s !important; transition-duration: 0s !important; }\n}",
       "after": "@media (prefers-reduced-motion: reduce) {\n  *, *::before, *::after {\n    animation: none !important;\n    transition: none !important;\n  }\n  html { scroll-behavior: auto !important; }\n}",
       "reason": "Disable DOM animation, transitions, and smooth scrolling deterministically instead of leaving zero-duration delayed keyframes active."
+    },
+    {
+      "before": "canvas, img, svg { image-rendering: pixelated; image-rendering: crisp-edges; }",
+      "after": "canvas, img, svg { image-rendering: pixelated; image-rendering: crisp-edges; }\n\n/* Native keyboard access for the interactive fixtures painted inside the\n   office canvas. Kept compact and translucent so the floor remains primary. */\n.cth-floor-action-dock {\n  position: absolute;\n  inset-inline-end: 8px;\n  bottom: 8px;\n  z-index: 2;\n  display: flex;\n  flex-wrap: wrap;\n  justify-content: flex-end;\n  gap: 4px;\n  max-width: calc(100% - 16px);\n  padding: 4px;\n  background: color-mix(in srgb, var(--cth-paper-100) 88%, transparent);\n  box-shadow: inset 0 0 0 1px var(--cth-ink-300), var(--cth-shadow-hard);\n}\n\n.cth-floor-action-dock button {\n  min-height: 28px;\n  border: 0;\n  padding: 4px 8px;\n  background: var(--cth-cream-100);\n  box-shadow: inset 0 0 0 1px var(--cth-ink-300);\n  color: var(--cth-ink-700);\n  font-family: var(--cth-font-display);\n  font-size: 7px;\n  line-height: 12px;\n  text-transform: uppercase;\n  cursor: pointer;\n}\n\n.cth-floor-action-dock button:hover,\n.cth-floor-action-dock button:focus-visible {\n  background: var(--cth-lemon);\n  color: var(--cth-on-accent);\n}\n\n.cth-floor-action-dock .cth-floor-action-dock__close:hover,\n.cth-floor-action-dock .cth-floor-action-dock__close:focus-visible {\n  background: var(--cth-coral);\n}",
+      "reason": "Style the native office-floor action dock as a compact theme-aware keyboard surface with visible focus feedback."
     }
   ],
   "src/renderer/index.html": [

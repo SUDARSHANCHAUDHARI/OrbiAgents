@@ -704,6 +704,8 @@
   },
   "office": {
     "gpuError": "The office floor lost its GPU context.\n\nToo many terminals are using the GPU at once.\nClose a few agent terminals, or restart the app, to bring it back.",
+    "floorActions": "Office floor actions",
+    "closeApplication": "Close app",
     "errand": {
       "water": [
         "watering the plants 🌿",

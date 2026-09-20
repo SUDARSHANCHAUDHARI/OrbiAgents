@@ -14,7 +14,7 @@ test('task board names and signals its tasks action on hover', () => {
 });
 
 test('task board preserves its reviewed tasks navigation and live redraw', () => {
-  assert.match(source, /st\.requestCommandCenterTab\('tasks'\)/);
+  assert.match(source, /openFloorCommandTab\('tasks'\)/);
   assert.match(source, /const drawTaskBoard = \(tasks: BoardTask\[\]\): void => \{/);
   assert.match(source, /drawCork\(0, NOTE_COLORS\.blocked, blocked\)/);
   assert.match(source, /drawCork\(34, NOTE_COLORS\.todo, todoNotes\)/);
