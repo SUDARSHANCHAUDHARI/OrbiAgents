@@ -560,6 +560,38 @@
       "reason": "Reapply reduced-motion playback whenever worker activity or facing changes."
     }
   ],
+  "src/renderer/src/components/AgentCard.tsx": [
+    {
+      "before": "        <span\n          title={doingCount === 1",
+      "after": "        <button\n          type=\"button\"\n          title={doingCount === 1",
+      "reason": "Use a native keyboard-operable control for the live task-note affordance."
+    },
+    {
+      "before": "            : t('agentCard.doingTasksPlural', { count: doingCount })}\n          onClick={(e) => { e.stopPropagation(); onTaskNoteClick?.(); }}",
+      "after": "            : t('agentCard.doingTasksPlural', { count: doingCount })}\n          aria-label={doingCount === 1\n            ? t('agentCard.doingTasks', { count: doingCount })\n            : t('agentCard.doingTasksPlural', { count: doingCount })}\n          onClick={(e) => { e.stopPropagation(); onTaskNoteClick?.(); }}",
+      "reason": "Give the compact task-note button the same translated task count as an accessible name."
+    },
+    {
+      "before": "            width: 20, height: 18,\n            background: 'var(--cth-sky)',",
+      "after": "            width: 20, height: 18,\n            padding: 0, border: 'none',\n            background: 'var(--cth-sky)',",
+      "reason": "Remove native button chrome while retaining the existing pixel sticky-note geometry."
+    },
+    {
+      "before": "          {doingCount > 1 ? doingCount : '✎'}\n        </span>",
+      "after": "          {doingCount > 1 ? doingCount : '✎'}\n        </button>",
+      "reason": "Close the task-note affordance with native button semantics."
+    },
+    {
+      "before": "  const noteFirstLine = (note ?? '').split('\\n').find((l) => l.trim()) ?? '';",
+      "after": "  const noteFirstLine = (note ?? '').split('\\n').find((l) => l.trim()) ?? '';\n  const doingTaskLabel = doingCount === 1\n    ? t('agentCard.doingTasks', { count: doingCount })\n    : t('agentCard.doingTasksPlural', { count: doingCount });",
+      "reason": "Compute the translated live-task label once for matching visible and assistive descriptions."
+    },
+    {
+      "before": "          title={doingCount === 1\n            ? t('agentCard.doingTasks', { count: doingCount })\n            : t('agentCard.doingTasksPlural', { count: doingCount })}\n          aria-label={doingCount === 1\n            ? t('agentCard.doingTasks', { count: doingCount })\n            : t('agentCard.doingTasksPlural', { count: doingCount })}",
+      "after": "          title={doingTaskLabel}\n          aria-label={doingTaskLabel}",
+      "reason": "Reuse one translated task label for the native tooltip and accessible name."
+    }
+  ],
   "src/renderer/src/scene/office/OfficeFloor.tsx": [
     {
       "before": "import { Application, Container, Graphics, Ticker, Texture } from 'pixi.js';",
