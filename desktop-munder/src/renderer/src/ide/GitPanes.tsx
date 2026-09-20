@@ -107,7 +107,12 @@ export function HistoryPane({ gitRoot, onOpenRevDiff }: {
       <div style={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
         {loading && commits.length === 0 && <div style={noteStyle}>{t('gitPanes.loadingHistory')}</div>}
         {!loading && commits.length === 0 && <div style={noteStyle}>{t('gitTab.noCommits')}</div>}
-        <CommitGraph commits={commits} currentBranch={branch} onCommitClick={(sha) => { void pick(sha); }} />
+        <CommitGraph
+          commits={commits}
+          currentBranch={branch}
+          selectedSha={selected?.sha}
+          onCommitClick={(sha) => { void pick(sha); }}
+        />
         {commits.length >= page * 200 && (
           <div style={{ padding: '4px 12px' }}>
             <button style={smallBtn} onClick={() => setPage((p) => p + 1)}>{t('gitPanes.loadOlder')}</button>

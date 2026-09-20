@@ -602,6 +602,28 @@
       "reason": "Make the independent Copy Path control explicit and safe inside surrounding form contexts."
     }
   ],
+  "src/renderer/src/components/git/CommitGraph.tsx": [
+    {
+      "before": "  /** Name of the currently checked-out branch, for highlighting. */\n  currentBranch?: string | null;\n  /** v0.3.4: commit click → per-commit file list / diff in the IDE HISTORY pane. */",
+      "after": "  /** Name of the currently checked-out branch, for highlighting. */\n  currentBranch?: string | null;\n  /** Commit whose file details are currently shown in the history pane. */\n  selectedSha?: string | null;\n  /** v0.3.4: commit click → per-commit file list / diff in the IDE HISTORY pane. */",
+      "reason": "Accept the history pane's selected commit so the interactive row can expose current state."
+    },
+    {
+      "before": "export function CommitGraph({ commits, currentBranch, onCommitClick }: CommitGraphProps) {",
+      "after": "export function CommitGraph({ commits, currentBranch, selectedSha, onCommitClick }: CommitGraphProps) {",
+      "reason": "Resolve selected commit state alongside existing graph inputs."
+    },
+    {
+      "before": "        return (\n          <div\n            key={c.sha}\n            onClick={onCommitClick ? () => onCommitClick(c.sha) : undefined}\n            title={`${c.shortSha} · ${c.subject}\\n${c.author} · ${relTime(c.time * 1000)} ago`}\n            style={{\n              height: ROW_H,\n              display: 'flex',\n              alignItems: 'center',\n              gap: 6,\n              paddingLeft: railW + 4,\n              paddingRight: 8,\n              minWidth: 0,\n              cursor: onCommitClick ? 'pointer' : 'default',\n              fontSize: 12,\n              lineHeight: `${ROW_H}px`,\n              whiteSpace: 'nowrap'\n            }}\n          >",
+      "after": "        const selected = selectedSha === c.sha;\n        const title = `${c.shortSha} · ${c.subject}\\n${c.author} · ${relTime(c.time * 1000)} ago`;\n        const style: React.CSSProperties = {\n          width: '100%', height: ROW_H,\n          display: 'flex', alignItems: 'center', gap: 6,\n          paddingLeft: railW + 4, paddingRight: 8,\n          border: 'none', textAlign: 'start',\n          background: selected ? 'var(--cth-sky-light)' : 'transparent',\n          color: 'inherit', font: 'inherit',\n          minWidth: 0,\n          cursor: onCommitClick ? 'pointer' : 'default',\n          fontSize: 12,\n          lineHeight: `${ROW_H}px`,\n          whiteSpace: 'nowrap'\n        };\n        const content = <>",
+      "reason": "Share a reset, full-width row treatment and selected surface between interactive and read-only history consumers."
+    },
+    {
+      "before": "            <span style={{\n              flexShrink: 0, fontFamily: 'var(--cth-font-mono)',\n              fontSize: 11, color: 'var(--cth-ink-500)'\n            }}>{relTime(c.time * 1000)}</span>\n          </div>\n        );",
+      "after": "            <span style={{\n              flexShrink: 0, fontFamily: 'var(--cth-font-mono)',\n              fontSize: 11, color: 'var(--cth-ink-500)'\n            }}>{relTime(c.time * 1000)}</span>\n          </>;\n        return onCommitClick ? (\n          <button\n            type=\"button\"\n            key={c.sha}\n            onClick={() => onCommitClick(c.sha)}\n            aria-current={selected ? 'true' : undefined}\n            title={title}\n            style={style}\n          >{content}</button>\n        ) : (\n          <div key={c.sha} title={title} style={style}>{content}</div>\n        );",
+      "reason": "Use native buttons for selectable history commits while preserving inert rows for read-only graphs."
+    }
+  ],
   "src/renderer/src/ide/GitPanes.tsx": [
     {
       "before": "  display: 'flex', alignItems: 'center', gap: 6, padding: '2px 12px',\n  cursor: 'pointer', fontSize: 12, color: 'var(--cth-ink-900)'",
@@ -622,6 +644,11 @@
       "before": "    </div>\n  );\n}\n\n// ─── HISTORY",
       "after": "    </button>\n  );\n}\n\n// ─── HISTORY",
       "reason": "Complete the Git file row's native button semantics."
+    },
+    {
+      "before": "        <CommitGraph commits={commits} currentBranch={branch} onCommitClick={(sha) => { void pick(sha); }} />",
+      "after": "        <CommitGraph\n          commits={commits}\n          currentBranch={branch}\n          selectedSha={selected?.sha}\n          onCommitClick={(sha) => { void pick(sha); }}\n        />",
+      "reason": "Pass the commit whose details are visible into the interactive history graph."
     }
   ],
   "src/renderer/src/components/AgentCard.tsx": [
