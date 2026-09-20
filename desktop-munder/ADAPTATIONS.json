@@ -1498,6 +1498,13 @@
       "reason": "Give the existing worker-focus path a responsive zoom above the fitted whole-office scale."
     }
   ],
+  "src/renderer/src/design/global.css": [
+    {
+      "before": "@media (prefers-reduced-motion: reduce) {\n  * { animation-duration: 0s !important; transition-duration: 0s !important; }\n}",
+      "after": "@media (prefers-reduced-motion: reduce) {\n  *, *::before, *::after {\n    animation: none !important;\n    transition: none !important;\n  }\n  html { scroll-behavior: auto !important; }\n}",
+      "reason": "Disable DOM animation, transitions, and smooth scrolling deterministically instead of leaving zero-duration delayed keyframes active."
+    }
+  ],
   "src/renderer/index.html": [
     {
       "before": "<title>Munder Difflin</title>",
