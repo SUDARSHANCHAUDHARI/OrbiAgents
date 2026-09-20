@@ -14,7 +14,7 @@ test('calendar names and signals its triggers action on hover', () => {
 });
 
 test('calendar preserves the reviewed triggers navigation', () => {
-  assert.match(source, /const god = st\.agents\.find\(\(a\) => a\.isGod\)/);
-  assert.match(source, /if \(god\) st\.select\(god\.id\)/);
-  assert.match(source, /st\.requestCommandCenterTab\('triggers'\)/);
+  assert.match(source, /const orchestrator = state\.agents\.find\(\(agent\) => agent\.isGod\)/);
+  assert.match(source, /if \(orchestrator\) state\.select\(orchestrator\.id\)/);
+  assert.match(source, /openFloorCommandTab\('triggers'\)/);
 });

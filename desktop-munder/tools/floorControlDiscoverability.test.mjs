@@ -20,8 +20,8 @@ test('persistent outlines do not replace hover placards or reviewed actions', ()
     assert.match(floor, new RegExp(`${placard}\\.visible = true`));
     assert.match(floor, new RegExp(`${placard}\\.visible = false`));
   }
-  assert.match(floor, /requestCommandCenterTab\('triggers'\)/);
-  assert.match(floor, /requestCommandCenterTab\('tasks'\)/);
-  assert.match(floor, /requestCommandCenterTab\('human'\)/);
+  assert.match(floor, /openFloorCommandTab\('triggers'\)/);
+  assert.match(floor, /openFloorCommandTab\('tasks'\)/);
+  assert.match(floor, /openFloorCommandTab\('human'\)/);
   assert.match(floor, /window\.close\(\)/);
 });

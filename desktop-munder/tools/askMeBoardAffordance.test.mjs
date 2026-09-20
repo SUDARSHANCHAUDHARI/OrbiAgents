@@ -14,7 +14,7 @@ test('ask-me board names and signals its human action on hover', () => {
 });
 
 test('ask-me board preserves navigation and its live pending-question pulse', () => {
-  assert.match(source, /st\.requestCommandCenterTab\('human'\)/);
+  assert.match(source, /openFloorCommandTab\('human'\)/);
   assert.match(source, /const drawAskBoard = \(pulse: number\): void => \{/);
   assert.match(source, /if \(askCount > 0\) drawAskBoard\(askPulse\)/);
 });
