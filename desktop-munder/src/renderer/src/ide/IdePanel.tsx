@@ -521,17 +521,20 @@ export function IdePanel() {
                 {changedFiles.map((f) => {
                   const active = activeKey === tabKey('diff', f.path);
                   return (
-                    <div
+                    <button
+                      type="button"
                       key={f.path}
                       onClick={() => openDiff(f.path)}
                       title={f.path}
+                      aria-current={active ? 'page' : undefined}
                       style={{
                         display: 'flex', alignItems: 'center', gap: 6, padding: '2px 12px',
-                        cursor: 'pointer', fontSize: 12, color: 'var(--cth-ink-900)',
+                        width: '100%', border: 'none', textAlign: 'start',
+                        cursor: 'pointer', font: 'inherit', fontSize: 12, color: 'var(--cth-ink-900)',
                         background: active ? 'var(--cth-lemon-light)' : 'transparent'
                       }}
                     >
-                      <span style={{
+                      <span aria-hidden="true" style={{
                         width: 12, textAlign: 'center', fontFamily: 'var(--cth-font-mono)',
                         fontWeight: 'bold' as const, color: statusColor(f.code)
                       }}>{f.code === ' ' ? '·' : f.code}</span>
@@ -539,7 +542,7 @@ export function IdePanel() {
                         flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
                         fontFamily: 'var(--cth-font-mono)', direction: 'rtl', textAlign: 'left'
                       }}>{f.path}</span>
-                    </div>
+                    </button>
                   );
                 })}
               </div>

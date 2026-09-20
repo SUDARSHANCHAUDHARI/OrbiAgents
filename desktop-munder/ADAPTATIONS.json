@@ -1255,6 +1255,26 @@
       "before": "          MUNDER DIFFLIN · IDE",
       "after": "          ORBIAGENTS · IDE",
       "reason": "Identify the full IDE surface as OrbiAgents."
+    },
+    {
+      "before": "                    <div\n                      key={f.path}\n                      onClick={() => openDiff(f.path)}\n                      title={f.path}\n                      style={{",
+      "after": "                    <button\n                      type=\"button\"\n                      key={f.path}\n                      onClick={() => openDiff(f.path)}\n                      title={f.path}\n                      aria-current={active ? 'page' : undefined}\n                      style={{",
+      "reason": "Expose each working-tree diff action through a native keyboard-operable control with current-page state."
+    },
+    {
+      "before": "                        display: 'flex', alignItems: 'center', gap: 6, padding: '2px 12px',\n                        cursor: 'pointer', fontSize: 12, color: 'var(--cth-ink-900)',",
+      "after": "                        display: 'flex', alignItems: 'center', gap: 6, padding: '2px 12px',\n                        width: '100%', border: 'none', textAlign: 'start',\n                        cursor: 'pointer', font: 'inherit', fontSize: 12, color: 'var(--cth-ink-900)',",
+      "reason": "Reset native button chrome while preserving the compact full-width changed-file row layout."
+    },
+    {
+      "before": "                      <span style={{\n                        width: 12, textAlign: 'center', fontFamily: 'var(--cth-font-mono)',",
+      "after": "                      <span aria-hidden=\"true\" style={{\n                        width: 12, textAlign: 'center', fontFamily: 'var(--cth-font-mono)',",
+      "reason": "Keep the terse Git status code as visual context while the changed-file path names the action."
+    },
+    {
+      "before": "                    </div>\n                  );\n                })}",
+      "after": "                    </button>\n                  );\n                })}",
+      "reason": "Complete the working-tree row's native button semantics."
     }
   ],
   "src/renderer/src/components/FullscreenTerminal.tsx": [
