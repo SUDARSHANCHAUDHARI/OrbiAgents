@@ -127,6 +127,9 @@ export function AgentCard({
   // One context line: what it's DOING while working, WHERE it lives while idle.
   const infoLine = (status !== 'idle' && action) ? action : project;
   const noteFirstLine = (note ?? '').split('\n').find((l) => l.trim()) ?? '';
+  const doingTaskLabel = doingCount === 1
+    ? t('agentCard.doingTasks', { count: doingCount })
+    : t('agentCard.doingTasksPlural', { count: doingCount });
 
   return (
     <div
@@ -159,14 +162,15 @@ export function AgentCard({
       {/* The taken note, stuck to the card like on the desk: this worker is
           actively DOING a ledger task. Click → the task's detail overlay. */}
       {doingCount > 0 && (
-        <span
-          title={doingCount === 1
-            ? t('agentCard.doingTasks', { count: doingCount })
-            : t('agentCard.doingTasksPlural', { count: doingCount })}
+        <button
+          type="button"
+          title={doingTaskLabel}
+          aria-label={doingTaskLabel}
           onClick={(e) => { e.stopPropagation(); onTaskNoteClick?.(); }}
           style={{
             position: 'absolute', right: -4, bottom: -5, zIndex: 2,
             width: 20, height: 18,
+            padding: 0, border: 'none',
             background: 'var(--cth-sky)',
             boxShadow: 'inset 0 0 0 1px var(--cth-ink-300), 1px 2px 0 rgba(26,19,32,0.18)',
             transform: 'rotate(4deg)',
@@ -176,7 +180,7 @@ export function AgentCard({
           }}
         >
           {doingCount > 1 ? doingCount : '✎'}
-        </span>
+        </button>
       )}
       <PixelPanel
         variant="default"
