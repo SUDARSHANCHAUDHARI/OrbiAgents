@@ -183,7 +183,11 @@ canvas, img, svg { image-rendering: pixelated; image-rendering: crisp-edges; }
 
 /* Reduce motion */
 @media (prefers-reduced-motion: reduce) {
-  * { animation-duration: 0s !important; transition-duration: 0s !important; }
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  html { scroll-behavior: auto !important; }
 }
 
 /* xterm: disable font ligatures.
