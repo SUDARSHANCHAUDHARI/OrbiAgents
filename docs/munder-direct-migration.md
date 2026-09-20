@@ -422,3 +422,5 @@ Keyboard-accessible file-tree slice (2026-09-20): every lazy IDE folder and file
 Keyboard-accessible Git-file slice (2026-09-20): history and branch-comparison file changes now use full-width native buttons rather than mouse-only divs. Keyboard activation opens the same revision diff, status glyphs remain visual context, and the compact transparent row treatment preserves both pane layouts.
 
 Keyboard-accessible working-tree slice (2026-09-20): live changed-file rows in the IDE rail now use full-width native buttons rather than mouse-only divs. The open diff is exposed as the current page, keyboard activation reuses the existing diff loader, status glyphs remain decorative context, and active-row highlighting is unchanged.
+
+Keyboard-accessible editor-tabs slice (2026-09-20): the IDE tab strip now exposes a named tablist with native tab buttons, selected state, and roving focus. Left/Right/Home/End move and activate tabs, while each close action remains a separate native button; labels, dirty markers, mode badges, active styling, and close behavior are preserved.
