@@ -27,7 +27,8 @@ function statusColor(code: string): string {
 
 const rowStyle: React.CSSProperties = {
   display: 'flex', alignItems: 'center', gap: 6, padding: '2px 12px',
-  cursor: 'pointer', fontSize: 12, color: 'var(--cth-ink-900)'
+  width: '100%', border: 'none', background: 'transparent', textAlign: 'start',
+  cursor: 'pointer', font: 'inherit', fontSize: 12, color: 'var(--cth-ink-900)'
 };
 const noteStyle: React.CSSProperties = {
   padding: '6px 12px', fontSize: 12, color: 'var(--cth-ink-500)'
@@ -41,8 +42,8 @@ const smallBtn: React.CSSProperties = {
 
 function FileRow({ f, onClick }: { f: GitFileChange; onClick: () => void }) {
   return (
-    <div onClick={onClick} title={f.oldPath ? `${f.oldPath} → ${f.path}` : f.path} style={rowStyle}>
-      <span style={{
+    <button type="button" onClick={onClick} title={f.oldPath ? `${f.oldPath} → ${f.path}` : f.path} style={rowStyle}>
+      <span aria-hidden="true" style={{
         width: 12, textAlign: 'center', fontFamily: 'var(--cth-font-mono)',
         fontWeight: 'bold' as const, color: statusColor(f.status)
       }}>{f.status}</span>
@@ -50,7 +51,7 @@ function FileRow({ f, onClick }: { f: GitFileChange; onClick: () => void }) {
         flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
         fontFamily: 'var(--cth-font-mono)', direction: 'rtl', textAlign: 'left'
       }}>{f.path}</span>
-    </div>
+    </button>
   );
 }
 

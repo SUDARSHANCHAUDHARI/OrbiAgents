@@ -602,6 +602,28 @@
       "reason": "Make the independent Copy Path control explicit and safe inside surrounding form contexts."
     }
   ],
+  "src/renderer/src/ide/GitPanes.tsx": [
+    {
+      "before": "  display: 'flex', alignItems: 'center', gap: 6, padding: '2px 12px',\n  cursor: 'pointer', fontSize: 12, color: 'var(--cth-ink-900)'",
+      "after": "  display: 'flex', alignItems: 'center', gap: 6, padding: '2px 12px',\n  width: '100%', border: 'none', background: 'transparent', textAlign: 'start',\n  cursor: 'pointer', font: 'inherit', fontSize: 12, color: 'var(--cth-ink-900)'",
+      "reason": "Reset native button chrome while preserving the compact full-width history and comparison row layout."
+    },
+    {
+      "before": "    <div onClick={onClick} title={f.oldPath ? `${f.oldPath} → ${f.path}` : f.path} style={rowStyle}>",
+      "after": "    <button type=\"button\" onClick={onClick} title={f.oldPath ? `${f.oldPath} → ${f.path}` : f.path} style={rowStyle}>",
+      "reason": "Expose revision-diff opening through a native keyboard-operable control."
+    },
+    {
+      "before": "      <span style={{\n        width: 12, textAlign: 'center', fontFamily: 'var(--cth-font-mono)',",
+      "after": "      <span aria-hidden=\"true\" style={{\n        width: 12, textAlign: 'center', fontFamily: 'var(--cth-font-mono)',",
+      "reason": "Keep the terse Git status code as visual context while the file path names the action."
+    },
+    {
+      "before": "    </div>\n  );\n}\n\n// ─── HISTORY",
+      "after": "    </button>\n  );\n}\n\n// ─── HISTORY",
+      "reason": "Complete the Git file row's native button semantics."
+    }
+  ],
   "src/renderer/src/components/AgentCard.tsx": [
     {
       "before": "        <span\n          title={doingCount === 1",

@@ -418,3 +418,5 @@ Keyboard-accessible floor-actions slice (2026-09-20): the five semantic fixtures
 Keyboard-accessible worker-task slice (2026-09-20): a worker card's live-task sticky note is now a native, translated, named button rather than a mouse-only span. Keyboard activation opens the same first task detail as pointer activation, focus uses the existing global visible ring, and propagation remains stopped so opening a task never also changes the selected worker.
 
 Keyboard-accessible file-tree slice (2026-09-20): every lazy IDE folder and file row is now a native button rather than a mouse-only div. Folder buttons expose expanded state, active files expose current-page state, disclosure glyphs are decorative, and Copy Path remains an independent native action; lazy loading, indentation, selection color, and file-opening behavior are unchanged.
+
+Keyboard-accessible Git-file slice (2026-09-20): history and branch-comparison file changes now use full-width native buttons rather than mouse-only divs. Keyboard activation opens the same revision diff, status glyphs remain visual context, and the compact transparent row treatment preserves both pane layouts.
