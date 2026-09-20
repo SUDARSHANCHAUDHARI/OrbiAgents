@@ -420,3 +420,5 @@ Keyboard-accessible worker-task slice (2026-09-20): a worker card's live-task st
 Keyboard-accessible file-tree slice (2026-09-20): every lazy IDE folder and file row is now a native button rather than a mouse-only div. Folder buttons expose expanded state, active files expose current-page state, disclosure glyphs are decorative, and Copy Path remains an independent native action; lazy loading, indentation, selection color, and file-opening behavior are unchanged.
 
 Keyboard-accessible Git-file slice (2026-09-20): history and branch-comparison file changes now use full-width native buttons rather than mouse-only divs. Keyboard activation opens the same revision diff, status glyphs remain visual context, and the compact transparent row treatment preserves both pane layouts.
+
+Keyboard-accessible working-tree slice (2026-09-20): live changed-file rows in the IDE rail now use full-width native buttons rather than mouse-only divs. The open diff is exposed as the current page, keyboard activation reuses the existing diff loader, status glyphs remain decorative context, and active-row highlighting is unchanged.
