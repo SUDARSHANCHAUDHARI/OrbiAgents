@@ -1275,6 +1275,51 @@
       "before": "                    </div>\n                  );\n                })}",
       "after": "                    </button>\n                  );\n                })}",
       "reason": "Complete the working-tree row's native button semantics."
+    },
+    {
+      "before": "  const activeEditRel = activeTab && (activeTab.mode === 'edit' || activeTab.mode === 'image')\n    ? activeTab.rel\n    : undefined;",
+      "after": "  const activeEditRel = activeTab && (activeTab.mode === 'edit' || activeTab.mode === 'image')\n    ? activeTab.rel\n    : undefined;\n\n  const onEditorTabKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {\n    let next = index;\n    if (event.key === 'ArrowLeft') next = Math.max(0, index - 1);\n    else if (event.key === 'ArrowRight') next = Math.min(tabs.length - 1, index + 1);\n    else if (event.key === 'Home') next = 0;\n    else if (event.key === 'End') next = tabs.length - 1;\n    else return;\n\n    event.preventDefault();\n    const tab = tabs[next];\n    if (!tab) return;\n    setActiveKey(tab.key);\n    const tabButtons = event.currentTarget.parentElement?.parentElement\n      ?.querySelectorAll<HTMLButtonElement>('[role=\"tab\"]');\n    tabButtons?.[next]?.focus();\n  };",
+      "reason": "Add conventional arrow and boundary-key navigation with synchronized tab activation and focus."
+    },
+    {
+      "before": "            <div style={{\n              display: 'flex', alignItems: 'stretch', overflowX: 'auto', flexShrink: 0,",
+      "after": "            <div role=\"tablist\" aria-label={t('idePanel.files')} style={{\n              display: 'flex', alignItems: 'stretch', overflowX: 'auto', flexShrink: 0,",
+      "reason": "Identify the editor strip as a named tablist for assistive technology."
+    },
+    {
+      "before": "              {tabs.map((tab) => {",
+      "after": "              {tabs.map((tab, index) => {",
+      "reason": "Track each tab's position for bounded keyboard navigation."
+    },
+    {
+      "before": "                  <div\n                    key={tab.key}\n                    onClick={() => setActiveKey(tab.key)}\n                    title={tab.rel}\n                    style={{\n                      display: 'inline-flex', alignItems: 'center', gap: 6, padding: '0 8px', height: 30,\n                      cursor: 'pointer', flexShrink: 0, maxWidth: 240,",
+      "after": "                  <div\n                    key={tab.key}\n                    title={tab.rel}\n                    style={{\n                      display: 'inline-flex', alignItems: 'center', height: 30,\n                      flexShrink: 0, maxWidth: 240,",
+      "reason": "Keep the visual tab container inert so selection and close can be separate native controls."
+    },
+    {
+      "before": "                    {tab.mode !== 'edit' && (",
+      "after": "                    <button\n                      type=\"button\"\n                      role=\"tab\"\n                      aria-selected={active}\n                      tabIndex={active ? 0 : -1}\n                      onClick={() => setActiveKey(tab.key)}\n                      onKeyDown={(event) => onEditorTabKeyDown(event, index)}\n                      style={{\n                        display: 'inline-flex', alignItems: 'center', gap: 6, minWidth: 0,\n                        height: 30, padding: '0 4px 0 8px', border: 'none',\n                        background: 'transparent', color: 'inherit', font: 'inherit', cursor: 'pointer'\n                      }}\n                    >\n                      {tab.mode !== 'edit' && (",
+      "reason": "Expose selection as a native tab button with selected state, roving focus, and keyboard navigation."
+    },
+    {
+      "before": "                      <span style={{\n                        fontFamily: 'var(--cth-font-display)', fontSize: 7, padding: '1px 3px',\n                        background: tab.mode === 'revdiff' ? 'var(--cth-lilac-light)'\n                          : tab.mode === 'image' ? 'var(--cth-peach-light)'\n                          : 'var(--cth-sky-light)',\n                        color: 'var(--cth-ink-900)'\n                      }}>{tab.mode === 'revdiff' ? (tab.revLabel ?? t('idePanel.rev')) : tab.mode === 'image' ? t('idePanel.img') : t('idePanel.diff')}</span>\n                    )}",
+      "after": "                        <span aria-hidden=\"true\" style={{\n                          fontFamily: 'var(--cth-font-display)', fontSize: 7, padding: '1px 3px',\n                          background: tab.mode === 'revdiff' ? 'var(--cth-lilac-light)'\n                            : tab.mode === 'image' ? 'var(--cth-peach-light)'\n                            : 'var(--cth-sky-light)',\n                          color: 'var(--cth-ink-900)'\n                        }}>{tab.mode === 'revdiff' ? (tab.revLabel ?? t('idePanel.rev')) : tab.mode === 'image' ? t('idePanel.img') : t('idePanel.diff')}</span>\n                      )}",
+      "reason": "Keep terse editor-mode badges as visual context while the file name labels the tab."
+    },
+    {
+      "before": "                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>\n                      {basename(tab.rel)}{dirty ? ' •' : ''}\n                    </span>",
+      "after": "                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>\n                        {basename(tab.rel)}{dirty ? ' •' : ''}\n                      </span>",
+      "reason": "Keep the existing file label inside the native tab selection control."
+    },
+    {
+      "before": "                    <button\n                      onClick={(e) => { e.stopPropagation(); closeTab(tab.key); }}",
+      "after": "                    </button>\n                    <button\n                      type=\"button\"\n                      onClick={(e) => { e.stopPropagation(); closeTab(tab.key); }}",
+      "reason": "Close the selection tab and retain close as a separate explicit native action."
+    },
+    {
+      "before": "                      style={{ ...iconBtn, width: 16, height: 16 }}",
+      "after": "                      style={{ ...iconBtn, width: 16, height: 16, marginRight: 4 }}",
+      "reason": "Preserve trailing tab spacing after moving selection padding into its native button."
     }
   ],
   "src/renderer/src/components/FullscreenTerminal.tsx": [

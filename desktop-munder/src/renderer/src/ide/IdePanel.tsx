@@ -353,6 +353,23 @@ export function IdePanel() {
     ? activeTab.rel
     : undefined;
 
+  const onEditorTabKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
+    let next = index;
+    if (event.key === 'ArrowLeft') next = Math.max(0, index - 1);
+    else if (event.key === 'ArrowRight') next = Math.min(tabs.length - 1, index + 1);
+    else if (event.key === 'Home') next = 0;
+    else if (event.key === 'End') next = tabs.length - 1;
+    else return;
+
+    event.preventDefault();
+    const tab = tabs[next];
+    if (!tab) return;
+    setActiveKey(tab.key);
+    const tabButtons = event.currentTarget.parentElement?.parentElement
+      ?.querySelectorAll<HTMLButtonElement>('[role="tab"]');
+    tabButtons?.[next]?.focus();
+  };
+
   return (
     <div style={{
       position: 'fixed', inset: 0, zIndex: 290,
@@ -569,44 +586,58 @@ export function IdePanel() {
           {/* ── Right: tabs + editor ── */}
           <div style={{ flex: 1, minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column', background: 'var(--cth-paper-100)' }}>
             {/* Tab bar */}
-            <div style={{
+            <div role="tablist" aria-label={t('idePanel.files')} style={{
               display: 'flex', alignItems: 'stretch', overflowX: 'auto', flexShrink: 0,
               background: 'var(--cth-cream-200)', borderBottom: '1px solid var(--cth-ink-700)', minHeight: 30
             }}>
-              {tabs.map((tab) => {
+              {tabs.map((tab, index) => {
                 const active = tab.key === activeKey;
                 const buf = editBuffers[tab.rel];
                 const dirty = tab.mode === 'edit' && buf?.status === 'ready' && buf.content !== buf.original;
                 return (
                   <div
                     key={tab.key}
-                    onClick={() => setActiveKey(tab.key)}
                     title={tab.rel}
                     style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 6, padding: '0 8px', height: 30,
-                      cursor: 'pointer', flexShrink: 0, maxWidth: 240,
+                      display: 'inline-flex', alignItems: 'center', height: 30,
+                      flexShrink: 0, maxWidth: 240,
                       background: active ? 'var(--cth-paper-100)' : 'transparent',
                       boxShadow: active ? 'inset 0 -2px 0 var(--cth-sky)' : 'none',
                       borderRight: '1px solid var(--cth-ink-100)',
                       fontFamily: 'var(--cth-font-ui)', fontSize: 12, color: 'var(--cth-ink-900)'
                     }}
                   >
-                    {tab.mode !== 'edit' && (
-                      <span style={{
-                        fontFamily: 'var(--cth-font-display)', fontSize: 7, padding: '1px 3px',
-                        background: tab.mode === 'revdiff' ? 'var(--cth-lilac-light)'
-                          : tab.mode === 'image' ? 'var(--cth-peach-light)'
-                          : 'var(--cth-sky-light)',
-                        color: 'var(--cth-ink-900)'
-                      }}>{tab.mode === 'revdiff' ? (tab.revLabel ?? t('idePanel.rev')) : tab.mode === 'image' ? t('idePanel.img') : t('idePanel.diff')}</span>
-                    )}
-                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {basename(tab.rel)}{dirty ? ' •' : ''}
-                    </span>
                     <button
+                      type="button"
+                      role="tab"
+                      aria-selected={active}
+                      tabIndex={active ? 0 : -1}
+                      onClick={() => setActiveKey(tab.key)}
+                      onKeyDown={(event) => onEditorTabKeyDown(event, index)}
+                      style={{
+                        display: 'inline-flex', alignItems: 'center', gap: 6, minWidth: 0,
+                        height: 30, padding: '0 4px 0 8px', border: 'none',
+                        background: 'transparent', color: 'inherit', font: 'inherit', cursor: 'pointer'
+                      }}
+                    >
+                      {tab.mode !== 'edit' && (
+                        <span aria-hidden="true" style={{
+                          fontFamily: 'var(--cth-font-display)', fontSize: 7, padding: '1px 3px',
+                          background: tab.mode === 'revdiff' ? 'var(--cth-lilac-light)'
+                            : tab.mode === 'image' ? 'var(--cth-peach-light)'
+                            : 'var(--cth-sky-light)',
+                          color: 'var(--cth-ink-900)'
+                        }}>{tab.mode === 'revdiff' ? (tab.revLabel ?? t('idePanel.rev')) : tab.mode === 'image' ? t('idePanel.img') : t('idePanel.diff')}</span>
+                      )}
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {basename(tab.rel)}{dirty ? ' •' : ''}
+                      </span>
+                    </button>
+                    <button
+                      type="button"
                       onClick={(e) => { e.stopPropagation(); closeTab(tab.key); }}
                       title={t('idePanel.closeTab')}
-                      style={{ ...iconBtn, width: 16, height: 16 }}
+                      style={{ ...iconBtn, width: 16, height: 16, marginRight: 4 }}
                     >
                       <Icon name="x" />
                     </button>
