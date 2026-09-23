@@ -432,3 +432,5 @@ Keyboard-accessible IDE-splitter slice (2026-09-23): the file-tree/editor divide
 Keyboard-accessible sidebar-splitter slice (2026-09-23): the main floor/sidebar divider now exposes an adjustable vertical separator with its viewport-aware bounds. Left/Right move the divider in bounded steps, Home/End select the width limits, pointer dragging shares those limits, and double-click reset can no longer exceed the available viewport.
 
 Keyboard-accessible memory-graph slice (2026-09-23): live agent nodes in the Memory Graph now expose named button semantics and remain the only graph nodes in the tab order. Enter and Space open the same agent memory as pointer activation, keyboard focus reuses the node detail tooltip, and a cyan graph-native frame makes focus visible without changing layout or drag behavior.
+
+Accessible task-detail dialog slice (2026-09-23): the app-wide task detail now identifies itself as a named modal dialog, takes focus when opened, closes with Escape, loops forward and reverse Tab navigation inside its controls, and restores focus to the action that opened it. Backdrop dismissal and all task operations remain unchanged.
