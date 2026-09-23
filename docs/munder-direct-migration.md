@@ -430,3 +430,5 @@ Keyboard-accessible commit-history slice (2026-09-20): commits in the IDE histor
 Keyboard-accessible IDE-splitter slice (2026-09-23): the file-tree/editor divider now exposes an adjustable vertical separator with current, minimum, and maximum width values. Left/Right resize in bounded steps and Home/End jump to the limits, while pointer dragging retains the same shared bounds and the global focus ring identifies keyboard focus.
 
 Keyboard-accessible sidebar-splitter slice (2026-09-23): the main floor/sidebar divider now exposes an adjustable vertical separator with its viewport-aware bounds. Left/Right move the divider in bounded steps, Home/End select the width limits, pointer dragging shares those limits, and double-click reset can no longer exceed the available viewport.
+
+Keyboard-accessible memory-graph slice (2026-09-23): live agent nodes in the Memory Graph now expose named button semantics and remain the only graph nodes in the tab order. Enter and Space open the same agent memory as pointer activation, keyboard focus reuses the node detail tooltip, and a cyan graph-native frame makes focus visible without changing layout or drag behavior.
