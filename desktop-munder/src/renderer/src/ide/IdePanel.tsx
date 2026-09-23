@@ -25,6 +25,9 @@ function defaultMdView(): MdView {
 
 /** Remembers the git rail collapse across IDE opens and app restarts. */
 const GIT_RAIL_COLLAPSED_KEY = 'cth.ide.gitRailCollapsed';
+const TREE_MIN_WIDTH = 200;
+const TREE_MAX_WIDTH = 520;
+const TREE_KEYBOARD_STEP = 20;
 
 // ─── Local mirrors of the main-side git shapes (kept renderer-local like GitTab) ──
 interface GitStatusEntry { path: string; index: string; worktree: string }
@@ -331,7 +334,7 @@ export function IdePanel() {
   // ─── Left splitter drag ───────────────────────────────────────────────────
   const startDrag = (e: React.MouseEvent) => {
     const startX = e.clientX; const startW = treeWidth;
-    const onMove = (ev: MouseEvent) => setTreeWidth(Math.min(520, Math.max(200, startW + (ev.clientX - startX))));
+    const onMove = (ev: MouseEvent) => setTreeWidth(Math.min(TREE_MAX_WIDTH, Math.max(TREE_MIN_WIDTH, startW + (ev.clientX - startX))));
     const onUp = () => {
       document.body.style.cursor = '';
       window.removeEventListener('mousemove', onMove);
@@ -341,6 +344,17 @@ export function IdePanel() {
     window.addEventListener('mousemove', onMove);
     window.addEventListener('mouseup', onUp);
     e.preventDefault();
+  };
+
+  const resizeTreeFromKeyboard = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    let next: number | null = null;
+    if (event.key === 'ArrowLeft') next = Math.max(TREE_MIN_WIDTH, treeWidth - TREE_KEYBOARD_STEP);
+    else if (event.key === 'ArrowRight') next = Math.min(TREE_MAX_WIDTH, treeWidth + TREE_KEYBOARD_STEP);
+    else if (event.key === 'Home') next = TREE_MIN_WIDTH;
+    else if (event.key === 'End') next = TREE_MAX_WIDTH;
+    if (next === null) return;
+    event.preventDefault();
+    setTreeWidth(next);
   };
 
   const copyAbs = (rel: string) => {
@@ -581,7 +595,18 @@ export function IdePanel() {
           </div>
 
           {/* Splitter */}
-          <div onMouseDown={startDrag} style={{ width: 4, cursor: 'ew-resize', flexShrink: 0, background: 'var(--cth-ink-300)' }} />
+          <div
+            role="separator"
+            aria-label={t('idePanel.files')}
+            aria-orientation="vertical"
+            aria-valuemin={TREE_MIN_WIDTH}
+            aria-valuemax={TREE_MAX_WIDTH}
+            aria-valuenow={treeWidth}
+            tabIndex={0}
+            onMouseDown={startDrag}
+            onKeyDown={resizeTreeFromKeyboard}
+            style={{ width: 4, cursor: 'ew-resize', flexShrink: 0, background: 'var(--cth-ink-300)' }}
+          />
 
           {/* ── Right: tabs + editor ── */}
           <div style={{ flex: 1, minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column', background: 'var(--cth-paper-100)' }}>
