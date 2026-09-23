@@ -1347,6 +1347,26 @@
       "before": "                      style={{ ...iconBtn, width: 16, height: 16 }}",
       "after": "                      style={{ ...iconBtn, width: 16, height: 16, marginRight: 4 }}",
       "reason": "Preserve trailing tab spacing after moving selection padding into its native button."
+    },
+    {
+      "before": "const GIT_RAIL_COLLAPSED_KEY = 'cth.ide.gitRailCollapsed';",
+      "after": "const GIT_RAIL_COLLAPSED_KEY = 'cth.ide.gitRailCollapsed';\nconst TREE_MIN_WIDTH = 200;\nconst TREE_MAX_WIDTH = 520;\nconst TREE_KEYBOARD_STEP = 20;",
+      "reason": "Share the IDE tree pane's width limits between pointer and keyboard resizing."
+    },
+    {
+      "before": "    const onMove = (ev: MouseEvent) => setTreeWidth(Math.min(520, Math.max(200, startW + (ev.clientX - startX))));",
+      "after": "    const onMove = (ev: MouseEvent) => setTreeWidth(Math.min(TREE_MAX_WIDTH, Math.max(TREE_MIN_WIDTH, startW + (ev.clientX - startX))));",
+      "reason": "Keep pointer resizing on the same named width boundaries exposed by the separator."
+    },
+    {
+      "before": "    e.preventDefault();\n  };\n\n  const copyAbs = (rel: string) => {",
+      "after": "    e.preventDefault();\n  };\n\n  const resizeTreeFromKeyboard = (event: React.KeyboardEvent<HTMLDivElement>) => {\n    let next: number | null = null;\n    if (event.key === 'ArrowLeft') next = Math.max(TREE_MIN_WIDTH, treeWidth - TREE_KEYBOARD_STEP);\n    else if (event.key === 'ArrowRight') next = Math.min(TREE_MAX_WIDTH, treeWidth + TREE_KEYBOARD_STEP);\n    else if (event.key === 'Home') next = TREE_MIN_WIDTH;\n    else if (event.key === 'End') next = TREE_MAX_WIDTH;\n    if (next === null) return;\n    event.preventDefault();\n    setTreeWidth(next);\n  };\n\n  const copyAbs = (rel: string) => {",
+      "reason": "Resize the IDE tree pane through conventional bounded separator keyboard controls."
+    },
+    {
+      "before": "          <div onMouseDown={startDrag} style={{ width: 4, cursor: 'ew-resize', flexShrink: 0, background: 'var(--cth-ink-300)' }} />",
+      "after": "          <div\n            role=\"separator\"\n            aria-label={t('idePanel.files')}\n            aria-orientation=\"vertical\"\n            aria-valuemin={TREE_MIN_WIDTH}\n            aria-valuemax={TREE_MAX_WIDTH}\n            aria-valuenow={treeWidth}\n            tabIndex={0}\n            onMouseDown={startDrag}\n            onKeyDown={resizeTreeFromKeyboard}\n            style={{ width: 4, cursor: 'ew-resize', flexShrink: 0, background: 'var(--cth-ink-300)' }}\n          />",
+      "reason": "Expose the mouse divider as a focusable adjustable separator with its current width."
     }
   ],
   "src/renderer/src/components/FullscreenTerminal.tsx": [

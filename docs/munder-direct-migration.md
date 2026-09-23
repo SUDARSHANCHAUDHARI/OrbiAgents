@@ -426,3 +426,5 @@ Keyboard-accessible working-tree slice (2026-09-20): live changed-file rows in t
 Keyboard-accessible editor-tabs slice (2026-09-20): the IDE tab strip now exposes a named tablist with native tab buttons, selected state, and roving focus. Left/Right/Home/End move and activate tabs, while each close action remains a separate native button; labels, dirty markers, mode badges, active styling, and close behavior are preserved.
 
 Keyboard-accessible commit-history slice (2026-09-20): commits in the IDE history pane now use native buttons and expose the commit whose file details are visible. Selection gains the existing light-blue surface treatment, while read-only commit graphs retain inert rows; lane geometry, refs, subjects, timestamps, and diff loading remain unchanged.
+
+Keyboard-accessible IDE-splitter slice (2026-09-23): the file-tree/editor divider now exposes an adjustable vertical separator with current, minimum, and maximum width values. Left/Right resize in bounded steps and Home/End jump to the limits, while pointer dragging retains the same shared bounds and the global focus ring identifies keyboard focus.
