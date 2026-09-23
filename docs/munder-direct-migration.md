@@ -428,3 +428,5 @@ Keyboard-accessible editor-tabs slice (2026-09-20): the IDE tab strip now expose
 Keyboard-accessible commit-history slice (2026-09-20): commits in the IDE history pane now use native buttons and expose the commit whose file details are visible. Selection gains the existing light-blue surface treatment, while read-only commit graphs retain inert rows; lane geometry, refs, subjects, timestamps, and diff loading remain unchanged.
 
 Keyboard-accessible IDE-splitter slice (2026-09-23): the file-tree/editor divider now exposes an adjustable vertical separator with current, minimum, and maximum width values. Left/Right resize in bounded steps and Home/End jump to the limits, while pointer dragging retains the same shared bounds and the global focus ring identifies keyboard focus.
+
+Keyboard-accessible sidebar-splitter slice (2026-09-23): the main floor/sidebar divider now exposes an adjustable vertical separator with its viewport-aware bounds. Left/Right move the divider in bounded steps, Home/End select the width limits, pointer dragging shares those limits, and double-click reset can no longer exceed the available viewport.

@@ -20,12 +20,13 @@ export function SidebarSplitter({
 }: SidebarSplitterProps) {
   const startRef = useRef<{ clientX: number; width: number } | null>(null);
   const [active, setActive] = useState(false);
+  const clampMax = Math.min(max, Math.max(min, viewportWidth - 360));
+  const splitterTitle = 'Drag to resize · double-click to reset';
 
   useEffect(() => {
     const onMove = (e: MouseEvent) => {
       if (!startRef.current) return;
       const delta = startRef.current.clientX - e.clientX; // left drag = positive delta → grow sidebar
-      const clampMax = Math.min(max, Math.max(min, viewportWidth - 360));
       const next = Math.min(clampMax, Math.max(min, startRef.current.width + delta));
       onChange(next);
     };
@@ -49,13 +50,30 @@ export function SidebarSplitter({
 
   return (
     <div
+      role="separator"
+      aria-label={splitterTitle}
+      aria-orientation="vertical"
+      aria-valuemin={min}
+      aria-valuemax={clampMax}
+      aria-valuenow={width}
+      tabIndex={0}
       onMouseDown={(e) => {
         startRef.current = { clientX: e.clientX, width };
         setActive(true);
         e.preventDefault();
       }}
-      onDoubleClick={() => onChange(420)}
-      title="Drag to resize · double-click to reset"
+      onKeyDown={(e) => {
+        let next: number | null = null;
+        if (e.key === 'ArrowLeft') next = Math.min(clampMax, width + 20);
+        else if (e.key === 'ArrowRight') next = Math.max(min, width - 20);
+        else if (e.key === 'Home') next = min;
+        else if (e.key === 'End') next = clampMax;
+        if (next === null) return;
+        e.preventDefault();
+        onChange(next);
+      }}
+      onDoubleClick={() => onChange(Math.min(clampMax, Math.max(min, 420)))}
+      title={splitterTitle}
       style={{
         width: 10,
         cursor: 'ew-resize',

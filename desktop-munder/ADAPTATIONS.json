@@ -560,6 +560,28 @@
       "reason": "Reapply reduced-motion playback whenever worker activity or facing changes."
     }
   ],
+  "src/renderer/src/components/SidebarSplitter.tsx": [
+    {
+      "before": "  const startRef = useRef<{ clientX: number; width: number } | null>(null);\n  const [active, setActive] = useState(false);",
+      "after": "  const startRef = useRef<{ clientX: number; width: number } | null>(null);\n  const [active, setActive] = useState(false);\n  const clampMax = Math.min(max, Math.max(min, viewportWidth - 360));\n  const splitterTitle = 'Drag to resize · double-click to reset';",
+      "reason": "Share the viewport-aware maximum across pointer, keyboard, reset, and separator metadata while reusing the existing tooltip copy."
+    },
+    {
+      "before": "      const delta = startRef.current.clientX - e.clientX; // left drag = positive delta → grow sidebar\n      const clampMax = Math.min(max, Math.max(min, viewportWidth - 360));\n      const next = Math.min(clampMax, Math.max(min, startRef.current.width + delta));",
+      "after": "      const delta = startRef.current.clientX - e.clientX; // left drag = positive delta → grow sidebar\n      const next = Math.min(clampMax, Math.max(min, startRef.current.width + delta));",
+      "reason": "Use the shared divider maximum in the existing pointer drag path."
+    },
+    {
+      "before": "    <div\n      onMouseDown={(e) => {",
+      "after": "    <div\n      role=\"separator\"\n      aria-label={splitterTitle}\n      aria-orientation=\"vertical\"\n      aria-valuemin={min}\n      aria-valuemax={clampMax}\n      aria-valuenow={width}\n      tabIndex={0}\n      onMouseDown={(e) => {",
+      "reason": "Expose the main sidebar divider as a named, focusable adjustable separator with its live bounds."
+    },
+    {
+      "before": "      onDoubleClick={() => onChange(420)}\n      title=\"Drag to resize · double-click to reset\"",
+      "after": "      onKeyDown={(e) => {\n        let next: number | null = null;\n        if (e.key === 'ArrowLeft') next = Math.min(clampMax, width + 20);\n        else if (e.key === 'ArrowRight') next = Math.max(min, width - 20);\n        else if (e.key === 'Home') next = min;\n        else if (e.key === 'End') next = clampMax;\n        if (next === null) return;\n        e.preventDefault();\n        onChange(next);\n      }}\n      onDoubleClick={() => onChange(Math.min(clampMax, Math.max(min, 420)))}\n      title={splitterTitle}",
+      "reason": "Add bounded directional and boundary keyboard controls, and keep double-click reset inside the same available range."
+    }
+  ],
   "src/renderer/src/components/FileTree.tsx": [
     {
       "before": "        <div\n          onClick={() => toggle(node)}\n          style={{",
