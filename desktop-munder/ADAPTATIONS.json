@@ -560,6 +560,28 @@
       "reason": "Reapply reduced-motion playback whenever worker activity or facing changes."
     }
   ],
+  "src/renderer/src/components/QuitWarningModal.tsx": [
+    {
+      "before": "import { useState } from 'react';",
+      "after": "import { useEffect, useRef, useState } from 'react';",
+      "reason": "Support modal focus ownership, keyboard containment, and listener cleanup."
+    },
+    {
+      "before": "  const [busy, setBusy] = useState(false);",
+      "after": "  const [busy, setBusy] = useState(false);\n  const dialogRef = useRef<HTMLDivElement | null>(null);\n  const openerRef = useRef<HTMLElement | null>(null);",
+      "reason": "Retain the safety dialog and interrupted-control elements across the modal lifecycle."
+    },
+    {
+      "before": "  const inClosingTime = !!closing && closing.phase !== 'error';\n\n  return (",
+      "after": "  const inClosingTime = !!closing && closing.phase !== 'error';\n  const canCancel = !busy && closing?.phase !== 'complete';\n\n  useEffect(() => {\n    openerRef.current = document.activeElement instanceof HTMLElement\n      ? document.activeElement\n      : null;\n    dialogRef.current?.focus();\n    return () => { openerRef.current?.focus(); };\n  }, []);\n\n  useEffect(() => {\n    const onKeyDown = (event: KeyboardEvent) => {\n      if (event.key === 'Escape' && canCancel) {\n        event.preventDefault();\n        onCancel();\n        return;\n      }\n      const dialog = dialogRef.current;\n      if (event.key !== 'Tab' || !dialog) return;\n      const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(\n        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex=\"-1\"])'\n      ));\n      if (focusable.length === 0) {\n        event.preventDefault();\n        return;\n      }\n      const first = focusable[0];\n      const last = focusable[focusable.length - 1];\n      if (event.shiftKey && (document.activeElement === first || document.activeElement === dialog)) {\n        event.preventDefault();\n        last.focus();\n      } else if (!event.shiftKey && document.activeElement === last) {\n        event.preventDefault();\n        first.focus();\n      }\n    };\n    document.addEventListener('keydown', onKeyDown);\n    return () => document.removeEventListener('keydown', onKeyDown);\n  }, [canCancel, onCancel]);\n\n  return (",
+      "reason": "Own and restore focus, contain Tab navigation, and allow Escape only while the shutdown warning can safely be cancelled."
+    },
+    {
+      "before": "      <div\n        onClick={(e) => e.stopPropagation()}\n        style={{ width: 480, maxWidth: '92vw' }}",
+      "after": "      <div\n        ref={dialogRef}\n        role=\"alertdialog\"\n        aria-modal=\"true\"\n        aria-label={inClosingTime ? 'Closing time' : 'Quit OrbiAgents'}\n        aria-busy={inClosingTime && closing?.phase !== 'complete'}\n        tabIndex={-1}\n        onClick={(e) => e.stopPropagation()}\n        style={{ width: 480, maxWidth: '92vw' }}",
+      "reason": "Expose the destructive quit warning as a named modal alert and announce an active graceful-shutdown phase as busy."
+    }
+  ],
   "src/renderer/src/components/MemoryGraphPanel.tsx": [
     {
       "before": "  >(null);\n  const [cursor, setCursor] = useState({ x: 0, y: 0 });",
