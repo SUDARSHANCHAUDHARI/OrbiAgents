@@ -165,6 +165,7 @@ export function MemoryGraphPanel({
     | { kind: 'edge'; edge: GraphEdge }
     | null
   >(null);
+  const [focusedNodeId, setFocusedNodeId] = useState<string | null>(null);
   const [cursor, setCursor] = useState({ x: 0, y: 0 });
 
   const onCanvasMove = useCallback((e: React.MouseEvent) => {
@@ -291,8 +292,33 @@ export function MemoryGraphPanel({
                   onMouseLeave={() => setHover(null)}
                   onMouseDown={(e) => startDrag(e, n.id)}
                   onClick={() => { if (navigable && !moved.current) onJumpToMemory(n.id); }}
+                  role={navigable ? 'button' : undefined}
+                  tabIndex={navigable ? 0 : undefined}
+                  aria-label={navigable ? `${n.label} · ${t('commandCenter.tabs.memory')}` : undefined}
+                  onFocus={() => {
+                    if (!navigable) return;
+                    setFocusedNodeId(n.id);
+                    setCursor({ x: p.x, y: p.y });
+                    hoverNode(n);
+                  }}
+                  onBlur={() => {
+                    setFocusedNodeId((id) => (id === n.id ? null : id));
+                    setHover((current) => current?.kind === 'node' && current.node.id === n.id ? null : current);
+                  }}
+                  onKeyDown={(e) => {
+                    if (!navigable || (e.key !== 'Enter' && e.key !== ' ')) return;
+                    e.preventDefault();
+                    onJumpToMemory(n.id);
+                  }}
                   style={{ cursor: navigable ? 'pointer' : 'grab' }}
                 >
+                  {focusedNodeId === n.id && (
+                    <rect
+                      x={-half - 6} y={-half - 6} width={s + 12} height={s + 12}
+                      fill="none" stroke="var(--cth-cyan)" strokeWidth={2}
+                      pointerEvents="none"
+                    />
+                  )}
                   {/* hard offset shadow */}
                   <rect x={-half + 2} y={-half + 2} width={s} height={s} fill="var(--cth-ink-900)" />
                   {/* body */}

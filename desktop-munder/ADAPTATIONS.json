@@ -560,6 +560,23 @@
       "reason": "Reapply reduced-motion playback whenever worker activity or facing changes."
     }
   ],
+  "src/renderer/src/components/MemoryGraphPanel.tsx": [
+    {
+      "before": "  >(null);\n  const [cursor, setCursor] = useState({ x: 0, y: 0 });",
+      "after": "  >(null);\n  const [focusedNodeId, setFocusedNodeId] = useState<string | null>(null);\n  const [cursor, setCursor] = useState({ x: 0, y: 0 });",
+      "reason": "Track graph-native keyboard focus independently from pointer hover."
+    },
+    {
+      "before": "                  onClick={() => { if (navigable && !moved.current) onJumpToMemory(n.id); }}\n                  style={{ cursor: navigable ? 'pointer' : 'grab' }}",
+      "after": "                  onClick={() => { if (navigable && !moved.current) onJumpToMemory(n.id); }}\n                  role={navigable ? 'button' : undefined}\n                  tabIndex={navigable ? 0 : undefined}\n                  aria-label={navigable ? `${n.label} · ${t('commandCenter.tabs.memory')}` : undefined}\n                  onFocus={() => {\n                    if (!navigable) return;\n                    setFocusedNodeId(n.id);\n                    setCursor({ x: p.x, y: p.y });\n                    hoverNode(n);\n                  }}\n                  onBlur={() => {\n                    setFocusedNodeId((id) => (id === n.id ? null : id));\n                    setHover((current) => current?.kind === 'node' && current.node.id === n.id ? null : current);\n                  }}\n                  onKeyDown={(e) => {\n                    if (!navigable || (e.key !== 'Enter' && e.key !== ' ')) return;\n                    e.preventDefault();\n                    onJumpToMemory(n.id);\n                  }}\n                  style={{ cursor: navigable ? 'pointer' : 'grab' }}",
+      "reason": "Expose only actionable agent nodes as named keyboard buttons and reuse the existing memory navigation and detail behavior."
+    },
+    {
+      "before": "                >\n                  {/* hard offset shadow */}",
+      "after": "                >\n                  {focusedNodeId === n.id && (\n                    <rect\n                      x={-half - 6} y={-half - 6} width={s + 12} height={s + 12}\n                      fill=\"none\" stroke=\"var(--cth-cyan)\" strokeWidth={2}\n                      pointerEvents=\"none\"\n                    />\n                  )}\n                  {/* hard offset shadow */}",
+      "reason": "Draw an explicit SVG focus frame that remains visible inside the graph canvas."
+    }
+  ],
   "src/renderer/src/components/SidebarSplitter.tsx": [
     {
       "before": "  const startRef = useRef<{ clientX: number; width: number } | null>(null);\n  const [active, setActive] = useState(false);",
