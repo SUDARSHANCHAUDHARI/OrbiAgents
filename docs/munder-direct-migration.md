@@ -424,3 +424,5 @@ Keyboard-accessible Git-file slice (2026-09-20): history and branch-comparison f
 Keyboard-accessible working-tree slice (2026-09-20): live changed-file rows in the IDE rail now use full-width native buttons rather than mouse-only divs. The open diff is exposed as the current page, keyboard activation reuses the existing diff loader, status glyphs remain decorative context, and active-row highlighting is unchanged.
 
 Keyboard-accessible editor-tabs slice (2026-09-20): the IDE tab strip now exposes a named tablist with native tab buttons, selected state, and roving focus. Left/Right/Home/End move and activate tabs, while each close action remains a separate native button; labels, dirty markers, mode badges, active styling, and close behavior are preserved.
+
+Keyboard-accessible commit-history slice (2026-09-20): commits in the IDE history pane now use native buttons and expose the commit whose file details are visible. Selection gains the existing light-blue surface treatment, while read-only commit graphs retain inert rows; lane geometry, refs, subjects, timestamps, and diff loading remain unchanged.

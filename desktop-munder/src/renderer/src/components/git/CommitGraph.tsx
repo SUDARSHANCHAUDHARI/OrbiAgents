@@ -38,6 +38,8 @@ export interface CommitGraphProps {
   commits: CommitLite[];
   /** Name of the currently checked-out branch, for highlighting. */
   currentBranch?: string | null;
+  /** Commit whose file details are currently shown in the history pane. */
+  selectedSha?: string | null;
   /** v0.3.4: commit click → per-commit file list / diff in the IDE HISTORY pane. */
   onCommitClick?: (sha: string) => void;
 }
@@ -74,7 +76,7 @@ function cleanRefs(refs: string[]): string[] {
   return out;
 }
 
-export function CommitGraph({ commits, currentBranch, onCommitClick }: CommitGraphProps) {
+export function CommitGraph({ commits, currentBranch, selectedSha, onCommitClick }: CommitGraphProps) {
   const { rows, railW, rowIndex } = useMemo(() => {
     const layout = layoutGraph(commits.map((c) => ({ sha: c.sha, parents: c.parents })));
     const idx = new Map<string, number>();
@@ -153,25 +155,22 @@ export function CommitGraph({ commits, currentBranch, onCommitClick }: CommitGra
         const refs = cleanRefs(c.refs);
         const head = refs[0];
         const isCurrent = !!head && !!currentBranch && head.endsWith(currentBranch);
-        return (
-          <div
-            key={c.sha}
-            onClick={onCommitClick ? () => onCommitClick(c.sha) : undefined}
-            title={`${c.shortSha} · ${c.subject}\n${c.author} · ${relTime(c.time * 1000)} ago`}
-            style={{
-              height: ROW_H,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 6,
-              paddingLeft: railW + 4,
-              paddingRight: 8,
-              minWidth: 0,
-              cursor: onCommitClick ? 'pointer' : 'default',
-              fontSize: 12,
-              lineHeight: `${ROW_H}px`,
-              whiteSpace: 'nowrap'
-            }}
-          >
+        const selected = selectedSha === c.sha;
+        const title = `${c.shortSha} · ${c.subject}\n${c.author} · ${relTime(c.time * 1000)} ago`;
+        const style: React.CSSProperties = {
+          width: '100%', height: ROW_H,
+          display: 'flex', alignItems: 'center', gap: 6,
+          paddingLeft: railW + 4, paddingRight: 8,
+          border: 'none', textAlign: 'start',
+          background: selected ? 'var(--cth-sky-light)' : 'transparent',
+          color: 'inherit', font: 'inherit',
+          minWidth: 0,
+          cursor: onCommitClick ? 'pointer' : 'default',
+          fontSize: 12,
+          lineHeight: `${ROW_H}px`,
+          whiteSpace: 'nowrap'
+        };
+        const content = <>
             <span style={{
               fontFamily: 'var(--cth-font-mono)', color: 'var(--cth-ink-500)', flexShrink: 0
             }}>{c.shortSha}</span>
@@ -204,7 +203,18 @@ export function CommitGraph({ commits, currentBranch, onCommitClick }: CommitGra
               flexShrink: 0, fontFamily: 'var(--cth-font-mono)',
               fontSize: 11, color: 'var(--cth-ink-500)'
             }}>{relTime(c.time * 1000)}</span>
-          </div>
+          </>;
+        return onCommitClick ? (
+          <button
+            type="button"
+            key={c.sha}
+            onClick={() => onCommitClick(c.sha)}
+            aria-current={selected ? 'true' : undefined}
+            title={title}
+            style={style}
+          >{content}</button>
+        ) : (
+          <div key={c.sha} title={title} style={style}>{content}</div>
         );
       })}
     </div>
