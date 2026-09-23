@@ -599,6 +599,18 @@
       "reason": "Add bounded directional and boundary keyboard controls, and keep double-click reset inside the same available range."
     }
   ],
+  "src/renderer/src/components/TasksKanban.tsx": [
+    {
+      "before": "  const created = new Date(task.createdAt);\n  return (",
+      "after": "  const created = new Date(task.createdAt);\n  const dialogRef = useRef<HTMLDivElement | null>(null);\n\n  useEffect(() => {\n    const previouslyFocused = document.activeElement instanceof HTMLElement\n      ? document.activeElement\n      : null;\n    const dialog = dialogRef.current;\n    dialog?.focus();\n\n    const onKeyDown = (event: KeyboardEvent) => {\n      if (event.key === 'Escape') {\n        event.preventDefault();\n        onClose();\n        return;\n      }\n      if (event.key !== 'Tab' || !dialog) return;\n      const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(\n        'button:not([disabled]), select:not([disabled]), input:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex=\"-1\"])'\n      ));\n      if (focusable.length === 0) {\n        event.preventDefault();\n        return;\n      }\n      const first = focusable[0];\n      const last = focusable[focusable.length - 1];\n      if (event.shiftKey && (document.activeElement === first || document.activeElement === dialog)) {\n        event.preventDefault();\n        last.focus();\n      } else if (!event.shiftKey && document.activeElement === last) {\n        event.preventDefault();\n        first.focus();\n      }\n    };\n\n    document.addEventListener('keydown', onKeyDown);\n    return () => {\n      document.removeEventListener('keydown', onKeyDown);\n      previouslyFocused?.focus();\n    };\n  }, [onClose]);\n\n  return (",
+      "reason": "Give the app-wide task modal deterministic focus entry, Escape dismissal, contained Tab order, listener cleanup, and opener restoration."
+    },
+    {
+      "before": "      <div onClick={(e) => e.stopPropagation()} style={{ width: 720, maxWidth: '94vw', maxHeight: '90vh', display: 'flex' }}>",
+      "after": "      <div\n        ref={dialogRef}\n        role=\"dialog\"\n        aria-modal=\"true\"\n        aria-label={t('kanban.taskTitle')}\n        tabIndex={-1}\n        onClick={(e) => e.stopPropagation()}\n        style={{ width: 720, maxWidth: '94vw', maxHeight: '90vh', display: 'flex' }}\n      >",
+      "reason": "Expose the task detail as a named modal focus target while preserving backdrop click isolation."
+    }
+  ],
   "src/renderer/src/components/FileTree.tsx": [
     {
       "before": "        <div\n          onClick={() => toggle(node)}\n          style={{",
