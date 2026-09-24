@@ -1548,6 +1548,26 @@
       "before": "const HIRE_PROMPT = `You are designing a \"hire\" — a ready-to-spawn AI agent for Munder Difflin, an app that runs a team of CLI coding agents. Output ONE JSON object (a hire manifest) and nothing else.",
       "after": "const HIRE_PROMPT = `You are designing a \"hire\" — a ready-to-spawn AI agent for OrbiAgents, an app that runs a team of CLI coding agents. Output ONE JSON object (a hire manifest) and nothing else.",
       "reason": "Identify OrbiAgents in the copyable hire-manifest prompt while preserving its protocol spec."
+    },
+    {
+      "before": "import { useEffect, useLayoutEffect, useState, type CSSProperties } from 'react';",
+      "after": "import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';",
+      "reason": "Support Add Agent modal focus ownership and opener restoration."
+    },
+    {
+      "before": "  const { t: tr } = useTranslation();\n  const rtl = useRtl();",
+      "after": "  const { t: tr } = useTranslation();\n  const rtl = useRtl();\n  const dialogRef = useRef<HTMLDivElement | null>(null);\n  const openerRef = useRef<HTMLElement | null>(null);",
+      "reason": "Retain the hire dialog and its opening control across the modal lifecycle."
+    },
+    {
+      "before": "  // Close only the modal on Esc. Capture prevents the fullscreen terminal's\n  // window-level handler from also closing the view underneath.\n  useEffect(() => {\n    const onKey = (e: KeyboardEvent) => {\n      if (e.key !== 'Escape') return;\n      e.preventDefault();\n      e.stopImmediatePropagation();\n      onClose();\n    };",
+      "after": "  useEffect(() => {\n    openerRef.current = document.activeElement instanceof HTMLElement\n      ? document.activeElement\n      : null;\n    dialogRef.current?.focus();\n    return () => { openerRef.current?.focus(); };\n  }, []);\n\n  // Keep keyboard interaction inside this modal. Capture prevents the\n  // fullscreen terminal's window-level handler from also closing the view\n  // underneath when Escape closes Add Agent.\n  useEffect(() => {\n    const onKey = (e: KeyboardEvent) => {\n      if (e.key === 'Escape') {\n        e.preventDefault();\n        e.stopImmediatePropagation();\n        onClose();\n        return;\n      }\n      const dialog = dialogRef.current;\n      if (e.key !== 'Tab' || !dialog) return;\n      const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(\n        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex=\"-1\"])'\n      ));\n      if (focusable.length === 0) {\n        e.preventDefault();\n        return;\n      }\n      const first = focusable[0];\n      const last = focusable[focusable.length - 1];\n      if (e.shiftKey && (document.activeElement === first || document.activeElement === dialog)) {\n        e.preventDefault();\n        last.focus();\n      } else if (!e.shiftKey && document.activeElement === last) {\n        e.preventDefault();\n        first.focus();\n      }\n    };",
+      "reason": "Take and restore focus while extending the existing captured Escape handler to contain forward and reverse Tab navigation."
+    },
+    {
+      "before": "      <div onClick={(e) => e.stopPropagation()} style={{ width: 940, maxWidth: '95vw' }}>",
+      "after": "      <div\n        ref={dialogRef}\n        role=\"dialog\"\n        aria-modal=\"true\"\n        aria-label={tr('addAgent.title')}\n        tabIndex={-1}\n        onClick={(e) => e.stopPropagation()}\n        style={{ width: 940, maxWidth: '95vw' }}\n      >",
+      "reason": "Expose the translated hire form as a named modal focus target while preserving backdrop click isolation."
     }
   ],
   "src/shared/ossModels.ts": [
