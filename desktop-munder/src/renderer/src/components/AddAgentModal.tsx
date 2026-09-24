@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useState, type CSSProperties } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PixelPanel } from './PixelPanel';
 import { PixelButton } from './PixelButton';
@@ -145,6 +145,8 @@ export interface AddAgentModalProps {
 export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModalProps) {
   const { t: tr } = useTranslation();
   const rtl = useRtl();
+  const dialogRef = useRef<HTMLDivElement | null>(null);
+  const openerRef = useRef<HTMLElement | null>(null);
   const addAgent = useStore(s => s.addAgent);
   // Deep links and file batches share one FIFO. The head alone seeds the form;
   // every item still requires an explicit spawn or skip.
@@ -257,14 +259,43 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
     } catch { /* clipboard blocked — the textarea below is selectable as a fallback */ }
   };
 
-  // Close only the modal on Esc. Capture prevents the fullscreen terminal's
-  // window-level handler from also closing the view underneath.
+  useEffect(() => {
+    openerRef.current = document.activeElement instanceof HTMLElement
+      ? document.activeElement
+      : null;
+    dialogRef.current?.focus();
+    return () => { openerRef.current?.focus(); };
+  }, []);
+
+  // Keep keyboard interaction inside this modal. Capture prevents the
+  // fullscreen terminal's window-level handler from also closing the view
+  // underneath when Escape closes Add Agent.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
-      e.preventDefault();
-      e.stopImmediatePropagation();
-      onClose();
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        onClose();
+        return;
+      }
+      const dialog = dialogRef.current;
+      if (e.key !== 'Tab' || !dialog) return;
+      const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+      ));
+      if (focusable.length === 0) {
+        e.preventDefault();
+        return;
+      }
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (e.shiftKey && (document.activeElement === first || document.activeElement === dialog)) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
     };
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
@@ -516,7 +547,15 @@ export function AddAgentModal({ onClose, config, onConfigChange }: AddAgentModal
         zIndex: 500
       }}
     >
-      <div onClick={(e) => e.stopPropagation()} style={{ width: 940, maxWidth: '95vw' }}>
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={tr('addAgent.title')}
+        tabIndex={-1}
+        onClick={(e) => e.stopPropagation()}
+        style={{ width: 940, maxWidth: '95vw' }}
+      >
         <PixelPanel
           variant="dialog"
           title={tr('addAgent.title')}
