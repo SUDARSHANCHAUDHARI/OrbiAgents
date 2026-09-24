@@ -1442,6 +1442,28 @@
       "reason": "Expose the mouse divider as a focusable adjustable separator with its current width."
     }
   ],
+  "src/renderer/src/components/EditAgentModal.tsx": [
+    {
+      "before": "import { useEffect, useState, type CSSProperties } from 'react';",
+      "after": "import { useEffect, useRef, useState, type CSSProperties } from 'react';",
+      "reason": "Support Edit Agent modal focus ownership and opener restoration."
+    },
+    {
+      "before": "export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {\n  const updateAgent = useStore((s) => s.updateAgent);",
+      "after": "export function EditAgentModal({ agent, onClose }: EditAgentModalProps) {\n  const dialogRef = useRef<HTMLDivElement | null>(null);\n  const openerRef = useRef<HTMLElement | null>(null);\n  const updateAgent = useStore((s) => s.updateAgent);",
+      "reason": "Retain the edit dialog and the control that opened it across the modal lifecycle."
+    },
+    {
+      "before": "  const pickProvider = (id: AgentProvider) => {",
+      "after": "  useEffect(() => {\n    openerRef.current = document.activeElement instanceof HTMLElement\n      ? document.activeElement\n      : null;\n    dialogRef.current?.focus();\n    return () => { openerRef.current?.focus(); };\n  }, []);\n\n  useEffect(() => {\n    const onKeyDown = (event: KeyboardEvent) => {\n      if (event.key === 'Escape') {\n        event.preventDefault();\n        onClose();\n        return;\n      }\n      const dialog = dialogRef.current;\n      if (event.key !== 'Tab' || !dialog) return;\n      const focusable = Array.from(dialog.querySelectorAll<HTMLElement>(\n        'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex=\"-1\"])'\n      ));\n      if (focusable.length === 0) {\n        event.preventDefault();\n        return;\n      }\n      const first = focusable[0];\n      const last = focusable[focusable.length - 1];\n      if (event.shiftKey && (document.activeElement === first || document.activeElement === dialog)) {\n        event.preventDefault();\n        last.focus();\n      } else if (!event.shiftKey && document.activeElement === last) {\n        event.preventDefault();\n        first.focus();\n      }\n    };\n    document.addEventListener('keydown', onKeyDown);\n    return () => document.removeEventListener('keydown', onKeyDown);\n  }, [onClose]);\n\n  const pickProvider = (id: AgentProvider) => {",
+      "reason": "Take and restore focus while adding Escape and forward/reverse Tab containment to the existing edit form."
+    },
+    {
+      "before": "      <div onClick={(e) => e.stopPropagation()} style={{ width: 940, maxWidth: '95vw' }}>",
+      "after": "      <div\n        ref={dialogRef}\n        role=\"dialog\"\n        aria-modal=\"true\"\n        aria-label={`Edit ${agent.name}`}\n        tabIndex={-1}\n        onClick={(e) => e.stopPropagation()}\n        style={{ width: 940, maxWidth: '95vw' }}\n      >",
+      "reason": "Expose the post-hire editor as a named modal focus target while retaining backdrop behavior."
+    }
+  ],
   "src/renderer/src/components/FullscreenTerminal.tsx": [
     {
       "before": "        }}>MUNDER DIFFLIN · FOCUS MODE</span>",
