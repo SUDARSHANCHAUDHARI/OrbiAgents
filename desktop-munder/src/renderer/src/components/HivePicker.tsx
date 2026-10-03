@@ -79,7 +79,7 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       zIndex: 200,
       padding: 32
-      }}>
+    }}>
       <div style={{ width: 560, maxWidth: '94vw' }}>
         <PixelPanel variant="dialog" title="SELECT A HARNESS CONFIG" noPadding>
           <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
