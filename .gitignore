@@ -15,3 +15,10 @@ desktop/.electron-vite/
 pnpm-debug.log*
 tsconfig.tsbuildinfo
 .claude/worktrees/
+
+# build artifacts
+*.vsix
+
+# local prisma dev database
+server/prisma/*.db
+server/prisma/*.db-journal
