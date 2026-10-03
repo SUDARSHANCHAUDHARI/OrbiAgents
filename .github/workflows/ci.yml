@@ -1,0 +1,138 @@
+name: CI
+
+# Every PR merged before this workflow existed went in unchecked. Two of them
+# landed breakage that these jobs would have caught: a provenance-hash mismatch
+# in desktop-munder, and a compile-check pinning an electron version that had
+# just been bumped.
+#
+# The repository holds five independent installs, each with its own lockfile:
+# the root pnpm workspace (root + desktop), server, web, extension and
+# extension/webview-ui. Only `desktop` is a workspace member, so every other
+# package installs on its own with --ignore-workspace.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: '22'
+  PNPM_VERSION: '10.28.2'
+
+jobs:
+  # desktop-munder declares no dependencies at all — its suite and its
+  # provenance check are plain node. No install step, deliberately.
+  desktop-munder:
+    name: desktop-munder (tests + provenance)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Upstream provenance
+        working-directory: desktop-munder
+        run: node tools/verify-baseline.mjs
+      - name: Tests
+        working-directory: desktop-munder
+        run: npm test
+      - name: Security boundaries
+        working-directory: desktop-munder
+        run: npm run check:security
+      - name: Design system
+        working-directory: desktop-munder
+        run: npm run check:design-system
+      - name: Accessibility
+        working-directory: desktop-munder
+        run: npm run check:accessibility
+      - name: Localization
+        working-directory: desktop-munder
+        run: npm run check:localization
+      - name: Performance budget
+        working-directory: desktop-munder
+        run: npm run check:performance
+
+  desktop:
+    name: desktop (typecheck + tests + checks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - name: Install (root workspace)
+        run: pnpm install --frozen-lockfile
+      - name: Typecheck
+        working-directory: desktop
+        run: pnpm typecheck
+      - name: Tests
+        working-directory: desktop
+        run: pnpm test
+      - name: Security boundaries
+        working-directory: desktop
+        run: pnpm check:security
+      - name: Accessibility
+        working-directory: desktop
+        run: pnpm check:accessibility
+      - name: Localization
+        working-directory: desktop
+        run: pnpm check:localization
+      - name: Design system
+        working-directory: desktop
+        run: pnpm check:design-system
+      - name: Renderer budget
+        working-directory: desktop
+        run: pnpm check:performance
+
+  web:
+    name: web (build + tests)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      # web/ is not in pnpm-workspace.yaml (it lists only `desktop`), so it
+      # carries its own lockfile. Without --ignore-workspace pnpm resolves to
+      # the root workspace and silently installs nothing for this package.
+      - name: Install
+        working-directory: web
+        run: pnpm install --frozen-lockfile --ignore-workspace
+      - name: Tests
+        working-directory: web
+        run: pnpm test
+      - name: Build
+        working-directory: web
+        run: pnpm build
+
+  server:
+    name: server (tests)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Install
+        working-directory: server
+        run: pnpm install --frozen-lockfile --ignore-workspace
+      - name: Tests
+        working-directory: server
+        run: pnpm test
