@@ -22,3 +22,6 @@ tsconfig.tsbuildinfo
 # local prisma dev database
 server/prisma/*.db
 server/prisma/*.db-journal
+
+# repoguard scan output
+repoguard-results/
