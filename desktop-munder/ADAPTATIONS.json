@@ -1464,6 +1464,13 @@
       "reason": "Expose the post-hire editor as a named modal focus target while retaining backdrop behavior."
     }
   ],
+  "src/renderer/src/components/HivePicker.tsx": [
+    {"before":"import { useState } from 'react';","after":"import { useEffect, useRef, useState } from 'react';","reason":"Support launch-page focus ownership."},
+    {"before":"export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {\n  const current = config.harnessHome;","after":"export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {\n  const pageRef = useRef<HTMLElement | null>(null);\n  const current = config.harnessHome;","reason":"Retain the launch-page focus target."},
+    {"before":"  const [error, setError] = useState<string | undefined>();","after":"  const [error, setError] = useState<string | undefined>();\n\n  useEffect(() => { pageRef.current?.focus(); }, []);","reason":"Place keyboard focus on the named launch page when it opens."},
+    {"before":"    <div style={{\n      position: 'fixed', inset: 0,","after":"    <main\n      ref={pageRef}\n      aria-label=\"Select a harness configuration\"\n      tabIndex={-1}\n      style={{\n      position: 'fixed', inset: 0,","reason":"Expose the full-screen configuration picker as a named page landmark rather than a modal."},
+    {"before":"    </div>\n  );\n}","after":"    </main>\n  );\n}","reason":"Close the page landmark while preserving the existing launch-picker content."}
+  ],
   "src/renderer/src/components/FullscreenTerminal.tsx": [
     {
       "before": "        }}>MUNDER DIFFLIN · FOCUS MODE</span>",

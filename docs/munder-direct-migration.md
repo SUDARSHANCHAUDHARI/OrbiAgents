@@ -440,3 +440,5 @@ Accessible quit-warning dialog slice (2026-09-23): the application-closing warni
 Accessible Add Agent dialog slice (2026-09-23): the translated multi-section hire form now identifies itself as a named modal dialog, takes and contains keyboard focus, and restores focus to the control that opened it. Existing captured Escape handling still closes only Add Agent when launched over a fullscreen terminal; provider, workspace, consent, queue-review, and spawn behavior are unchanged.
 
 Accessible Edit Agent dialog slice (2026-09-24): the post-hire editor now identifies itself with the edited agent's name, takes and contains keyboard focus, restores the invoking edit control, and closes on Escape. Existing identity, engine, briefing, save, and backdrop-dismissal behavior are unchanged.
+
+Accessible Hive Picker page slice (2026-09-24): the launch-time configuration picker now exposes a named main landmark and takes initial focus as an application page. Its existing folder selection, relaunch, busy, and error behavior are unchanged.

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { PixelPanel } from './PixelPanel';
 import { PixelButton } from './PixelButton';
 import { Icon } from './Icon';
@@ -28,10 +28,13 @@ function folderName(path: string): string {
  * every switch is a clean process restart (cheap here, before any work is live).
  */
 export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
+  const pageRef = useRef<HTMLElement | null>(null);
   const current = config.harnessHome;
   const recents = (config.recentHives ?? []).filter((h) => h && h !== current);
   const [busy, setBusy] = useState<string | undefined>();
   const [error, setError] = useState<string | undefined>();
+
+  useEffect(() => { pageRef.current?.focus(); }, []);
 
   // Open a hive. Same folder as the current one → just enter it (no relaunch).
   // A different folder → changeHome('fresh') re-points + relaunches the process.
@@ -64,7 +67,11 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
   };
 
   return (
-    <div style={{
+    <main
+      ref={pageRef}
+      aria-label="Select a harness configuration"
+      tabIndex={-1}
+      style={{
       position: 'fixed', inset: 0,
       background: 'var(--cth-cream-200)',
       backgroundImage:
@@ -72,7 +79,7 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       zIndex: 200,
       padding: 32
-    }}>
+      }}>
       <div style={{ width: 560, maxWidth: '94vw' }}>
         <PixelPanel variant="dialog" title="SELECT A HARNESS CONFIG" noPadding>
           <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -179,6 +186,6 @@ export function HivePicker({ config, onOpenCurrent }: HivePickerProps) {
           </div>
         </PixelPanel>
       </div>
-    </div>
+    </main>
   );
 }
