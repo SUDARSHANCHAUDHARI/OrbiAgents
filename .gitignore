@@ -25,3 +25,22 @@ server/prisma/*.db-journal
 
 # repoguard scan output
 repoguard-results/
+
+# agent tooling output — local to one machine, never shared
+.flow/
+.superpowers/
+
+# editor config
+.vscode/
+
+# local planning and design artifacts, kept out of the public repo
+PLAN.md
+CLAUDE_TASKS.md
+design_system.html
+
+# debug dumps: single-line base64 PNG captures from the canvas renderer
+canvas-capture.txt
+canvas_render.txt
+
+# lefthook sample config, all of it commented out and unused
+lefthook.yml
