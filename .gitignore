@@ -15,6 +15,7 @@ desktop/.electron-vite/
 pnpm-debug.log*
 tsconfig.tsbuildinfo
 .claude/worktrees/
+.claude/settings.local.json
 
 # build artifacts
 *.vsix
