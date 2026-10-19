@@ -21,6 +21,20 @@ export interface ProcessRunner {
   run(request: ProcessRequest): Promise<ProcessResult>;
 }
 
+// Children get only what codex/claude/git need to run and find their own login; server secrets stay out.
+const CHILD_ENV_KEYS = [
+  "PATH", "HOME", "USER", "LOGNAME", "SHELL", "TMPDIR", "LANG", "LC_ALL", "LC_CTYPE", "TERM",
+  "CODEX_HOME", "CLAUDE_CONFIG_DIR",
+] as const;
+
+export function childProcessEnv(env: NodeJS.ProcessEnv = process.env): NodeJS.ProcessEnv {
+  const result: NodeJS.ProcessEnv = {};
+  for (const key of CHILD_ENV_KEYS) {
+    if (env[key] !== undefined) result[key] = env[key];
+  }
+  return result;
+}
+
 export class SpawnProcessRunner implements ProcessRunner {
   constructor(private readonly allowedCommands: ReadonlySet<string>) {}
 
@@ -37,7 +51,7 @@ export class SpawnProcessRunner implements ProcessRunner {
         cwd: request.cwd,
         shell: false,
         stdio: ["pipe", "pipe", "pipe"],
-        env: process.env,
+        env: childProcessEnv(),
       });
       let stdout = "";
       let stderr = "";

@@ -78,6 +78,23 @@ test("spawn runner streams output and aborts a running child", async () => {
   await assert.rejects(running, /cancelled by test/);
 });
 
+test("spawn runner passes only allowlisted environment to children", async () => {
+  process.env.ORBI_TEST_SECRET = "must-not-leak";
+  try {
+    const runner = new SpawnProcessRunner(new Set([process.execPath]));
+    const { stdout } = await runner.run({
+      command: process.execPath,
+      args: ["-e", "process.stdout.write(JSON.stringify(process.env))"],
+      cwd: "/tmp",
+    });
+    const childEnv = JSON.parse(stdout) as Record<string, string>;
+    assert.equal(childEnv.ORBI_TEST_SECRET, undefined);
+    assert.equal(childEnv.PATH, process.env.PATH);
+  } finally {
+    delete process.env.ORBI_TEST_SECRET;
+  }
+});
+
 test("spawn runner terminates output beyond its configured bound", async () => {
   const runner = new SpawnProcessRunner(new Set([process.execPath]));
   await assert.rejects(
