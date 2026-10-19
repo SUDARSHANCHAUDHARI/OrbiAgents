@@ -222,7 +222,7 @@ OrbiAgents/
 
 | Area | Technology |
 |---|---|
-| Web dashboard | Next.js 14, React 18, TypeScript |
+| Web dashboard | Next.js 15, React 19, TypeScript |
 | Root design app | Next.js 16, React 19, TypeScript |
 | Styling | Tailwind CSS |
 | Server | Node.js, Express, WebSocket |
