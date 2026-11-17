@@ -19,6 +19,11 @@ tsconfig.tsbuildinfo
 
 # build artifacts
 *.vsix
+dist/
+desktop-munder/out/
+coverage/
+test-results/
+playwright-report/
 
 # local prisma dev database
 server/prisma/*.db
