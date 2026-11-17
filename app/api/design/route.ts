@@ -5,8 +5,10 @@ const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 export async function POST(req: NextRequest) {
   const _guard = guard(req);
   if (_guard) return _guard;
-  const { goal, constraints, agentCount, framework } = await req.json();
-  if (!goal?.trim()) return NextResponse.json({ error: "Goal required" }, { status: 400 });
+  let body: { goal?: unknown; constraints?: unknown; agentCount?: unknown; framework?: unknown };
+  try { body = await req.json(); } catch { return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }); }
+  const { goal, constraints, agentCount, framework } = body ?? {};
+  if (typeof goal !== "string" || !goal.trim()) return NextResponse.json({ error: "Goal required" }, { status: 400 });
   const prompt = `You are a multi-agent system architect. Design an optimal agent network for this goal.
 Goal: ${goal} | Agent count: ${agentCount || "AI decides"} | Framework: ${framework || "Any"} | Constraints: ${constraints || "None"}
 Return JSON: { "systemName": "string", "agents": [{ "name": "string", "role": "string", "responsibilities": ["string"], "tools": ["string"], "inputFrom": ["string"], "outputTo": ["string"], "model": "string" }], "orchestrator": "string", "workflow": [{ "step": number, "agent": "string", "action": "string", "output": "string" }], "communicationPattern": "string", "failureModes": ["string"], "successCriteria": ["string"], "implementationCode": "string", "estimatedCost": "string", "summary": "string" }
