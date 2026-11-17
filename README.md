@@ -21,6 +21,7 @@ Release candidate: **v0.2.0**. See the [changelog](CHANGELOG.md) and [acceptance
 ## Table of Contents
 
 - [What OrbiAgents is](#what-orbiagents-is)
+- [Screenshots](#screenshots)
 - [Features](#features)
 - [Architecture](#architecture)
 - [Repository structure](#repository-structure)
@@ -68,6 +69,24 @@ The workflow engine resolves dependencies between nodes, passes predecessor outp
 OrbiAgents also includes a simpler fixed Planner → Coder execution path.
 
 > **Current runtime model:** OrbiAgents executes specialist agents through Anthropic, OpenAI, and Gemini APIs by default. Operators can explicitly enable local Claude Code or Codex CLI adapters; those runs use allowlisted, no-shell process execution and isolated Git worktrees.
+
+## Screenshots
+
+### Web app
+
+| Sign in | Workflow builder |
+| --- | --- |
+| ![OrbiAgents web sign-in](docs/assets/screenshots/web-login.png) | ![OrbiAgents workflow builder](docs/assets/screenshots/web-workflow-builder.png) |
+
+![OrbiAgents live agent log](docs/assets/screenshots/web-live-log.png)
+
+*Live log while idle: between runs the dashboard animates simulated agent activity. Real runs replace it with workflow events.*
+
+### Desktop app (macOS)
+
+| Welcome | Meet your office |
+| --- | --- |
+| ![OrbiAgents desktop welcome](docs/assets/screenshots/desktop-welcome.png) | ![OrbiAgents desktop office overview](docs/assets/screenshots/desktop-office-overview.png) |
 
 ## Features
 
@@ -185,8 +204,10 @@ OrbiAgents is no longer a single Next.js MVP. The repository contains multiple p
 
 ```text
 OrbiAgents/
-├── app/                         # Next.js application
+├── app/                         # Standalone agent-system designer page (root `pnpm dev`)
 │   └── api/design/              # Agent-system design API route
+├── web/                         # Next.js dashboard (main web UI)
+├── shared/                      # Engine, world and sprite code shared with web/
 ├── server/                      # Express + WebSocket orchestration backend
 │   ├── agents/                  # Planner/Coder/Tester/Reviewer/Debugger
 │   ├── test/                    # Server tests
@@ -250,27 +271,36 @@ git clone https://github.com/SUDARSHANCHAUDHARI/OrbiAgents.git
 cd OrbiAgents
 ```
 
-### 2. Run the web app
+`server/`, `web/` and `extension/` each carry their own lockfile and are not members of the root pnpm workspace (it lists only `desktop`). Install them with `--ignore-workspace`, otherwise pnpm resolves to the root workspace and installs nothing for that package.
+
+### 2. Configure and run the orchestration server
+
+In a first terminal:
 
 ```bash
-pnpm install
+cd server
+cp .env.example .env              # add at least one provider key
+pnpm install --ignore-workspace
+pnpm exec prisma generate         # Prisma client (SQLite, server/prisma/dev.db)
+pnpm exec prisma migrate deploy   # create or upgrade the database tables
 pnpm dev
 ```
 
-The web app runs at `http://localhost:3000` by default.
+The server runs at `http://localhost:4000`.
 
-### 3. Configure and run the orchestration server
+### 3. Run the web dashboard
 
 In a second terminal:
 
 ```bash
-cd server
-cp .env.example .env
-pnpm install
+cd web
+pnpm install --ignore-workspace
 pnpm dev
 ```
 
-The server runs at `http://localhost:4000` by default.
+The dashboard runs at `http://localhost:3000` and talks to the server at `http://localhost:4000`. Point it elsewhere with `NEXT_PUBLIC_API_BASE_URL` and `NEXT_PUBLIC_WS_BASE_URL`. These are inlined at build time, so set them before `pnpm build`.
+
+Root `pnpm dev` starts a separate single-page agent-system designer (`app/`), not the dashboard. It needs `ANTHROPIC_API_KEY` in a root `.env.local` and accepts `RATE_LIMIT_WINDOW_MS`, `RATE_LIMIT_MAX` and `MAX_BODY_BYTES`. Its rate limit is per client only with `TRUST_PROXY=true` behind a trusted proxy; otherwise all callers share one bucket.
 
 Configure one or more provider keys in `server/.env`:
 
@@ -297,16 +327,20 @@ TRUST_PROXY=false
 LOCAL_CLI_ENABLED=false
 # LOCAL_CLI_REPO_PATH=/absolute/path/to/repository
 # LOCAL_CLI_WORKTREE_ROOT=/absolute/path/to/orbi-worktrees
+MEMORY_EMBEDDINGS_ENABLED=false   # true requires OPENAI_API_KEY
+# MEMORY_EMBEDDING_MODEL=
+MEMORY_EMBEDDING_CACHE_TTL_DAYS=30
+MEMORY_EMBEDDING_CACHE_MAX_ENTRIES=1000
 ```
 
-Use a strong `JWT_SECRET` outside local development.
+Use a strong `JWT_SECRET` outside local development. With `NODE_ENV=production` the server refuses to start when `JWT_SECRET` is missing or empty, or when no provider key is configured.
 Set `TRUST_PROXY=true` only when the server is directly behind one trusted reverse proxy. Leaving it disabled prevents clients from spoofing forwarded addresses to evade rate limits.
 
 ### 4. Run server tests
 
 ```bash
 cd server
-pnpm test
+pnpm test   # after prisma generate + migrate deploy (step 2)
 ```
 
 The server test suite covers integration behavior, runtime state, session storage, and workflow execution logic.
@@ -315,7 +349,7 @@ The server test suite covers integration behavior, runtime state, session storag
 
 ```bash
 cd extension
-pnpm install
+pnpm install --ignore-workspace
 pnpm build
 ```
 
@@ -537,7 +571,7 @@ Built by [SUDARSHANCHAUDHARI](https://github.com/SUDARSHANCHAUDHARI)
 
 ## About
 
-I'm Sudarshan Chaudhari, a Senior Quality Engineer, Test Automation specialist, and AI systems builder based in Bangkok, Thailand.
+I'm Sudarshan Kishor Chaudhari, a Senior Quality Engineer, Test Automation specialist, and AI systems builder based in Bangkok, Thailand.
 
 I have 13+ years of experience in software quality engineering, working across SaaS, fintech, gaming, web, mobile, cloud, and digital signage platforms. My background combines hands-on test automation with QA leadership, test strategy, CI/CD, release quality, production investigation, and cross-platform validation.
 

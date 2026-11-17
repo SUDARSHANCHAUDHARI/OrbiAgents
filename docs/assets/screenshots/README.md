@@ -10,8 +10,7 @@ Why this exists:
 
 Current contents include:
 
-- dashboard screenshots
-- login screenshots
-- canvas/render test captures
+- web app: dashboard, sign-in, workflow builder, and live agent log (`orbi-dashboard.png`, `web-*.png`)
+- desktop app: onboarding welcome and office overview (`desktop-*.png`)
 
 If any screenshot later becomes part of the docs or README, link it from here instead of placing image files at the repo root.
