@@ -838,6 +838,14 @@ function ensureClaudeProjectTrust(home: string, cwd: string): void {
   } catch { /* best-effort; never block a spawn */ }
 }
 
+/** True when Claude argv starts the session in bypass or auto permission mode. */
+function claudeArgsSkipPermissionPrompts(args: readonly string[]): boolean {
+  const unattended = (mode: string | undefined) => mode === 'bypassPermissions' || mode === 'auto';
+  return args.some((a, i) => a === '--dangerously-skip-permissions'
+    || (a === '--permission-mode' && unattended(args[i + 1]))
+    || (a.startsWith('--permission-mode=') && unattended(a.slice('--permission-mode='.length))));
+}
+
 /** Idempotently pre-accept Claude Code's first-run prompts so agents spawned with
  *  `--permission-mode bypassPermissions` start cleanly. Without this, a fresh
  *  install shows an interactive "WARNING: Bypass Permissions mode … 1. No, exit /
@@ -853,12 +861,14 @@ function ensureClaudeProjectTrust(home: string, cwd: string): void {
  *
  *  Each file is an independent best-effort boundary: unsafe existing contents
  *  are preserved without preventing the other file from being handled safely. */
-export function ensureClaudePermissionsAccepted(cwd?: string): void {
+export function ensureClaudePermissionsAccepted(cwd?: string, args: readonly string[] = []): void {
   let home: string;
   try { home = homedir(); } catch { return; }
   if (!home) return;
 
-  ensureClaudeGlobalPermissions(home);
+  // The global prompt-skip flags only matter when this spawn starts in bypass/auto
+  // mode; an ordinary spawn must not change the user's global Claude settings.
+  if (claudeArgsSkipPermissionPrompts(args)) ensureClaudeGlobalPermissions(home);
   if (cwd) {
     ensureClaudeProjectTrust(home, cwd);
   }

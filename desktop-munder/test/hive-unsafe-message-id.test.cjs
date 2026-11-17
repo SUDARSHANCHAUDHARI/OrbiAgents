@@ -63,8 +63,10 @@ test('a traversal recipient is not written outside agents/ and bounces to god', 
     id: 'evil', to: '../../outside', act: 'inform', subject: 's', body: 'b'
   }));
   assert.equal(hive.routeOnce(), 1);
-  const json = listJson(home).filter((p) => path.basename(p) === 'evil.json');
-  assert.deepEqual(json.map((p) => path.relative(home, p)), [path.join('hive', 'agents', 'god-1', 'inbox', 'evil.json')]);
+  // The router assigns its own id, so the agent's 'evil' never names a file anywhere.
+  assert.deepEqual(listJson(home).filter((p) => path.basename(p) === 'evil.json'), []);
+  assert.deepEqual(fs.readdirSync(path.join(home, 'outside', 'inbox')), []);
+  assert.equal(hive.inbox('god-1').length, 1);
   assert.match(hive.inbox('god-1')[0].subject, /undeliverable/);
   assert.ok(hive.logTail(50).some((e) => e.kind === 'drop' && e.reason === 'no-inbox' && e.to === '../../outside'));
 });

@@ -26,7 +26,10 @@ require.cache[electron] = {
   exports: { app: { getPath: () => userData } }
 };
 
-const { ensureClaudePermissionsAccepted } = loadTs('src/main/config.ts');
+const config = loadTs('src/main/config.ts');
+// The cases below model an auto-mode spawn, the only kind that writes global settings.
+const bypassArgs = ['--permission-mode', 'bypassPermissions'];
+const ensureClaudePermissionsAccepted = (dir, args = bypassArgs) => config.ensureClaudePermissionsAccepted(dir, args);
 delete process.env.CLAUDE_CONFIG_DIR; // default resolution: ~/.claude + ~/.claude.json
 const settingsDir = path.join(home, '.claude');
 const settingsPath = path.join(settingsDir, 'settings.json');
@@ -147,4 +150,30 @@ test('preserves existing config files with unsafe JSON root shapes', () => {
 
   assert.equal(fs.readFileSync(settingsPath, 'utf8'), 'null\n');
   assert.equal(fs.readFileSync(projectConfigPath, 'utf8'), '["keep"]\n');
+});
+
+test('a non-auto spawn leaves global Claude settings untouched but still trusts the folder', () => {
+  for (const args of [[], ['--model', 'sonnet'], ['--permission-mode', 'default'], ['--permission-mode=plan']]) {
+    resetConfigs();
+    ensureClaudePermissionsAccepted(cwd, args);
+    assert.equal(fs.existsSync(settingsPath), false, `settings written for ${JSON.stringify(args)}`);
+    assert.deepEqual(JSON.parse(fs.readFileSync(projectConfigPath, 'utf8')), {
+      projects: { [cwd]: { hasTrustDialogAccepted: true } }
+    });
+  }
+  const settings = '{"env":{"KEEP":"1"}}\n';
+  writeSettings(settings);
+  ensureClaudePermissionsAccepted(cwd, ['--model', 'sonnet']);
+  assert.equal(fs.readFileSync(settingsPath, 'utf8'), settings);
+});
+
+test('an auto or bypass spawn writes the global prompt-skip settings', () => {
+  for (const args of [['--permission-mode', 'bypassPermissions'], ['--permission-mode', 'auto'], ['--permission-mode=bypassPermissions'], ['--dangerously-skip-permissions']]) {
+    resetConfigs();
+    ensureClaudePermissionsAccepted(cwd, args);
+    assert.deepEqual(JSON.parse(fs.readFileSync(settingsPath, 'utf8')), {
+      skipDangerousModePermissionPrompt: true,
+      skipAutoPermissionPrompt: true
+    }, JSON.stringify(args));
+  }
 });

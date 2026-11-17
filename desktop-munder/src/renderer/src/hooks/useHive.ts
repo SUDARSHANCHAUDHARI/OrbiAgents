@@ -282,8 +282,8 @@ export function useHive(config: HarnessConfig | null): void {
   //
   // This used to hold one string — the lexicographically largest id in the inbox,
   // read as "the newest". Message ids are usually `<timestamp>-<rand>`, so that
-  // held, but an agent may set its own `id` in the outbox JSON and the hive keeps
-  // it verbatim (hive.ts normalize: `partial.id ?? ...`). One such id in god's
+  // held, but an agent could once set its own `id` in the outbox JSON and the hive
+  // kept it verbatim (the router now assigns its own). One such id in god's
   // inbox — `dev15-progress-canvas-v4` — sorts above EVERY `2026-*` timestamp and
   // never drains, so the "newest" id was frozen on it: Michael was nudged once per
   // app launch and then never again, however much real mail piled up behind it.

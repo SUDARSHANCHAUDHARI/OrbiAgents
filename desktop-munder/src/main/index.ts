@@ -2917,7 +2917,7 @@ async function spawnAgentCore(opts: AgentSpawnOptions, owner: Electron.WebConten
   // interactive prompt it can't answer and exit code 1. Best-effort, never blocks.
   // Claude-only — other CLIs handle their own permission UX.
   if (claudeProvider) {
-    try { ensureClaudePermissionsAccepted(opts.cwd); } catch { /* never block spawn */ }
+    try { ensureClaudePermissionsAccepted(opts.cwd, opts.args ?? []); } catch { /* never block spawn */ }
   }
   // Suppress first-run interactive prompts for providers that need it (e.g. Codex
   // directory-trust gate via CODEX_NON_INTERACTIVE). Merges into any env already
