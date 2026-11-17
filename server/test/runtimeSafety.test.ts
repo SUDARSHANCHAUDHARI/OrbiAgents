@@ -3,9 +3,10 @@ import test from "node:test";
 import { CircuitOpenError, WorkflowCircuitBreaker } from "../circuitBreaker";
 import { ApiRuntimeAdapter, codexCliDescriptor, LocalCliRuntimeAdapter } from "../runtimeAdapter";
 import { SpawnProcessRunner } from "../processRunner";
-import { GitWorktreeIsolation } from "../workspaceIsolation";
+import { GitCliWorktreeCommandRunner, GitWorktreeIsolation } from "../workspaceIsolation";
 import { availableRuntimeIds, createRuntimeExecution } from "../runtimeConfig";
 import { validateServerEnv } from "../env";
+import { anthropicCostUsd } from "../ai";
 
 test("API runtime remains the available default", async () => {
   const adapter = new ApiRuntimeAdapter();
@@ -122,6 +123,21 @@ test("worktree isolation sanitizes names and releases once", async () => {
   assert.equal(calls.length, 3);
 });
 
+test("worktree isolation deletes the managed branch only after removing a clean worktree", async () => {
+  const calls: string[] = [];
+  const isolation = new GitWorktreeIsolation("/repo", "/tmp/orbi-worktrees", {
+    async add() {},
+    async isClean() { return true; },
+    async remove(_repo, target) { calls.push(`remove:${target}`); },
+    async deleteBranch(_repo, branch) { calls.push(`branch:${branch}`); throw new Error("not fully merged"); },
+  });
+  assert.equal(await (await isolation.acquire("run", "coder")).release(), "removed");
+  assert.deepEqual(calls, ["remove:/tmp/orbi-worktrees/run-coder", "branch:orbi/run-coder"]);
+  const args: string[][] = [];
+  await new GitCliWorktreeCommandRunner({ async run(request) { args.push(request.args); return { stdout: "", stderr: "", exitCode: 0 }; } }).deleteBranch("/repo", "orbi/run-coder");
+  assert.deepEqual(args, [["-C", "/repo", "branch", "-d", "orbi/run-coder"]]);
+});
+
 test("worktree isolation preserves dirty agent changes", async () => {
   let removed = false;
   const isolation = new GitWorktreeIsolation("/repo", "/tmp/orbi-worktrees", {
@@ -174,4 +190,14 @@ test("environment validation rejects unsafe local CLI configuration", () => {
     () => validateServerEnv({ LOCAL_CLI_ENABLED: "true", LOCAL_CLI_REPO_PATH: "/repo", LOCAL_CLI_WORKTREE_ROOT: "/repo/worktrees" }),
     /must be outside/
   );
+});
+
+test("environment validation treats an empty JWT_SECRET as missing in production", () => {
+  assert.throws(() => validateServerEnv({ NODE_ENV: "production", JWT_SECRET: "" }), /JWT_SECRET must be set in production/);
+});
+
+test("anthropic cost bills input, cache reads, cache writes, and output separately", () => {
+  // 1M of each: $3 input + $0.30 cache read + $3.75 cache write + $15 output.
+  assert.equal(Number(anthropicCostUsd(1_000_000, 1_000_000, 1_000_000, 1_000_000).toFixed(6)), 22.05);
+  assert.equal(Number(anthropicCostUsd(1_000_000, 0, 0, 0).toFixed(6)), 3);
 });

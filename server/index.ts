@@ -1,7 +1,8 @@
 import "dotenv/config";
-import express from "express";
+import express, { NextFunction, Request, RequestHandler, Response } from "express";
 import type { Server } from "http";
 import type { AddressInfo } from "net";
+import { randomUUID } from "crypto";
 import { WebSocketServer, WebSocket } from "ws";
 import { Agent, AgentState, ClientMessage, WorkflowEvent } from "./types";
 import { runWorkflow } from "./orchestrator";
@@ -21,6 +22,7 @@ import {
   createShareToken,
   getUserSessionUsage,
   listSessions,
+  finishSession,
 } from "./sessionStore";
 import { db } from "./db";
 import { hashPassword, verifyPassword, signToken, protect, verifyToken } from "./auth";
@@ -29,6 +31,7 @@ import {
   ensureRuntimeActive,
   getOrCreateRuntime,
   requestRuntimeCancel,
+  resetAgentUsage,
   resetRuntimeAgents,
   setAgentPaused,
   touchRuntime,
@@ -47,6 +50,15 @@ import { getProposalPolicies, parseProposalHistoryPayload, recordProposal, saveP
 import { clearEmbeddingCache, embeddingCacheLimits, embeddingCacheTelemetry, pruneEmbeddingCache } from "./embeddingCache";
 
 const app = express();
+// Express 4 does not forward async rejections; wrap every route handler so they reach the error middleware.
+for (const method of ["get", "post", "put", "patch", "delete"] as const) {
+  const register = app[method].bind(app) as (...args: unknown[]) => unknown;
+  (app as unknown as Record<string, unknown>)[method] = (...args: unknown[]) => register(...args.map((arg) =>
+    typeof arg === "function"
+      ? (req: Request, res: Response, next: NextFunction) => Promise.resolve((arg as RequestHandler)(req, res, next)).catch(next)
+      : arg
+  ));
+}
 app.set("trust proxy", process.env.TRUST_PROXY === "true" ? 1 : false);
 const PORT = 4000;
 const APP_URL = (process.env.APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
@@ -232,7 +244,8 @@ function getUserIdFromSocketRequest(req: import("http").IncomingMessage): string
 
 function broadcastSimulation() {
   runtimes.forEach((runtime) => {
-    if (runtime.workflowRunning) return;
+    // No viewers: skip, so the simulation neither wastes work nor keeps an idle runtime alive past its TTL.
+    if (runtime.workflowRunning || runtime.sockets.size === 0) return;
     let changed = false;
     runtime.agents = runtime.agents.map((a) => {
       if (a.paused) return a;
@@ -246,7 +259,6 @@ function broadcastSimulation() {
         state: newState,
         task: pick(taskList),
         lastAction: action,
-        tokensUsed: a.tokensUsed + Math.floor(Math.random() * 800) + 100,
         logs: [`${timestamp()} — [${newState}] ${action}`, ...a.logs].slice(0, 20),
       };
     });
@@ -302,8 +314,8 @@ app.get("/health", (_req, res) => {
 });
 
 app.post("/signup", authRateLimit, async (req, res) => {
-  const { email, password } = req.body as { email?: string; password?: string };
-  if (!email || !password || password.length < 8) {
+  const { email, password } = req.body as { email?: unknown; password?: unknown };
+  if (typeof email !== "string" || !email || typeof password !== "string" || password.length < 8) {
     res.status(400).json({ error: "Valid email and password (≥8 chars) required" }); return;
   }
   const exists = await db.user.findUnique({ where: { email } });
@@ -314,8 +326,8 @@ app.post("/signup", authRateLimit, async (req, res) => {
 });
 
 app.post("/login", authRateLimit, async (req, res) => {
-  const { email, password } = req.body as { email?: string; password?: string };
-  if (!email || !password) { res.status(400).json({ error: "email and password required" }); return; }
+  const { email, password } = req.body as { email?: unknown; password?: unknown };
+  if (typeof email !== "string" || !email || typeof password !== "string" || !password) { res.status(400).json({ error: "email and password required" }); return; }
   const user = await db.user.findUnique({ where: { email } });
   if (!user || !(await verifyPassword(password, user.password))) {
     res.status(401).json({ error: "Invalid credentials" }); return;
@@ -547,26 +559,36 @@ app.get("/usage", protect, async (req, res) => {
 // ── AI workflow — fixed planner→coder ─────────────────────────────
 app.post("/run", protect, workflowRateLimit, async (req, res) => {
   const { task, provider } = req.body as { task?: string; provider?: Provider };
-  if (!task?.trim()) { res.status(400).json({ error: "task is required" }); return; }
+  if (typeof task !== "string" || !task.trim()) { res.status(400).json({ error: "task is required" }); return; }
   const userId = req.userId!;
   const usageError = await enforceUsageGuardrails(userId);
   if (usageError) { res.status(429).json({ error: usageError }); return; }
   const runtime = getRuntime(userId);
   if (runtime.workflowRunning) { res.status(409).json({ error: "Workflow already running" }); return; }
-
-  const sessionId = Date.now().toString();
-  await createSession(sessionId, task.trim(), userId, provider);
-  runtime.activeSessionId = sessionId;
+  // Claim the runtime before any await so a concurrent request sees the 409.
   runtime.workflowRunning = true;
   runtime.workflowAbortController = new AbortController();
   runtime.cancelRequested = false;
+
+  const sessionId = randomUUID();
+  try {
+    await createSession(sessionId, task.trim(), userId, provider);
+  } catch (error) {
+    runtime.workflowRunning = false;
+    runtime.workflowAbortController = null;
+    throw error;
+  }
+  runtime.activeSessionId = sessionId;
+  resetAgentUsage(runtime);
   touchRuntime(runtime);
   res.status(202).json({ status: "started", sessionId });
+  let accruedCostUsd = 0;
+  const update = (id: string, patch: Partial<Agent>) => { accruedCostUsd += patch.costUsd ?? 0; updateAgent(userId, id, patch); };
 
   try {
     const result = await runWorkflow(
       task.trim(),
-      (id, patch) => updateAgent(userId, id, patch),
+      update,
       (id) => waitIfPaused(userId, id),
       provider,
       runtime.workflowAbortController.signal
@@ -577,6 +599,7 @@ app.post("/run", protect, workflowRateLimit, async (req, res) => {
         socket.send(JSON.stringify({ type: "result", sessionId, ...result }));
     });
   } catch (err) {
+    updateSessionCost(sessionId, accruedCostUsd);
     if (err instanceof WorkflowCancelledError || runtime.cancelRequested) {
       resetRuntime(userId);
       runtime.sockets.forEach((socket) => {
@@ -597,6 +620,7 @@ app.post("/run", protect, workflowRateLimit, async (req, res) => {
     runtime.workflowAbortController = null;
     runtime.activeSessionId = null;
     touchRuntime(runtime);
+    await finishSession(sessionId);
   }
 });
 
@@ -630,8 +654,11 @@ app.post("/workflow", protect, workflowRateLimit, async (req, res) => {
     runtimeId?: RuntimeId;
     memory?: { enabled?: boolean; projectKey?: string };
   };
-  if (!workflow || !task?.trim()) {
+  if (!workflow || typeof task !== "string" || !task.trim()) {
     res.status(400).json({ error: "workflow and task required" }); return;
+  }
+  if (!Array.isArray(workflow.nodes) || !Array.isArray(workflow.edges)) {
+    res.status(400).json({ error: "workflow nodes and edges must be arrays" }); return;
   }
   if (workflow.nodes.length > MAX_WORKFLOW_NODES) {
     res.status(400).json({ error: `Workflow exceeds node limit (${MAX_WORKFLOW_NODES})` }); return;
@@ -650,21 +677,31 @@ app.post("/workflow", protect, workflowRateLimit, async (req, res) => {
   if (usageError) { res.status(429).json({ error: usageError }); return; }
   const runtime = getRuntime(userId);
   if (runtime.workflowRunning) { res.status(409).json({ error: "Workflow already running" }); return; }
-
-  const sessionId = Date.now().toString();
-  await createSession(sessionId, task.trim(), userId, provider);
-  runtime.activeSessionId = sessionId;
+  // Claim the runtime before any await so a concurrent request sees the 409.
   runtime.workflowRunning = true;
   runtime.workflowAbortController = new AbortController();
   runtime.cancelRequested = false;
+
+  const sessionId = randomUUID();
+  try {
+    await createSession(sessionId, task.trim(), userId, provider);
+  } catch (error) {
+    runtime.workflowRunning = false;
+    runtime.workflowAbortController = null;
+    throw error;
+  }
+  runtime.activeSessionId = sessionId;
+  resetAgentUsage(runtime);
   touchRuntime(runtime);
   res.status(202).json({ status: "started", sessionId });
+  let accruedCostUsd = 0;
+  const update = (id: string, patch: Partial<Agent>) => { accruedCostUsd += patch.costUsd ?? 0; updateAgent(userId, id, patch); };
 
   try {
     const result = await runWorkflowDynamic(
       workflow,
       task.trim(),
-      (id, patch) => updateAgent(userId, id, patch),
+      update,
       (id) => waitIfPaused(userId, id),
       provider,
       {
@@ -695,6 +732,7 @@ app.post("/workflow", protect, workflowRateLimit, async (req, res) => {
         }));
     });
   } catch (err) {
+    updateSessionCost(sessionId, accruedCostUsd);
     if (err instanceof WorkflowCancelledError || runtime.cancelRequested) {
       resetRuntime(userId);
       runtime.sockets.forEach((socket) => {
@@ -715,6 +753,7 @@ app.post("/workflow", protect, workflowRateLimit, async (req, res) => {
     runtime.workflowAbortController = null;
     runtime.activeSessionId = null;
     touchRuntime(runtime);
+    await finishSession(sessionId);
   }
 });
 
@@ -782,7 +821,16 @@ app.post("/replay/:id/share", protect, async (_req, res) => {
 app.get("/replay/public/:token", async (req, res) => {
   const session = await getSessionByShareToken(req.params.token);
   if (!session) { res.status(404).json({ error: "Share link invalid or expired" }); return; }
-  res.json({ ...session, bookmarks: await listSharedReplayBookmarks(session.id) });
+  const { userId: _userId, shareToken: _shareToken, ...publicSession } = session;
+  res.json({ ...publicSession, bookmarks: await listSharedReplayBookmarks(session.id) });
+});
+
+app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
+  const status = (error as { status?: unknown })?.status;
+  const clientError = typeof status === "number" && status >= 400 && status < 500;
+  if (!clientError) logServerEvent(`Unhandled request error: ${error instanceof Error ? error.stack ?? error.message : String(error)}`);
+  if (res.headersSent) return;
+  res.status(clientError ? status : 500).json({ error: clientError ? "Invalid request" : "Internal server error" });
 });
 
 // ── WebSocket ──────────────────────────────────────────────────────

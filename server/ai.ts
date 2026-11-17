@@ -55,6 +55,15 @@ export interface StreamResult {
 export type OnChunk = (text: string) => void | Promise<void>;
 
 // ── Provider implementations ──────────────────────────────────────────────────
+// Anthropic's input_tokens already excludes cache reads and writes; each is billed at its own rate.
+const ANTHROPIC_CACHE_READ = 0.3 / 1_000_000;   // 0.1x input
+const ANTHROPIC_CACHE_WRITE = 3.75 / 1_000_000; // 1.25x input, the 5-minute "ephemeral" cache used below
+
+export function anthropicCostUsd(inputTokens: number, outputTokens: number, cacheReadTokens: number, cacheCreateTokens: number): number {
+  const p = PRICING.anthropic;
+  return inputTokens * p.input + cacheReadTokens * ANTHROPIC_CACHE_READ + cacheCreateTokens * ANTHROPIC_CACHE_WRITE + outputTokens * p.output;
+}
+
 async function streamAnthropic(
   systemPrompt: string,
   userMessage: string,
@@ -85,9 +94,7 @@ async function streamAnthropic(
   const outputTokens = usage.output_tokens ?? 0;
   const cacheReadTokens = usage.cache_read_input_tokens ?? 0;
   const cacheCreateTokens = usage.cache_creation_input_tokens ?? 0;
-  const billable = inputTokens - cacheReadTokens - cacheCreateTokens;
-  const p = PRICING.anthropic;
-  const costUsd = billable * p.input + cacheReadTokens * 0.5 / 1_000_000 + outputTokens * p.output;
+  const costUsd = anthropicCostUsd(inputTokens, outputTokens, cacheReadTokens, cacheCreateTokens);
 
   return { text: fullText, inputTokens, outputTokens, cacheReadTokens, costUsd, provider: "anthropic", model };
 }

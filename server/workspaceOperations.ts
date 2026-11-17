@@ -85,6 +85,12 @@ export class WorkspaceOperations {
       args: ["-C", this.repoPath, "worktree", "remove", "--force", worktreePath],
       cwd: this.repoPath,
     });
+    // Drop the managed orbi/<lease> branch GitWorktreeIsolation created for this worktree; a missing branch is fine.
+    await this.runner.run({
+      command: "git",
+      args: ["-C", this.repoPath, "branch", "-D", `orbi/${path.basename(path.resolve(worktreePath))}`],
+      cwd: this.repoPath,
+    }).catch(() => undefined);
   }
 
   private assertManagedPath(worktreePath: string): void {

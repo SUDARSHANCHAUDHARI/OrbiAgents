@@ -27,6 +27,7 @@ export interface WorktreeCommandRunner {
   add(repoPath: string, worktreePath: string, branchName: string): Promise<void>;
   isClean(repoPath: string, worktreePath: string): Promise<boolean>;
   remove(repoPath: string, worktreePath: string): Promise<void>;
+  deleteBranch?(repoPath: string, branchName: string): Promise<void>;
 }
 
 export class GitCliWorktreeCommandRunner implements WorktreeCommandRunner {
@@ -44,6 +45,15 @@ export class GitCliWorktreeCommandRunner implements WorktreeCommandRunner {
     await this.processRunner.run({
       command: "git",
       args: ["-C", repoPath, "worktree", "remove", worktreePath],
+      cwd: repoPath,
+    });
+  }
+
+  // -d, not -D: git keeps the branch if the agent committed work that is not merged.
+  async deleteBranch(repoPath: string, branchName: string): Promise<void> {
+    await this.processRunner.run({
+      command: "git",
+      args: ["-C", repoPath, "branch", "-d", branchName],
       cwd: repoPath,
     });
   }
@@ -83,6 +93,7 @@ export class GitWorktreeIsolation implements WorkspaceIsolation {
         released = true;
         if (await this.runner.isClean(this.repoPath, worktreePath)) {
           await this.runner.remove(this.repoPath, worktreePath);
+          await this.runner.deleteBranch?.(this.repoPath, branchName).catch(() => undefined);
           return "removed";
         }
         return "preserved";

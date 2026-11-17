@@ -15,7 +15,8 @@ function isValidUrl(value: string): boolean {
 export function validateServerEnv(env: NodeJS.ProcessEnv = process.env): void {
   const appUrl = env.APP_URL ?? "http://localhost:3000";
   const corsOrigin = env.CORS_ORIGIN ?? appUrl;
-  const jwtSecret = env.JWT_SECRET ?? FALLBACK_JWT_SECRET;
+  // `||` so an empty JWT_SECRET (e.g. compose `${JWT_SECRET}` unset) counts as missing.
+  const jwtSecret = env.JWT_SECRET || FALLBACK_JWT_SECRET;
   const isProduction = env.NODE_ENV === "production";
   const provider = (env.DEFAULT_PROVIDER as Provider | undefined) ?? DEFAULT_PROVIDER;
   const available = availableProviders();
