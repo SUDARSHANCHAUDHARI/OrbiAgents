@@ -22,7 +22,7 @@ const CLAUDE_HOOK_EVENTS = [
 
 interface ClaudeHookEntry {
   matcher: string;
-  hooks: Array<{ type: string; command: string; timeout?: number }>;
+  hooks: Array<{ type: string; command?: string; timeout?: number }>;
 }
 
 interface ClaudeSettings {
@@ -54,7 +54,7 @@ function writeSettings(settings: ClaudeSettings): void {
 }
 
 function isOurEntry(entry: ClaudeHookEntry): boolean {
-  return entry.hooks.some((h) => h.command.includes(HOOK_SCRIPT_NAME));
+  return Array.isArray(entry.hooks) && entry.hooks.some((h) => typeof h?.command === "string" && h.command.includes(HOOK_SCRIPT_NAME));
 }
 
 function makeHookEntry(): ClaudeHookEntry {

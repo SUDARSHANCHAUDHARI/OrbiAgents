@@ -249,9 +249,12 @@ export function activate(context: vscode.ExtensionContext) {
 
   context.subscriptions.push({
     dispose: () => {
+      // Read before stop(), which resets ownsServer. Secondary windows must leave
+      // the owner window's hooks in ~/.claude/settings.json.
+      const ownsServer = hookServer.ownsServer;
       hookServer.stop();
       permissionTimer.clearAll();
-      uninstallHooks();
+      if (ownsServer) uninstallHooks();
     },
   });
 
