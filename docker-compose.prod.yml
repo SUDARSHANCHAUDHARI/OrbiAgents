@@ -18,6 +18,8 @@ services:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+    volumes:
+      - orbi-data:/app/prisma/data
     ports:
       - "4000:4000"
     healthcheck:
@@ -39,3 +41,6 @@ services:
     depends_on:
       server:
         condition: service_healthy
+
+volumes:
+  orbi-data:
