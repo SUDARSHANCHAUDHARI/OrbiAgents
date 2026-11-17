@@ -27,16 +27,23 @@ env:
   PNPM_VERSION: '10.28.2'
 
 jobs:
-  # desktop-munder declares no dependencies at all — its suite and its
-  # provenance check are plain node. No install step, deliberately.
+  # desktop-munder declares no dependencies of its own, but its tools/ suites
+  # resolve typescript, esbuild and friends from desktop/node_modules, so the
+  # root workspace (root + desktop) must be installed first.
   desktop-munder:
     name: desktop-munder (tests + provenance)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+      - name: Install (root workspace)
+        run: pnpm install --frozen-lockfile
       - name: Upstream provenance
         working-directory: desktop-munder
         run: node tools/verify-baseline.mjs
@@ -91,6 +98,10 @@ jobs:
       - name: Design system
         working-directory: desktop
         run: pnpm check:design-system
+      # check:performance measures desktop/out/renderer, which only exists after a build.
+      - name: Build
+        working-directory: desktop
+        run: pnpm build
       - name: Renderer budget
         working-directory: desktop
         run: pnpm check:performance
