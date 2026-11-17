@@ -23,6 +23,11 @@ function legacyProjectKey(cwd: string): string {
     : cwd.replace(/^\//, '').replaceAll('/', '-');
 }
 
+/** Claude Code's projects root: $CLAUDE_CONFIG_DIR/projects when set, else ~/.claude/projects. */
+function claudeProjectsRoot(): string {
+  return path.join(process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude'), 'projects');
+}
+
 /** Resolve the Claude Code transcript directory for a given working directory:
  *  ~/.claude/projects keyed by cwd.
  *
@@ -41,7 +46,7 @@ function legacyProjectKey(cwd: string): string {
  *  spelling, because callers that go on to create the directory must create the
  *  one Claude Code will actually read. */
 export function projectDir(cwd: string): string {
-  const root = path.join(os.homedir(), '.claude/projects');
+  const root = claudeProjectsRoot();
   const current = path.join(root, projectKey(cwd));
   if (existsSync(current)) return current;
   // For cwd '/' the legacy key is the empty string, and path.join(root, '')
@@ -77,7 +82,7 @@ export function seedSessionTranscript(cwd: string, sessionId: string): boolean {
     if (!sessionId || !VALID_SESSION_ID.test(sessionId)) return false;
     const target = path.join(projectDir(cwd), `${sessionId}.jsonl`);
     if (existsSync(target)) return true;
-    const projectsRoot = path.join(os.homedir(), '.claude/projects');
+    const projectsRoot = claudeProjectsRoot();
     if (!existsSync(projectsRoot)) return false;
     for (const dir of readdirSync(projectsRoot)) {
       const candidate = path.join(projectsRoot, dir, `${sessionId}.jsonl`);
@@ -103,7 +108,7 @@ export function seedSessionTranscript(cwd: string, sessionId: string): boolean {
 export function resolveSessionCwd(sessionId: string): string | null {
   try {
     if (!sessionId || !VALID_SESSION_ID.test(sessionId)) return null;
-    const projectsRoot = path.join(os.homedir(), '.claude/projects');
+    const projectsRoot = claudeProjectsRoot();
     if (!existsSync(projectsRoot)) return null;
     let best: { file: string; mtime: number } | null = null;
     for (const dir of readdirSync(projectsRoot)) {

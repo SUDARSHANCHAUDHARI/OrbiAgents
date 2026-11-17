@@ -49,7 +49,12 @@
       "before": "      ? `RUNNING BUILD: Munder Difflin v${rt.version}, ${rt.packaged ? 'packaged app' : 'local dev build'}${rt.appPath ? `, from ${rt.appPath}` : ''}. Say this version if asked which one is running, and do not assume behaviour from an older one. A local dev build inherits the launching shell's environment (umask included) where a packaged app does not, so file modes and inherited env can legitimately differ between the two. \\`log.jsonl\\` records an \\`app-start\\` event on every launch, which is how you spot a restart or a build switch.`",
       "after": "      ? `RUNNING BUILD: OrbiAgents v${rt.version}, ${rt.packaged ? 'packaged app' : 'local dev build'}${rt.appPath ? `, from ${rt.appPath}` : ''}. Say this version if asked which one is running, and do not assume behaviour from an older one. A local dev build inherits the launching shell's environment (umask included) where a packaged app does not, so file modes and inherited env can legitimately differ between the two. \\`log.jsonl\\` records an \\`app-start\\` event on every launch, which is how you spot a restart or a build switch.`",
       "reason": "Identify the running build as OrbiAgents in agent context."
-    }
+    },
+    {"before":"function shortRand(): string {\n  return randomBytes(3).toString('hex');\n}\n","after":"function shortRand(): string {\n  return randomBytes(3).toString('hex');\n}\n\n/** True for a single safe path segment (message id, agent id): no separators, not '.'/'..'. */\nexport function isSafeMessageSegment(value: unknown): value is string {\n  return typeof value === 'string' && /^[A-Za-z0-9._-]+$/.test(value) && value !== '.' && value !== '..';\n}\n","reason":"Treat agent-written message ids and recipients as path segments: reject traversal (#1 outbox path traversal)."},
+    {"before":"      id: partial.id ?? `${stamp()}-${shortRand()}`,","after":"      // The id becomes an inbox filename; an agent-written one is untrusted.\n      id: isSafeMessageSegment(partial.id) ? partial.id : `${stamp()}-${shortRand()}`,","reason":"Regenerate an unsafe agent-written message id instead of using it as an inbox filename."},
+    {"before":"    const inbox = join(this.agentDir(toId), 'inbox');\n    if (!existsSync(inbox)) return false;","after":"    // Both values become path segments; an unsafe one is reported like an unknown recipient.\n    if (!isSafeMessageSegment(toId) || !isSafeMessageSegment(msg.id)) return false;\n    const inbox = join(this.agentDir(toId), 'inbox');\n    if (!existsSync(inbox)) return false;","reason":"Refuse delivery to an unsafe recipient id; the caller logs the drop and bounces to god."},
+    {"before":"      extraWritableDirs?: string[];\n    } = {}","after":"      extraWritableDirs?: string[];\n      /** Proxy-tier upstream from the user's per-provider base URL setting. */\n      upstreamBaseUrl?: string;\n    } = {}","reason":"Accept the proxy-tier upstream per spawn instead of reading a process-wide env mutation."},
+    {"before":"            const upstream = process.env[desc.baseUrlEnv]\n","after":"            const upstream = opts.upstreamBaseUrl || process.env[desc.baseUrlEnv]\n","reason":"Prefer the per-spawn proxy upstream over the inherited environment."}
   ],
   "src/main/index.ts": [
     {"before":"5. REPORT TO GOD — the agent then tells you (Michael) what it did.","after":"5. REPORT TO ORCHESTRATOR — the agent then tells you what it did.","reason":"Remove the upstream character name from generated Slack work instructions."},
@@ -87,7 +92,14 @@
       "before": "// ─── IPC: Settings hero payload (remote data, cached) ───────────────────────\n/** Plan copy and sponsor, fetched from the repo so they can change without a\n *  release. Validated in shared/heroPayload before it reaches the renderer. */",
       "after": "// ─── IPC: Settings identity payload (local, compatibility bridge) ───────────",
       "reason": "Describe the retained hero IPC as a local compatibility bridge."
-    }
+    },
+    {"before":"    return { action: 'deny' };\n  });\n\n  // Close interception when live PTYs exist.","after":"    return { action: 'deny' };\n  });\n\n  // Never let the main frame leave the app: a file dropped outside a drop zone\n  // would load file://… with the preload API. Dev keeps its renderer-server reloads.\n  win.webContents.on('will-navigate', (e) => {\n    const devUrl = isDev ? process.env.ELECTRON_RENDERER_URL : undefined;\n    try { if (devUrl && new URL(e.url).origin === new URL(devUrl).origin) return; } catch { /* malformed URL: block */ }\n    e.preventDefault();\n  });\n\n  // Close interception when live PTYs exist.","reason":"Block renderer-initiated main-frame navigation so a dropped file cannot load file:// content with the preload API."},
+    {"before":"  // proxy forwards to their endpoint (Ollama/LM Studio/vLLM). Set on process.env BEFORE\n  // ensureAgent reads it. (Crush's baseUrlEnv is an inert sentinel used ONLY as this\n  // upstream source; its real routing is the per-agent CRUSH_GLOBAL_CONFIG base_url.)\n  if (opts.hive && (provider === 'crush' || provider === 'qwen')) {\n    const bridge = providerPreset(provider).bridge;\n    const baseUrl = readConfig().providerBaseUrls?.[provider];\n    if (bridge && bridge.kind === 'proxy' && baseUrl) process.env[bridge.baseUrlEnv] = baseUrl;\n  }\n","after":"  // proxy forwards to their endpoint (Ollama/LM Studio/vLLM). Passed per spawn (this\n  // agent's env + ensureAgent's upstream), never via process.env, so it cannot leak into\n  // later agents. (Crush's baseUrlEnv is an inert sentinel used ONLY as this\n  // upstream source; its real routing is the per-agent CRUSH_GLOBAL_CONFIG base_url.)\n  let upstreamBaseUrl: string | undefined;\n  if (opts.hive && (provider === 'crush' || provider === 'qwen')) {\n    const bridge = providerPreset(provider).bridge;\n    const baseUrl = readConfig().providerBaseUrls?.[provider];\n    if (bridge && bridge.kind === 'proxy' && baseUrl) {\n      upstreamBaseUrl = baseUrl;\n      opts.env = { ...(opts.env ?? {}), [bridge.baseUrlEnv]: baseUrl };\n    }\n  }\n","reason":"Scope the proxy-tier base URL to its own spawn instead of mutating process.env for every later agent."},
+    {"before":"          extraWritableDirs: [memory.env().MEMPALACE_PALACE_PATH].filter((p): p is string => !!p)\n        }\n      );","after":"          extraWritableDirs: [memory.env().MEMPALACE_PALACE_PATH].filter((p): p is string => !!p),\n          upstreamBaseUrl\n        }\n      );","reason":"Pass the per-spawn proxy upstream into ensureAgent."},
+    {"before":"import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, powerMonitor, powerSaveBlocker, screen, shell, Notification } from 'electron';","after":"import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, powerMonitor, powerSaveBlocker, screen, session, shell, Notification } from 'electron';","reason":"Import the default session to tell the primary window from floor windows."},
+    {"before":"ipcMain.handle('roster:write', (_evt, snap: unknown) => roster.write(snap));","after":"// Floors run in their own session partition with their own agents; only the\n// primary (default session) owns the shared roster file, or floors overwrite it.\nipcMain.handle('roster:write', (evt, snap: unknown) => evt.sender.session === session.defaultSession\n  ? roster.write(snap)\n  : { ok: false, error: 'floor windows do not write the shared roster' });","reason":"Stop floor windows from overwriting the shared roster.json (last-write-wins lost primary hires)."},
+    {"before":"/** Install one catalog skill into ~/.claude/skills. Structured refusals, never a","after":"/** Install one catalog skill into Claude's user skills dir. Structured refusals, never a","reason":"Document that skill install follows CLAUDE_CONFIG_DIR."},
+    {"before":"  const skillRoots = [join(homedir(), '.claude', 'skills'), join(homedir(), '.config', 'opencode')];","after":"  const skillRoots = [join(process.env.CLAUDE_CONFIG_DIR || join(homedir(), '.claude'), 'skills'), join(homedir(), '.config', 'opencode')];","reason":"Reveal skills from the resolved Claude config dir, matching install and uninstall."}
   ],
   "src/main/config.ts": [
     {
@@ -104,7 +116,11 @@
       "before": "  telemetryEnabled: true,",
       "after": "  telemetryEnabled: false,",
       "reason": "Disable telemetry for fresh migration configuration."
-    }
+    },
+    {"before":"function ensureClaudeGlobalPermissions(home: string): void {\n  try {\n    const dir = join(home, '.claude');","after":"// Resolve like Claude Code: CLAUDE_CONFIG_DIR when set (it is passed through to agents,\n// see ptyEnv.ts), else ~/.claude with the state file at ~/.claude.json.\nfunction claudeConfigDir(home: string): string {\n  return process.env.CLAUDE_CONFIG_DIR || join(home, '.claude');\n}\n\nfunction claudeStateFile(home: string): string {\n  const dir = process.env.CLAUDE_CONFIG_DIR;\n  return dir ? join(dir, '.claude.json') : join(home, '.claude.json');\n}\n\nfunction ensureClaudeGlobalPermissions(home: string): void {\n  try {\n    const dir = claudeConfigDir(home);","reason":"Honor CLAUDE_CONFIG_DIR for the Claude settings directory, matching Claude Code."},
+    {"before":"    const p = join(home, '.claude.json');","after":"    const p = claudeStateFile(home);","reason":"Honor CLAUDE_CONFIG_DIR for the Claude project-trust state file."},
+    {"before":" *   1. `~/.claude/settings.json` → `skipDangerousModePermissionPrompt` +","after":" *   1. `<config dir>/settings.json` → `skipDangerousModePermissionPrompt` +","reason":"Document the config-directory resolution."},
+    {"before":" *   2. `~/.claude.json` → `projects[cwd].hasTrustDialogAccepted` — the per-folder","after":" *   2. the state file (`~/.claude.json`, or `$CLAUDE_CONFIG_DIR/.claude.json`) → `projects[cwd].hasTrustDialogAccepted` — the per-folder","reason":"Document the state-file resolution."}
   ],
   "src/main/hiddenClaude.ts": [
     {
@@ -1652,7 +1668,8 @@
       "before": "img.alt = 'Munder Difflin';",
       "after": "img.alt = 'OrbiAgents';",
       "reason": "Replace excluded upstream logo dependency and identify the migration splash as OrbiAgents."
-    }
+    },
+    {"before":"const root = document.getElementById('root');","after":"// A file dropped outside a drop zone must not navigate the window. Bubble phase\n// on window: drop zones still receive the event first.\nfor (const type of ['dragover', 'drop'] as const) {\n  window.addEventListener(type, (e) => {\n    if (e.dataTransfer?.types.includes('Files')) e.preventDefault();\n  });\n}\n\nconst root = document.getElementById('root');","reason":"Prevent the browser default for file drops outside a drop zone (window navigation); drop zones still handle the event."}
   ],
   "src/preload/index.ts": [
     {
@@ -1906,5 +1923,33 @@
       "after": "<div class=\"title\">ORBIAGENTS</div>",
       "reason": "Replace excluded upstream logo dependency and identify the migration splash as OrbiAgents."
     }
+  ],
+  "test/claude-permissions-config.test.cjs": [{"before":"const { ensureClaudePermissionsAccepted } = loadTs('src/main/config.ts');\nconst settingsDir","after":"const { ensureClaudePermissionsAccepted } = loadTs('src/main/config.ts');\ndelete process.env.CLAUDE_CONFIG_DIR; // default resolution: ~/.claude + ~/.claude.json\nconst settingsDir","reason":"Pin the default config-directory resolution so an inherited CLAUDE_CONFIG_DIR cannot redirect the test."}],
+  "src/main/slack.ts": [
+    {"before":"      server.listen(this.port, () => {","after":"      // Loopback only: tunnelmole forwards to localhost, nothing else needs this port.\n      server.listen(this.port, '127.0.0.1', () => {","reason":"Bind the Slack events server to loopback instead of all interfaces."}
+  ],
+  "src/main/webhook.ts": [
+    {"before":"      server.listen(this.port, () => {","after":"      // Loopback only: tunnelmole forwards to localhost, nothing else needs this port.\n      server.listen(this.port, '127.0.0.1', () => {","reason":"Bind the webhook server to loopback instead of all interfaces."}
+  ],
+  "test/transcript-usage.test.cjs": [
+    {"before":"process.env.USERPROFILE = FAKE_HOME;\n","after":"process.env.USERPROFILE = FAKE_HOME;\ndelete process.env.CLAUDE_CONFIG_DIR; // projectDir() honours it; keep the sandboxed HOME authoritative\n","reason":"Pin the default Claude config-dir resolution so an inherited CLAUDE_CONFIG_DIR cannot redirect the sandboxed transcript writes."}
+  ],
+  "test/telemetry-session-fallback.test.cjs": [
+    {"before":"process.env.USERPROFILE = FAKE_HOME;\n","after":"process.env.USERPROFILE = FAKE_HOME;\ndelete process.env.CLAUDE_CONFIG_DIR; // projectDir() honours it; keep the sandboxed HOME authoritative\n","reason":"Pin the default Claude config-dir resolution so an inherited CLAUDE_CONFIG_DIR cannot redirect the sandboxed transcript writes."}
+  ],
+  "test/transcript-project-dir.test.cjs": [
+    {"before":"const { projectDir } = loadTs('src/main/transcript.ts');\n","after":"const { projectDir } = loadTs('src/main/transcript.ts');\ndelete process.env.CLAUDE_CONFIG_DIR; // projectDir() honours it; keep the sandboxed HOME authoritative\n","reason":"Pin the default Claude config-dir resolution so an inherited CLAUDE_CONFIG_DIR cannot redirect the sandboxed transcript writes."}
+  ],
+  "src/main/transcript.ts": [
+    {"before":"/** Resolve the Claude Code transcript directory for a given working directory:\n *  ~/.claude/projects keyed by cwd.\n","after":"/** Claude Code's projects root: $CLAUDE_CONFIG_DIR/projects when set, else ~/.claude/projects. */\nfunction claudeProjectsRoot(): string {\n  return path.join(process.env.CLAUDE_CONFIG_DIR || path.join(os.homedir(), '.claude'), 'projects');\n}\n\n/** Resolve the Claude Code transcript directory for a given working directory:\n *  ~/.claude/projects keyed by cwd.\n","reason":"Honor CLAUDE_CONFIG_DIR for Claude Code transcripts, matching config.ts claudeConfigDir()."},
+    {"before":"export function projectDir(cwd: string): string {\n  const root = path.join(os.homedir(), '.claude/projects');","after":"export function projectDir(cwd: string): string {\n  const root = claudeProjectsRoot();","reason":"Honor CLAUDE_CONFIG_DIR for Claude Code transcripts."},
+    {"before":"    if (existsSync(target)) return true;\n    const projectsRoot = path.join(os.homedir(), '.claude/projects');","after":"    if (existsSync(target)) return true;\n    const projectsRoot = claudeProjectsRoot();","reason":"Honor CLAUDE_CONFIG_DIR when seeding a resumed session transcript."},
+    {"before":"    if (!sessionId || !VALID_SESSION_ID.test(sessionId)) return null;\n    const projectsRoot = path.join(os.homedir(), '.claude/projects');","after":"    if (!sessionId || !VALID_SESSION_ID.test(sessionId)) return null;\n    const projectsRoot = claudeProjectsRoot();","reason":"Honor CLAUDE_CONFIG_DIR when resolving a session's cwd."}
+  ],
+  "src/main/skills.ts": [
+    {"before":"import { getText } from './fetchText';\n","after":"import { getText } from './fetchText';\n\n/** Claude Code's user skills dir: $CLAUDE_CONFIG_DIR/skills when set, else ~/.claude/skills. */\nfunction claudeUserSkillsDir(): string {\n  return join(process.env.CLAUDE_CONFIG_DIR || join(homedir(), '.claude'), 'skills');\n}\n","reason":"Honor CLAUDE_CONFIG_DIR for Claude user skills, matching config.ts claudeConfigDir()."},
+    {"before":"    ...scanSkillDir(join(home, '.claude', 'skills'), 'claude', 'user'),","after":"    ...scanSkillDir(claudeUserSkillsDir(), 'claude', 'user'),","reason":"List user skills from the resolved Claude config dir."},
+    {"before":"  const root = join(homedir(), '.claude', 'skills');","after":"  const root = claudeUserSkillsDir();","reason":"Install skills into the resolved Claude config dir."},
+    {"before":"  const roots = [\n    join(homedir(), '.claude', 'skills'),","after":"  const roots = [\n    claudeUserSkillsDir(),","reason":"Allow uninstall from the resolved Claude config dir's skills root."}
   ]
 }

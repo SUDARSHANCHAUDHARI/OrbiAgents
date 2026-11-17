@@ -27,6 +27,7 @@ require.cache[electron] = {
 };
 
 const { ensureClaudePermissionsAccepted } = loadTs('src/main/config.ts');
+delete process.env.CLAUDE_CONFIG_DIR; // default resolution: ~/.claude + ~/.claude.json
 const settingsDir = path.join(home, '.claude');
 const settingsPath = path.join(settingsDir, 'settings.json');
 const projectConfigPath = path.join(home, '.claude.json');

@@ -30,6 +30,7 @@ const path = require('node:path');
 const FAKE_HOME = fs.mkdtempSync(path.join(os.tmpdir(), 'home-'));
 process.env.HOME = FAKE_HOME;
 process.env.USERPROFILE = FAKE_HOME;
+delete process.env.CLAUDE_CONFIG_DIR; // projectDir() honours it; keep the sandboxed HOME authoritative
 
 const loadTs = require('./load-ts.cjs');
 const { TelemetryCollector } = loadTs('src/main/telemetry.ts');

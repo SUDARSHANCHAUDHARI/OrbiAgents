@@ -778,9 +778,20 @@ export function ensureHarnessHome(path: string): { ok: boolean; error?: string }
   }
 }
 
+// Resolve like Claude Code: CLAUDE_CONFIG_DIR when set (it is passed through to agents,
+// see ptyEnv.ts), else ~/.claude with the state file at ~/.claude.json.
+function claudeConfigDir(home: string): string {
+  return process.env.CLAUDE_CONFIG_DIR || join(home, '.claude');
+}
+
+function claudeStateFile(home: string): string {
+  const dir = process.env.CLAUDE_CONFIG_DIR;
+  return dir ? join(dir, '.claude.json') : join(home, '.claude.json');
+}
+
 function ensureClaudeGlobalPermissions(home: string): void {
   try {
-    const dir = join(home, '.claude');
+    const dir = claudeConfigDir(home);
     const p = join(dir, 'settings.json');
     let s: Record<string, unknown> = {};
     if (existsSync(p)) {
@@ -807,7 +818,7 @@ type ClaudeConfig = Record<string, unknown> & { projects?: Record<string, Claude
 
 function ensureClaudeProjectTrust(home: string, cwd: string): void {
   try {
-    const p = join(home, '.claude.json');
+    const p = claudeStateFile(home);
     let c: ClaudeConfig = {};
     if (existsSync(p)) {
       try {
@@ -835,9 +846,9 @@ function ensureClaudeProjectTrust(home: string, cwd: string): void {
  *
  *  Two separate gates, written only when they aren't already satisfied (so we
  *  rarely touch files a running `claude` also writes):
- *   1. `~/.claude/settings.json` → `skipDangerousModePermissionPrompt` +
+ *   1. `<config dir>/settings.json` → `skipDangerousModePermissionPrompt` +
  *      `skipAutoPermissionPrompt` — these gate the bypass-mode warning (global).
- *   2. `~/.claude.json` → `projects[cwd].hasTrustDialogAccepted` — the per-folder
+ *   2. the state file (`~/.claude.json`, or `$CLAUDE_CONFIG_DIR/.claude.json`) → `projects[cwd].hasTrustDialogAccepted` — the per-folder
  *      "do you trust the files in this folder?" dialog.
  *
  *  Each file is an independent best-effort boundary: unsafe existing contents
