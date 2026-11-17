@@ -1,7 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
-import { Agent } from "./types";
+import { useCallback } from "react";
 
 const STORAGE_KEY = "orbi_webhook_url";
 
@@ -41,34 +40,9 @@ async function fireNotification(title: string, body: string) {
   }
 }
 
+// No AgentState signals an error ("debugging" is the Debugger node's normal
+// active state); failures reach the client as workflow errors only.
 export function useAlerts() {
-  const prevStatesRef = useRef<Map<string, string>>(new Map());
-
-  const checkAgents = useCallback((agents: Agent[]) => {
-    agents.forEach((agent) => {
-      const prev = prevStatesRef.current.get(agent.id);
-      if (prev !== agent.state) {
-        if (agent.state === "debugging" && prev !== undefined) {
-          const title = `${agent.name} hit an error`;
-          const body = agent.lastAction || "Agent entered debugging state";
-          void fireNotification(title, body);
-          const webhookUrl = getWebhookUrl();
-          if (webhookUrl) {
-            void sendWebhook(webhookUrl, {
-              event: "agent_error",
-              agentId: agent.id,
-              agentName: agent.name,
-              state: agent.state,
-              lastAction: agent.lastAction,
-              timestamp: Date.now(),
-            });
-          }
-        }
-        prevStatesRef.current.set(agent.id, agent.state);
-      }
-    });
-  }, []);
-
   const alertWorkflowError = useCallback((message: string) => {
     void fireNotification("OrbiAgents — workflow error", message);
     const webhookUrl = getWebhookUrl();
@@ -81,10 +55,5 @@ export function useAlerts() {
     }
   }, []);
 
-  // Reset state tracking when a new run starts
-  function resetAlertState() {
-    prevStatesRef.current.clear();
-  }
-
-  return { checkAgents, alertWorkflowError, resetAlertState };
+  return { alertWorkflowError };
 }

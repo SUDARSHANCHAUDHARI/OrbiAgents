@@ -79,7 +79,7 @@ export default function AlertSettings({ onClose }: Props) {
           }}
         >
           <strong style={{ color: chrome.text }}>Browser notifications</strong> fire automatically
-          when an agent enters a debugging state or a workflow errors.
+          when a workflow errors.
           Your browser will prompt for permission on the first alert.
         </div>
 
