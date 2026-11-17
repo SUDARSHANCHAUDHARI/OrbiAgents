@@ -10,7 +10,6 @@
     "desktop:dev": "pnpm --dir desktop-munder dev",
     "desktop:build": "pnpm --dir desktop-munder build",
     "desktop:package:mac": "pnpm --dir desktop-munder package:mac",
-    "desktop:package:mac:release": "pnpm --dir desktop-munder package:mac",
     "desktop:check:security": "pnpm --dir desktop-munder check:security",
     "desktop:check:design-system": "pnpm --dir desktop-munder check:design-system",
     "desktop:check:accessibility": "pnpm --dir desktop-munder check:accessibility",
