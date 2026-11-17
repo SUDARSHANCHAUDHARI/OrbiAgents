@@ -1,6 +1,6 @@
 // Assemble an unsigned local OrbiAgents app. Never launches it.
 import { createRequire } from 'node:module';
-import { cpSync, copyFileSync, lstatSync, mkdtempSync, mkdirSync, readFileSync, readdirSync, readlinkSync, rmSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs';
+import { cpSync, copyFileSync, lstatSync, mkdtempSync, mkdirSync, readFileSync, readdirSync, readlinkSync, realpathSync, rmSync, symlinkSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join, dirname, relative, resolve } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
@@ -24,11 +24,16 @@ execFileSync(electronBin, [join(toolsDir, 'runtime-smoke.cjs'), dependenciesRoot
   env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' }, stdio: 'inherit',
 });
 const run = (name, args = []) => execFileSync(process.execPath, [join(toolsDir, name), ...args], { encoding: 'utf8', maxBuffer: 8 * 1024 * 1024 });
-const mainOutput = run('build-main.mjs');
-const rendererOutput = run('build-renderer.mjs', [dependenciesRoot]);
-const mainDir = mainOutput.match(/Main\/preload source bundles: (.+)\. External/)[1];
-const rendererDir = rendererOutput.match(/Renderer-only build: (.+)\. Not/)[1];
-const staging = mkdtempSync(join(tmpdir(), 'orbi-package-'));
+// Build outputs and staging are temporary (~660 MB a run); delete them on any exit.
+const temporaryDirs = [];
+process.on('exit', () => { for (const dir of temporaryDirs) rmSync(dir, { recursive: true, force: true }); });
+const mainDir = run('build-main.mjs').match(/Main\/preload source bundles: (.+)\. External/)[1];
+temporaryDirs.push(mainDir);
+const rendererDir = run('build-renderer.mjs', [dependenciesRoot]).match(/Renderer-only build: (.+)\. Not/)[1];
+temporaryDirs.push(rendererDir);
+// Resolve /var -> /private/var so the framework links electron-builder writes match stagedApp.
+const staging = realpathSync(mkdtempSync(join(tmpdir(), 'orbi-package-')));
+temporaryDirs.push(staging);
 const iconRenderDir = join(staging, 'icon-render');
 const iconsetDir = join(staging, 'OrbiAgents.iconset');
 mkdirSync(iconRenderDir);
@@ -56,7 +61,7 @@ const dependencies = Object.fromEntries(runtimeDependencyNames.map(name => {
   return [name, version];
 }));
 writeFileSync(join(appDir, 'package.json'), JSON.stringify({
-  name: 'orbiagents-desktop', version: '0.4.6-orbi.1', private: true,
+  name: 'orbiagents-desktop', version: JSON.parse(readFileSync(new URL('../package.json', import.meta.url))).version, private: true,
   description: 'OrbiAgents local-first multi-agent desktop application', author: 'SudarshanTechLabs',
   main: 'launch-gate.cjs', dependencies,
 }, null, 2));

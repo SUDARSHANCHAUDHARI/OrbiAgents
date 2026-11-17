@@ -21,7 +21,7 @@ const root = fileURLToPath(new URL('../src/renderer', import.meta.url));
 const outDir = mkdtempSync(join(tmpdir(), 'orbi-renderer-build-'));
 await build({ configFile: false, envDir: false, root, base: './',
   esbuild: { jsx: 'automatic' },
-  define: { __APP_VERSION__: JSON.stringify('0.0.0-migration') },
+  define: { __APP_VERSION__: JSON.stringify(JSON.parse(readFileSync(new URL('../package.json', import.meta.url))).version) },
   resolve: { alias: [
     { find: '@', replacement: join(root, 'src') },
     { find: '@shared', replacement: fileURLToPath(new URL('../src/shared', import.meta.url)) },
