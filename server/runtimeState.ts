@@ -61,6 +61,10 @@ export function resetRuntimeAgents(runtime: UserRuntime): void {
   runtime.cancelRequested = false;
 }
 
+export function resetAgentUsage(runtime: UserRuntime): void {
+  runtime.agents = runtime.agents.map((agent) => ({ ...agent, tokensUsed: 0, inputTokens: 0, outputTokens: 0, costUsd: 0 }));
+}
+
 export function setAgentPaused(runtime: UserRuntime, agentId: string, paused: boolean): void {
   runtime.agents = runtime.agents.map((agent) =>
     agent.id === agentId ? { ...agent, paused } : agent

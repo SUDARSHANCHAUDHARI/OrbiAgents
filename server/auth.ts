@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { Request, Response, NextFunction } from "express";
 
-const JWT_SECRET = process.env.JWT_SECRET ?? "orbiagents-dev-secret-change-in-prod";
+const JWT_SECRET = process.env.JWT_SECRET || "orbiagents-dev-secret-change-in-prod";
 const SALT_ROUNDS = 10;
 
 export async function hashPassword(plain: string): Promise<string> {

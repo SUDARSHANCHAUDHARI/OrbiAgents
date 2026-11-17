@@ -108,13 +108,17 @@ test("workspace apply refuses a dirty target repository", async () => {
 });
 
 test("workspace discard uses an explicit force-removal argument for a managed record", async () => {
-  let args: string[] = [];
+  const calls: string[][] = [];
   const operations = new WorkspaceOperations("/repo", "/managed/worktrees", {
     async run(request) {
-      args = request.args;
+      calls.push(request.args);
+      if (request.args.includes("branch")) throw new Error("branch not found");
       return { stdout: "", stderr: "", exitCode: 0 };
     },
   });
   await operations.discard("/managed/worktrees/run-node");
-  assert.deepEqual(args, ["-C", "/repo", "worktree", "remove", "--force", "/managed/worktrees/run-node"]);
+  assert.deepEqual(calls, [
+    ["-C", "/repo", "worktree", "remove", "--force", "/managed/worktrees/run-node"],
+    ["-C", "/repo", "branch", "-D", "orbi/run-node"],
+  ]);
 });

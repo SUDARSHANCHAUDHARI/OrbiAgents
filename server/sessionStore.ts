@@ -2,6 +2,7 @@ import { randomUUID } from "crypto";
 import { Agent, WorkflowEvent } from "./types";
 import { db } from "./db";
 import type { Provider } from "./ai";
+import { logServerEvent } from "./logger";
 
 export interface SessionFrame {
   timestamp: number;
@@ -60,7 +61,7 @@ function schedulePersist(sessionId: string): void {
   if (existing) clearTimeout(existing);
   const timer = setTimeout(() => {
     persistTimers.delete(sessionId);
-    void persistSession(sessionId);
+    persistSession(sessionId).catch((error) => logServerEvent(`Session persist failed for ${sessionId}: ${error instanceof Error ? error.message : String(error)}`));
   }, 50);
   persistTimers.set(sessionId, timer);
 }
@@ -104,10 +105,8 @@ export async function createSession(id: string, task: string, userId?: string, p
     provider,
     userId,
   };
-  sessions.set(id, session);
-  await db.storedSession.upsert({
-    where: { id },
-    create: {
+  await db.storedSession.create({
+    data: {
       id,
       task,
       frames: "[]",
@@ -117,17 +116,19 @@ export async function createSession(id: string, task: string, userId?: string, p
       userId,
       createdAt: new Date(session.createdAt),
     },
-    update: {
-      task,
-      frames: "[]",
-      events: "[]",
-      totalCostUsd: 0,
-      provider,
-      shareToken: null,
-      userId,
-      createdAt: new Date(session.createdAt),
-    },
   });
+  sessions.set(id, session);
+}
+
+// Final persist for a finished run, then drop it from memory; replay reloads it from the DB.
+export async function finishSession(sessionId: string): Promise<void> {
+  const timer = persistTimers.get(sessionId);
+  if (timer) { clearTimeout(timer); persistTimers.delete(sessionId); }
+  try {
+    await persistSession(sessionId);
+  } finally {
+    sessions.delete(sessionId);
+  }
 }
 
 export function recordFrame(sessionId: string, agents: Agent[]): void {
@@ -164,10 +165,7 @@ export async function getSession(sessionId: string, userId?: string): Promise<Se
   const stored = await db.storedSession.findFirst({
     where: userId ? { id: sessionId, userId } : { id: sessionId },
   });
-  if (!stored) return null;
-  const session = deserializeSession(stored);
-  sessions.set(sessionId, session);
-  return session;
+  return stored ? deserializeSession(stored) : null;
 }
 
 export async function createShareToken(sessionId: string, userId?: string): Promise<string> {
@@ -179,7 +177,7 @@ export async function createShareToken(sessionId: string, userId?: string): Prom
 
   const token = randomUUID();
   session.shareToken = token;
-  await persistSession(sessionId);
+  await db.storedSession.update({ where: { id: session.id }, data: { shareToken: token } });
   return token;
 }
 
@@ -189,10 +187,7 @@ export async function getSessionByShareToken(token: string): Promise<Session | n
   }
 
   const stored = await db.storedSession.findUnique({ where: { shareToken: token } });
-  if (!stored) return null;
-  const session = deserializeSession(stored);
-  sessions.set(session.id, session);
-  return session;
+  return stored ? deserializeSession(stored) : null;
 }
 
 export async function listSessions(userId?: string): Promise<Pick<Session, "id" | "task" | "createdAt" | "totalCostUsd" | "provider">[]> {

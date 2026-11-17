@@ -1,7 +1,7 @@
 import test, { after, before } from "node:test";
 import assert from "node:assert/strict";
 import { WebSocket } from "ws";
-import { createSession, recordFrame } from "../sessionStore";
+import { createSession, finishSession, recordFrame, updateSessionCost } from "../sessionStore";
 import { signToken } from "../auth";
 import { db } from "../db";
 import { startServer, stopServer } from "../index";
@@ -157,8 +157,31 @@ test("share links can be created by the owner and viewed publicly", async () => 
 
   const publicReplay = await fetch(`${baseUrl}/replay/public/${shareBody.token}`);
   assert.equal(publicReplay.status, 200);
-  const session = (await publicReplay.json()) as { id: string };
+  const session = (await publicReplay.json()) as { id: string; userId?: string; shareToken?: string };
   assert.equal(session.id, sessionId);
+  assert.equal(session.userId, undefined);
+  assert.equal(session.shareToken, undefined);
+});
+
+test("finished sessions persist, leave memory, and still replay and share from the DB", async () => {
+  const owner = await createTestUser("finish-owner");
+  const sessionId = `finish-session-${Date.now()}`;
+  await createSession(sessionId, "Finish me", owner.id);
+  await assert.rejects(createSession(sessionId, "Clobber", owner.id));
+  recordFrame(sessionId, [makeAgent()]);
+  updateSessionCost(sessionId, 0.25);
+  await finishSession(sessionId);
+  recordFrame(sessionId, [makeAgent()]); // no-op once evicted from memory
+
+  const replay = await fetch(`${baseUrl}/replay/${sessionId}`, { headers: makeHeaders(owner.token) });
+  assert.equal(replay.status, 200);
+  const body = (await replay.json()) as { task: string; frames: unknown[]; totalCostUsd: number };
+  assert.deepEqual([body.task, body.frames.length, body.totalCostUsd], ["Finish me", 1, 0.25]);
+
+  const share = (await (await fetch(`${baseUrl}/replay/${sessionId}/share`, { method: "POST", headers: makeHeaders(owner.token) })).json()) as { token: string };
+  const publicReplay = await fetch(`${baseUrl}/replay/public/${share.token}`);
+  assert.equal(publicReplay.status, 200);
+  assert.equal(((await publicReplay.json()) as { frames: unknown[] }).frames.length, 1);
 });
 
 test("websocket rejects missing token and accepts authenticated clients", async () => {
@@ -190,6 +213,22 @@ test("websocket rejects missing token and accepts authenticated clients", async 
     ws.on("message", () => { ws.close(); resolve(); });
     ws.on("error", reject);
   });
+});
+
+test("malformed request bodies return 4xx/500 JSON instead of crashing the server", async () => {
+  const post = (path: string, body: unknown, token?: string) => fetch(`${baseUrl}${path}`, { method: "POST", headers: token ? makeJsonHeaders(token) : { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  assert.equal((await post("/signup", { email: "a@b.c", password: [1, 2, 3, 4, 5, 6, 7, 8] })).status, 400);
+  assert.equal((await post("/signup", { email: { not: "a string" }, password: "long-enough-password" })).status, 400);
+  assert.equal((await post("/login", { email: ["a@b.c"], password: "x" })).status, 400);
+  const user = await createTestUser("malformed");
+  assert.equal((await post("/workflow", { workflow: {}, task: "x" }, user.token)).status, 400);
+  assert.equal((await post("/run", { task: 42 }, user.token)).status, 400);
+  const corrupt = await db.savedWorkflow.create({ data: { name: "corrupt", data: "not-json", userId: user.id } });
+  const crashed = await fetch(`${baseUrl}/workflows/${corrupt.id}`, { headers: makeHeaders(user.token) });
+  assert.equal(crashed.status, 500); assert.deepEqual(await crashed.json(), { error: "Internal server error" });
+  const badJson = await fetch(`${baseUrl}/login`, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{" });
+  assert.equal(badJson.status, 400);
+  assert.equal((await fetch(`${baseUrl}/health`)).status, 200);
 });
 
 test("workflow stop returns conflict when no run is active", async () => {
