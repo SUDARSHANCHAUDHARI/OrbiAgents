@@ -10,7 +10,12 @@ const MAX_BODY = Number(process.env.MAX_BODY_BYTES ?? 15_000_000); // ~15MB, cov
 type Bucket = { count: number; reset: number };
 const buckets = new Map<string, Bucket>();
 
+// Forwarding headers are client-controlled unless a trusted proxy sets them
+// (same TRUST_PROXY switch as server/). Next route handlers expose no socket IP,
+// so without a proxy every caller shares one bucket.
+// shortcut: one global bucket when TRUST_PROXY is off, upgrade if deployed without a proxy and per-client limits are needed.
 function clientIp(req: NextRequest): string {
+  if (process.env.TRUST_PROXY !== "true") return "unknown";
   const xff = req.headers.get("x-forwarded-for");
   if (xff) return xff.split(",")[0].trim();
   return req.headers.get("x-real-ip") ?? "unknown";
