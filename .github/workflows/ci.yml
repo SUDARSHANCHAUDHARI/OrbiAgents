@@ -133,6 +133,10 @@ jobs:
       - name: Install
         working-directory: server
         run: pnpm install --frozen-lockfile --ignore-workspace
+      # Tests open a real PrismaClient against SQLite; generate the client and create the tables first.
+      - name: Prisma
+        working-directory: server
+        run: pnpm exec prisma generate && pnpm exec prisma migrate deploy
       - name: Tests
         working-directory: server
         run: pnpm test

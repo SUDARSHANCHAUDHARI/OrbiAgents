@@ -6,7 +6,7 @@ services:
     environment:
       APP_URL: ${APP_URL:-http://localhost:3000}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
-      JWT_SECRET: ${JWT_SECRET}
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
       DEFAULT_PROVIDER: ${DEFAULT_PROVIDER:-anthropic}
       RATE_LIMIT_AUTH_MAX: ${RATE_LIMIT_AUTH_MAX:-10}
       RATE_LIMIT_WORKFLOW_MAX: ${RATE_LIMIT_WORKFLOW_MAX:-12}
@@ -30,9 +30,10 @@ services:
     build:
       context: .
       dockerfile: web/Dockerfile
-    environment:
-      NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:4000}
-      NEXT_PUBLIC_WS_BASE_URL: ${NEXT_PUBLIC_WS_BASE_URL:-ws://localhost:4000}
+      # NEXT_PUBLIC_* are inlined at build time, so they must be build args.
+      args:
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:4000}
+        NEXT_PUBLIC_WS_BASE_URL: ${NEXT_PUBLIC_WS_BASE_URL:-ws://localhost:4000}
     ports:
       - "3000:3000"
     depends_on:
