@@ -25,6 +25,11 @@ import { join, basename, dirname, resolve, sep } from 'node:path';
 import { homedir } from 'node:os';
 import { getText } from './fetchText';
 
+/** Claude Code's user skills dir: $CLAUDE_CONFIG_DIR/skills when set, else ~/.claude/skills. */
+function claudeUserSkillsDir(): string {
+  return join(process.env.CLAUDE_CONFIG_DIR || join(homedir(), '.claude'), 'skills');
+}
+
 export interface LocalSkill {
   id: string;
   name: string;
@@ -132,7 +137,7 @@ export function listLocalSkills(opts: { cwds: string[]; bundledDir: string | nul
   const home = homedir();
   const found: LocalSkill[] = [
     ...(opts.bundledDir ? scanSkillDir(opts.bundledDir, 'claude', 'bundled') : []),
-    ...scanSkillDir(join(home, '.claude', 'skills'), 'claude', 'user'),
+    ...scanSkillDir(claudeUserSkillsDir(), 'claude', 'user'),
     ...scanPluginDir(join(home, '.config', 'opencode', 'plugin'), 'opencode', 'user'),
     ...scanPluginDir(join(home, '.codex', 'plugins'), 'codex', 'user')
   ];
@@ -409,7 +414,7 @@ export async function installSkill(
   const dirName = safeSkillDirName(skillPath || entryName);
   if (!dirName) return { ok: false, error: 'That skill has a name this app will not create a folder for.' };
 
-  const root = join(homedir(), '.claude', 'skills');
+  const root = claudeUserSkillsDir();
   const dest = join(root, dirName);
   if (existsSync(dest)) return { ok: false, error: `Already installed at ${dest}` };
 
@@ -482,7 +487,7 @@ export function uninstallSkill(
   try { target = resolve(skillPath); } catch { return { ok: false, error: 'unreadable path' }; }
 
   const roots = [
-    join(homedir(), '.claude', 'skills'),
+    claudeUserSkillsDir(),
     join(homedir(), '.config', 'opencode', 'plugin'),
     join(homedir(), '.codex', 'plugins'),
     ...opts.cwds.filter(Boolean).flatMap((c) => [

@@ -1,7 +1,7 @@
 import './migrationBootstrap';
 import { launchConsentError } from './launchConsent';
 import { launchInputError } from './launchInputs';
-import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, powerMonitor, powerSaveBlocker, screen, shell, Notification } from 'electron';
+import { app, BrowserWindow, clipboard, dialog, ipcMain, Menu, powerMonitor, powerSaveBlocker, screen, session, shell, Notification } from 'electron';
 import { spawn } from 'node:child_process';
 import {
   rmSync, existsSync, readFileSync, readdirSync, statSync, cpSync, writeFileSync,
@@ -2357,6 +2357,14 @@ function createWindow(opts: { floor?: boolean } = {}): BrowserWindow {
     return { action: 'deny' };
   });
 
+  // Never let the main frame leave the app: a file dropped outside a drop zone
+  // would load file://… with the preload API. Dev keeps its renderer-server reloads.
+  win.webContents.on('will-navigate', (e) => {
+    const devUrl = isDev ? process.env.ELECTRON_RENDERER_URL : undefined;
+    try { if (devUrl && new URL(e.url).origin === new URL(devUrl).origin) return; } catch { /* malformed URL: block */ }
+    e.preventDefault();
+  });
+
   // Close interception when live PTYs exist. The red-X destroys the window;
   // intercept it the same way before-quit does so PTY users aren't surprised.
   win.on('close', (e) => {
@@ -2711,13 +2719,18 @@ async function spawnAgentCore(opts: AgentSpawnOptions, owner: Electron.WebConten
   // Proxy-tier CLIs (qwen/crush) route their LLM traffic through a loopback sidecar
   // whose UPSTREAM is read from the preset's bridge.baseUrlEnv inside hive.ensureAgent.
   // For the local-LLM path, feed the user's configured base URL as that upstream so the
-  // proxy forwards to their endpoint (Ollama/LM Studio/vLLM). Set on process.env BEFORE
-  // ensureAgent reads it. (Crush's baseUrlEnv is an inert sentinel used ONLY as this
+  // proxy forwards to their endpoint (Ollama/LM Studio/vLLM). Passed per spawn (this
+  // agent's env + ensureAgent's upstream), never via process.env, so it cannot leak into
+  // later agents. (Crush's baseUrlEnv is an inert sentinel used ONLY as this
   // upstream source; its real routing is the per-agent CRUSH_GLOBAL_CONFIG base_url.)
+  let upstreamBaseUrl: string | undefined;
   if (opts.hive && (provider === 'crush' || provider === 'qwen')) {
     const bridge = providerPreset(provider).bridge;
     const baseUrl = readConfig().providerBaseUrls?.[provider];
-    if (bridge && bridge.kind === 'proxy' && baseUrl) process.env[bridge.baseUrlEnv] = baseUrl;
+    if (bridge && bridge.kind === 'proxy' && baseUrl) {
+      upstreamBaseUrl = baseUrl;
+      opts.env = { ...(opts.env ?? {}), [bridge.baseUrlEnv]: baseUrl };
+    }
   }
   // If the agent carries hive metadata, provision its workspace and add
   // provider-specific spawn injection. Non-Claude providers get shared AGENT_*
@@ -2744,7 +2757,8 @@ async function spawnAgentCore(opts: AgentSpawnOptions, owner: Electron.WebConten
           skillsDir: skillsResourceDir(),
           // The shared palace is mutated by the agent's own `mempalace` calls, so
           // the OS sandbox must let it through (empty when memory is off).
-          extraWritableDirs: [memory.env().MEMPALACE_PALACE_PATH].filter((p): p is string => !!p)
+          extraWritableDirs: [memory.env().MEMPALACE_PALACE_PATH].filter((p): p is string => !!p),
+          upstreamBaseUrl
         }
       );
       opts.args = [...(opts.args ?? []), ...inj.args];
@@ -3424,7 +3438,11 @@ ipcMain.handle('git:checkout', async (_evt, cwd: unknown, ref: unknown, detach: 
 ipcMain.on('roster:readSync', (evt) => { evt.returnValue = roster.read(); });
 ipcMain.on('config:homeSync', (evt) => { evt.returnValue = readConfig().harnessHome ?? null; });
 ipcMain.handle('roster:read', () => roster.read());
-ipcMain.handle('roster:write', (_evt, snap: unknown) => roster.write(snap));
+// Floors run in their own session partition with their own agents; only the
+// primary (default session) owns the shared roster file, or floors overwrite it.
+ipcMain.handle('roster:write', (evt, snap: unknown) => evt.sender.session === session.defaultSession
+  ? roster.write(snap)
+  : { ok: false, error: 'floor windows do not write the shared roster' });
 
 // ─── IPC: hive (multi-agent coordination) ───────────────────────────────────
 ipcMain.handle('hive:registry', () => hive.registry());
@@ -3526,7 +3544,7 @@ ipcMain.handle('skills:catalog', async (_evt, force: unknown) => {
   return loadCatalog(cachePath, { force: force === true });
 });
 
-/** Install one catalog skill into ~/.claude/skills. Structured refusals, never a
+/** Install one catalog skill into Claude's user skills dir. Structured refusals, never a
  *  throw: the UI distinguishes "not installable" from "install failed". */
 ipcMain.handle('skills:install', async (_evt, url: unknown, name: unknown) => {
   if (typeof url !== 'string' || typeof name !== 'string') {
@@ -3545,7 +3563,7 @@ ipcMain.handle('skills:uninstall', (_evt, path: unknown) => {
  *  file:// URL cannot (and should not) be smuggled through it. */
 ipcMain.handle('skills:reveal', (_evt, path: unknown) => {
   if (typeof path !== 'string' || !path.trim()) return { ok: false, error: 'bad request' };
-  const skillRoots = [join(homedir(), '.claude', 'skills'), join(homedir(), '.config', 'opencode')];
+  const skillRoots = [join(process.env.CLAUDE_CONFIG_DIR || join(homedir(), '.claude'), 'skills'), join(homedir(), '.config', 'opencode')];
   const target = resolve(path);
   const inRoot = skillRoots.some((r) => target.startsWith(resolve(r) + sep))
     || (readConfig().registeredRepos ?? []).some((c) => target.startsWith(resolve(c) + sep));

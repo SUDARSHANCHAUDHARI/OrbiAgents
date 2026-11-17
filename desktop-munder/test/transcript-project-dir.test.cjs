@@ -15,6 +15,7 @@ const path = require('node:path');
 const loadTs = require('./load-ts.cjs');
 
 const { projectDir } = loadTs('src/main/transcript.ts');
+delete process.env.CLAUDE_CONFIG_DIR; // projectDir() honours it; keep the sandboxed HOME authoritative
 
 /** projectDir() resolves against os.homedir(), which POSIX reads from $HOME — so
  *  each case gets a throwaway home and never touches the real ~/.claude. */

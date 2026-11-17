@@ -205,6 +205,11 @@ function shortRand(): string {
   return randomBytes(3).toString('hex');
 }
 
+/** True for a single safe path segment (message id, agent id): no separators, not '.'/'..'. */
+export function isSafeMessageSegment(value: unknown): value is string {
+  return typeof value === 'string' && /^[A-Za-z0-9._-]+$/.test(value) && value !== '.' && value !== '..';
+}
+
 /** Non-memory files `mempalace mine` must not ingest (Claude Code hooks config,
  *  cursor, raw inbox/outbox JSON). `mempalace mine` honors .gitignore, so we drop
  *  one in each agent dir; written on birth here and refreshed by the mine loop.
@@ -692,6 +697,8 @@ export class HiveManager {
        *  MemPalace dir, which `mempalace` mutates). Absolute paths; ignored
        *  for providers without a sandbox. */
       extraWritableDirs?: string[];
+      /** Proxy-tier upstream from the user's per-provider base URL setting. */
+      upstreamBaseUrl?: string;
     } = {}
   ): Promise<SpawnInjection> {
     const root = this.root();
@@ -875,7 +882,7 @@ export class HiveManager {
             // the user's configured value as the sidecar's UPSTREAM, then point the
             // CLI at the loopback proxy instead. Fall back to the cloud default if
             // the user hasn't set one.
-            const upstream = process.env[desc.baseUrlEnv]
+            const upstream = opts.upstreamBaseUrl || process.env[desc.baseUrlEnv]
               || (desc.api === 'anthropic' ? 'https://api.anthropic.com' : 'https://api.openai.com/v1');
             // A loopback bind on port 0 fails only transiently (a busy moment, a
             // slow sidecar start past the 4s ceiling), so try a few times before
@@ -1509,7 +1516,8 @@ export class HiveManager {
   private normalize(partial: Partial<HiveMessage>, from: string): HiveMessage {
     const act = (partial.act ?? 'inform') as MessageAct;
     return {
-      id: partial.id ?? `${stamp()}-${shortRand()}`,
+      // The id becomes an inbox filename; an agent-written one is untrusted.
+      id: isSafeMessageSegment(partial.id) ? partial.id : `${stamp()}-${shortRand()}`,
       conversation: partial.conversation ?? `conv-${shortRand()}`,
       in_reply_to: partial.in_reply_to ?? null,
       from: partial.from ?? from,
@@ -1528,6 +1536,8 @@ export class HiveManager {
    *  Returns false when the recipient has no inbox, so the caller can bounce and
    *  log the drop rather than let the message vanish. */
   private deliver(msg: HiveMessage, toId: string): boolean {
+    // Both values become path segments; an unsafe one is reported like an unknown recipient.
+    if (!isSafeMessageSegment(toId) || !isSafeMessageSegment(msg.id)) return false;
     const inbox = join(this.agentDir(toId), 'inbox');
     if (!existsSync(inbox)) return false; // unknown recipient — the caller reports it
     this.atomicWriteJson(join(inbox, `${msg.id}.json`), msg);
