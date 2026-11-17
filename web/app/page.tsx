@@ -119,12 +119,14 @@ export default function Home() {
   const replayBookmarkSavingRef = useRef(false);
   const [replayEventFilter, setReplayEventFilter] = useState("all");
   const replayRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // True from replay start until stopReplay; the timer ref is null while paused/finished.
+  const replayActiveRef = useRef(false);
   const replaySpeedRef = useRef<ReplaySpeed>(1);
   const replayIndexRef = useRef(0);
 
   const wsRef = useRef<WebSocket | null>(null);
   const liveAgentsRef = useRef<Agent[]>([]);
-  const { checkAgents, alertWorkflowError, resetAlertState } = useAlerts();
+  const { alertWorkflowError } = useAlerts();
 
   // Auth gate — redirect to /login if no token
   useEffect(() => {
@@ -150,8 +152,7 @@ export default function Home() {
       if (Array.isArray(data)) {
         const agentList = data as Agent[];
         liveAgentsRef.current = agentList;
-        checkAgents(agentList);
-        if (!replayRef.current) {
+        if (!replayActiveRef.current) {
           setAgents(agentList);
           setSelected((prev) =>
             prev ? agentList.find((a) => a.id === prev.id) ?? null : null
@@ -316,7 +317,6 @@ export default function Home() {
     setResult(null);
     setError(null);
     setWorkflowEvents([]);
-    resetAlertState();
 
     try {
       const res = await fetch(`${getApiBaseUrl()}/run`, {
@@ -342,7 +342,6 @@ export default function Home() {
     setResult(null);
     setError(null);
     setWorkflowEvents([]);
-    resetAlertState();
 
     try {
       const res = await fetch(`${getApiBaseUrl()}/workflow`, {
@@ -378,6 +377,7 @@ export default function Home() {
         throw new Error("Replay has no frames yet");
       }
 
+      replayActiveRef.current = true;
       setReplaySession(session);
       setReplayFrame(0);
       setReplayBookmarks(await getReplayBookmarks(sessionId).catch(() => [])); setReplayEventFilter("all");
@@ -417,6 +417,7 @@ export default function Home() {
   }
 
   function stopReplay() {
+    replayActiveRef.current = false;
     clearReplayTimer();
     setReplaySession(null);
     setReplayFrame(0);
@@ -698,8 +699,8 @@ export default function Home() {
 
           {/* Right controls */}
           <div
-            className="flex items-center gap-3 shrink-0"
-            style={{ display: "flex", alignItems: "center", gap: 16, flexShrink: 0 }}
+            className="flex flex-wrap items-center gap-3"
+            style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap", minWidth: 0, maxWidth: "100%" }}
           >
             <button
               className="orbi-control"
