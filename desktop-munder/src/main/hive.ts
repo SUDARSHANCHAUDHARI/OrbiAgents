@@ -353,6 +353,15 @@ function repairLiteralLineBreaksInJsonStrings(raw: string): { text: string; chan
   return { text, changed };
 }
 
+/** An outbox file larger than this is quarantined unread: agent-written, parsed in main. */
+const MAX_OUTBOX_BYTES = 1024 * 1024;
+
+/** Agent-written text bound for another agent's PTY: drop C0/C1 controls (ESC, CR, ^C)
+ *  except tab and newline, so it cannot end the bracketed paste or send keystrokes. */
+export function terminalSafeText(value: unknown): string {
+  return String(value ?? '').replace(/[\x00-\x08\x0b-\x1f\x7f-\x9f]/g, '');
+}
+
 export class HiveManager {
   /**
    * @param getHome  Lazily resolve harnessHome so the hive follows config changes.
@@ -1670,15 +1679,16 @@ export class HiveManager {
   /** Non-Claude providers cannot drain hive inbox; hand direct mail to the
    *  renderer so it can queue a terminal work order for the target PTY. */
   private emitTerminalHandoff(msg: HiveMessage, targetId: string): boolean {
+    // Every text field here is typed into the target's PTY by the renderer.
     const delivered = this.emit?.('hive:terminalHandoff', {
-      id: msg.id,
-      from: msg.from,
+      id: terminalSafeText(msg.id),
+      from: terminalSafeText(msg.from),
       to: targetId,
-      act: msg.act,
-      subject: msg.subject,
-      body: msg.body,
+      act: terminalSafeText(msg.act),
+      subject: terminalSafeText(msg.subject),
+      body: terminalSafeText(msg.body),
       requiresReply: msg.requires_reply,
-      createdAt: msg.created_at
+      createdAt: terminalSafeText(msg.created_at)
     }) === true;
     this.appendLog({
       kind: 'terminal-handoff',
@@ -1714,10 +1724,17 @@ export class HiveManager {
     for (const id of readdirSync(agentsDir)) {
       const outbox = join(agentsDir, id, 'outbox');
       if (!existsSync(outbox)) continue;
+      // Archiving needs .sent/; without it every tick re-delivers the same files.
+      try { mkdirSync(join(outbox, '.sent'), { recursive: true }); } catch { continue; }
       for (const f of readdirSync(outbox)) {
         if (!f.endsWith('.json')) continue;
         const full = join(outbox, f);
         try {
+          if (statSync(full).size > MAX_OUTBOX_BYTES) {
+            this.appendLog({ kind: 'drop', reason: 'oversize', from: id, file: f });
+            try { renameSync(full, join(outbox, '.sent', `bad-${f}`)); } catch { /* noop */ }
+            continue;
+          }
           const raw = readFileSync(full, 'utf8');
           let partial: Partial<HiveMessage>;
           try {
@@ -1745,11 +1762,18 @@ export class HiveManager {
           }
           const msg = this.normalize(partial, id);
           msg.from = id; // sender is authoritative — the owning directory
+          // PROTOCOL.md: the harness fills in id. A reused agent id overwrote inbox files
+          // and was suppressed as already seen by the renderer.
+          msg.id = `${stamp()}-${shortRand()}`;
           this.routeMessage(msg);
-          renameSync(full, join(outbox, '.sent', f)); // archive, don't reprocess
+          // Archive the routed message (harness id), not the raw file, so the sender's
+          // copy and the recipient's copy share one id; then don't reprocess.
+          this.atomicWriteJson(join(outbox, '.sent', f), msg);
+          unlinkSync(full);
           routed++;
         } catch {
           // malformed file — quarantine so we don't spin on it
+          this.appendLog({ kind: 'drop', reason: 'route-error', from: id, file: f });
           try { renameSync(full, join(outbox, '.sent', `bad-${f}`)); } catch { /* noop */ }
         }
       }
