@@ -43,6 +43,17 @@ test('package staging removes compile-only dependencies before archiving', () =>
   assert.match(source, /Runtime dependency is not pinned/);
   assert.match(source, /npm', \['prune', '--omit=dev', '--ignore-scripts'/);
 });
+test('package run deletes its temporary build outputs and staging on exit', () => {
+  const source = readFileSync(new URL('./package-macos.mjs', import.meta.url), 'utf8');
+  assert.match(source, /process\.on\('exit', \(\) => \{ for \(const dir of temporaryDirs\) rmSync\(dir, \{ recursive: true, force: true \}\)/);
+  for (const dir of ['mainDir', 'rendererDir', 'staging']) assert.match(source, new RegExp(`temporaryDirs\\.push\\(${dir}\\)`));
+});
+test('build and package scripts take the app version from package.json only', () => {
+  for (const name of ['build-main.mjs', 'build-renderer.mjs', 'package-macos.mjs']) {
+    const source = readFileSync(new URL(`./${name}`, import.meta.url), 'utf8');
+    assert.doesNotMatch(source, /0\.0\.0-migration|0\.4\.6-orbi/, name);
+  }
+});
 test('main build records external runtime packages for exact package pruning', () => {
   const source = readFileSync(new URL('./build-main.mjs', import.meta.url), 'utf8');
   assert.match(source, /metafile: true/);

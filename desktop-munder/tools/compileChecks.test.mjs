@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync, statSync } from 'node:fs';
+import { readFileSync, rmSync, statSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
@@ -16,6 +16,10 @@ test('main/preload build emits source bundles and required sidecars without laun
   ]);
   // These are intentionally external, not a claim that native modules work.
   assert.match(readFileSync(join(directory, 'main/index.cjs'), 'utf8'), /require\("electron"\)/);
+  // The preload reports the same version the packaged package.json carries.
+  const { version } = JSON.parse(readFileSync(tool('../package.json')));
+  assert.ok(readFileSync(join(directory, 'preload/index.cjs'), 'utf8').includes(JSON.stringify(version)));
+  rmSync(directory, { recursive: true, force: true });
 });
 test('compile dependency lock matches exact direct pins and contains no project scripts', () => {
   const pkg = JSON.parse(readFileSync(tool('./compile-dependencies.json')));
@@ -30,7 +34,7 @@ test('compile dependency lock matches exact direct pins and contains no project 
 test('remediation keeps unused tunneling dependency out and pins patched TOML', () => {
   const pkg = JSON.parse(readFileSync(tool('./compile-dependencies.json')));
   const lock = JSON.parse(readFileSync(tool('./compile-dependencies.lock.json')));
-  assert.equal(pkg.dependencies.electron, '41.10.6');
+  assert.equal(pkg.dependencies.electron, '41.10.7');
   assert.equal(pkg.dependencies.localtunnel, undefined);
   assert.equal(pkg.dependencies['@types/localtunnel'], undefined);
   assert.equal(pkg.overrides.tunnelmole.toml, '4.2.0');
